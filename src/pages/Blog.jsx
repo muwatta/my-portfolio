@@ -130,7 +130,7 @@ const Blog = () => {
       <div className="absolute -top-32 left-1/3 w-[600px] h-[600px] rounded-full bg-blue-600 opacity-[0.06] blur-[160px] pointer-events-none" />
       <div className="absolute bottom-0 right-0 w-96 h-96 rounded-full bg-violet-600 opacity-[0.06] blur-[130px] pointer-events-none" />
 
-      <div className="relative z-10 max-w-6xl mx-auto px-4 py-16 sm:py-20">
+      <div className="relative z-10 w-full max-w-6xl mx-auto px-4 py-16 sm:px-6 sm:py-20">
         {/* HEADER */}
         <motion.div
           initial={{ opacity: 0, y: 24 }}
@@ -171,7 +171,7 @@ const Blog = () => {
               placeholder="Search title, topic or tag…"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-9 pr-4 py-2 rounded-lg bg-white/80 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 text-sm placeholder-slate-400 dark:placeholder-slate-600 focus:outline-none focus:border-blue-500/60 w-64 transition-colors"
+              className="pl-9 pr-4 py-2 rounded-lg bg-white/80 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 text-sm placeholder-slate-400 dark:placeholder-slate-600 focus:outline-none focus:border-blue-500/60 w-full sm:w-64 transition-colors"
             />
           </div>
           <div className="flex flex-wrap gap-2">
@@ -223,8 +223,8 @@ const Blog = () => {
               className="mb-14 group"
             >
               <SectionLabel>Featured</SectionLabel>
-              <div className="grid grid-cols-1 lg:grid-cols-12 rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-800 bg-slate-100/40 dark:bg-slate-900/40 hover:border-slate-700 transition-colors duration-300">
-                <div className="lg:col-span-7 relative overflow-hidden h-56 lg:h-auto min-h-[300px]">
+              <div className="grid min-w-0 grid-cols-1 lg:grid-cols-12 rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-800 bg-slate-100/40 dark:bg-slate-900/40 hover:border-slate-700 transition-colors duration-300">
+                <div className="lg:col-span-7 relative min-w-0 overflow-hidden h-56 lg:h-auto min-h-[300px]">
                   <img
                     src={featured.image}
                     alt={featured.title}
@@ -236,7 +236,7 @@ const Blog = () => {
                     <CategoryBadge category={featured.category} />
                   </div>
                 </div>
-                <div className="lg:col-span-5 p-8 flex flex-col justify-between">
+                <div className="lg:col-span-5 min-w-0 p-5 sm:p-8 flex flex-col justify-between">
                   <div>
                     <div className="flex items-center gap-2 flex-wrap mb-4">
                       <ReadTime time={featured.readTime} />
@@ -244,7 +244,7 @@ const Blog = () => {
                         {featured.date}
                       </span>
                     </div>
-                    <h2 className="text-2xl font-extrabold text-slate-900 dark:text-white leading-snug mb-3">
+                    <h2 className="text-2xl font-extrabold text-slate-900 dark:text-white leading-snug mb-3 break-words">
                       {featured.title}
                     </h2>
                     <p
@@ -266,7 +266,7 @@ const Blog = () => {
                       </div>
                     )}
                   </div>
-                  <div className="flex items-center gap-4 mt-6 pt-5 border-t border-slate-200 dark:border-slate-800">
+                  <div className="flex flex-wrap items-center gap-4 mt-6 pt-5 border-t border-slate-200 dark:border-slate-800">
                     <Link
                       to={`/blog/${featured.id}`}
                       className="flex items-center gap-2 text-sm font-bold text-blue-700 dark:text-blue-400 hover:text-blue-600 dark:hover:text-blue-300 transition-colors group/link"
@@ -286,7 +286,7 @@ const Blog = () => {
                     )}
                     <button
                       onClick={() => share(featured)}
-                      className="flex items-center gap-1.5 text-slate-700 dark:text-slate-600 hover:text-blue-600 dark:hover:text-blue-400 text-xs transition-colors ml-auto"
+                      className="flex items-center gap-1.5 text-slate-700 dark:text-slate-600 hover:text-blue-600 dark:hover:text-blue-400 text-xs transition-colors ml-0 sm:ml-auto"
                     >
                       <FaShareAlt className="text-[10px]" />{" "}
                       {copiedId === featured.id ? "Copied!" : "Share"}
@@ -321,7 +321,7 @@ const Blog = () => {
                     visible: { opacity: 1, y: 0 },
                   }}
                   whileHover={{ y: -5, transition: { duration: 0.2 } }}
-                  className="group flex flex-col rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-100/40 dark:bg-slate-900/40 overflow-hidden hover:border-slate-700 transition-colors duration-300"
+                  className="group flex min-w-0 flex-col rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-100/40 dark:bg-slate-900/40 overflow-hidden hover:border-slate-700 transition-colors duration-300"
                 >
                   <div className="overflow-hidden h-44 relative">
                     <img
@@ -334,14 +334,14 @@ const Blog = () => {
                       <CategoryBadge category={blog.category} />
                     </div>
                   </div>
-                  <div className="p-5 flex flex-col flex-1">
+                  <div className="min-w-0 p-5 flex flex-col flex-1">
                     <div className="flex items-center gap-2 mb-2">
                       <span className="text-[10px] font-mono text-slate-600">
                         {blog.date}
                       </span>
                       <ReadTime time={blog.readTime} />
                     </div>
-                    <h3 className="text-[15px] font-bold text-slate-900 dark:text-white leading-snug mb-2 line-clamp-2 group-hover:text-blue-600 dark:group-hover:text-blue-300 transition-colors">
+                    <h3 className="text-[15px] font-bold text-slate-900 dark:text-white leading-snug mb-2 line-clamp-2 break-words group-hover:text-blue-600 dark:group-hover:text-blue-300 transition-colors">
                       {blog.title}
                     </h3>
                     <p
@@ -362,7 +362,7 @@ const Blog = () => {
                         ))}
                       </div>
                     )}
-                    <div className="flex items-center gap-3 mt-4 pt-4 border-t border-slate-200 dark:border-slate-800/80">
+                    <div className="flex flex-wrap items-center gap-3 mt-4 pt-4 border-t border-slate-200 dark:border-slate-800/80">
                       <Link
                         to={`/blog/${blog.id}`}
                         className="flex items-center gap-1 text-xs font-bold text-blue-700 dark:text-blue-400 hover:text-blue-600 dark:hover:text-blue-300 transition-colors group/link"
@@ -372,7 +372,7 @@ const Blog = () => {
                       </Link>
                       <button
                         onClick={() => share(blog)}
-                        className="flex items-center gap-1 text-slate-700 dark:text-slate-600 hover:text-blue-600 dark:hover:text-blue-400 text-[11px] transition-colors ml-auto"
+                        className="flex items-center gap-1 text-slate-700 dark:text-slate-600 hover:text-blue-600 dark:hover:text-blue-400 text-[11px] transition-colors ml-0 sm:ml-auto"
                       >
                         <FaShareAlt className="text-[9px]" />{" "}
                         {copiedId === blog.id ? "Copied!" : "Share"}
