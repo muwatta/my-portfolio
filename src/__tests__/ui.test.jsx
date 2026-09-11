@@ -84,7 +84,7 @@ describe("Portfolio UI (browser rendering)", () => {
     renderApp(["/portfolio/ssc-cooperative"]);
     expect(
       await screen.findByRole("heading", {
-        name: /SSC Cooperative — Member & Loan Management/i,
+        name: /SSC Cooperative: Member & Loan Management/i,
       }),
     ).toBeInTheDocument();
     expect(
@@ -117,7 +117,7 @@ describe("Portfolio UI (browser rendering)", () => {
     renderApp(["/portfolio/shopcore"]);
     expect(
       await screen.findByRole("heading", {
-        name: /ShopCore — E-commerce REST Backend/i,
+        name: /ShopCore: E-commerce REST Backend/i,
       }),
     ).toBeInTheDocument();
     expect(

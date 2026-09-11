@@ -11,7 +11,7 @@ export const Now = () => {
     <div className="min-h-screen bg-white dark:bg-[#06090f] text-slate-800 dark:text-slate-200">
       <Seo
         title="Now | Abdullahi Musliudeen"
-        description="What Abdullahi Musliudeen is currently working on and focusing on — backend and full-stack engineering."
+        description="What Abdullahi Musliudeen is currently working on and focusing on: backend and full-stack engineering."
         path="/now"
       />
 

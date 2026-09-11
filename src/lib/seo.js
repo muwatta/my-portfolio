@@ -1,7 +1,7 @@
 export const SITE = {
   name: "Muwatta",
   title:
-    "Muwatta | Abdullahi Musliudeen — Software Engineer, Technology Educator & Builder",
+    "Muwatta | Abdullahi Musliudeen: Software Engineer, Technology Educator & Builder",
   description:
     "Portfolio of Abdullahi Musliudeen, a Nigerian software engineer, technology educator, and builder working across backend systems, React, embedded systems, AI, and IoT.",
   url: "https://www.muwatta.com.ng",

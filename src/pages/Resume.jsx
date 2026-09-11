@@ -9,7 +9,7 @@ export const Resume = () => {
     <div className="min-h-screen bg-white dark:bg-[#06090f] text-slate-800 dark:text-slate-200">
       <Seo
         title="Resume | Abdullahi Musliudeen"
-        description="Resume and CV for Abdullahi Musliudeen — Backend Engineer & Full-Stack Developer building production systems with Django, DRF, PostgreSQL, Redis and React."
+        description="Resume and CV for Abdullahi Musliudeen: Backend Engineer & Full-Stack Developer building production systems with Django, DRF, PostgreSQL, Redis and React."
         path="/resume"
       />
 
@@ -308,11 +308,11 @@ export const Resume = () => {
             <ul className="space-y-2">
               <li className="flex gap-3 text-slate-700 dark:text-slate-300">
                 <span className="text-blue-500">★</span>
-                National ICT Competition for Girls — Student Leadership (2025)
+                National ICT Competition for Girls: Student Leadership (2025)
               </li>
               <li className="flex gap-3 text-slate-700 dark:text-slate-300">
                 <span className="text-blue-500">★</span>
-                African Intelligence LMS Hackathon — 2nd Runner-up (2025)
+                African Intelligence LMS Hackathon: 2nd Runner-up (2025)
               </li>
             </ul>
           </motion.section>

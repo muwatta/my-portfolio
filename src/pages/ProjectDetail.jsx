@@ -262,7 +262,7 @@ const ProjectDetail = () => {
           )}
         </motion.div>
 
-        {/* Case study sections — only rendered when the project has data */}
+        {/* Case study sections, only rendered when the project has data */}
         <div className="space-y-8">
           {project.problem && (
             <Section icon={<HiOutlineChip size={18} />} title="The Problem">

@@ -128,13 +128,13 @@ const Contact = () => {
             style={{ fontFamily: "'Lora', serif" }}
           >
             Whether you're hiring, collaborating on a project, or exploring tech
-            education partnerships — I'd love to hear from you.
+            education partnerships. I'd love to hear from you.
           </p>
         </motion.div>
 
-        {/* ── TWO-COLUMN LAYOUT ── */}
+        {/* TWO-COLUMN LAYOUT */}
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-10">
-          {/* LEFT — FORM */}
+          {/* LEFT: FORM */}
           <motion.div
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
@@ -271,7 +271,7 @@ const Contact = () => {
             </div>
           </motion.div>
 
-          {/* RIGHT — LINKS + INFO */}
+          {/* RIGHT: LINKS + INFO */}
           <motion.div
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
@@ -333,12 +333,14 @@ const Contact = () => {
               <p className="text-xs font-mono text-slate-500 uppercase tracking-widest mb-1">
                 Response time
               </p>
-              <p className="text-slate-900 dark:text-white font-bold">Usually within 24 hrs</p>
+              <p className="text-slate-900 dark:text-white font-bold">
+                Usually within 24 hrs
+              </p>
               <p
                 className="text-slate-500 text-xs mt-1"
                 style={{ fontFamily: "'Lora', serif" }}
               >
-                Based in Nigeria (WAT — UTC+1)
+                Based in Nigeria (WAT, UTC+1)
               </p>
             </div>
           </motion.div>

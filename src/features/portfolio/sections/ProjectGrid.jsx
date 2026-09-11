@@ -35,12 +35,12 @@ export const ProjectGrid = ({ projects = legacyProjects }) => {
             className="text-slate-600 dark:text-slate-400 text-sm max-w-md mx-auto leading-relaxed"
             style={{ fontFamily: "'Lora', serif" }}
           >
-            A complete archive of my public work — from production backends to
+            A complete archive of my public work, from production backends to
             experimental prototypes.
           </p>
         </div>
 
-        {/* Filter tabs — horizontally scrollable on mobile */}
+        {/* Filter tabs, horizontally scrollable on mobile */}
         <div className="overflow-x-auto pb-2 mb-8 -mx-4 px-4 sm:mx-0 sm:px-0">
           <div className="min-w-max sm:min-w-0 flex justify-start sm:justify-center">
             <FilterTabs active={activeFilter} onChange={setActiveFilter} />
@@ -48,7 +48,7 @@ export const ProjectGrid = ({ projects = legacyProjects }) => {
         </div>
 
         {/* Count */}
-        <p         className="text-xs font-mono text-slate-500 dark:text-slate-600 text-center mb-6">
+        <p className="text-xs font-mono text-slate-500 dark:text-slate-600 text-center mb-6">
           {filteredProjects.length} project
           {filteredProjects.length !== 1 ? "s" : ""}
         </p>

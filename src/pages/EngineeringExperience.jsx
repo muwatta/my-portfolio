@@ -157,14 +157,14 @@ export const EngineeringExperience = () => {
             </h2>
             <div className="space-y-4 text-slate-700 dark:text-slate-300">
               <p>
-                Not just code—real systems solving real problems. 100+ active
+                Not just code. Real systems solving real problems. 100+ active
                 users depend on platforms I built. Multiple clients have
                 deployed production applications. 150+ learners have benefited
                 from mentorship grounded in pragmatic, production-grade
                 engineering.
               </p>
               <p>
-                I don't abstract away complexity—I embrace it. Building
+                I don't abstract away complexity. I embrace it. Building
                 financial workflows, multi-tenant architectures, role-based
                 authorization, and real-time systems has taught me how to
                 translate business requirements into robust technical solutions.

@@ -17,8 +17,8 @@ export default function Portfolio() {
   return (
     <>
       <Seo
-        title="Work | Abdullahi Musliudeen — Backend Engineer & Full-Stack Developer"
-        description="Production systems built by Abdullahi Musliudeen — Django REST APIs, PostgreSQL, Redis, Celery/RabbitMQ, React — used by real users and delivered to clients."
+        title="Work | Abdullahi Musliudeen: Backend Engineer & Full-Stack Developer"
+        description="Production systems built by Abdullahi Musliudeen: Django REST APIs, PostgreSQL, Redis, Celery/RabbitMQ, and React, used by real users and delivered to clients."
         path="/portfolio"
         type="website"
       />
