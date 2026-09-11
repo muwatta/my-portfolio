@@ -3,6 +3,8 @@ import { configure } from "@testing-library/react";
 
 configure({ asyncUtilTimeout: 6000 });
 
+globalThis.scrollTo = () => {};
+
 if (!globalThis.matchMedia) {
   globalThis.matchMedia = (query) => ({
     matches: false,

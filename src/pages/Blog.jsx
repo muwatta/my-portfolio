@@ -138,10 +138,10 @@ const Blog = () => {
           transition={{ duration: 0.55 }}
           className="mb-14"
         >
-          <p className="text-[11px] font-mono tracking-[0.28em] uppercase text-blue-400 mb-3">
+          <p className="text-[11px] font-mono tracking-[0.28em] uppercase text-blue-700 dark:text-blue-400 mb-3">
             Full Stack · Writing
           </p>
-          <h1 className="text-5xl sm:text-[4.5rem] font-extrabold text-white leading-[1.05] mb-5">
+          <h1 className="text-4xl sm:text-[4.5rem] font-extrabold text-slate-900 dark:text-white leading-[1.05] mb-5 break-words">
             The Dev
             <br />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-cyan-400 to-teal-400">
@@ -244,7 +244,7 @@ const Blog = () => {
                         {featured.date}
                       </span>
                     </div>
-                    <h2 className="text-2xl font-extrabold text-white leading-snug mb-3">
+                    <h2 className="text-2xl font-extrabold text-slate-900 dark:text-white leading-snug mb-3">
                       {featured.title}
                     </h2>
                     <p
@@ -258,7 +258,7 @@ const Blog = () => {
                         {featured.tags.map((t) => (
                           <span
                             key={t}
-                            className="text-[10px] px-2 py-0.5 rounded bg-slate-800 text-slate-500"
+                            className="text-[10px] px-2 py-0.5 rounded bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-500"
                           >
                             {t}
                           </span>
@@ -269,7 +269,7 @@ const Blog = () => {
                   <div className="flex items-center gap-4 mt-6 pt-5 border-t border-slate-200 dark:border-slate-800">
                     <Link
                       to={`/blog/${featured.id}`}
-                      className="flex items-center gap-2 text-sm font-bold text-blue-400 hover:text-blue-300 transition-colors group/link"
+                      className="flex items-center gap-2 text-sm font-bold text-blue-700 dark:text-blue-400 hover:text-blue-600 dark:hover:text-blue-300 transition-colors group/link"
                     >
                       Read article{" "}
                       <HiArrowRight className="transition-transform group-hover/link:translate-x-1" />
@@ -279,14 +279,14 @@ const Blog = () => {
                         href={featured.medium_link}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-xs text-slate-500 hover:text-blue-400 transition-colors"
+                        className="text-xs text-slate-600 dark:text-slate-500 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
                       >
                         Read on Medium
                       </a>
                     )}
                     <button
                       onClick={() => share(featured)}
-                      className="flex items-center gap-1.5 text-slate-600 hover:text-blue-400 text-xs transition-colors ml-auto"
+                      className="flex items-center gap-1.5 text-slate-700 dark:text-slate-600 hover:text-blue-600 dark:hover:text-blue-400 text-xs transition-colors ml-auto"
                     >
                       <FaShareAlt className="text-[10px]" />{" "}
                       {copiedId === featured.id ? "Copied!" : "Share"}
@@ -341,7 +341,7 @@ const Blog = () => {
                       </span>
                       <ReadTime time={blog.readTime} />
                     </div>
-                    <h3 className="text-[15px] font-bold text-white leading-snug mb-2 line-clamp-2 group-hover:text-blue-300 transition-colors">
+                    <h3 className="text-[15px] font-bold text-slate-900 dark:text-white leading-snug mb-2 line-clamp-2 group-hover:text-blue-600 dark:group-hover:text-blue-300 transition-colors">
                       {blog.title}
                     </h3>
                     <p
@@ -355,7 +355,7 @@ const Blog = () => {
                         {blog.tags.slice(0, 3).map((t) => (
                           <span
                             key={t}
-                            className="text-[10px] px-1.5 py-0.5 rounded bg-slate-800 text-slate-600"
+                            className="text-[10px] px-1.5 py-0.5 rounded bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-600"
                           >
                             {t}
                           </span>
@@ -365,14 +365,14 @@ const Blog = () => {
                     <div className="flex items-center gap-3 mt-4 pt-4 border-t border-slate-200 dark:border-slate-800/80">
                       <Link
                         to={`/blog/${blog.id}`}
-                        className="flex items-center gap-1 text-xs font-bold text-blue-400 hover:text-blue-300 transition-colors group/link"
+                        className="flex items-center gap-1 text-xs font-bold text-blue-700 dark:text-blue-400 hover:text-blue-600 dark:hover:text-blue-300 transition-colors group/link"
                       >
                         Read{" "}
                         <HiArrowRight className="text-[10px] transition-transform group-hover/link:translate-x-0.5" />
                       </Link>
                       <button
                         onClick={() => share(blog)}
-                        className="flex items-center gap-1 text-slate-600 hover:text-blue-400 text-[11px] transition-colors ml-auto"
+                        className="flex items-center gap-1 text-slate-700 dark:text-slate-600 hover:text-blue-600 dark:hover:text-blue-400 text-[11px] transition-colors ml-auto"
                       >
                         <FaShareAlt className="text-[9px]" />{" "}
                         {copiedId === blog.id ? "Copied!" : "Share"}
@@ -395,14 +395,16 @@ const Blog = () => {
             <p className="text-5xl mb-5">🔍</p>
             <p className="text-slate-400 text-sm mb-2">
               No posts match{" "}
-              <strong className="text-slate-300">"{search || category}"</strong>
+              <strong className="text-slate-700 dark:text-slate-300">
+                "{search || category}"
+              </strong>
             </p>
             <button
               onClick={() => {
                 setSearch("");
                 setCategory("All");
               }}
-              className="mt-3 text-blue-400 hover:text-blue-300 text-sm transition-colors underline underline-offset-4"
+              className="mt-3 text-blue-700 dark:text-blue-400 hover:text-blue-600 dark:hover:text-blue-300 text-sm transition-colors underline underline-offset-4"
             >
               Clear filters
             </button>
