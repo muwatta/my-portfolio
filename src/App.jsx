@@ -1,4 +1,4 @@
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useEffect } from "react";
 import { Routes, Route, useLocation } from "react-router-dom";
 import { HelmetProvider } from "react-helmet-async";
 import { MotionConfig } from "framer-motion";
@@ -40,8 +40,12 @@ const PageLoader = () => (
 );
 
 function App() {
-  const { pathname } = useLocation();
+  const { pathname, search } = useLocation();
   const isAdminRoute = pathname.startsWith("/admin");
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+  }, [pathname, search]);
 
   return (
     <HelmetProvider>
@@ -89,7 +93,10 @@ function App() {
                         element={<AdminProjectPreview />}
                       />
                       <Route path="/admin/courses" element={<AdminCourses />} />
-                      <Route path="/admin/achievements" element={<AdminAchievements />} />
+                      <Route
+                        path="/admin/achievements"
+                        element={<AdminAchievements />}
+                      />
                       <Route path="/admin" element={<Admin />} />
                       <Route path="*" element={<NotFound />} />
                     </Routes>
