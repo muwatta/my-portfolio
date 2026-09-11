@@ -119,7 +119,7 @@ export const PortfolioCard = ({ project, index }) => {
           ))}
         </div>
 
-        {/* Actions — always visible, never hover-only */}
+        {/* Actions are always visible, never hover-only */}
         <div className="flex flex-wrap items-center gap-2 mt-auto pt-4 border-t border-slate-800">
           {project.live && (
             <a

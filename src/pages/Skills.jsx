@@ -139,7 +139,7 @@ export default function Skills() {
     <div className="min-h-screen bg-white dark:bg-[#080c14] text-slate-800 dark:text-slate-200 relative overflow-hidden">
       <Seo
         title="Skills | Abdullahi Musliudeen Oladipupo"
-        description="Backend Engineer & Full-Stack Developer — Python, Django, Django REST Framework, PostgreSQL, Redis, Celery, Docker and React."
+        description="Backend Engineer & Full-Stack Developer: Python, Django, Django REST Framework, PostgreSQL, Redis, Celery, Docker and React."
         path="/skills"
       >
         <link
@@ -501,7 +501,7 @@ export default function Skills() {
               },
               {
                 label: "Bilingual",
-                desc: "English & Arabic — fluent in both.",
+                desc: "English & Arabic, fluent in both.",
                 icon: "🌍",
               },
             ].map((card) => (

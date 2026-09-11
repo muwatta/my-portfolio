@@ -411,7 +411,7 @@ const Blog = () => {
           </motion.div>
         )}
 
-        {/* DEV HINT — only shows in development */}
+        {/* DEV HINT, only shown in development */}
         {import.meta.env.DEV && (
           <motion.div
             initial={{ opacity: 0 }}

@@ -41,8 +41,7 @@ export const NotFound = () => {
           className="text-slate-500 dark:text-slate-400 text-[15px] leading-relaxed mb-8"
           style={{ fontFamily: "'Lora', serif" }}
         >
-          This page doesn't exist — it may have been moved or the link is
-          broken.
+          This page doesn't exist. It may have been moved or the link is broken.
         </p>
         <Link
           to="/"

@@ -43,7 +43,7 @@ export const projects = [
   },
   {
     id: "ssc-cooperative",
-    title: "SSC Cooperative — Member & Loan Management",
+    title: "SSC Cooperative: Member & Loan Management",
     category: "Full Stack",
     featured: true,
     impact: "production",
@@ -86,7 +86,7 @@ export const projects = [
   },
   {
     id: "kma-spices",
-    title: "KMA Spices & Herbs — E-commerce Platform",
+    title: "KMA Spices & Herbs: E-commerce Platform",
     category: "Full Stack",
     featured: true,
     impact: "client",
@@ -129,7 +129,7 @@ export const projects = [
   },
   {
     id: "dghi-academy",
-    title: "DGHI Academy — School Platform",
+    title: "DGHI Academy: School Platform",
     category: "Full Stack",
     featured: true,
     impact: "client",
@@ -169,7 +169,7 @@ export const projects = [
   },
   {
     id: "nexus-lms",
-    title: "NexusLMS — Learning Management System",
+    title: "NexusLMS: Learning Management System",
     category: "Full Stack",
     featured: true,
     impact: "reference",
@@ -215,7 +215,7 @@ export const projects = [
   },
   {
     id: "nextalk",
-    title: "NexTalk — REST Messaging API",
+    title: "NexTalk: REST Messaging API",
     category: "Backend",
     featured: true,
     impact: "reference",
@@ -252,7 +252,7 @@ export const projects = [
   },
   {
     id: "agroguard",
-    title: "AgroGuard — AI-Driven Crop Protection",
+    title: "AgroGuard: AI-Driven Crop Protection",
     category: "AI + IoT",
     featured: true,
     impact: "research",
@@ -296,7 +296,7 @@ export const projects = [
   },
   {
     id: "nexus-fintech",
-    title: "Nexus Fintech — Full Stack Platform",
+    title: "Nexus Fintech: Full Stack Platform",
     category: "Full Stack",
     featured: false,
     impact: "reference",
@@ -331,7 +331,7 @@ export const projects = [
   },
   {
     id: "shopcore",
-    title: "ShopCore — E-commerce REST Backend",
+    title: "ShopCore: E-commerce REST Backend",
     category: "Backend",
     featured: false,
     impact: "reference",
@@ -346,7 +346,7 @@ export const projects = [
     engineering: [
       "JWT role-based permissions (Admin, Customer, Staff)",
       "Product and category CRUD with filtering, sorting, and pagination",
-      "Full order lifecycle — creation, tracking, and checkout",
+      "Full order lifecycle: creation, tracking, and checkout",
       "Async email notifications and order processing via Celery + RabbitMQ",
       "Redis caching for performance optimization",
       "Dockerized dev and production environments",

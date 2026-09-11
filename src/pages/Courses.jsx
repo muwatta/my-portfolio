@@ -90,14 +90,14 @@ export default function Courses() {
             <div className="mt-10 grid max-w-2xl grid-cols-2 gap-4 border-t border-white/10 pt-6 text-sm text-slate-300 sm:grid-cols-3">
               <div>
                 <strong className="block text-2xl text-white">
-                  {loading ? "—" : courses.length}
+                  {loading ? "..." : courses.length}
                 </strong>
                 courses
               </div>
               <div>
                 <strong className="block text-2xl text-white">
                   {loading
-                    ? "—"
+                    ? "..."
                     : new Set(courses.map((course) => course.category)).size}
                 </strong>
                 learning categories

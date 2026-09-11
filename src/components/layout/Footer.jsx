@@ -206,7 +206,7 @@ export default function Footer() {
                 </span>
               </Link>
               <p className="text-slate-500 dark:text-slate-400 text-sm leading-relaxed mb-5 max-w-xs">
-                Backend Engineer & Full-Stack Developer — building production
+                Backend Engineer & Full-Stack Developer, building production
                 systems with Django, PostgreSQL, and React, and mentoring the
                 next generation of Nigerian developers.
               </p>
