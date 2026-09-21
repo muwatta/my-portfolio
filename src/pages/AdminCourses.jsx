@@ -68,7 +68,7 @@ function Frame({ children }) {
                 Achievements
               </Link>
               <Link
-                to="/courses"
+                to="/academy"
                 className="text-slate-500 hover:text-blue-600"
               >
                 View courses

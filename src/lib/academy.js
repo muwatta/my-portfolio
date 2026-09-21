@@ -190,6 +190,7 @@ export async function getAcademyTeacherStudents() {
   const [
     { data: students, error: studentError },
     { data: levels, error: levelError },
+    { data: sessions, error: sessionError },
   ] = await Promise.all([
     supabase
       .from("academy_profiles")
@@ -203,10 +204,33 @@ export async function getAcademyTeacherStudents() {
       .select("id, name, slug")
       .eq("active", true)
       .order("sort_order"),
+    supabase
+      .from("academy_learning_sessions")
+      .select("student_id, active_seconds, last_heartbeat_at"),
   ]);
+  const activityByStudent = new Map();
+  (sessions ?? []).forEach((session) => {
+    const activity = activityByStudent.get(session.student_id) ?? {
+      seconds: 0,
+      lastActive: null,
+    };
+    activity.seconds += session.active_seconds ?? 0;
+    if (!activity.lastActive || session.last_heartbeat_at > activity.lastActive)
+      activity.lastActive = session.last_heartbeat_at;
+    activityByStudent.set(session.student_id, activity);
+  });
   return {
-    data: { students: students ?? [], levels: levels ?? [] },
-    error: studentError || levelError,
+    data: {
+      students: (students ?? []).map((student) => ({
+        ...student,
+        activity: activityByStudent.get(student.id) ?? {
+          seconds: 0,
+          lastActive: null,
+        },
+      })),
+      levels: levels ?? [],
+    },
+    error: studentError || levelError || sessionError,
     configured: true,
   };
 }
@@ -491,14 +515,12 @@ export async function assignAcademyStudentLevel(studentId, levelId) {
   return { data, error };
 }
 
-export async function startAcademyLearningSession(studentId, route) {
+export async function startAcademyLearningSession(route) {
   if (!supabase)
     return { data: null, error: new Error("Academy is not configured.") };
-  return supabase
-    .from("academy_learning_sessions")
-    .insert({ student_id: studentId, last_route: route })
-    .select("id, started_at, last_heartbeat_at, active_seconds")
-    .single();
+  return supabase.rpc("academy_start_learning_session", {
+    target_route: route,
+  });
 }
 
 export async function heartbeatAcademyLearningSession(sessionId, route) {

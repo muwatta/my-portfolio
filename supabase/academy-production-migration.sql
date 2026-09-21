@@ -341,6 +341,32 @@ grant execute on function public.academy_set_user_role(uuid, public.academy_role
 alter table public.academy_lesson_progress
   add column if not exists started_at timestamptz;
 
+create or replace function public.academy_start_learning_session(
+  target_route text
+)
+returns public.academy_learning_sessions
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  new_session public.academy_learning_sessions;
+begin
+  if auth.uid() is null then
+    raise exception 'Authentication required';
+  end if;
+
+  insert into public.academy_learning_sessions (student_id, last_route)
+  values (auth.uid(), left(coalesce(target_route, ''), 500))
+  returning * into new_session;
+
+  return new_session;
+end;
+$$;
+
+revoke execute on function public.academy_start_learning_session(text) from public, anon;
+grant execute on function public.academy_start_learning_session(text) to authenticated;
+
 create or replace function public.academy_record_learning_heartbeat(
   target_session_id uuid,
   target_route text
@@ -382,6 +408,9 @@ $$;
 
 revoke execute on function public.academy_record_learning_heartbeat(uuid, text) from public, anon;
 grant execute on function public.academy_record_learning_heartbeat(uuid, text) to authenticated;
+
+drop policy if exists academy_sessions_self_insert on public.academy_learning_sessions;
+drop policy if exists academy_sessions_self_update on public.academy_learning_sessions;
 -- Objective practice scoring owned by the database.
 alter table public.academy_exercises
   add column if not exists question_type text not null default 'programming'

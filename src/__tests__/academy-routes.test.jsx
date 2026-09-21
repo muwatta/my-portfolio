@@ -21,7 +21,7 @@ describe("Academy routes", () => {
       await screen.findByText(/Learn Python by building toward AI/i),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("link", { name: /Sign in to Academy/i }),
+      screen.getByRole("link", { name: /Student sign in/i }),
     ).toHaveAttribute("href", "/academy/login");
   });
 

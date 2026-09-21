@@ -53,7 +53,7 @@ export default function AcademyLayout() {
   useEffect(() => {
     if (!isStudent) return undefined;
     let cancelled = false;
-    startAcademyLearningSession(user.id, pathname).then(({ data }) => {
+    startAcademyLearningSession(pathname).then(({ data }) => {
       if (!cancelled) learningSession.current = data;
     });
 
@@ -74,10 +74,24 @@ export default function AcademyLayout() {
         heartbeatAcademyLearningSession(learningSession.current.id, pathname);
       }
     }, 30000);
+    const recordVisibleTime = () => {
+      if (document.visibilityState === "visible" && learningSession.current) {
+        lastActivity.current = Date.now();
+        return;
+      }
+      if (learningSession.current) {
+        heartbeatAcademyLearningSession(learningSession.current.id, pathname);
+      }
+    };
+    document.addEventListener("visibilitychange", recordVisibleTime);
 
     return () => {
       cancelled = true;
       window.clearInterval(heartbeat);
+      document.removeEventListener("visibilitychange", recordVisibleTime);
+      if (learningSession.current) {
+        heartbeatAcademyLearningSession(learningSession.current.id, pathname);
+      }
       activityEvents.forEach((eventName) =>
         window.removeEventListener(eventName, markActivity),
       );
@@ -91,7 +105,7 @@ export default function AcademyLayout() {
         <div className="mx-auto flex min-h-16 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6">
           <Link
             to="/academy/dashboard"
-            className="flex items-center gap-3"
+            className="flex items-center gap-3 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-950"
             aria-label="Academy dashboard"
           >
             <span className="grid h-9 w-9 place-items-center rounded-lg bg-blue-600 text-sm font-bold text-white">
@@ -146,7 +160,7 @@ export default function AcademyLayout() {
               key={link.to}
               to={link.to}
               className={({ isActive }) =>
-                `whitespace-nowrap rounded-lg px-3 py-2 text-sm font-semibold transition-colors ${
+                `whitespace-nowrap rounded-lg px-3 py-2 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-950 ${
                   isActive
                     ? "bg-blue-600 text-white"
                     : "text-slate-600 hover:bg-slate-200 dark:text-slate-300 dark:hover:bg-slate-800"
