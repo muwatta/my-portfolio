@@ -330,6 +330,45 @@ export async function getAcademyAdminOverview() {
   };
 }
 
+export async function getAcademyAdminAccess() {
+  if (!supabase) return unavailable({ profiles: [], admins: [] });
+  const [
+    { data: profiles, error: profileError },
+    { data: admins, error: adminError },
+  ] = await Promise.all([
+    supabase
+      .from("academy_profiles")
+      .select("id, display_name, role, updated_at")
+      .order("display_name"),
+    supabase.from("academy_admins").select("user_id"),
+  ]);
+  return {
+    data: { profiles: profiles ?? [], admins: admins ?? [] },
+    error: profileError || adminError,
+    configured: true,
+  };
+}
+
+export async function setAcademyAdmin(userId, enabled) {
+  if (!supabase)
+    return { data: null, error: new Error("Academy is not configured.") };
+  const { data, error } = await supabase.rpc("academy_set_user_admin", {
+    target_user_id: userId,
+    should_be_admin: enabled,
+  });
+  return { data, error };
+}
+
+export async function setAcademyUserRole(userId, role) {
+  if (!supabase)
+    return { data: null, error: new Error("Academy is not configured.") };
+  const { data, error } = await supabase.rpc("academy_set_user_role", {
+    target_user_id: userId,
+    target_role: role,
+  });
+  return { data, error };
+}
+
 export async function getAcademyStudentProfile(studentId) {
   if (!supabase) return unavailable(null);
   const [

@@ -56,13 +56,13 @@ export default function AcademyLogin() {
             Muwatta Academy
           </p>
           <h2 className="mt-8 text-3xl font-bold tracking-tight">
-            Small lessons. Strong foundations.
+            Small lessons. Strong foundations across software and hardware.
           </h2>
           <div className="mt-10 grid gap-3 text-sm text-slate-300">
             {[
-              "Build useful Python habits",
+              "Build useful programming habits",
               "Practice with real code",
-              "Move toward AI/ML with confidence",
+              "Explore backend, C++, embedded, or AI/ML paths",
             ].map((item) => (
               <div
                 key={item}

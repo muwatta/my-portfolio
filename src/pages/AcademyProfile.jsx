@@ -11,7 +11,6 @@ export default function AcademyProfile() {
     schoolId: "",
     state: "",
     city: "",
-    studentLevel: "",
   });
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
@@ -21,7 +20,6 @@ export default function AcademyProfile() {
       schoolId: profile?.school_id || "",
       state: profile?.state || "",
       city: profile?.city || "",
-      studentLevel: profile?.student_level || "",
     });
     getAcademySchools().then(({ data }) => setSchools(data ?? []));
   }, [profile]);
@@ -34,7 +32,6 @@ export default function AcademyProfile() {
       school_id: form.schoolId || null,
       state: form.state,
       city: form.city.trim(),
-      student_level: form.studentLevel.trim(),
     });
     if (saveError)
       setError(saveError.message || "Profile could not be updated.");
@@ -120,17 +117,6 @@ export default function AcademyProfile() {
               required
             />
           </label>
-          <label className="label">
-            Level or class
-            <input
-              className="field"
-              value={form.studentLevel}
-              onChange={(event) =>
-                setForm({ ...form, studentLevel: event.target.value })
-              }
-              required
-            />
-          </label>
           {error && (
             <p role="alert" className="text-sm text-red-600">
               {error}
@@ -149,14 +135,6 @@ export default function AcademyProfile() {
           <div>
             <dt className="text-sm text-slate-500">Role</dt>
             <dd className="mt-1 font-semibold">Student</dd>
-          </div>
-          <div>
-            <dt className="text-sm text-slate-500">Level</dt>
-            <dd className="mt-1 font-semibold">
-              {profile?.academy_levels?.name ||
-                profile?.student_level ||
-                "Pending assignment"}
-            </dd>
           </div>
         </dl>
       </section>
