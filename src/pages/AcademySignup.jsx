@@ -1,40 +1,64 @@
 import { useState } from "react";
-import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
+import { Link, Navigate, useNavigate } from "react-router-dom";
 import { useAcademyAuth } from "../hooks/useAcademyAuth";
 import { useTheme } from "../context/useTheme";
 
-export default function AcademyLogin() {
-  const { user, loading, signIn, isConfigured } = useAcademyAuth();
+export default function AcademySignup() {
+  const { user, loading, signUp, isConfigured } = useAcademyAuth();
   const { theme, toggle } = useTheme();
   const navigate = useNavigate();
-  const location = useLocation();
+  const [displayName, setDisplayName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
+  const [message, setMessage] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
-  if (loading)
+  if (loading) {
     return (
       <div className="grid min-h-screen place-items-center">
         Loading Academy...
       </div>
     );
-  if (user)
-    return (
-      <Navigate to={location.state?.from || "/academy/dashboard"} replace />
-    );
+  }
+
+  if (user) return <Navigate to="/academy/dashboard" replace />;
 
   async function handleSubmit(event) {
     event.preventDefault();
     setError("");
+    setMessage("");
+
+    const name = displayName.trim();
+    const normalizedEmail = email.trim().toLowerCase();
+    if (!name) return setError("Please enter your full name.");
+    if (password.length < 8) {
+      return setError("Your password must be at least 8 characters.");
+    }
+    if (password !== confirmPassword)
+      return setError("Passwords do not match.");
+
     setSubmitting(true);
     try {
-      const { error: signInError } = await signIn(email.trim(), password);
-      if (signInError) throw signInError;
-      navigate(location.state?.from || "/academy/dashboard", { replace: true });
-    } catch (signInError) {
-      setError(signInError.message || "We could not sign you in.");
+      const { data, error: signUpError } = await signUp(
+        normalizedEmail,
+        password,
+        name,
+      );
+      if (signUpError) throw signUpError;
+      if (data.session) {
+        navigate("/academy/dashboard", { replace: true });
+        return;
+      }
+      setMessage(
+        "Account created. Check your email to confirm your account, then sign in.",
+      );
+    } catch (signUpError) {
+      setError(
+        signUpError.message || "We could not create your Academy account.",
+      );
     } finally {
       setSubmitting(false);
     }
@@ -55,14 +79,14 @@ export default function AcademyLogin() {
           <p className="text-sm font-semibold uppercase tracking-[0.18em] text-cyan-300">
             Muwatta Academy
           </p>
-          <h2 className="mt-8 text-3xl font-bold tracking-tight">
-            Small lessons. Strong foundations.
-          </h2>
+          <h1 className="mt-8 text-3xl font-bold tracking-tight">
+            Your next chapter starts with one small step.
+          </h1>
           <div className="mt-10 grid gap-3 text-sm text-slate-300">
             {[
-              "Build useful Python habits",
-              "Practice with real code",
-              "Move toward AI/ML with confidence",
+              "A clear 11-week learning path",
+              "Practical exercises and projects",
+              "A student account built for progress",
             ].map((item) => (
               <div
                 key={item}
@@ -75,29 +99,39 @@ export default function AcademyLogin() {
         </div>
         <div className="p-6 sm:p-8">
           <Link
-            to="/"
+            to="/academy/login"
             className="text-sm font-semibold text-blue-600 hover:text-blue-700"
           >
-            ← Back to Muwatta
+            ← Back to sign in
           </Link>
           <div className="mt-8">
             <p className="text-sm font-semibold uppercase tracking-[0.18em] text-blue-600">
               Academy
             </p>
-            <h1 className="mt-2 text-3xl font-bold tracking-tight">
-              Welcome back
-            </h1>
+            <h2 className="mt-2 text-3xl font-bold tracking-tight">
+              Create your account
+            </h2>
             <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
-              Sign in to continue your Python to AI/ML course.
+              Create a student account to start your Python to AI/ML course.
             </p>
           </div>
           {!isConfigured ? (
             <div className="mt-6 rounded-lg border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">
-              Academy sign-in is not configured in this environment. Add the
-              Supabase variables from `.env.example` to enable it.
+              Academy sign-up is not configured in this environment.
             </div>
           ) : (
             <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
+              <label className="label">
+                Full name
+                <input
+                  className="field"
+                  type="text"
+                  autoComplete="name"
+                  value={displayName}
+                  onChange={(event) => setDisplayName(event.target.value)}
+                  required
+                />
+              </label>
               <label className="label">
                 Email
                 <input
@@ -115,10 +149,11 @@ export default function AcademyLogin() {
                   <input
                     className="field pr-16"
                     type={showPassword ? "text" : "password"}
-                    autoComplete="current-password"
+                    autoComplete="new-password"
                     value={password}
                     onChange={(event) => setPassword(event.target.value)}
                     required
+                    minLength={8}
                   />
                   <button
                     type="button"
@@ -132,6 +167,18 @@ export default function AcademyLogin() {
                   </button>
                 </span>
               </label>
+              <label className="label">
+                Confirm password
+                <input
+                  className="field"
+                  type={showPassword ? "text" : "password"}
+                  autoComplete="new-password"
+                  value={confirmPassword}
+                  onChange={(event) => setConfirmPassword(event.target.value)}
+                  required
+                  minLength={8}
+                />
+              </label>
               {error && (
                 <p
                   role="alert"
@@ -140,26 +187,32 @@ export default function AcademyLogin() {
                   {error}
                 </p>
               )}
+              {message && (
+                <p
+                  role="status"
+                  className="rounded-lg bg-green-50 p-3 text-sm text-green-700 dark:bg-green-950/40 dark:text-green-300"
+                >
+                  {message}
+                </p>
+              )}
               <button
                 className="button-primary w-full"
                 type="submit"
                 disabled={submitting}
               >
-                {submitting ? "Signing in..." : "Sign in"}
+                {submitting ? "Creating account..." : "Create student account"}
               </button>
             </form>
           )}
-          {isConfigured && (
-            <p className="mt-6 text-center text-sm text-slate-600 dark:text-slate-300">
-              New to Academy?{" "}
-              <Link
-                to="/academy/signup"
-                className="font-semibold text-blue-600 hover:text-blue-700"
-              >
-                Create a student account
-              </Link>
-            </p>
-          )}
+          <p className="mt-6 text-center text-sm text-slate-600 dark:text-slate-300">
+            Already have an Academy account?{" "}
+            <Link
+              to="/academy/login"
+              className="font-semibold text-blue-600 hover:text-blue-700"
+            >
+              Sign in
+            </Link>
+          </p>
         </div>
       </div>
     </div>

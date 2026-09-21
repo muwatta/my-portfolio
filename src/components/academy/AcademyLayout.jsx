@@ -1,5 +1,6 @@
 import { NavLink, Outlet, Link } from "react-router-dom";
 import { useAcademyAuth } from "../../hooks/useAcademyAuth";
+import { useTheme } from "../../context/useTheme";
 
 const links = [
   { label: "Dashboard", to: "/academy/dashboard" },
@@ -12,6 +13,7 @@ const links = [
 
 export default function AcademyLayout() {
   const { profile, user, signOut } = useAcademyAuth();
+  const { theme, toggle } = useTheme();
   const displayName =
     profile?.display_name || user?.email?.split("@")[0] || "Student";
 
@@ -37,6 +39,15 @@ export default function AcademyLayout() {
             </span>
           </Link>
           <div className="flex items-center gap-3">
+            <button
+              type="button"
+              className="button-secondary min-h-9 px-3 py-1.5"
+              onClick={toggle}
+              aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
+              title={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
+            >
+              {theme === "dark" ? "Light" : "Dark"}
+            </button>
             <span className="hidden text-sm text-slate-600 dark:text-slate-300 sm:inline">
               {displayName}
             </span>
