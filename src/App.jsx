@@ -35,6 +35,7 @@ const AdminAchievements = lazy(() => import("./pages/AdminAchievements"));
 const AdminProjectPreview = lazy(() => import("./pages/AdminProjectPreview"));
 const AcademyHome = lazy(() => import("./pages/AcademyHome"));
 const AcademyLogin = lazy(() => import("./pages/AcademyLogin"));
+const AcademySignup = lazy(() => import("./pages/AcademySignup"));
 const AcademyDashboard = lazy(() => import("./pages/AcademyDashboard"));
 const AcademyLessons = lazy(() => import("./pages/AcademyLessons"));
 const AcademyLesson = lazy(() => import("./pages/AcademyLesson"));
@@ -129,6 +130,10 @@ function App() {
                         <Route
                           path="/academy/login"
                           element={<AcademyLogin />}
+                        />
+                        <Route
+                          path="/academy/signup"
+                          element={<AcademySignup />}
                         />
                         <Route element={<AcademyGuard />}>
                           <Route element={<AcademyLayout />}>
