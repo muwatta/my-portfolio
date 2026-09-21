@@ -27,7 +27,8 @@ export default function AcademyLessons() {
         </p>
         <h1 className="mt-2 text-3xl font-bold">Lessons</h1>
         <p className="mt-2 text-slate-600 dark:text-slate-300">
-          Move from Python foundations to your first machine learning project.
+          Work through practical lessons across software, embedded systems, and
+          AI/ML.
         </p>
       </header>
       {state === "loading" && (

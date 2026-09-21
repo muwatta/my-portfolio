@@ -34,6 +34,7 @@ const teacherLinks = [
 const adminLinks = [
   { label: "Admin overview", to: "/academy/admin" },
   { label: "Students", to: "/academy/admin/students" },
+  { label: "Access", to: "/academy/admin/access" },
   { label: "Courses", to: "/academy/teacher/courses" },
   { label: "Lessons", to: "/academy/teacher/lessons" },
   { label: "Analytics", to: "/academy/teacher/analytics" },
@@ -104,7 +105,7 @@ export default function AcademyLayout() {
       <header className="border-b border-slate-200 bg-white/95 dark:border-slate-800 dark:bg-slate-950/95">
         <div className="mx-auto flex min-h-16 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6">
           <Link
-            to="/academy/dashboard"
+            to={isAdmin ? "/academy/admin" : "/academy/dashboard"}
             className="flex items-center gap-3 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-950"
             aria-label="Academy dashboard"
           >
@@ -113,10 +114,10 @@ export default function AcademyLayout() {
             </span>
             <span>
               <span className="block text-sm font-bold tracking-wide">
-                ATE Academy
+                {isAdmin ? "ATE Academy Admin" : "ATE Academy"}
               </span>
               <span className="block text-xs text-slate-500 dark:text-slate-400">
-                Python to AI/ML
+                Software, embedded, and AI/ML
               </span>
             </span>
           </Link>

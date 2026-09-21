@@ -15,7 +15,6 @@ export default function AcademySignup() {
   const [schoolCode, setSchoolCode] = useState("");
   const [state, setState] = useState("");
   const [city, setCity] = useState("");
-  const [studentLevel, setStudentLevel] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
@@ -56,7 +55,7 @@ export default function AcademySignup() {
         normalizedEmail,
         password,
         name,
-        { schoolCode, state, city: city.trim(), studentLevel },
+        { schoolCode, state, city: city.trim() },
       );
       if (signUpError) throw signUpError;
       if (data.session) {
@@ -95,7 +94,7 @@ export default function AcademySignup() {
           </h1>
           <div className="mt-10 grid gap-3 text-sm text-slate-300">
             {[
-              "A clear 11-week learning path",
+              "Paths across software, embedded, and AI/ML",
               "Practical exercises and projects",
               "A student account built for progress",
             ].map((item) => (
@@ -194,16 +193,6 @@ export default function AcademySignup() {
                   type="text"
                   value={city}
                   onChange={(event) => setCity(event.target.value)}
-                  required
-                />
-              </label>
-              <label className="label">
-                Level or class
-                <input
-                  className="field"
-                  type="text"
-                  value={studentLevel}
-                  onChange={(event) => setStudentLevel(event.target.value)}
                   required
                 />
               </label>
