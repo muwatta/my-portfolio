@@ -50,6 +50,7 @@ export default function AcademyLayout() {
   const lastActivity = useRef(Date.now());
   const displayName =
     profile?.display_name || user?.email?.split("@")[0] || "Student";
+  const accessLabel = isAdmin ? "Admin" : isTeacher ? "Teacher" : "Student";
 
   useEffect(() => {
     if (!isStudent) return undefined;
@@ -103,40 +104,45 @@ export default function AcademyLayout() {
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
       <header className="border-b border-slate-200 bg-white/95 dark:border-slate-800 dark:bg-slate-950/95">
-        <div className="mx-auto flex min-h-16 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6">
+        <div className="mx-auto flex min-h-20 max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
           <Link
             to={isAdmin ? "/academy/admin" : "/academy/dashboard"}
-            className="flex items-center gap-3 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-950"
+            className="flex min-w-0 shrink-0 items-center gap-3 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-950"
             aria-label="Academy dashboard"
           >
             <span className="grid h-9 w-9 place-items-center rounded-lg bg-blue-600 text-sm font-bold text-white">
               A
             </span>
-            <span>
-              <span className="block text-sm font-bold tracking-wide">
+            <span className="min-w-0">
+              <span className="block truncate text-sm font-bold tracking-wide">
                 {isAdmin ? "ATE Academy Admin" : "ATE Academy"}
               </span>
-              <span className="block text-xs text-slate-500 dark:text-slate-400">
+              <span className="block max-w-[13rem] truncate text-xs text-slate-500 dark:text-slate-400">
                 Software, embedded, and AI/ML
               </span>
             </span>
           </Link>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             <button
               type="button"
-              className="button-secondary min-h-9 px-3 py-1.5"
+              className="button-secondary min-h-9 px-2 py-1.5 text-xs sm:px-3 sm:text-sm"
               onClick={toggle}
               aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
               title={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
             >
               {theme === "dark" ? "Light" : "Dark"}
             </button>
-            <span className="hidden text-sm text-slate-600 dark:text-slate-300 sm:inline">
-              {displayName}
+            <span className="text-right">
+              <span className="hidden text-sm text-slate-600 dark:text-slate-300 sm:block">
+                {displayName}
+              </span>
+              <span className="block rounded-full bg-cyan-50 px-2.5 py-1 text-[0.68rem] font-semibold uppercase tracking-wide text-cyan-700 dark:bg-cyan-950/50 dark:text-cyan-300">
+                {accessLabel}
+              </span>
             </span>
             <button
               type="button"
-              className="button-secondary min-h-9 px-3 py-1.5"
+              className="button-secondary min-h-9 px-2 py-1.5 text-xs sm:px-3 sm:text-sm"
               onClick={signOut}
             >
               Sign out
@@ -147,7 +153,7 @@ export default function AcademyLayout() {
       <div className="mx-auto flex max-w-7xl flex-col gap-6 px-4 py-6 sm:px-6 lg:flex-row">
         <nav
           aria-label="Academy navigation"
-          className="flex gap-2 overflow-x-auto pb-1 lg:w-52 lg:flex-col lg:overflow-visible"
+          className="flex snap-x gap-1 overflow-x-auto pb-1 lg:w-52 lg:flex-col lg:gap-2 lg:overflow-visible"
         >
           {(isAdmin
             ? adminLinks
@@ -161,7 +167,7 @@ export default function AcademyLayout() {
               key={link.to}
               to={link.to}
               className={({ isActive }) =>
-                `whitespace-nowrap rounded-lg px-3 py-2 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-950 ${
+                `snap-start whitespace-nowrap rounded-lg px-2.5 py-2 text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-950 sm:px-3 sm:text-sm ${
                   isActive
                     ? "bg-blue-600 text-white"
                     : "text-slate-600 hover:bg-slate-200 dark:text-slate-300 dark:hover:bg-slate-800"
@@ -176,8 +182,10 @@ export default function AcademyLayout() {
           <Outlet />
         </main>
       </div>
-      <footer className="mx-auto max-w-7xl border-t border-slate-200 px-4 py-6 text-xs text-slate-500 dark:border-slate-800 dark:text-slate-400 sm:px-6">
-        Algorise Tech Explorers (ATE) · ATE Academy · RC No. RC-8665201
+      <footer className="mt-10 w-full border-t border-slate-200 dark:border-slate-800">
+        <div className="mx-auto max-w-7xl px-4 py-6 text-xs text-slate-500 dark:text-slate-400 sm:px-6">
+          Algorise Tech Explorers (ATE) · ATE Academy · RC No. RC-8665201
+        </div>
       </footer>
     </div>
   );

@@ -49,7 +49,19 @@ export default function AcademyAdminStudents() {
         <p className="text-sm font-semibold uppercase tracking-[0.18em] text-cyan-600 dark:text-cyan-300">
           Admin control center
         </p>
-        <h1 className="mt-2 text-3xl font-bold">Students</h1>
+        <div className="mt-2 flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-bold">Registered students</h1>
+            <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
+              {state === "ready"
+                ? `${data.students.length} student${data.students.length === 1 ? "" : "s"} registered`
+                : "Loading registered students..."}
+            </p>
+          </div>
+          <button type="button" className="button-secondary" onClick={load}>
+            Refresh students
+          </button>
+        </div>
       </header>
       {message && (
         <p
@@ -121,7 +133,62 @@ export default function AcademyAdminStudents() {
               No students match these filters.
             </p>
           )}
-          <div className="overflow-x-auto border border-slate-200 dark:border-slate-800">
+          <div className="space-y-3 md:hidden">
+            {students.map((student) => (
+              <article
+                key={student.id}
+                className="border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <h2 className="font-semibold">
+                      {student.display_name || "Unnamed student"}
+                    </h2>
+                    <p className="mt-1 text-sm text-slate-500">
+                      {student.academy_schools?.name || "Other"} ·{" "}
+                      {student.state || "Not set"}
+                    </p>
+                  </div>
+                  <Link
+                    className="shrink-0 text-sm font-semibold text-blue-600"
+                    to={`/academy/admin/students/${student.id}`}
+                  >
+                    Profile
+                  </Link>
+                </div>
+                <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                  <label className="label text-xs">
+                    Level
+                    <select
+                      className="field mt-1"
+                      value={student.level_id || ""}
+                      onChange={(event) =>
+                        changeLevel(student.id, event.target.value)
+                      }
+                    >
+                      <option value="">Unassigned</option>
+                      {data.levels.map((level) => (
+                        <option key={level.id} value={level.id}>
+                          {level.name}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <div className="text-sm text-slate-500">
+                    <span className="block text-xs uppercase tracking-wide">
+                      Activity
+                    </span>
+                    <span className="mt-1 block font-semibold text-slate-700 dark:text-slate-200">
+                      {Math.floor((student.activity?.seconds ?? 0) / 60)} min ·
+                      Updated{" "}
+                      {new Date(student.updated_at).toLocaleDateString()}
+                    </span>
+                  </div>
+                </div>
+              </article>
+            ))}
+          </div>
+          <div className="hidden overflow-x-auto border border-slate-200 dark:border-slate-800 md:block">
             <table className="min-w-full text-left text-sm">
               <thead className="border-b border-slate-200 text-xs uppercase text-slate-500 dark:border-slate-800">
                 <tr>

@@ -4,7 +4,8 @@ import { useEffect, useState } from "react";
 import { getAcademySchools, updateAcademyStudentProfile } from "../lib/academy";
 
 export default function AcademyProfile() {
-  const { user, profile } = useAcademyAuth();
+  const { user, profile, isAdmin, isTeacher } = useAcademyAuth();
+  const accessLabel = isAdmin ? "Admin" : isTeacher ? "Teacher" : "Student";
   const [schools, setSchools] = useState([]);
   const [form, setForm] = useState({
     displayName: "",
@@ -134,7 +135,7 @@ export default function AcademyProfile() {
         <dl className="mt-8 grid gap-5 sm:grid-cols-2">
           <div>
             <dt className="text-sm text-slate-500">Role</dt>
-            <dd className="mt-1 font-semibold">Student</dd>
+            <dd className="mt-1 font-semibold">{accessLabel}</dd>
           </div>
         </dl>
       </section>
