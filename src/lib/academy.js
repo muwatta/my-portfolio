@@ -195,7 +195,7 @@ export async function getAcademyTeacherStudents() {
     supabase
       .from("academy_profiles")
       .select(
-        "id, display_name, role, level_id, updated_at, academy_levels(id, name, slug)",
+        "id, display_name, role, level_id, school_id, state, city, student_level, updated_at, academy_levels(id, name, slug), academy_schools(id, name, code, state, city)",
       )
       .eq("role", "student")
       .order("display_name"),
@@ -339,7 +339,7 @@ export async function getAcademyStudentProfile(studentId) {
     supabase
       .from("academy_profiles")
       .select(
-        "id, display_name, role, avatar_url, level_id, updated_at, academy_levels(name)",
+        "id, display_name, role, avatar_url, level_id, school_id, state, city, student_level, updated_at, academy_levels(name), academy_schools(id, name, code, state, city)",
       )
       .eq("id", studentId)
       .maybeSingle(),
@@ -350,6 +350,29 @@ export async function getAcademyStudentProfile(studentId) {
     error: profileError || overviewError,
     configured: true,
   };
+}
+
+export async function getAcademySchools() {
+  if (!supabase) return unavailable([]);
+  const { data, error } = await supabase
+    .from("academy_schools")
+    .select("id, name, code, state, city")
+    .eq("is_active", true)
+    .order("name");
+  return { data: data ?? [], error, configured: true };
+}
+
+export async function updateAcademyStudentProfile(studentId, updates) {
+  if (!supabase)
+    return { data: null, error: new Error("Academy is not configured.") };
+  return supabase
+    .from("academy_profiles")
+    .update(updates)
+    .eq("id", studentId)
+    .select(
+      "id, display_name, avatar_url, school_id, state, city, student_level, academy_schools(id, name, code, state, city)",
+    )
+    .single();
 }
 
 export async function getAcademyTeacherCourses() {

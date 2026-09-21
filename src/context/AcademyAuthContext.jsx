@@ -53,7 +53,7 @@ export function AcademyAuthProvider({ children }) {
     supabase
       .from("academy_profiles")
       .select(
-        "id, display_name, role, avatar_url, level_id, academy_levels(id, slug, name)",
+        "id, display_name, role, avatar_url, level_id, school_id, state, city, student_level, academy_levels(id, slug, name), academy_schools(id, name, code, state, city)",
       )
       .eq("id", session.user.id)
       .maybeSingle()
@@ -78,16 +78,42 @@ export function AcademyAuthProvider({ children }) {
     return supabase.auth.signInWithPassword({ email, password });
   };
 
-  const signUp = (email, password, displayName) => {
+  const signUp = (email, password, displayName, profileDetails = {}) => {
     if (!supabase) {
       throw new Error("Academy authentication is not configured yet.");
     }
     return supabase.auth.signUp({
       email,
       password,
-      options: { data: { display_name: displayName } },
+      options: {
+        data: {
+          display_name: displayName,
+          school_code: profileDetails.schoolCode,
+          state: profileDetails.state,
+          city: profileDetails.city,
+          student_level: profileDetails.studentLevel,
+        },
+      },
     });
   };
+
+  const sendPasswordReset = (email) => {
+    if (!supabase) {
+      return Promise.resolve({
+        error: new Error("Academy authentication is not configured yet."),
+      });
+    }
+    return supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/academy/reset-password`,
+    });
+  };
+
+  const updatePassword = (password) =>
+    supabase
+      ? supabase.auth.updateUser({ password })
+      : Promise.resolve({
+          error: new Error("Academy authentication is not configured yet."),
+        });
 
   const signOut = () =>
     supabase ? supabase.auth.signOut() : Promise.resolve();
@@ -107,6 +133,8 @@ export function AcademyAuthProvider({ children }) {
         isStudent: profile?.role === "student",
         signIn,
         signUp,
+        sendPasswordReset,
+        updatePassword,
         signOut,
         isConfigured: isSupabaseConfigured,
       }}

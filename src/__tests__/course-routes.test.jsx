@@ -12,7 +12,7 @@ describe("Academy course entry", () => {
     );
 
     expect(
-      await screen.findByText(/Learn Python by building toward AI/i),
+      await screen.findByText(/Learn\. Build\. Practice\. Grow\./i),
     ).toBeInTheDocument();
     expect(screen.getByText(/The learning path/i)).toBeInTheDocument();
     expect(

@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, Navigate, useNavigate } from "react-router-dom";
 import { useAcademyAuth } from "../hooks/useAcademyAuth";
 import { useTheme } from "../context/useTheme";
+import { getAcademySchools } from "../lib/academy";
 
 export default function AcademySignup() {
   const { user, loading, signUp, isConfigured } = useAcademyAuth();
@@ -11,10 +12,19 @@ export default function AcademySignup() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [schoolCode, setSchoolCode] = useState("");
+  const [state, setState] = useState("");
+  const [city, setCity] = useState("");
+  const [studentLevel, setStudentLevel] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [schools, setSchools] = useState([]);
+
+  useEffect(() => {
+    getAcademySchools().then(({ data }) => setSchools(data ?? []));
+  }, []);
 
   if (loading) {
     return (
@@ -46,6 +56,7 @@ export default function AcademySignup() {
         normalizedEmail,
         password,
         name,
+        { schoolCode, state, city: city.trim(), studentLevel },
       );
       if (signUpError) throw signUpError;
       if (data.session) {
@@ -106,13 +117,13 @@ export default function AcademySignup() {
           </Link>
           <div className="mt-8">
             <p className="text-sm font-semibold uppercase tracking-[0.18em] text-blue-600">
-              Academy
+              ATE Academy
             </p>
             <h2 className="mt-2 text-3xl font-bold tracking-tight">
               Create your account
             </h2>
             <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
-              Create a student account to start your Python to AI/ML course.
+              Create your student account with Algorise Tech Explorers.
             </p>
           </div>
           {!isConfigured ? (
@@ -140,6 +151,59 @@ export default function AcademySignup() {
                   autoComplete="email"
                   value={email}
                   onChange={(event) => setEmail(event.target.value)}
+                  required
+                />
+              </label>
+              <label className="label">
+                School code
+                <select
+                  className="field"
+                  value={schoolCode}
+                  onChange={(event) => setSchoolCode(event.target.value)}
+                  required
+                >
+                  <option value="">Select your school</option>
+                  {schools.map((school) => (
+                    <option key={school.code} value={school.code}>
+                      {school.name} · {school.city}
+                    </option>
+                  ))}
+                  <option value="OTHER">Other</option>
+                </select>
+              </label>
+              <label className="label">
+                State
+                <select
+                  className="field"
+                  value={state}
+                  onChange={(event) => setState(event.target.value)}
+                  required
+                >
+                  <option value="">Select your state</option>
+                  <option>Plateau</option>
+                  <option>Kwara</option>
+                  <option>Lagos</option>
+                  <option>Abuja</option>
+                  <option>Other</option>
+                </select>
+              </label>
+              <label className="label">
+                City or location
+                <input
+                  className="field"
+                  type="text"
+                  value={city}
+                  onChange={(event) => setCity(event.target.value)}
+                  required
+                />
+              </label>
+              <label className="label">
+                Level or class
+                <input
+                  className="field"
+                  type="text"
+                  value={studentLevel}
+                  onChange={(event) => setStudentLevel(event.target.value)}
                   required
                 />
               </label>

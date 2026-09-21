@@ -88,7 +88,7 @@ export default function AcademyLogin() {
               Welcome back
             </h1>
             <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
-              Sign in to continue your Python to AI/ML course.
+              Sign in to continue your ATE Academy learning journey.
             </p>
           </div>
           {!isConfigured ? (
@@ -147,6 +147,12 @@ export default function AcademyLogin() {
               >
                 {submitting ? "Signing in..." : "Sign in"}
               </button>
+              <Link
+                to="/academy/forgot-password"
+                className="block text-center text-sm font-semibold text-blue-600 hover:text-blue-700"
+              >
+                Forgot password?
+              </Link>
             </form>
           )}
           {isConfigured && (

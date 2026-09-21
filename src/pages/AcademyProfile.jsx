@@ -1,8 +1,45 @@
 import { useAcademyAuth } from "../hooks/useAcademyAuth";
 import { Link } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { getAcademySchools, updateAcademyStudentProfile } from "../lib/academy";
 
 export default function AcademyProfile() {
   const { user, profile } = useAcademyAuth();
+  const [schools, setSchools] = useState([]);
+  const [form, setForm] = useState({
+    displayName: "",
+    schoolId: "",
+    state: "",
+    city: "",
+    studentLevel: "",
+  });
+  const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
+  useEffect(() => {
+    setForm({
+      displayName: profile?.display_name || "",
+      schoolId: profile?.school_id || "",
+      state: profile?.state || "",
+      city: profile?.city || "",
+      studentLevel: profile?.student_level || "",
+    });
+    getAcademySchools().then(({ data }) => setSchools(data ?? []));
+  }, [profile]);
+  async function save(event) {
+    event.preventDefault();
+    setMessage("");
+    setError("");
+    const { error: saveError } = await updateAcademyStudentProfile(user.id, {
+      display_name: form.displayName.trim(),
+      school_id: form.schoolId || null,
+      state: form.state,
+      city: form.city.trim(),
+      student_level: form.studentLevel.trim(),
+    });
+    if (saveError)
+      setError(saveError.message || "Profile could not be updated.");
+    else setMessage("Profile updated.");
+  }
   return (
     <div className="max-w-2xl space-y-8">
       <header>
@@ -25,6 +62,89 @@ export default function AcademyProfile() {
             <p className="text-sm text-slate-500">{user?.email}</p>
           </div>
         </div>
+        <form className="mt-8 space-y-4" onSubmit={save}>
+          <label className="label">
+            Full name
+            <input
+              className="field"
+              value={form.displayName}
+              onChange={(event) =>
+                setForm({ ...form, displayName: event.target.value })
+              }
+              required
+            />
+          </label>
+          <label className="label">
+            School
+            <select
+              className="field"
+              value={form.schoolId}
+              onChange={(event) =>
+                setForm({ ...form, schoolId: event.target.value })
+              }
+            >
+              <option value="">Other or not listed</option>
+              {schools.map((school) => (
+                <option key={school.id} value={school.id}>
+                  {school.name} · {school.city}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="label">
+            State
+            <select
+              className="field"
+              value={form.state}
+              onChange={(event) =>
+                setForm({ ...form, state: event.target.value })
+              }
+              required
+            >
+              <option value="">Select state</option>
+              <option>Plateau</option>
+              <option>Kwara</option>
+              <option>Lagos</option>
+              <option>Abuja</option>
+              <option>Other</option>
+            </select>
+          </label>
+          <label className="label">
+            City or location
+            <input
+              className="field"
+              value={form.city}
+              onChange={(event) =>
+                setForm({ ...form, city: event.target.value })
+              }
+              required
+            />
+          </label>
+          <label className="label">
+            Level or class
+            <input
+              className="field"
+              value={form.studentLevel}
+              onChange={(event) =>
+                setForm({ ...form, studentLevel: event.target.value })
+              }
+              required
+            />
+          </label>
+          {error && (
+            <p role="alert" className="text-sm text-red-600">
+              {error}
+            </p>
+          )}
+          {message && (
+            <p role="status" className="text-sm text-green-600">
+              {message}
+            </p>
+          )}
+          <button className="button-primary" type="submit">
+            Save profile
+          </button>
+        </form>
         <dl className="mt-8 grid gap-5 sm:grid-cols-2">
           <div>
             <dt className="text-sm text-slate-500">Role</dt>
@@ -33,7 +153,9 @@ export default function AcademyProfile() {
           <div>
             <dt className="text-sm text-slate-500">Level</dt>
             <dd className="mt-1 font-semibold">
-              {profile?.academy_levels?.name || "Pending assignment"}
+              {profile?.academy_levels?.name ||
+                profile?.student_level ||
+                "Pending assignment"}
             </dd>
           </div>
         </dl>

@@ -15,6 +15,7 @@ export default function AcademyDashboard() {
   const [lessons, setLessons] = useState([]);
   const [progress, setProgress] = useState(null);
   const [assignmentCount, setAssignmentCount] = useState(0);
+  const [assignments, setAssignments] = useState([]);
   const [overview, setOverview] = useState(null);
   const [state, setState] = useState("loading");
 
@@ -29,6 +30,7 @@ export default function AcademyDashboard() {
         setLessons(lessonResult.data ?? []);
         setProgress(progressResult.data);
         setAssignmentCount(assignmentResult.data?.length ?? 0);
+        setAssignments(assignmentResult.data ?? []);
         setOverview(overviewResult.data);
         setState(
           lessonResult.error ||
@@ -143,10 +145,92 @@ export default function AcademyDashboard() {
             Upcoming
           </p>
           {overview?.schedules?.[0] ? (
-            <p className="mt-2 font-bold">{overview.schedules[0].title}</p>
+            <>
+              <p className="mt-2 font-bold">{overview.schedules[0].title}</p>
+              <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
+                {new Date(overview.schedules[0].starts_at).toLocaleString()}
+              </p>
+              {overview.schedules[0].activity_type === "live_class" &&
+                overview.schedules[0].description?.startsWith(
+                  "https://meet.google.com/",
+                ) && (
+                  <a
+                    className="mt-4 inline-flex font-semibold text-blue-600"
+                    href={overview.schedules[0].description}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    Join live class
+                  </a>
+                )}
+            </>
           ) : (
             <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
               No scheduled activities yet.
+            </p>
+          )}
+        </div>
+      </section>
+      <section className="rounded-xl border border-cyan-200 bg-cyan-50 p-6 dark:border-cyan-900 dark:bg-cyan-950/30">
+        <p className="text-sm font-semibold uppercase tracking-[0.18em] text-cyan-700 dark:text-cyan-300">
+          Today's task
+        </p>
+        <h2 className="mt-2 text-xl font-bold">
+          {overview?.schedules?.[0]?.title ||
+            nextLesson?.title ||
+            "Continue your current lesson"}
+        </h2>
+        <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
+          Open your current lesson or pending assignment to keep your learning
+          moving.
+        </p>
+        <div className="mt-4 flex flex-wrap gap-3">
+          <Link
+            className="button-primary inline-flex"
+            to={
+              nextLesson
+                ? `/academy/lessons/${nextLesson.id}`
+                : "/academy/lessons"
+            }
+          >
+            Open lesson
+          </Link>
+          <Link
+            className="button-secondary inline-flex"
+            to="/academy/assignments"
+          >
+            View assignments
+          </Link>
+        </div>
+      </section>
+      <section className="rounded-xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900">
+        <div className="flex items-center justify-between gap-4">
+          <h2 className="text-xl font-bold">Pending assignments</h2>
+          <Link
+            className="text-sm font-semibold text-blue-600"
+            to="/academy/assignments"
+          >
+            View all
+          </Link>
+        </div>
+        <div className="mt-4 grid gap-3 sm:grid-cols-2">
+          {assignments.slice(0, 4).map((assignment) => (
+            <Link
+              key={assignment.id}
+              to={`/academy/assignments/${assignment.id}`}
+              className="rounded-lg border border-slate-200 p-4 hover:border-blue-400 dark:border-slate-800"
+            >
+              <p className="font-semibold">{assignment.title}</p>
+              <p className="mt-1 text-sm text-slate-500">
+                {assignment.due_at
+                  ? `Due ${new Date(assignment.due_at).toLocaleDateString()}`
+                  : "No due date"}
+              </p>
+            </Link>
+          ))}
+          {!assignments.length && (
+            <p className="text-sm text-slate-600 dark:text-slate-300">
+              No pending assignments.
             </p>
           )}
         </div>
