@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { getAcademyLesson, markLessonComplete } from "../lib/academy";
-import { useAcademyAuth } from "../context/AcademyAuthContext";
+import { useAcademyAuth } from "../hooks/useAcademyAuth";
+import LessonContent from "../components/academy/LessonContent";
 
 export default function AcademyLesson() {
   const { id } = useParams();
@@ -11,11 +12,12 @@ export default function AcademyLesson() {
   const [completed, setCompleted] = useState(false);
 
   useEffect(() => {
-    getAcademyLesson(id).then(({ data, error, configured }) => {
+    getAcademyLesson(id, user.id).then(({ data, error, configured }) => {
       setLesson(data);
+      setCompleted(Boolean(data?.progress?.completed_at));
       setState(error ? "error" : configured ? "ready" : "unconfigured");
     });
-  }, [id]);
+  }, [id, user.id]);
 
   async function completeLesson() {
     const { error } = await markLessonComplete(id, user.id);
@@ -64,19 +66,22 @@ export default function AcademyLesson() {
           ))}
         </ul>
       </section>
-      <section className="prose prose-slate max-w-none dark:prose-invert">
-        <p>{content.explanation}</p>
-        {content.examples?.map((example) => (
-          <pre
-            key={example}
-            className="overflow-x-auto rounded-xl bg-slate-900 p-4 text-sm text-slate-100"
+      <LessonContent content={content} />
+      {lesson.exercises?.length > 0 && (
+        <section className="rounded-xl border border-slate-200 p-5 dark:border-slate-800">
+          <h2 className="text-xl font-bold">Practice for this lesson</h2>
+          <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
+            {lesson.exercises.length} exercise
+            {lesson.exercises.length === 1 ? "" : "s"} available.
+          </p>
+          <Link
+            className="button-primary mt-4 inline-flex"
+            to="/academy/practice"
           >
-            <code>{example}</code>
-          </pre>
-        ))}
-        <h2>Why this matters for AI/ML</h2>
-        <p>{content.connection}</p>
-      </section>
+            Open practice
+          </Link>
+        </section>
+      )}
       <button
         type="button"
         className="button-primary"

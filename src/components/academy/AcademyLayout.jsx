@@ -1,5 +1,5 @@
 import { NavLink, Outlet, Link } from "react-router-dom";
-import { useAcademyAuth } from "../../context/AcademyAuthContext";
+import { useAcademyAuth } from "../../hooks/useAcademyAuth";
 
 const links = [
   { label: "Dashboard", to: "/academy/dashboard" },

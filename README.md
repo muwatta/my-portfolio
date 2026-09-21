@@ -182,10 +182,12 @@ place for legacy `/admin` functionality.
 
 1. Create or select the Supabase project for Academy.
 2. Run the migration and seed files in order:
-   `supabase/migrations/20260921000000_academy_foundation.sql`, then
-   `supabase/seed.sql`.
-3. Add `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` to `.env.local` and your
-   deployment environment. Only the browser-safe anon key belongs in Vite variables.
+   `supabase/migrations/20260921000000_academy_foundation.sql`,
+   `supabase/migrations/20260922000000_academy_access_control.sql`, then
+   `supabase/seed.sql`. Review the target project before applying migrations.
+3. Add `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` to `.env.local` and
+   your deployment environment. `VITE_SUPABASE_ANON_KEY` remains supported for
+   backward compatibility. Only browser-safe keys belong in Vite variables.
 4. Create teacher accounts in Supabase Auth, then promote them by updating their
    `academy_profiles.role` to `teacher` using the Supabase SQL editor.
 

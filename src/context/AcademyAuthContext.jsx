@@ -1,12 +1,13 @@
-import { createContext, useContext, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { isSupabaseConfigured, supabase } from "../lib/supabase";
-
-const AcademyAuthContext = createContext(null);
+import { AcademyAuthContext } from "./AcademyAuthContextValue";
 
 export function AcademyAuthProvider({ children }) {
   const [session, setSession] = useState(null);
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [profileLoading, setProfileLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     if (!supabase) {
@@ -16,12 +17,20 @@ export function AcademyAuthProvider({ children }) {
 
     let mounted = true;
 
-    supabase.auth.getSession().then(({ data }) => {
-      if (mounted) {
+    supabase.auth
+      .getSession()
+      .then(({ data, error: sessionError }) => {
+        if (!mounted) return;
         setSession(data.session);
+        setError(sessionError ?? null);
         setLoading(false);
-      }
-    });
+      })
+      .catch((sessionError) => {
+        if (mounted) {
+          setError(sessionError);
+          setLoading(false);
+        }
+      });
 
     const {
       data: { subscription },
@@ -46,9 +55,14 @@ export function AcademyAuthProvider({ children }) {
       .select("id, display_name, role, avatar_url")
       .eq("id", session.user.id)
       .maybeSingle()
-      .then(({ data }) => {
-        if (!cancelled) setProfile(data ?? null);
+      .then(({ data, error: profileError }) => {
+        if (cancelled) return;
+        setProfile(data ?? null);
+        setError(profileError ?? null);
+        setProfileLoading(false);
       });
+
+    setProfileLoading(true);
 
     return () => {
       cancelled = true;
@@ -72,6 +86,9 @@ export function AcademyAuthProvider({ children }) {
         user: session?.user ?? null,
         profile,
         loading,
+        profileLoading,
+        error,
+        isTeacher: profile?.role === "teacher",
         signIn,
         signOut,
         isConfigured: isSupabaseConfigured,
@@ -80,8 +97,4 @@ export function AcademyAuthProvider({ children }) {
       {children}
     </AcademyAuthContext.Provider>
   );
-}
-
-export function useAcademyAuth() {
-  return useContext(AcademyAuthContext);
 }
