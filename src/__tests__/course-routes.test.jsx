@@ -3,35 +3,23 @@ import { render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import App from "../App";
 
-describe("course routes", () => {
-  it("renders the courses page", async () => {
+describe("Academy course entry", () => {
+  it("renders the course details and application entry", async () => {
     render(
-      <MemoryRouter initialEntries={["/courses"]}>
+      <MemoryRouter initialEntries={["/academy"]}>
         <App />
       </MemoryRouter>,
     );
 
-    expect(await screen.findByText(/Learn by building/i)).toBeInTheDocument();
     expect(
-      await screen.findByText(/Backend Engineering Foundations/i),
+      await screen.findByText(/Learn Python by building toward AI/i),
     ).toBeInTheDocument();
+    expect(screen.getByText(/The learning path/i)).toBeInTheDocument();
     expect(
-      await screen.findByText(/Python Programming for Beginners/i),
-    ).toBeInTheDocument();
+      screen.getByRole("link", { name: /Apply to Academy/i }),
+    ).toHaveAttribute("href", "/academy/signup");
     expect(
-      await screen.findByText(/Build a confident Python foundation/i),
-    ).toBeInTheDocument();
-  });
-
-  it("renders a known course detail route", async () => {
-    render(
-      <MemoryRouter
-        initialEntries={["/courses/backend-engineering-foundations"]}
-      >
-        <App />
-      </MemoryRouter>,
-    );
-
-    expect(await screen.findByText(/What you will learn/i)).toBeInTheDocument();
+      screen.getByRole("link", { name: /Start your application/i }),
+    ).toHaveAttribute("href", "/academy/signup");
   });
 });

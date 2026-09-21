@@ -65,6 +65,7 @@ export default function AcademyAdminStudents() {
               <tr>
                 <th className="px-5 py-4">Name</th>
                 <th className="px-5 py-4">Level</th>
+                <th className="px-5 py-4">Academy time</th>
                 <th className="px-5 py-4">Updated</th>
                 <th className="px-5 py-4">Actions</th>
               </tr>
@@ -90,6 +91,9 @@ export default function AcademyAdminStudents() {
                         </option>
                       ))}
                     </select>
+                  </td>
+                  <td className="px-5 py-4">
+                    {Math.floor((student.activity?.seconds ?? 0) / 60)} min
                   </td>
                   <td className="px-5 py-4">
                     {new Date(student.updated_at).toLocaleDateString()}

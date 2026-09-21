@@ -47,7 +47,7 @@ export default function AcademyDashboard() {
     lessons[lessons.length - 1];
   const levelName = profile?.academy_levels?.name || "Level pending";
   const course = overview?.enrollment?.academy_courses;
-  const learningHours = Math.floor((overview?.learningSeconds ?? 0) / 3600);
+  const learningMinutes = Math.floor((overview?.learningSeconds ?? 0) / 60);
 
   return (
     <div className="space-y-8">
@@ -102,8 +102,9 @@ export default function AcademyDashboard() {
           },
           {
             label: "Learning time",
-            value: `${learningHours}h`,
-            detail: "Active learning time recorded from Academy sessions.",
+            value: `${learningMinutes} min`,
+            detail:
+              "Server-recorded time while Academy was visible and active.",
           },
         ].map((card) => (
           <div
