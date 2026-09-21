@@ -1,5 +1,5 @@
 import { Navigate, Outlet, useLocation } from "react-router-dom";
-import { useAcademyAuth } from "../../context/AcademyAuthContext";
+import { useAcademyAuth } from "../../hooks/useAcademyAuth";
 
 export default function AcademyGuard() {
   const { user, loading } = useAcademyAuth();

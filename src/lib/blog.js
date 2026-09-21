@@ -1,15 +1,5 @@
-import {
-  addDoc,
-  collection,
-  deleteDoc,
-  doc,
-  getDocs,
-  query,
-  serverTimestamp,
-  updateDoc,
-  where,
-} from "firebase/firestore";
-import { db, isFirebaseConfigured } from "./firebase";
+import { auth } from "./firebase";
+import { isSupabaseConfigured, supabase } from "./supabase";
 
 export const asPublicPost = (row = {}) => ({
   id: row.id,
@@ -31,9 +21,6 @@ export const asPublicPost = (row = {}) => ({
 export const filterPublicPosts = (posts = []) =>
   posts.filter((post) => post.published !== false);
 
-const fromFirestore = (snapshot) =>
-  snapshot.docs.map((item) => ({ id: item.id, ...asPublicPost(item.data()) }));
-
 const fetchLegacyPosts = async (includeDrafts) => {
   const res = await fetch("/blog.json");
   if (!res.ok) throw new Error("Couldn't load posts.");
@@ -42,14 +29,22 @@ const fetchLegacyPosts = async (includeDrafts) => {
 };
 
 export async function fetchPosts({ includeDrafts = false } = {}) {
-  if (isFirebaseConfigured && db) {
-    const articles = collection(db, "articles");
-    const articleQuery = includeDrafts
-      ? query(articles)
-      : query(articles, where("status", "==", "published"));
-    const posts = fromFirestore(await getDocs(articleQuery));
-    if (posts.length || includeDrafts) return posts;
+  if (includeDrafts) {
+    return requestAdmin("GET");
   }
+
+  if (isSupabaseConfigured && supabase) {
+    const { data, error } = await supabase
+      .from("blog_posts")
+      .select(
+        "id, slug, title, excerpt, body, category, date, image, medium_link, tags, read_time, featured, status, published, created_at, updated_at, published_at",
+      )
+      .eq("published", true)
+      .order("date", { ascending: false });
+
+    if (!error) return (data || []).map(asPublicPost);
+  }
+
   return fetchLegacyPosts(includeDrafts);
 }
 
@@ -59,50 +54,35 @@ export async function fetchPost(id) {
 }
 
 export async function createPost(post) {
-  if (!isFirebaseConfigured || !db)
-    throw new Error("Firebase is not configured.");
-  const status =
-    post.status || (post.published === false ? "draft" : "published");
-  const now = serverTimestamp();
-  const article = {
-    ...post,
-    status,
-    published: status === "published",
-    publishedAt: status === "published" ? now : null,
-    createdAt: now,
-    updatedAt: now,
-  };
-  const created = await addDoc(collection(db, "articles"), article);
-  return {
-    id: created.id,
-    ...asPublicPost({ ...post, status, published: status === "published" }),
-  };
+  return requestAdmin("POST", { action: "create", post });
 }
 
 export async function updatePost(id, post) {
-  if (!isFirebaseConfigured || !db)
-    throw new Error("Firebase is not configured.");
-  const status =
-    post.status || (post.published === false ? "draft" : "published");
-  const article = {
-    ...post,
-    status,
-    published: status === "published",
-    updatedAt: serverTimestamp(),
-  };
-  if (status === "published" && !post.publishedAt)
-    article.publishedAt = serverTimestamp();
-  delete article.id;
-  delete article.createdAt;
-  await updateDoc(doc(db, "articles", id), article);
-  return {
-    id,
-    ...asPublicPost({ ...post, status, published: status === "published" }),
-  };
+  return requestAdmin("POST", { action: "update", id, post });
 }
 
 export async function deletePost(id) {
-  if (!isFirebaseConfigured || !db)
-    throw new Error("Firebase is not configured.");
-  await deleteDoc(doc(db, "articles", id));
+  return requestAdmin("POST", { action: "delete", id });
+}
+
+async function requestAdmin(method, payload) {
+  if (!auth?.currentUser)
+    throw new Error("Firebase admin authentication is required.");
+
+  const token = await auth.currentUser.getIdToken();
+  const response = await fetch("/api/blog-admin", {
+    method,
+    headers: {
+      Authorization: `Bearer ${token}`,
+      ...(payload ? { "Content-Type": "application/json" } : {}),
+    },
+    body: payload ? JSON.stringify(payload) : undefined,
+  });
+
+  const result = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(result.error || "Blog operation failed.");
+
+  return Array.isArray(result)
+    ? result.map(asPublicPost)
+    : asPublicPost(result);
 }

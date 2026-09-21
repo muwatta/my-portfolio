@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
-import { useAcademyAuth } from "../context/AcademyAuthContext";
+import { useAcademyAuth } from "../hooks/useAcademyAuth";
 
 export default function AcademyLogin() {
   const { user, loading, signIn, isConfigured } = useAcademyAuth();
@@ -8,6 +8,7 @@ export default function AcademyLogin() {
   const location = useLocation();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
@@ -77,14 +78,24 @@ export default function AcademyLogin() {
             </label>
             <label className="label">
               Password
-              <input
-                className="field"
-                type="password"
-                autoComplete="current-password"
-                value={password}
-                onChange={(event) => setPassword(event.target.value)}
-                required
-              />
+              <span className="relative block">
+                <input
+                  className="field pr-16"
+                  type={showPassword ? "text" : "password"}
+                  autoComplete="current-password"
+                  value={password}
+                  onChange={(event) => setPassword(event.target.value)}
+                  required
+                />
+                <button
+                  type="button"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md px-2 py-1 text-xs font-semibold text-slate-500 hover:text-blue-600"
+                  onClick={() => setShowPassword((value) => !value)}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? "Hide" : "Show"}
+                </button>
+              </span>
             </label>
             {error && (
               <p

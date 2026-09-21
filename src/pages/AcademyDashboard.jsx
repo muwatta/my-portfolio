@@ -1,27 +1,41 @@
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { useAcademyAuth } from "../context/AcademyAuthContext";
-
-const cards = [
-  {
-    label: "Completed lessons",
-    value: "0",
-    detail: "Your lesson history will appear here.",
-  },
-  {
-    label: "Pending assignments",
-    value: "0",
-    detail: "No assignments have been assigned yet.",
-  },
-  {
-    label: "Current week",
-    value: "1 / 11",
-    detail: "Start with Python foundations.",
-  },
-];
+import { useAcademyAuth } from "../hooks/useAcademyAuth";
+import {
+  getAcademyAssignments,
+  getAcademyLessons,
+  getAcademyProgress,
+} from "../lib/academy";
+import ProgressBar from "../components/academy/ProgressBar";
 
 export default function AcademyDashboard() {
   const { profile, user } = useAcademyAuth();
   const name = profile?.display_name || user?.email?.split("@")[0] || "Student";
+  const [lessons, setLessons] = useState([]);
+  const [progress, setProgress] = useState(null);
+  const [assignmentCount, setAssignmentCount] = useState(0);
+  const [state, setState] = useState("loading");
+
+  useEffect(() => {
+    Promise.all([
+      getAcademyLessons(user.id),
+      getAcademyProgress(user.id),
+      getAcademyAssignments(),
+    ]).then(([lessonResult, progressResult, assignmentResult]) => {
+      setLessons(lessonResult.data ?? []);
+      setProgress(progressResult.data);
+      setAssignmentCount(assignmentResult.data?.length ?? 0);
+      setState(
+        lessonResult.error || progressResult.error || assignmentResult.error
+          ? "error"
+          : "ready",
+      );
+    });
+  }, [user.id]);
+
+  const nextLesson =
+    lessons.find((lesson) => !lesson.progress?.completed_at) ||
+    lessons[lessons.length - 1];
 
   return (
     <div className="space-y-8">
@@ -43,8 +57,37 @@ export default function AcademyDashboard() {
           Start your first lesson
         </Link>
       </section>
+      {state === "loading" && (
+        <p className="text-sm text-slate-500">Loading your course...</p>
+      )}
+      {state === "error" && (
+        <p
+          role="alert"
+          className="rounded-xl border border-red-300 bg-red-50 p-4 text-sm text-red-700"
+        >
+          Some dashboard data could not be loaded.
+        </p>
+      )}
       <section className="grid gap-4 sm:grid-cols-3">
-        {cards.map((card) => (
+        {[
+          {
+            label: "Completed lessons",
+            value: progress?.completedLessons ?? 0,
+            detail: `${progress?.lessonCount ?? 0} lessons in this course`,
+          },
+          {
+            label: "Pending assignments",
+            value: assignmentCount,
+            detail: assignmentCount
+              ? "Keep your next deadline in sight."
+              : "No assignments yet.",
+          },
+          {
+            label: "Current week",
+            value: `${progress?.currentWeek ?? 1} / 11`,
+            detail: "Your course position is calculated from completions.",
+          },
+        ].map((card) => (
           <div
             key={card.label}
             className="rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900"
@@ -61,13 +104,30 @@ export default function AcademyDashboard() {
       </section>
       <section className="rounded-xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900">
         <h2 className="text-xl font-bold">Your learning path</h2>
-        <div className="mt-5 h-3 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800">
-          <div className="h-full w-0 rounded-full bg-blue-600" />
+        <div className="mt-5">
+          <ProgressBar
+            value={progress?.completionPercent ?? 0}
+            label="Course progress"
+          />
         </div>
-        <p className="mt-3 text-sm text-slate-600 dark:text-slate-300">
-          Progress is calculated from completed lessons, exercises, and
-          assignments.
-        </p>
+        <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <p className="text-sm font-semibold text-slate-500">
+              Continue learning
+            </p>
+            <p className="mt-1 font-bold">
+              {nextLesson?.title || "No lessons published yet."}
+            </p>
+          </div>
+          {nextLesson && (
+            <Link
+              className="button-primary inline-flex"
+              to={`/academy/lessons/${nextLesson.id}`}
+            >
+              Open lesson
+            </Link>
+          )}
+        </div>
       </section>
     </div>
   );

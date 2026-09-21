@@ -38,9 +38,19 @@ const AcademyLogin = lazy(() => import("./pages/AcademyLogin"));
 const AcademyDashboard = lazy(() => import("./pages/AcademyDashboard"));
 const AcademyLessons = lazy(() => import("./pages/AcademyLessons"));
 const AcademyLesson = lazy(() => import("./pages/AcademyLesson"));
+const AcademyPractice = lazy(() => import("./pages/AcademyPractice"));
+const AcademyAssignments = lazy(() => import("./pages/AcademyAssignments"));
+const AcademyAssignment = lazy(() => import("./pages/AcademyAssignment"));
+const AcademyProgress = lazy(() => import("./pages/AcademyProgress"));
+const AcademyTeacherPlaceholder = lazy(
+  () => import("./pages/AcademyTeacherPlaceholder"),
+);
 const AcademyPlaceholder = lazy(() => import("./pages/AcademyPlaceholder"));
 const AcademyLayout = lazy(() => import("./components/academy/AcademyLayout"));
 const AcademyGuard = lazy(() => import("./components/academy/AcademyGuard"));
+const AcademyTeacherGuard = lazy(
+  () => import("./components/academy/AcademyTeacherGuard"),
+);
 
 const PageLoader = () => (
   <div className="min-h-screen flex items-center justify-center">
@@ -136,19 +146,47 @@ function App() {
                             />
                             <Route
                               path="/academy/practice"
-                              element={<AcademyPlaceholder />}
+                              element={<AcademyPractice />}
                             />
                             <Route
                               path="/academy/assignments"
-                              element={<AcademyPlaceholder />}
+                              element={<AcademyAssignments />}
+                            />
+                            <Route
+                              path="/academy/assignments/:id"
+                              element={<AcademyAssignment />}
                             />
                             <Route
                               path="/academy/progress"
-                              element={<AcademyPlaceholder />}
+                              element={<AcademyProgress />}
                             />
                             <Route
                               path="/academy/projects"
                               element={<AcademyPlaceholder />}
+                            />
+                          </Route>
+                        </Route>
+                        <Route element={<AcademyTeacherGuard />}>
+                          <Route element={<AcademyLayout />}>
+                            <Route
+                              path="/academy/teacher"
+                              element={<AcademyTeacherPlaceholder />}
+                            />
+                            <Route
+                              path="/academy/teacher/students"
+                              element={<AcademyTeacherPlaceholder />}
+                            />
+                            <Route
+                              path="/academy/teacher/classes"
+                              element={<AcademyTeacherPlaceholder />}
+                            />
+                            <Route
+                              path="/academy/teacher/assignments"
+                              element={<AcademyTeacherPlaceholder />}
+                            />
+                            <Route
+                              path="/academy/teacher/submissions"
+                              element={<AcademyTeacherPlaceholder />}
                             />
                           </Route>
                         </Route>

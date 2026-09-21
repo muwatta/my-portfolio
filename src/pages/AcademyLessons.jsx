@@ -1,13 +1,15 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { useAcademyAuth } from "../hooks/useAcademyAuth";
 import { getAcademyLessons } from "../lib/academy";
 
 export default function AcademyLessons() {
   const [lessons, setLessons] = useState([]);
   const [state, setState] = useState("loading");
+  const { user } = useAcademyAuth();
 
   useEffect(() => {
-    getAcademyLessons().then(({ data, error, configured }) => {
+    getAcademyLessons(user.id).then(({ data, error, configured }) => {
       if (error) setState("error");
       else if (!configured) setState("unconfigured");
       else {
@@ -15,7 +17,7 @@ export default function AcademyLessons() {
         setState("ready");
       }
     });
-  }, []);
+  }, [user.id]);
 
   return (
     <div className="space-y-6">
@@ -62,6 +64,9 @@ export default function AcademyLessons() {
             <h2 className="mt-2 text-lg font-bold">{lesson.title}</h2>
             <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
               {lesson.objectives?.join(" · ")}
+            </p>
+            <p className="mt-4 text-xs font-semibold text-blue-600">
+              {lesson.progress?.completed_at ? "Completed" : "Ready to learn"}
             </p>
           </Link>
         ))}
