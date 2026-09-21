@@ -187,6 +187,7 @@ export async function markProjectMilestoneComplete(
 
 export async function getAcademyTeacherStudents() {
   if (!supabase) return unavailable([]);
+  await supabase.rpc("academy_sync_profiles");
   const [
     { data: students, error: studentError },
     { data: levels, error: levelError },
