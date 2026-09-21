@@ -113,7 +113,7 @@ export default function AcademyLayout() {
             </span>
             <span>
               <span className="block text-sm font-bold tracking-wide">
-                Academy
+                ATE Academy
               </span>
               <span className="block text-xs text-slate-500 dark:text-slate-400">
                 Python to AI/ML
@@ -175,6 +175,9 @@ export default function AcademyLayout() {
           <Outlet />
         </main>
       </div>
+      <footer className="mx-auto max-w-7xl border-t border-slate-200 px-4 py-6 text-xs text-slate-500 dark:border-slate-800 dark:text-slate-400 sm:px-6">
+        Algorise Tech Explorers (ATE) · ATE Academy · RC No. RC-8665201
+      </footer>
     </div>
   );
 }
