@@ -60,6 +60,9 @@ export default function AcademyAdminDashboard() {
             <Link className="button-secondary" to="/academy/teacher/lessons">
               Manage lessons
             </Link>
+            <Link className="button-secondary" to="/academy/admin/access">
+              Manage access
+            </Link>
           </div>
         </>
       )}

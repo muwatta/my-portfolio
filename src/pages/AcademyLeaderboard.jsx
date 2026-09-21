@@ -43,7 +43,6 @@ export default function AcademyLeaderboard() {
               <tr>
                 <th className="px-5 py-4">Rank</th>
                 <th className="px-5 py-4">Student</th>
-                <th className="px-5 py-4">Level</th>
                 <th className="px-5 py-4">Points</th>
               </tr>
             </thead>
@@ -52,9 +51,6 @@ export default function AcademyLeaderboard() {
                 <tr key={row.student_id}>
                   <td className="px-5 py-4 font-bold">{row.rank}</td>
                   <td className="px-5 py-4">{row.display_name || "Student"}</td>
-                  <td className="px-5 py-4">
-                    {row.level_name || "Unassigned"}
-                  </td>
                   <td className="px-5 py-4 font-semibold">{row.points}</td>
                 </tr>
               ))}

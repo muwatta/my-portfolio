@@ -2,10 +2,10 @@ import { Link } from "react-router-dom";
 import { useTheme } from "../context/useTheme";
 
 const learningSteps = [
-  ["Learn", "Build a strong Python foundation."],
+  ["Learn", "Build foundations across software and hardware."],
   ["Build", "Turn each concept into practical code."],
   ["Practice", "Work through exercises with useful feedback."],
-  ["Apply", "Use your skills in projects that point toward AI."],
+  ["Apply", "Ship projects in web, C++, embedded, or AI/ML."],
 ];
 
 export default function AcademyHome() {
@@ -33,8 +33,8 @@ export default function AcademyHome() {
           </h1>
           <p className="mt-5 max-w-xl text-lg leading-8 text-slate-300">
             A practical learning environment for students developing skills in
-            programming, Python, artificial intelligence, machine learning, and
-            digital technology.
+            programming, backend engineering, C++, embedded systems, Python,
+            artificial intelligence, machine learning, and digital technology.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
             <Link
@@ -90,8 +90,8 @@ export default function AcademyHome() {
             Learn, build, practice, and apply.
           </h2>
           <p className="mt-3 leading-7 text-slate-600 dark:text-slate-300">
-            Academy is an 11-week guided course for students who want to move
-            from Python fundamentals toward AI and machine learning.
+            Academy is a guided learning environment for students building
+            practical software, embedded systems, and AI/ML projects.
           </p>
         </div>
         <div className="mt-7 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">

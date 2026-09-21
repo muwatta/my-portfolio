@@ -26,7 +26,8 @@ export default function AcademyCourses() {
         </p>
         <h1 className="mt-2 text-3xl font-bold tracking-tight">Courses</h1>
         <p className="mt-2 max-w-2xl text-slate-600 dark:text-slate-300">
-          Explore the published learning paths available in Muwatta Academy.
+          Explore published paths in software, C++, embedded systems, Python,
+          and AI/ML.
         </p>
       </header>
 
@@ -55,9 +56,6 @@ export default function AcademyCourses() {
             <div className="flex flex-wrap gap-2 text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
               {course.academy_subjects?.name && (
                 <span>{course.academy_subjects.name}</span>
-              )}
-              {course.academy_levels?.name && (
-                <span>· {course.academy_levels.name}</span>
               )}
             </div>
             <h2 className="mt-3 text-xl font-bold">{course.title}</h2>

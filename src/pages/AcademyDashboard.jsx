@@ -47,7 +47,6 @@ export default function AcademyDashboard() {
   const nextLesson =
     lessons.find((lesson) => !lesson.progress?.completed_at) ||
     lessons[lessons.length - 1];
-  const levelName = profile?.academy_levels?.name || "Level pending";
   const course = overview?.enrollment?.academy_courses;
   const learningMinutes = Math.floor((overview?.learningSeconds ?? 0) / 60);
 
@@ -61,9 +60,9 @@ export default function AcademyDashboard() {
           Good to see you, {name}.
         </h1>
         <p className="mt-3 max-w-2xl text-slate-300">
-          {profile?.academy_levels?.name
-            ? `Your ${profile.academy_levels.name} pathway is ready for your next step.`
-            : "Your teacher will assign a level before your pathway begins."}
+          {course?.title
+            ? "Your assigned learning path is ready for your next step."
+            : "Your Academy team will assign a learning path when you begin."}
         </p>
         <Link
           to="/academy/lessons"
@@ -128,11 +127,13 @@ export default function AcademyDashboard() {
           <div className="flex items-start justify-between gap-4">
             <div>
               <p className="text-sm font-semibold text-slate-500 dark:text-slate-400">
-                Your placement
+                Your learning path
               </p>
-              <h2 className="mt-2 text-xl font-bold">{levelName}</h2>
+              <h2 className="mt-2 text-xl font-bold">
+                {course?.title || "Path pending"}
+              </h2>
               <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
-                {course?.title || "No course assigned yet"}
+                Your Academy team manages placement and access.
               </p>
             </div>
             <span className="rounded-full bg-cyan-100 px-3 py-1 text-xs font-bold text-cyan-800 dark:bg-cyan-950 dark:text-cyan-200">

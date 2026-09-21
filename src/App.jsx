@@ -81,6 +81,7 @@ const AcademyAdminStudents = lazy(() => import("./pages/AcademyAdminStudents"));
 const AcademyAdminStudentProfile = lazy(
   () => import("./pages/AcademyAdminStudentProfile"),
 );
+const AcademyAdminAccess = lazy(() => import("./pages/AcademyAdminAccess"));
 const AcademyProfile = lazy(() => import("./pages/AcademyProfile"));
 
 const PageLoader = () => (
@@ -273,6 +274,10 @@ function App() {
                             <Route
                               path="/academy/admin/students/:studentId"
                               element={<AcademyAdminStudentProfile />}
+                            />
+                            <Route
+                              path="/academy/admin/access"
+                              element={<AcademyAdminAccess />}
                             />
                           </Route>
                         </Route>

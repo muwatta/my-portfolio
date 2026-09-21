@@ -13,8 +13,7 @@ export default function AcademyPlaceholder() {
       </p>
       <h1 className="mt-3 text-3xl font-bold capitalize">{label}</h1>
       <p className="mt-3 max-w-xl text-slate-600 dark:text-slate-300">
-        This workspace is part of the Academy foundation and will be connected
-        to your course records in the next phase.
+        This workspace is ready for Academy activities and course records.
       </p>
       <Link
         className="button-primary mt-6 inline-flex items-center"

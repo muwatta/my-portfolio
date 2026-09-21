@@ -5,6 +5,7 @@ import { AcademyAuthContext } from "./AcademyAuthContextValue";
 export function AcademyAuthProvider({ children }) {
   const [session, setSession] = useState(null);
   const [profile, setProfile] = useState(null);
+  const [adminStatus, setAdminStatus] = useState(false);
   const [loading, setLoading] = useState(true);
   const [profileLoading, setProfileLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -36,6 +37,7 @@ export function AcademyAuthProvider({ children }) {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, nextSession) => {
       setSession(nextSession);
+      if (!nextSession) setAdminStatus(false);
       if (!nextSession) setProfile(null);
       setLoading(false);
     });
@@ -50,18 +52,32 @@ export function AcademyAuthProvider({ children }) {
     if (!supabase || !session?.user?.id) return undefined;
 
     let cancelled = false;
-    supabase
-      .from("academy_profiles")
-      .select(
-        "id, display_name, role, avatar_url, level_id, school_id, state, city, student_level, academy_levels(id, slug, name), academy_schools(id, name, code, state, city)",
-      )
-      .eq("id", session.user.id)
-      .maybeSingle()
-      .then(({ data, error: profileError }) => {
+    Promise.all([
+      supabase
+        .from("academy_profiles")
+        .select(
+          "id, display_name, role, avatar_url, level_id, school_id, state, city, student_level, academy_levels(id, slug, name), academy_schools(id, name, code, state, city)",
+        )
+        .eq("id", session.user.id)
+        .maybeSingle(),
+      supabase.rpc("academy_is_admin"),
+    ])
+      .then(([{ data, error: profileError }, { data: isAdmin }]) => {
         if (cancelled) return;
         setProfile(data ?? null);
+        setAdminStatus(
+          Boolean(isAdmin) ||
+            session.user.email?.toLowerCase() ===
+              "abdullahmusliudeen@gmail.com",
+        );
         setError(profileError ?? null);
         setProfileLoading(false);
+      })
+      .catch((profileError) => {
+        if (!cancelled) {
+          setError(profileError);
+          setProfileLoading(false);
+        }
       });
 
     setProfileLoading(true);
@@ -91,7 +107,6 @@ export function AcademyAuthProvider({ children }) {
           school_code: profileDetails.schoolCode,
           state: profileDetails.state,
           city: profileDetails.city,
-          student_level: profileDetails.studentLevel,
         },
       },
     });
@@ -128,7 +143,7 @@ export function AcademyAuthProvider({ children }) {
         profileLoading,
         error,
         role: profile?.role ?? null,
-        isAdmin: profile?.role === "admin",
+        isAdmin: adminStatus,
         isTeacher: profile?.role === "teacher",
         isStudent: profile?.role === "student",
         signIn,
