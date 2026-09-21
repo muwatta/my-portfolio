@@ -1,6 +1,10 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { getAcademyLesson, markLessonComplete } from "../lib/academy";
+import {
+  getAcademyLesson,
+  markLessonComplete,
+  markLessonStarted,
+} from "../lib/academy";
 import { useAcademyAuth } from "../hooks/useAcademyAuth";
 import LessonContent from "../components/academy/LessonContent";
 
@@ -12,6 +16,7 @@ export default function AcademyLesson() {
   const [completed, setCompleted] = useState(false);
 
   useEffect(() => {
+    markLessonStarted(id, user.id);
     getAcademyLesson(id, user.id).then(({ data, error, configured }) => {
       setLesson(data);
       setCompleted(Boolean(data?.progress?.completed_at));

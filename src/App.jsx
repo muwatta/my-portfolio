@@ -37,14 +37,31 @@ const AcademyHome = lazy(() => import("./pages/AcademyHome"));
 const AcademyLogin = lazy(() => import("./pages/AcademyLogin"));
 const AcademySignup = lazy(() => import("./pages/AcademySignup"));
 const AcademyDashboard = lazy(() => import("./pages/AcademyDashboard"));
+const AcademyCourses = lazy(() => import("./pages/AcademyCourses"));
 const AcademyLessons = lazy(() => import("./pages/AcademyLessons"));
 const AcademyLesson = lazy(() => import("./pages/AcademyLesson"));
 const AcademyPractice = lazy(() => import("./pages/AcademyPractice"));
 const AcademyAssignments = lazy(() => import("./pages/AcademyAssignments"));
 const AcademyAssignment = lazy(() => import("./pages/AcademyAssignment"));
 const AcademyProgress = lazy(() => import("./pages/AcademyProgress"));
+const AcademyProjects = lazy(() => import("./pages/AcademyProjects"));
+const AcademyLeaderboard = lazy(() => import("./pages/AcademyLeaderboard"));
+const AcademyNotifications = lazy(() => import("./pages/AcademyNotifications"));
+const AcademyLiveRoom = lazy(() => import("./pages/AcademyLiveRoom"));
+const AcademyTeacherAnalytics = lazy(
+  () => import("./pages/AcademyTeacherAnalytics"),
+);
 const AcademyTeacherPlaceholder = lazy(
   () => import("./pages/AcademyTeacherPlaceholder"),
+);
+const AcademyTeacherStudents = lazy(
+  () => import("./pages/AcademyTeacherStudents"),
+);
+const AcademyTeacherCourses = lazy(
+  () => import("./pages/AcademyTeacherCourses"),
+);
+const AcademyTeacherLessons = lazy(
+  () => import("./pages/AcademyTeacherLessons"),
 );
 const AcademyPlaceholder = lazy(() => import("./pages/AcademyPlaceholder"));
 const AcademyLayout = lazy(() => import("./components/academy/AcademyLayout"));
@@ -142,6 +159,10 @@ function App() {
                               element={<AcademyDashboard />}
                             />
                             <Route
+                              path="/academy/courses"
+                              element={<AcademyCourses />}
+                            />
+                            <Route
                               path="/academy/lessons"
                               element={<AcademyLessons />}
                             />
@@ -167,7 +188,19 @@ function App() {
                             />
                             <Route
                               path="/academy/projects"
-                              element={<AcademyPlaceholder />}
+                              element={<AcademyProjects />}
+                            />
+                            <Route
+                              path="/academy/leaderboard"
+                              element={<AcademyLeaderboard />}
+                            />
+                            <Route
+                              path="/academy/notifications"
+                              element={<AcademyNotifications />}
+                            />
+                            <Route
+                              path="/academy/live"
+                              element={<AcademyLiveRoom />}
                             />
                           </Route>
                         </Route>
@@ -179,7 +212,19 @@ function App() {
                             />
                             <Route
                               path="/academy/teacher/students"
-                              element={<AcademyTeacherPlaceholder />}
+                              element={<AcademyTeacherStudents />}
+                            />
+                            <Route
+                              path="/academy/teacher/courses"
+                              element={<AcademyTeacherCourses />}
+                            />
+                            <Route
+                              path="/academy/teacher/lessons"
+                              element={<AcademyTeacherLessons />}
+                            />
+                            <Route
+                              path="/academy/teacher/analytics"
+                              element={<AcademyTeacherAnalytics />}
                             />
                             <Route
                               path="/academy/teacher/classes"
