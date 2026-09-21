@@ -26,15 +26,15 @@ export default function AcademyHome() {
       <section className="mx-auto grid w-full max-w-6xl gap-8 py-16 lg:grid-cols-[1.2fr_0.8fr] lg:items-center">
         <div>
           <p className="text-sm font-semibold uppercase tracking-[0.2em] text-cyan-300">
-            Muwatta Academy
+            Algorise Tech Explorers · ATE Academy
           </p>
           <h1 className="mt-4 max-w-2xl text-4xl font-bold tracking-tight sm:text-6xl">
-            Learn Python by building toward AI.
+            Learn. Build. Practice. Grow.
           </h1>
           <p className="mt-5 max-w-xl text-lg leading-8 text-slate-300">
-            A focused learning space for secondary-school students: short
-            lessons, practical code, useful feedback, and a clear path through
-            11 weeks.
+            A practical learning environment for students developing skills in
+            programming, Python, artificial intelligence, machine learning, and
+            digital technology.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
             <Link
@@ -73,6 +73,14 @@ export default function AcademyHome() {
           ))}
         </div>
       </section>
+      <footer className="mx-auto w-full max-w-6xl border-t border-slate-200 py-8 text-sm text-slate-500 dark:border-slate-800 dark:text-slate-400">
+        <p className="font-semibold text-slate-700 dark:text-slate-200">
+          Algorise Tech Explorers (ATE)
+        </p>
+        <p className="mt-1">
+          ATE Academy · RC No. RC-8665201 · muwatta.com.ng/academy
+        </p>
+      </footer>
       <section className="mx-auto w-full max-w-6xl border-t border-slate-200 py-12 dark:border-slate-800">
         <div className="max-w-2xl">
           <p className="text-sm font-semibold uppercase tracking-[0.18em] text-cyan-600 dark:text-cyan-300">

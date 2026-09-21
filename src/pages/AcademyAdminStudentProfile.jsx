@@ -55,6 +55,16 @@ export default function AcademyAdminStudentProfile() {
               </p>
             </div>
             <div className="border-l-4 border-cyan-400 bg-white p-5 dark:bg-slate-900">
+              <p className="text-sm text-slate-500">School and location</p>
+              <p className="mt-2 text-xl font-bold">
+                {profile?.academy_schools?.name || "Other"}
+              </p>
+              <p className="mt-1 text-sm text-slate-500">
+                {profile?.city || "Location not set"},{" "}
+                {profile?.state || "State not set"}
+              </p>
+            </div>
+            <div className="border-l-4 border-cyan-400 bg-white p-5 dark:bg-slate-900">
               <p className="text-sm text-slate-500">Learning time</p>
               <p className="mt-2 text-xl font-bold">
                 {Math.floor((overview?.learningSeconds || 0) / 60)} min

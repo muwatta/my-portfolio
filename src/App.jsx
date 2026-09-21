@@ -34,6 +34,10 @@ const AdminProjectPreview = lazy(() => import("./pages/AdminProjectPreview"));
 const AcademyHome = lazy(() => import("./pages/AcademyHome"));
 const AcademyLogin = lazy(() => import("./pages/AcademyLogin"));
 const AcademySignup = lazy(() => import("./pages/AcademySignup"));
+const AcademyResetPassword = lazy(() => import("./pages/AcademyResetPassword"));
+const AcademyForgotPassword = lazy(
+  () => import("./pages/AcademyForgotPassword"),
+);
 const AcademyDashboard = lazy(() => import("./pages/AcademyDashboard"));
 const AcademyCourses = lazy(() => import("./pages/AcademyCourses"));
 const AcademyLessons = lazy(() => import("./pages/AcademyLessons"));
@@ -155,6 +159,14 @@ function App() {
                         <Route
                           path="/academy/signup"
                           element={<AcademySignup />}
+                        />
+                        <Route
+                          path="/academy/reset-password"
+                          element={<AcademyResetPassword />}
+                        />
+                        <Route
+                          path="/academy/forgot-password"
+                          element={<AcademyForgotPassword />}
                         />
                         <Route element={<AcademyGuard />}>
                           <Route element={<AcademyLayout />}>

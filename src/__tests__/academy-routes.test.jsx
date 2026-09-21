@@ -18,7 +18,7 @@ describe("Academy routes", () => {
     );
 
     expect(
-      await screen.findByText(/Learn Python by building toward AI/i),
+      await screen.findByText(/Learn\. Build\. Practice\. Grow\./i),
     ).toBeInTheDocument();
     expect(
       screen.getByRole("link", { name: /Student sign in/i }),
