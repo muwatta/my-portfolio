@@ -1,4 +1,4 @@
--- Blog posts table for the Supabase-backed portfolio blog.
+cl-- Blog posts table for the Supabase-backed portfolio blog.
 -- Run this in the Supabase SQL editor (Dashboard > SQL Editor).
 
 create table if not exists public.blog_posts (
