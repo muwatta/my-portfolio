@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { getAcademyExercises } from "../lib/academy";
+import { getAcademyExercises, submitObjectiveAnswer } from "../lib/academy";
 import PythonEditor from "../components/academy/PythonEditor";
 import { useAcademyAuth } from "../hooks/useAcademyAuth";
 
@@ -7,6 +7,9 @@ export default function AcademyPractice() {
   const { user } = useAcademyAuth();
   const [exercises, setExercises] = useState([]);
   const [state, setState] = useState("loading");
+  const [answers, setAnswers] = useState({});
+  const [results, setResults] = useState({});
+  const [submitting, setSubmitting] = useState(null);
 
   useEffect(() => {
     getAcademyExercises(user.id).then(({ data, error, configured }) => {
@@ -14,6 +17,19 @@ export default function AcademyPractice() {
       setState(error ? "error" : configured ? "ready" : "unconfigured");
     });
   }, [user.id]);
+
+  async function submitAnswer(exerciseId) {
+    setSubmitting(exerciseId);
+    const { data, error } = await submitObjectiveAnswer(
+      exerciseId,
+      answers[exerciseId] || "",
+    );
+    setResults((current) => ({
+      ...current,
+      [exerciseId]: error ? { error: error.message } : data,
+    }));
+    setSubmitting(null);
+  }
 
   return (
     <div className="space-y-6">
@@ -60,7 +76,80 @@ export default function AcademyPractice() {
               {exercise.instructions}
             </p>
           </div>
-          <PythonEditor starterCode={exercise.starter_code} />
+          {exercise.question_type === "programming" ? (
+            <PythonEditor starterCode={exercise.starter_code} />
+          ) : (
+            <div className="space-y-4">
+              {exercise.question_type === "short_answer" ? (
+                <input
+                  className="field"
+                  value={answers[exercise.id] || ""}
+                  onChange={(event) =>
+                    setAnswers((current) => ({
+                      ...current,
+                      [exercise.id]: event.target.value,
+                    }))
+                  }
+                  placeholder="Type your answer"
+                  aria-label={`Answer for ${exercise.title}`}
+                />
+              ) : (
+                <div className="grid gap-2">
+                  {(exercise.question_type === "true_false"
+                    ? ["true", "false"]
+                    : exercise.choices || []
+                  ).map((choice) => {
+                    const value =
+                      typeof choice === "string" ? choice : choice.value;
+                    const label =
+                      typeof choice === "string" ? choice : choice.label;
+                    return (
+                      <label
+                        key={value}
+                        className="flex items-center gap-3 rounded-lg border border-slate-200 p-3 dark:border-slate-800"
+                      >
+                        <input
+                          type="radio"
+                          name={`exercise-${exercise.id}`}
+                          value={value}
+                          checked={answers[exercise.id] === value}
+                          onChange={(event) =>
+                            setAnswers((current) => ({
+                              ...current,
+                              [exercise.id]: event.target.value,
+                            }))
+                          }
+                        />
+                        <span>{label}</span>
+                      </label>
+                    );
+                  })}
+                </div>
+              )}
+              <button
+                className="button-primary"
+                type="button"
+                onClick={() => submitAnswer(exercise.id)}
+                disabled={submitting === exercise.id || !answers[exercise.id]}
+              >
+                {submitting === exercise.id ? "Scoring..." : "Submit answer"}
+              </button>
+              {results[exercise.id]?.error && (
+                <p role="alert" className="text-sm text-red-600">
+                  {results[exercise.id].error}
+                </p>
+              )}
+              {results[exercise.id] && !results[exercise.id].error && (
+                <p
+                  role="status"
+                  className="text-sm font-semibold text-emerald-600"
+                >
+                  Score: {results[exercise.id].score} /{" "}
+                  {results[exercise.id].max_score}
+                </p>
+              )}
+            </div>
+          )}
         </article>
       ))}
     </div>

@@ -42,4 +42,84 @@ describe("Academy routes", () => {
       await screen.findByText(/Academy sign-in is not configured/i),
     ).toBeInTheDocument();
   });
+
+  it("renders the public student signup route", async () => {
+    render(
+      <MemoryRouter initialEntries={["/academy/signup"]}>
+        <App />
+      </MemoryRouter>,
+    );
+
+    expect(
+      await screen.findByRole("heading", { name: /Create your account/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/Academy sign-up is not configured/i),
+    ).toBeInTheDocument();
+  });
+
+  it("protects the courses route when unconfigured", async () => {
+    render(
+      <MemoryRouter initialEntries={["/academy/courses"]}>
+        <App />
+      </MemoryRouter>,
+    );
+
+    expect(
+      await screen.findByText(/Academy sign-in is not configured/i),
+    ).toBeInTheDocument();
+  });
+
+  it("protects the teacher student control center", async () => {
+    render(
+      <MemoryRouter initialEntries={["/academy/teacher/students"]}>
+        <App />
+      </MemoryRouter>,
+    );
+
+    expect(
+      await screen.findByText(/Academy sign-in is not configured/i),
+    ).toBeInTheDocument();
+  });
+
+  it("protects the teacher lesson control center", async () => {
+    render(
+      <MemoryRouter initialEntries={["/academy/teacher/lessons"]}>
+        <App />
+      </MemoryRouter>,
+    );
+
+    expect(
+      await screen.findByText(/Academy sign-in is not configured/i),
+    ).toBeInTheDocument();
+  });
+
+  it("protects the student projects route", async () => {
+    render(
+      <MemoryRouter initialEntries={["/academy/projects"]}>
+        <App />
+      </MemoryRouter>,
+    );
+
+    expect(
+      await screen.findByText(/Academy sign-in is not configured/i),
+    ).toBeInTheDocument();
+  });
+
+  it.each([
+    "/academy/leaderboard",
+    "/academy/notifications",
+    "/academy/live",
+    "/academy/teacher/analytics",
+  ])("protects the new Academy route %s", async (route) => {
+    render(
+      <MemoryRouter initialEntries={[route]}>
+        <App />
+      </MemoryRouter>,
+    );
+
+    expect(
+      await screen.findByText(/Academy sign-in is not configured/i),
+    ).toBeInTheDocument();
+  });
 });

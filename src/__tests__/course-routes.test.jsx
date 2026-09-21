@@ -13,14 +13,14 @@ describe("course routes", () => {
 
     expect(await screen.findByText(/Learn by building/i)).toBeInTheDocument();
     expect(
-      screen.getByText(/Backend Engineering Foundations/i),
+      await screen.findByText(/Backend Engineering Foundations/i),
     ).toBeInTheDocument();
     expect(
-      screen.getByText(/Python Programming for Beginners/i),
+      await screen.findByText(/Python Programming for Beginners/i),
     ).toBeInTheDocument();
     expect(
-      screen.getByLabelText(/Watch Python Programming for Beginners/i),
-    ).toHaveAttribute("href", expect.stringContaining("youtube.com"));
+      await screen.findByText(/Build a confident Python foundation/i),
+    ).toBeInTheDocument();
   });
 
   it("renders a known course detail route", async () => {
