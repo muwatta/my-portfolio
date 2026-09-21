@@ -76,6 +76,17 @@ export function AcademyAuthProvider({ children }) {
     return supabase.auth.signInWithPassword({ email, password });
   };
 
+  const signUp = (email, password, displayName) => {
+    if (!supabase) {
+      throw new Error("Academy authentication is not configured yet.");
+    }
+    return supabase.auth.signUp({
+      email,
+      password,
+      options: { data: { display_name: displayName } },
+    });
+  };
+
   const signOut = () =>
     supabase ? supabase.auth.signOut() : Promise.resolve();
 
@@ -90,6 +101,7 @@ export function AcademyAuthProvider({ children }) {
         error,
         isTeacher: profile?.role === "teacher",
         signIn,
+        signUp,
         signOut,
         isConfigured: isSupabaseConfigured,
       }}
