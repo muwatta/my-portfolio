@@ -69,6 +69,17 @@ const AcademyGuard = lazy(() => import("./components/academy/AcademyGuard"));
 const AcademyTeacherGuard = lazy(
   () => import("./components/academy/AcademyTeacherGuard"),
 );
+const AcademyAdminGuard = lazy(
+  () => import("./components/academy/AcademyAdminGuard"),
+);
+const AcademyAdminDashboard = lazy(
+  () => import("./pages/AcademyAdminDashboard"),
+);
+const AcademyAdminStudents = lazy(() => import("./pages/AcademyAdminStudents"));
+const AcademyAdminStudentProfile = lazy(
+  () => import("./pages/AcademyAdminStudentProfile"),
+);
+const AcademyProfile = lazy(() => import("./pages/AcademyProfile"));
 
 const PageLoader = () => (
   <div className="min-h-screen flex items-center justify-center">
@@ -202,6 +213,10 @@ function App() {
                               path="/academy/live"
                               element={<AcademyLiveRoom />}
                             />
+                            <Route
+                              path="/academy/profile"
+                              element={<AcademyProfile />}
+                            />
                           </Route>
                         </Route>
                         <Route element={<AcademyTeacherGuard />}>
@@ -237,6 +252,22 @@ function App() {
                             <Route
                               path="/academy/teacher/submissions"
                               element={<AcademyTeacherPlaceholder />}
+                            />
+                          </Route>
+                        </Route>
+                        <Route element={<AcademyAdminGuard />}>
+                          <Route element={<AcademyLayout />}>
+                            <Route
+                              path="/academy/admin"
+                              element={<AcademyAdminDashboard />}
+                            />
+                            <Route
+                              path="/academy/admin/students"
+                              element={<AcademyAdminStudents />}
+                            />
+                            <Route
+                              path="/academy/admin/students/:studentId"
+                              element={<AcademyAdminStudentProfile />}
                             />
                           </Route>
                         </Route>

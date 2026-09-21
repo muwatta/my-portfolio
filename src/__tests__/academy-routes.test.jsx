@@ -1,6 +1,12 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
+
+vi.mock("../lib/supabase", () => ({
+  isSupabaseConfigured: false,
+  supabase: null,
+}));
+
 import App from "../App";
 
 describe("Academy routes", () => {
@@ -112,6 +118,23 @@ describe("Academy routes", () => {
     "/academy/live",
     "/academy/teacher/analytics",
   ])("protects the new Academy route %s", async (route) => {
+    render(
+      <MemoryRouter initialEntries={[route]}>
+        <App />
+      </MemoryRouter>,
+    );
+
+    expect(
+      await screen.findByText(/Academy sign-in is not configured/i),
+    ).toBeInTheDocument();
+  });
+
+  it.each([
+    "/academy/admin",
+    "/academy/admin/students",
+    "/academy/admin/students/student-id",
+    "/academy/profile",
+  ])("protects the role-specific route %s", async (route) => {
     render(
       <MemoryRouter initialEntries={[route]}>
         <App />

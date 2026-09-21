@@ -267,6 +267,67 @@ export async function getAcademyTeacherAnalytics() {
   };
 }
 
+export async function getAcademyAdminOverview() {
+  if (!supabase) return unavailable(null);
+  const [
+    { data: profiles, error: profileError },
+    { data: courses, error: courseError },
+    { data: sessions, error: sessionError },
+  ] = await Promise.all([
+    supabase
+      .from("academy_profiles")
+      .select(
+        "id, display_name, role, level_id, updated_at, academy_levels(name)",
+      ),
+    supabase.from("academy_courses").select("id, published"),
+    supabase
+      .from("academy_learning_sessions")
+      .select("student_id, last_heartbeat_at"),
+  ]);
+  return {
+    data: {
+      students: (profiles ?? []).filter((profile) => profile.role === "student")
+        .length,
+      teachers: (profiles ?? []).filter((profile) => profile.role === "teacher")
+        .length,
+      courses: courses?.length ?? 0,
+      activeLearners: new Set(
+        (sessions ?? [])
+          .filter(
+            (session) =>
+              Date.now() - new Date(session.last_heartbeat_at).getTime() <
+              15 * 60 * 1000,
+          )
+          .map((session) => session.student_id),
+      ).size,
+    },
+    error: profileError || courseError || sessionError,
+    configured: true,
+  };
+}
+
+export async function getAcademyStudentProfile(studentId) {
+  if (!supabase) return unavailable(null);
+  const [
+    { data: profile, error: profileError },
+    { data: overview, error: overviewError },
+  ] = await Promise.all([
+    supabase
+      .from("academy_profiles")
+      .select(
+        "id, display_name, role, avatar_url, level_id, updated_at, academy_levels(name)",
+      )
+      .eq("id", studentId)
+      .maybeSingle(),
+    getAcademyStudentOverview(studentId),
+  ]);
+  return {
+    data: { profile, overview },
+    error: profileError || overviewError,
+    configured: true,
+  };
+}
+
 export async function getAcademyTeacherCourses() {
   if (!supabase) return unavailable([]);
   const { data, error } = await supabase

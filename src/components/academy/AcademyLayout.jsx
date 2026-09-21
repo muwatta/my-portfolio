@@ -31,8 +31,18 @@ const teacherLinks = [
   { label: "Submissions", to: "/academy/teacher/submissions" },
 ];
 
+const adminLinks = [
+  { label: "Admin overview", to: "/academy/admin" },
+  { label: "Students", to: "/academy/admin/students" },
+  { label: "Courses", to: "/academy/teacher/courses" },
+  { label: "Lessons", to: "/academy/teacher/lessons" },
+  { label: "Analytics", to: "/academy/teacher/analytics" },
+  { label: "Live classroom", to: "/academy/live" },
+];
+
 export default function AcademyLayout() {
-  const { profile, user, signOut, isTeacher } = useAcademyAuth();
+  const { profile, user, signOut, isAdmin, isTeacher, isStudent } =
+    useAcademyAuth();
   const { theme, toggle } = useTheme();
   const { pathname } = useLocation();
   const learningSession = useRef(null);
@@ -41,6 +51,7 @@ export default function AcademyLayout() {
     profile?.display_name || user?.email?.split("@")[0] || "Student";
 
   useEffect(() => {
+    if (!isStudent) return undefined;
     let cancelled = false;
     startAcademyLearningSession(user.id, pathname).then(({ data }) => {
       if (!cancelled) learningSession.current = data;
@@ -72,7 +83,7 @@ export default function AcademyLayout() {
       );
       learningSession.current = null;
     };
-  }, [pathname, user.id]);
+  }, [isStudent, pathname, user.id]);
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
@@ -123,7 +134,14 @@ export default function AcademyLayout() {
           aria-label="Academy navigation"
           className="flex gap-2 overflow-x-auto pb-1 lg:w-52 lg:flex-col lg:overflow-visible"
         >
-          {[...(isTeacher ? teacherLinks : links)].map((link) => (
+          {(isAdmin
+            ? adminLinks
+            : isTeacher
+              ? teacherLinks
+              : isStudent
+                ? links
+                : []
+          ).map((link) => (
             <NavLink
               key={link.to}
               to={link.to}
