@@ -22,24 +22,25 @@ A modern, fully responsive personal portfolio built with React and Vite — show
 - **Contact form** — powered by EmailJS, no backend required
 - **SEO ready** — dynamic meta tags via React Helmet Async
 - **Performance optimized** — code splitting, chunk caching, and asset optimization via Vite
+- **Academy learning space** — Supabase-authenticated student routes for the Python to AI/ML cohort
 
 ---
 
 ## 🛠 Tech Stack
 
-| Layer | Technology |
-|---|---|
-| Framework | React 18 |
-| Build Tool | Vite 5 |
-| Styling | Tailwind CSS 3 |
-| Animation | Framer Motion |
-| Routing | React Router v6 |
-| Forms | EmailJS |
-| Content management | Decap CMS + GitHub |
-| SEO | React Helmet Async |
-| Icons | React Icons |
-| Fonts | Google Fonts (Syne + Lora) |
-| Deployment | Vercel |
+| Layer              | Technology                 |
+| ------------------ | -------------------------- |
+| Framework          | React 18                   |
+| Build Tool         | Vite 5                     |
+| Styling            | Tailwind CSS 3             |
+| Animation          | Framer Motion              |
+| Routing            | React Router v6            |
+| Forms              | EmailJS                    |
+| Content management | Decap CMS + GitHub         |
+| SEO                | React Helmet Async         |
+| Icons              | React Icons                |
+| Fonts              | Google Fonts (Syne + Lora) |
+| Deployment         | Vercel                     |
 
 ---
 
@@ -155,7 +156,7 @@ you can create, edit, and delete posts with a phone-friendly form.
 Uses [EmailJS](https://emailjs.com). Update credentials in `src/pages/Contact.jsx`:
 
 ```js
-emailjs.send("SERVICE_ID", "TEMPLATE_ID", payload, "PUBLIC_KEY")
+emailjs.send("SERVICE_ID", "TEMPLATE_ID", payload, "PUBLIC_KEY");
 ```
 
 ---
@@ -169,9 +170,28 @@ Hosted on **Vercel** with auto-deploys from the `master` branch (GitHub).
 
 ### Env vars (Project Settings → Environment Variables)
 
-| Variable | Purpose |
-|---|---|
+| Variable     | Purpose                             |
+| ------------ | ----------------------------------- |
 | GitHub OAuth | Required by Decap CMS for `/admin/` |
+
+### Academy setup
+
+Academy is an additive route group inside the existing React application. It uses
+Supabase Auth and PostgreSQL, while the existing Firebase auth context remains in
+place for legacy `/admin` functionality.
+
+1. Create or select the Supabase project for Academy.
+2. Run the migration and seed files in order:
+   `supabase/migrations/20260921000000_academy_foundation.sql`, then
+   `supabase/seed.sql`.
+3. Add `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` to `.env.local` and your
+   deployment environment. Only the browser-safe anon key belongs in Vite variables.
+4. Create teacher accounts in Supabase Auth, then promote them by updating their
+   `academy_profiles.role` to `teacher` using the Supabase SQL editor.
+
+The current Academy foundation is available at `/academy`. Student lesson,
+assignment, grading, upload, and teacher workflows are being added on top of the
+RLS-protected schema in subsequent increments.
 
 ---
 
