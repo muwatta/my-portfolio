@@ -52,7 +52,9 @@ export function AcademyAuthProvider({ children }) {
     let cancelled = false;
     supabase
       .from("academy_profiles")
-      .select("id, display_name, role, avatar_url")
+      .select(
+        "id, display_name, role, avatar_url, level_id, academy_levels(id, slug, name)",
+      )
       .eq("id", session.user.id)
       .maybeSingle()
       .then(({ data, error: profileError }) => {

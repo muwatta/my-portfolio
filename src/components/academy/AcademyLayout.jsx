@@ -1,21 +1,78 @@
-import { NavLink, Outlet, Link } from "react-router-dom";
+import { useEffect, useRef } from "react";
+import { NavLink, Outlet, Link, useLocation } from "react-router-dom";
 import { useAcademyAuth } from "../../hooks/useAcademyAuth";
 import { useTheme } from "../../context/useTheme";
+import {
+  heartbeatAcademyLearningSession,
+  startAcademyLearningSession,
+} from "../../lib/academy";
 
 const links = [
   { label: "Dashboard", to: "/academy/dashboard" },
+  { label: "Courses", to: "/academy/courses" },
   { label: "Lessons", to: "/academy/lessons" },
   { label: "Practice", to: "/academy/practice" },
   { label: "Assignments", to: "/academy/assignments" },
   { label: "Progress", to: "/academy/progress" },
   { label: "Projects", to: "/academy/projects" },
+  { label: "Leaderboard", to: "/academy/leaderboard" },
+  { label: "Notifications", to: "/academy/notifications" },
+  { label: "Live classroom", to: "/academy/live" },
+];
+
+const teacherLinks = [
+  { label: "Teacher dashboard", to: "/academy/teacher" },
+  { label: "Students", to: "/academy/teacher/students" },
+  { label: "Courses", to: "/academy/teacher/courses" },
+  { label: "Lessons", to: "/academy/teacher/lessons" },
+  { label: "Analytics", to: "/academy/teacher/analytics" },
+  { label: "Classes", to: "/academy/teacher/classes" },
+  { label: "Assignments", to: "/academy/teacher/assignments" },
+  { label: "Submissions", to: "/academy/teacher/submissions" },
 ];
 
 export default function AcademyLayout() {
-  const { profile, user, signOut } = useAcademyAuth();
+  const { profile, user, signOut, isTeacher } = useAcademyAuth();
   const { theme, toggle } = useTheme();
+  const { pathname } = useLocation();
+  const learningSession = useRef(null);
+  const lastActivity = useRef(Date.now());
   const displayName =
     profile?.display_name || user?.email?.split("@")[0] || "Student";
+
+  useEffect(() => {
+    let cancelled = false;
+    startAcademyLearningSession(user.id, pathname).then(({ data }) => {
+      if (!cancelled) learningSession.current = data;
+    });
+
+    const markActivity = () => {
+      lastActivity.current = Date.now();
+    };
+    const activityEvents = ["pointerdown", "keydown", "scroll", "mousemove"];
+    activityEvents.forEach((eventName) =>
+      window.addEventListener(eventName, markActivity, { passive: true }),
+    );
+    const heartbeat = window.setInterval(() => {
+      const activeRecently = Date.now() - lastActivity.current <= 60000;
+      if (
+        document.visibilityState === "visible" &&
+        activeRecently &&
+        learningSession.current
+      ) {
+        heartbeatAcademyLearningSession(learningSession.current.id, pathname);
+      }
+    }, 30000);
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(heartbeat);
+      activityEvents.forEach((eventName) =>
+        window.removeEventListener(eventName, markActivity),
+      );
+      learningSession.current = null;
+    };
+  }, [pathname, user.id]);
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
@@ -66,7 +123,7 @@ export default function AcademyLayout() {
           aria-label="Academy navigation"
           className="flex gap-2 overflow-x-auto pb-1 lg:w-52 lg:flex-col lg:overflow-visible"
         >
-          {links.map((link) => (
+          {[...(isTeacher ? teacherLinks : links)].map((link) => (
             <NavLink
               key={link.to}
               to={link.to}

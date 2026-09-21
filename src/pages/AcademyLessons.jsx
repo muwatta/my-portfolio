@@ -66,7 +66,13 @@ export default function AcademyLessons() {
               {lesson.objectives?.join(" · ")}
             </p>
             <p className="mt-4 text-xs font-semibold text-blue-600">
-              {lesson.progress?.completed_at ? "Completed" : "Ready to learn"}
+              {lesson.status === "completed"
+                ? "Completed"
+                : lesson.status === "in-progress"
+                  ? "In progress"
+                  : lesson.status === "locked"
+                    ? "Locked"
+                    : "Available now"}
             </p>
           </Link>
         ))}
