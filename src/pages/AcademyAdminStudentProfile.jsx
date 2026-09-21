@@ -57,7 +57,10 @@ export default function AcademyAdminStudentProfile() {
             <div className="border-l-4 border-cyan-400 bg-white p-5 dark:bg-slate-900">
               <p className="text-sm text-slate-500">Learning time</p>
               <p className="mt-2 text-xl font-bold">
-                {Math.floor((overview?.learningSeconds || 0) / 3600)}h
+                {Math.floor((overview?.learningSeconds || 0) / 60)} min
+              </p>
+              <p className="mt-1 text-xs text-slate-500">
+                Server-recorded Academy time
               </p>
             </div>
             <div className="border-l-4 border-cyan-400 bg-white p-5 dark:bg-slate-900">
