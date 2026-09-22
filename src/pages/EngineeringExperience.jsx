@@ -188,7 +188,7 @@ export const EngineeringExperience = () => {
             to="/contact"
             className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-semibold transition-colors group"
           >
-            Need a Backend Engineer?
+            Need a Software Developer?
             <HiArrowRight className="transition-transform group-hover:translate-x-1" />
           </Link>
         </motion.div>

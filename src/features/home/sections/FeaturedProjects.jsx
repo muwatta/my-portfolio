@@ -33,7 +33,7 @@ const ACHIEVEMENT_PLACEHOLDERS = [
   },
   {
     title:
-      "Smart community using sensors for the light and car movements by students in Jos",
+      "Smart community using sensors for lights and car movement by students in Lagos",
     description:
       "Students build a sensor-based smart-community project that responds to lighting and vehicle movement.",
     imageUrl: "/images/achievements/smart_street.jpg",

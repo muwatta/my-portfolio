@@ -8,12 +8,12 @@
 ## Strategic Positioning Change
 
 **Before:** "Full-Stack Engineer & Educator" | Generic "EdTech systems" focus  
-**After:** "Backend Engineer · Full-Stack Developer" | Clear technical positioning with evidence
+**After:** "Software Developer · Backend & Full-Stack" | Clear technical positioning with evidence
 
 ### Key Repositioning Changes
 
 1. **Hero messaging** — Emphasizes backend systems and production reality, not aspirational claims
-2. **Data-driven claims** — All statements now backed by evidence (100+ users, 150+ learners, 6+ systems)
+2. **Data-driven claims** — All statements now backed by evidence (100+ users, 150+ learners, 10+ projects)
 3. **Removed unverified claims** — "5,000+ users" removed; replaced with substantiated metrics
 4. **Unified facts** — Single source of truth across all pages (50+ vs 150+ learners fixed to 150+)
 
@@ -65,7 +65,7 @@
 - **Fixed stats:**
   - 100+ active users (was vague)
   - 150+ learners trained (unified from 50+ elsewhere)
-  - 6+ production systems (was 3+)
+  - 10+ production projects
   - 2024 ATE founded (added context)
 - **Updated navigation:** Removed "Skills" tab → Simplified to Work | About | Writing | Contact
 - **Improved testimonials** to focus on engineering value, not just teaching
@@ -75,7 +75,7 @@
 
 - 100+ active users → ATE Management System
 - 150+ learners trained → Through bootcamps
-- 6+ production systems → Live and deployed
+- 10+ production projects → Live and deployed
 - Founded 2024 → Algorise Tech Explorers
 - Updated recognition → Girls in ICT Finals, AI Hackathon 2nd Runner-up, ALX completed
 
@@ -95,7 +95,7 @@ Before: Full-Stack Engineer
         "I build scalable EdTech systems and mentor developers.
          Currently focused on learning management platforms serving 5,000+ users"
 
-After:  Backend Engineer · Full-Stack Developer
+After:  Software Developer · Backend & Full-Stack
         "I build backend systems and full-stack products that solve real
          operational problems. Django · DRF · PostgreSQL · Redis · React"
 ```
@@ -111,7 +111,7 @@ After:  Backend Engineer · Full-Stack Developer
 - **Updated stats cards:**
   - 100+ active users (ATE Management)
   - 150+ learners trained
-  - 6+ production systems
+  - 10+ production projects
   - 2024 ATE founded
 
 #### Skills Page
@@ -149,11 +149,11 @@ After:  "Backend Systems That Actually Work"
 <title>Abdullahi Musliudeen Oladiupo</title>
 
 <!-- After -->
-<title>Abdullahi Musliudeen — Backend Engineer & Full-Stack Developer</title>
+<title>Abdullahi Musliudeen — Software Developer</title>
 <meta
   name="description"
-  content="Backend Engineer · Full-Stack Developer. 
-  I build Django APIs, React frontends, and production systems. 
+  content="Software Developer · Backend & Full-Stack. 
+  I build Django APIs, React frontends, and production software.
   100+ users. ATE Founder. Algorise Tech Explorers."
 />
 ```
@@ -254,7 +254,7 @@ After:  "Backend Systems That Actually Work"
 | ------------------ | --------------------------- | --------------------- | ------------------------------------ |
 | Active Users       | 5,000+ (unverified)         | 100+ (ATE Management) | System running                       |
 | Learners Trained   | 50+ (in About), conflicting | 150+ (unified)        | Bootcamp records                     |
-| Production Systems | 3-10 (unclear)              | 6+ (defined list)     | GitHub repos + links                 |
+| Production Projects | 3-10 (unclear)              | 10+ (defined portfolio) | GitHub repos + links                 |
 | Positioning        | Full-Stack + Educator       | Backend + Full-Stack  | Hero, About, all pages               |
 | Projects Showcased | Generic cards               | Case studies          | Architecture + engineering decisions |
 | Skills Display     | Percentages (arbitrary)     | Evidence-based        | Linked to real projects              |

@@ -12,9 +12,9 @@ export const impactStats = [
     context: "Through bootcamps & workshops",
   },
   {
-    value: 6,
+    value: 10,
     suffix: "+",
-    label: "Production Systems",
+    label: "Production Projects",
     context: "Live and client-deployed",
   },
   {

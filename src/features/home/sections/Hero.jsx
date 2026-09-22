@@ -21,7 +21,7 @@ export const Hero = () => {
 
             <h1 className="text-4xl md:text-5xl lg:text-7xl font-bold leading-tight mb-6">
               <span className="block text-slate-400 text-xl md:text-2xl font-normal mb-2">
-                Software Engineer and Technology Educator
+                Software Developer
               </span>
               <span className="home-hero-name bg-clip-text text-transparent bg-gradient-to-r from-white via-blue-200 to-blue-400">
                 Abdullahi Musliudeen
@@ -34,8 +34,8 @@ export const Hero = () => {
               transition={{ duration: 0.6, delay: 0.45 }}
               className="text-lg md:text-xl text-slate-400 mb-8 max-w-lg mx-auto leading-relaxed"
             >
-              I build production software, teach practical technology, and work
-              with students on projects that connect code to the physical world.
+              I design and ship production backends, APIs, and full-stack
+              platforms for real organizations and their users.
             </motion.p>
           </motion.div>
 
@@ -62,7 +62,7 @@ export const Hero = () => {
                   decoding="async"
                   fetchpriority="high"
                   loading="eager"
-                  className="w-full h-full object-cover rounded-full"
+                  className="h-full w-full rounded-full object-cover object-[center_20%]"
                 />
               </div>
             </div>
@@ -72,8 +72,8 @@ export const Hero = () => {
               transition={{ duration: 0.7, delay: 0.8, ease: "easeOut" }}
               className="mx-auto mt-6 max-w-md text-center text-sm leading-6 text-slate-500"
             >
-              My work connects Arabic education, software engineering, embedded
-              systems, artificial intelligence, and the Internet of Things.
+              Backend architecture, full-stack products, and reliable systems
+              for real-world operations.
             </motion.p>
           </motion.div>
         </div>

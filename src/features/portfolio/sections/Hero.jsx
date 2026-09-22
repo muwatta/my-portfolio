@@ -15,7 +15,7 @@ const ICON_MAP = {
 const STATS = [
   { value: "100+", label: "Active Users" },
   { value: "150+", label: "Learners Trained" },
-  { value: "6+", label: "Production Systems" },
+  { value: "10+", label: "Production Projects" },
 ];
 
 export const Hero = () => {
@@ -38,7 +38,7 @@ export const Hero = () => {
           >
             <div className="absolute inset-0 rounded-full bg-gradient-to-br from-blue-500 to-cyan-500 blur-xl opacity-40 animate-pulse" />
             <img
-              src="https://res.cloudinary.com/dee5edoss/image/upload/w_400,ar_1:1,c_fill,g_auto,e_art:hokusai/v1741434757/IMG-20241231-WA0094_jf4axb.jpg"
+              src="/images/profile_pics.jpg"
               alt="Abdullahi Musliudeen"
               className="relative w-full h-full rounded-full object-cover border-2 border-slate-300 dark:border-slate-700 ring-2 ring-blue-500/20"
             />
@@ -53,7 +53,7 @@ export const Hero = () => {
               transition={{ delay: 0.1 }}
               className="text-[11px] font-mono tracking-[0.25em] uppercase text-blue-400 mb-3"
             >
-              Backend Engineer · Full-Stack Developer
+              Software Developer · Backend & Full-Stack
             </motion.p>
 
             <motion.h1
