@@ -56,7 +56,7 @@ export function AcademyAuthProvider({ children }) {
       supabase
         .from("academy_profiles")
         .select(
-          "id, display_name, role, avatar_url, level_id, school_id, state, city, student_level, academy_levels(id, slug, name), academy_schools(id, name, code, state, city)",
+          "id, display_name, role, avatar_url, current_course_id, school_id, state, city, student_level, academy_courses!current_course_id(id, slug, title), academy_schools(id, name, code, state, city)",
         )
         .eq("id", session.user.id)
         .maybeSingle(),
