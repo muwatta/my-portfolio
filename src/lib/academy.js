@@ -602,7 +602,6 @@ export async function getAcademyLessons(studentId) {
     .from("academy_lessons")
     .select(lessonSelect)
     .eq("published", true)
-    .eq("academy_weeks.academy_courses.slug", COURSE_SLUG)
     .order("lesson_number");
 
   if (error || !studentId) return { data: data ?? [], error, configured: true };
@@ -639,7 +638,6 @@ export async function markLessonStarted(lessonId, studentId) {
     {
       lesson_id: lessonId,
       student_id: studentId,
-      started_at: new Date().toISOString(),
     },
     { onConflict: "lesson_id,student_id", ignoreDuplicates: false },
   );
@@ -654,16 +652,15 @@ export async function getAcademyLesson(id, studentId) {
     .select(lessonSelect)
     .eq("id", id)
     .eq("published", true)
-    .eq("academy_weeks.academy_courses.slug", COURSE_SLUG)
     .maybeSingle();
   if (error || !data) return { data, error, configured: true };
 
-  const [{ data: exercises, error: exercisesError }, { data: progress }] =
+  const [{ data: exercises }, { data: progress }] =
     await Promise.all([
       supabase
         .from("academy_exercises")
         .select(
-          "id, lesson_id, title, instructions, starter_code, difficulty, expected_concepts, hints, explanation, question_type, choices, attempt_limit",
+          "id, lesson_id, title, instructions, starter_code, difficulty, expected_concepts, hints, explanation",
         )
         .eq("lesson_id", id),
       studentId
@@ -678,7 +675,7 @@ export async function getAcademyLesson(id, studentId) {
 
   return {
     data: { ...data, exercises: exercises ?? [], progress: progress ?? null },
-    error: error ?? exercisesError,
+    error,
     configured: true,
   };
 }
