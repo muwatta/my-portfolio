@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { FiMenu, FiX } from "react-icons/fi";
+import { FiMenu, FiMoon, FiSun, FiX } from "react-icons/fi";
 import { NavLink, Outlet, Link, useLocation } from "react-router-dom";
 import { useAcademyAuth } from "../../hooks/useAcademyAuth";
 import { useTheme } from "../../context/useTheme";
@@ -9,7 +9,6 @@ import {
 } from "../../lib/academy";
 
 const links = [
-  { label: "Dashboard", to: "/academy/dashboard" },
   { label: "Courses", to: "/academy/courses" },
   { label: "Lessons", to: "/academy/lessons" },
   { label: "Practice", to: "/academy/practice" },
@@ -33,7 +32,6 @@ const teacherLinks = [
 ];
 
 const adminLinks = [
-  { label: "Admin overview", to: "/academy/admin" },
   { label: "Students", to: "/academy/admin/students" },
   { label: "Access", to: "/academy/admin/access" },
   { label: "Manage courses", to: "/academy/teacher/courses" },
@@ -150,12 +148,16 @@ export default function AcademyLayout() {
           <div className="order-3 ml-auto grid grid-cols-[auto_auto] items-center gap-2 sm:order-none sm:flex sm:min-w-0 sm:items-center sm:gap-3">
             <button
               type="button"
-              className="button-secondary min-h-9 justify-center px-2 py-1.5 text-xs sm:px-3 sm:text-sm"
+              className="button-secondary grid min-h-9 min-w-9 place-items-center px-2 py-1.5"
               onClick={toggle}
               aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
               title={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
             >
-              {theme === "dark" ? "Light" : "Dark"}
+              {theme === "dark" ? (
+                <FiSun aria-hidden="true" />
+              ) : (
+                <FiMoon aria-hidden="true" />
+              )}
             </button>
             <span className="hidden min-w-0 max-w-[12rem] text-right sm:block sm:max-w-[14rem]">
               <span className="hidden truncate text-sm text-slate-600 dark:text-slate-300 sm:block">
@@ -192,7 +194,7 @@ export default function AcademyLayout() {
           <div className="mb-4 border-b border-slate-200 pb-4 text-xs font-semibold uppercase tracking-[0.16em] text-slate-500 dark:border-slate-800 dark:text-slate-400 lg:hidden">
             Academy menu
           </div>
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-1.5">
           {navigationLinks.map((link) => (
             <NavLink
               key={link.to}
