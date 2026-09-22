@@ -74,13 +74,22 @@ export default function AcademyHome() {
           ))}
         </div>
       </section>
-      <footer className="mx-auto w-full max-w-6xl border-t border-slate-200 py-8 text-sm text-slate-500 dark:border-slate-800 dark:text-slate-400">
-        <p className="font-semibold text-slate-700 dark:text-slate-200">
-          Algorise Tech Explorers (ATE)
-        </p>
-        <p className="mt-1">
-          ATE Academy · RC No. RC-8665201 · muwatta.com.ng/academy
-        </p>
+      <footer className="mx-auto w-full max-w-6xl border-t border-slate-200 py-8 text-sm dark:border-slate-800">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="font-bold text-slate-800 dark:text-slate-200">ATE Academy</p>
+            <p className="mt-1 max-w-md leading-6 text-slate-500 dark:text-slate-400">
+              Algorise Tech Explorers · Practical learning for young builders.
+            </p>
+            <p className="mt-2 text-xs text-slate-400 dark:text-slate-500">
+              RC No. RC-8665201
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-4 font-semibold text-slate-600 dark:text-slate-300">
+            <Link to="/academy/login" className="hover:text-cyan-600">Student sign in</Link>
+            <Link to="/" className="hover:text-cyan-600">Portfolio</Link>
+          </div>
+        </div>
       </footer>
       <section className="mx-auto w-full max-w-6xl border-t border-slate-200 py-12 dark:border-slate-800">
         <div className="max-w-2xl">
