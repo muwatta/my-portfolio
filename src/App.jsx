@@ -66,6 +66,15 @@ const AcademyTeacherCourses = lazy(
 const AcademyTeacherLessons = lazy(
   () => import("./pages/AcademyTeacherLessons"),
 );
+const AcademyTeacherSubmissions = lazy(
+  () => import("./pages/AcademyTeacherSubmissions"),
+);
+const AcademyTeacherAssignments = lazy(
+  () => import("./pages/AcademyTeacherAssignments"),
+);
+const AcademyTeacherClasses = lazy(
+  () => import("./pages/AcademyTeacherClasses"),
+);
 const AcademyPlaceholder = lazy(() => import("./pages/AcademyPlaceholder"));
 const AcademyLayout = lazy(() => import("./components/academy/AcademyLayout"));
 const AcademyGuard = lazy(() => import("./components/academy/AcademyGuard"));
@@ -125,7 +134,10 @@ function App() {
                           element={<ProjectDetail />}
                         />
                         <Route path="/courses" element={<Portfolio />} />
-                        <Route path="/courses/:slug" element={<CourseDetail />} />
+                        <Route
+                          path="/courses/:slug"
+                          element={<CourseDetail />}
+                        />
                         <Route path="/skills" element={<Skills />} />
                         <Route path="/about" element={<About />} />
                         <Route path="/blog" element={<Blog />} />
@@ -252,15 +264,15 @@ function App() {
                             />
                             <Route
                               path="/academy/teacher/classes"
-                              element={<AcademyTeacherPlaceholder />}
+                              element={<AcademyTeacherClasses />}
                             />
                             <Route
                               path="/academy/teacher/assignments"
-                              element={<AcademyTeacherPlaceholder />}
+                              element={<AcademyTeacherAssignments />}
                             />
                             <Route
                               path="/academy/teacher/submissions"
-                              element={<AcademyTeacherPlaceholder />}
+                              element={<AcademyTeacherSubmissions />}
                             />
                           </Route>
                         </Route>

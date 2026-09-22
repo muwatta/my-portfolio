@@ -138,8 +138,8 @@ export const CallToAction = () => {
             transition={{ delay: 0.45 }}
             className="flex flex-col sm:flex-row items-center justify-center gap-4 text-sm text-slate-500 dark:text-slate-500"
           >
-            
-            
+
+
             <span className="font-mono text-xs">
               📍 Lagos, Nigeria (WAT · UTC+1)
             </span>

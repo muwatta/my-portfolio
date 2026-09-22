@@ -59,7 +59,11 @@ export default function AcademyHome() {
           </div>
         </div>
         <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
-          {["Python for AI/ML", "C++ for embedded systems", "Assignment submissions"].map((item) => (
+          {[
+            "Python for AI/ML",
+            "C++ for embedded systems",
+            "Assignment submissions",
+          ].map((item) => (
             <div
               key={item}
               className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900"
@@ -77,7 +81,9 @@ export default function AcademyHome() {
       <footer className="mx-auto w-full max-w-6xl border-t border-slate-200 py-8 text-sm dark:border-slate-800">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <p className="font-bold text-slate-800 dark:text-slate-200">ATE Academy</p>
+            <p className="font-bold text-slate-800 dark:text-slate-200">
+              ATE Academy
+            </p>
             <p className="mt-1 max-w-md leading-6 text-slate-500 dark:text-slate-400">
               Algorise Tech Explorers · Practical learning for young builders.
             </p>
@@ -86,8 +92,12 @@ export default function AcademyHome() {
             </p>
           </div>
           <div className="flex flex-wrap gap-4 font-semibold text-slate-600 dark:text-slate-300">
-            <Link to="/academy/login" className="hover:text-cyan-600">Student sign in</Link>
-            <Link to="/" className="hover:text-cyan-600">Portfolio</Link>
+            <Link to="/academy/login" className="hover:text-cyan-600">
+              Academy login
+            </Link>
+            <Link to="/" className="hover:text-cyan-600">
+              Portfolio
+            </Link>
           </div>
         </div>
       </footer>

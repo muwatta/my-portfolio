@@ -3,6 +3,7 @@ import { Link, useParams } from "react-router-dom";
 import {
   getAcademyAssignment,
   getSubmissionCount,
+  getAcademySubmissionHistory,
   submitAssignment,
 } from "../lib/academy";
 import { validateAcademyFile } from "../lib/academyFiles";
@@ -20,15 +21,18 @@ export default function AcademyAssignment() {
   const [file, setFile] = useState(null);
   const [sourceCode, setSourceCode] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [history, setHistory] = useState([]);
 
   useEffect(() => {
     Promise.all([
       getAcademyAssignment(id),
       getSubmissionCount(id, user.id),
-    ]).then(([assignmentResult, countResult]) => {
+      getAcademySubmissionHistory(id, user.id),
+    ]).then(([assignmentResult, countResult, historyResult]) => {
       setAssignment(assignmentResult.data);
       setSourceCode(assignmentResult.data?.starter_code || "");
       setAttempts(countResult.count);
+      setHistory(historyResult.data ?? []);
       setState(
         assignmentResult.error || countResult.error
           ? "error"
@@ -75,6 +79,8 @@ export default function AcademyAssignment() {
       });
       if (error) throw error;
       setAttempts((value) => value + 1);
+      const refreshed = await getAcademySubmissionHistory(id, user.id);
+      setHistory(refreshed.data ?? []);
       setFile(null);
       setNotice("Submitted. Your work is recorded for review.");
     } catch (error) {
@@ -156,6 +162,43 @@ export default function AcademyAssignment() {
       >
         {submitting ? "Submitting..." : "Submit assignment"}
       </button>
+      <section className="space-y-3">
+        <h2 className="text-xl font-bold">Submission results</h2>
+        {history.length === 0 && (
+          <p className="text-sm text-slate-500">No submissions yet.</p>
+        )}
+        {history.map((submission) => {
+          const result = Array.isArray(submission.academy_submission_results)
+            ? submission.academy_submission_results[0]
+            : submission.academy_submission_results;
+          return (
+            <div
+              key={submission.id}
+              className="rounded-xl border border-slate-200 p-4 dark:border-slate-800"
+            >
+              <div className="flex flex-wrap justify-between gap-2 text-sm">
+                <span>
+                  Attempt {submission.attempt_number} · {submission.status}
+                </span>
+                <span>
+                  {result?.final_score ?? "Awaiting grade"}
+                  {result?.final_score != null ? "/100" : ""}
+                </span>
+              </div>
+              {result?.teacher_feedback && (
+                <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
+                  {result.teacher_feedback}
+                </p>
+              )}
+              {result?.ai_feedback && (
+                <p className="mt-2 text-sm text-cyan-700 dark:text-cyan-300">
+                  AI feedback: {result.ai_feedback}
+                </p>
+              )}
+            </div>
+          );
+        })}
+      </section>
     </article>
   );
 }
