@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { doc, getDoc } from "firebase/firestore";
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "./useAuth";
 import { db } from "../lib/firebase";
 
 export function useAdminGuard() {

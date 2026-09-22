@@ -9,7 +9,7 @@ import {
   FiPlus,
   FiTrash2,
 } from "react-icons/fi";
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "../hooks/useAuth";
 import { useAdminGuard } from "../hooks/useAdminGuard";
 import {
   deleteProject,

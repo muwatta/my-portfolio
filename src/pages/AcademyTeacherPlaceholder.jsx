@@ -7,7 +7,7 @@ export default function AcademyTeacherPlaceholder() {
       <h1 className="mt-3 text-3xl font-bold">Teaching workspace</h1>
       <p className="mt-3 max-w-xl text-slate-600 dark:text-slate-300">
         Use the live tools below to manage the learning experience. Courses,
-        lessons, student levels, and analytics are available now.
+        lessons, student course assignments, and analytics are available now.
       </p>
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {[

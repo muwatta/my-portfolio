@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Helmet } from "react-helmet-async";
 import { Link, Navigate } from "react-router-dom";
 import { FiEdit3, FiPlus, FiTrash2, FiUpload } from "react-icons/fi";
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "../hooks/useAuth";
 import { useAdminGuard } from "../hooks/useAdminGuard";
 import { openUploadWidget } from "../lib/cloudinary";
 import {

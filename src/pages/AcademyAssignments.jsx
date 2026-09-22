@@ -1,17 +1,20 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { getAcademyAssignments } from "../lib/academy";
+import { useAcademyAuth } from "../hooks/useAcademyAuth";
 
 export default function AcademyAssignments() {
   const [assignments, setAssignments] = useState([]);
   const [state, setState] = useState("loading");
+  const { user } = useAcademyAuth();
 
   useEffect(() => {
-    getAcademyAssignments().then(({ data, error, configured }) => {
+    if (!user?.id) return;
+    getAcademyAssignments(user.id).then(({ data, error, configured }) => {
       setAssignments(data ?? []);
       setState(error ? "error" : configured ? "ready" : "unconfigured");
     });
-  }, []);
+  }, [user?.id]);
 
   return (
     <div className="space-y-6">

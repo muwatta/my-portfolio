@@ -12,7 +12,7 @@ import {
   FiPlus,
   FiTrash2,
 } from "react-icons/fi";
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "../hooks/useAuth";
 import { createPost, deletePost, fetchPosts, updatePost } from "../lib/blog";
 import { useAdminGuard } from "../hooks/useAdminGuard";
 

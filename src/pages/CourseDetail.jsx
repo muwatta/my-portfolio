@@ -4,7 +4,7 @@ import { Container } from "../components/layout/Container";
 import Seo from "../components/seo/Seo";
 import { fetchCourse } from "../lib/courses";
 import { enrollInCourse } from "../lib/courses";
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "../hooks/useAuth";
 
 const videoEmbedUrl = (url) => {
   if (!url) return "";
@@ -320,7 +320,7 @@ import { Container } from "../components/layout/Container";
 import Seo from "../components/seo/Seo";
 import { fetchCourse } from "../lib/courses";
 import { enrollInCourse } from "../lib/courses";
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "../hooks/useAuth";
 
 const videoEmbedUrl = (url) => {
   if (!url) return "";

@@ -3,7 +3,7 @@ import { Link, Navigate, useParams } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import Seo from "../components/seo/Seo";
 import { fetchProject } from "../lib/projects";
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "../hooks/useAuth";
 import { useAdminGuard } from "../hooks/useAdminGuard";
 
 export default function AdminProjectPreview() {
