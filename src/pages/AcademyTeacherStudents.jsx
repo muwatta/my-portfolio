@@ -81,9 +81,9 @@ export default function AcademyTeacherStudents() {
             <thead className="border-b border-slate-200 text-xs uppercase tracking-wide text-slate-500 dark:border-slate-800 dark:text-slate-400">
               <tr>
                 <th className="px-5 py-4">Student</th>
-                <th className="px-5 py-4">Current level</th>
+                <th className="px-5 py-4">Current course</th>
                 <th className="px-5 py-4">Profile updated</th>
-                <th className="px-5 py-4">Assign level</th>
+                <th className="px-5 py-4">Assign course</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -93,28 +93,28 @@ export default function AcademyTeacherStudents() {
                     {student.display_name || "Unnamed student"}
                   </td>
                   <td className="px-5 py-4 text-slate-600 dark:text-slate-300">
-                    {student.academy_levels?.name || "Unassigned"}
+                    {student.academy_courses?.title || "Unassigned"}
                   </td>
                   <td className="px-5 py-4 text-slate-600 dark:text-slate-300">
                     {new Date(student.updated_at).toLocaleDateString()}
                   </td>
                   <td className="px-5 py-4">
-                    <label className="sr-only" htmlFor={`level-${student.id}`}>
-                      Assign level to {student.display_name || "student"}
+                    <label className="sr-only" htmlFor={`course-${student.id}`}>
+                      Assign course to {student.display_name || "student"}
                     </label>
                     <select
-                      id={`level-${student.id}`}
+                      id={`course-${student.id}`}
                       className="field min-w-44"
-                      value={student.level_id || ""}
+                      value={student.current_course_id || ""}
                       disabled={savingId === student.id}
                       onChange={(event) =>
                         handleLevelChange(student.id, event.target.value)
                       }
                     >
                       <option value="">Unassigned</option>
-                      {data.levels.map((level) => (
-                        <option key={level.id} value={level.id}>
-                          {level.name}
+                      {data.levels.map((course) => (
+                        <option key={course.id} value={course.id}>
+                          {course.title}
                         </option>
                       ))}
                     </select>

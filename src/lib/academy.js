@@ -1,7 +1,5 @@
 import { supabase } from "./supabase";
 
-const DEFAULT_PROGRAMMING_COURSE_SLUG = "python-for-ai-machine-learning";
-
 const lessonSelect =
   "id, title, slug, lesson_number, objectives, content, academy_weeks!inner(id, week_number, title, academy_courses!inner(id, slug, title, duration_weeks))";
 
@@ -279,7 +277,9 @@ export async function getAcademyTeacherAnalytics() {
   ] = await Promise.all([
     supabase
       .from("academy_profiles")
-      .select("id, display_name, current_course_id, academy_courses!current_course_id(title, slug)")
+      .select(
+        "id, display_name, current_course_id, academy_courses!current_course_id(title, slug)",
+      )
       .eq("role", "student"),
     supabase
       .from("academy_learning_sessions")
@@ -492,7 +492,6 @@ export async function saveAcademyCourse(course) {
     description: course.description.trim(),
     duration_weeks: Number(course.duration_weeks),
     subject_id: course.subject_id || null,
-),
     published: Boolean(course.published),
   };
   const query = course.id
@@ -584,7 +583,6 @@ export async function scheduleAcademyLesson(schedule) {
     .from("academy_schedules")
     .insert({
       course_id: schedule.course_id,
-      level_id: schedule.level_id || null,
       lesson_id: schedule.lesson_id,
       activity_type: "lesson",
       title: schedule.title.trim(),
@@ -601,13 +599,15 @@ export async function scheduleAcademyLesson(schedule) {
   return { data, error };
 }
 
-export async function assignAcademyStudentLevel(studentId, levelId) {
+export async function assignAcademyStudentLevel(studentId, courseId) {
   if (!supabase)
     return { data: null, error: new Error("Academy is not configured.") };
-  const { data, error } = await supabase.rpc("academy_assign_student_level", {
-    target_student_id: studentId,
-    target_course_id: levelId || null,
-  });
+  const { data, error } = await supabase
+    .from("academy_profiles")
+    .update({ current_course_id: courseId || null })
+    .eq("id", studentId)
+    .select("id, current_course_id")
+    .single();
   return { data, error };
 }
 
@@ -688,23 +688,22 @@ export async function getAcademyLesson(id, studentId) {
     .maybeSingle();
   if (error || !data) return { data, error, configured: true };
 
-  const [{ data: exercises }, { data: progress }] =
-    await Promise.all([
-      supabase
-        .from("academy_exercises")
-        .select(
-          "id, lesson_id, title, instructions, starter_code, difficulty, expected_concepts, hints, explanation",
-        )
-        .eq("lesson_id", id),
-      studentId
-        ? supabase
-            .from("academy_lesson_progress")
-            .select("lesson_id, completed_at")
-            .eq("lesson_id", id)
-            .eq("student_id", studentId)
-            .maybeSingle()
-        : Promise.resolve({ data: null }),
-    ]);
+  const [{ data: exercises }, { data: progress }] = await Promise.all([
+    supabase
+      .from("academy_exercises")
+      .select(
+        "id, lesson_id, title, instructions, starter_code, difficulty, expected_concepts, hints, explanation",
+      )
+      .eq("lesson_id", id),
+    studentId
+      ? supabase
+          .from("academy_lesson_progress")
+          .select("lesson_id, completed_at")
+          .eq("lesson_id", id)
+          .eq("student_id", studentId)
+          .maybeSingle()
+      : Promise.resolve({ data: null }),
+  ]);
 
   return {
     data: { ...data, exercises: exercises ?? [], progress: progress ?? null },

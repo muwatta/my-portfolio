@@ -43,13 +43,15 @@ export default function AcademyAdminStudentProfile() {
         <>
           <section className="grid gap-4 sm:grid-cols-2">
             <div className="border-l-4 border-cyan-400 bg-white p-5 dark:bg-slate-900">
-              <p className="text-sm text-slate-500">Level</p>
+              <p className="text-sm text-slate-500">Current course</p>
               <p className="mt-2 text-xl font-bold">
-                {profile?.academy_levels?.name || "Unassigned"}
+                {profile?.academy_courses?.title ||
+                  overview?.enrollment?.academy_courses?.title ||
+                  "Unassigned"}
               </p>
             </div>
             <div className="border-l-4 border-cyan-400 bg-white p-5 dark:bg-slate-900">
-              <p className="text-sm text-slate-500">Course</p>
+              <p className="text-sm text-slate-500">Enrollment</p>
               <p className="mt-2 text-xl font-bold">
                 {overview?.enrollment?.academy_courses?.title || "Not enrolled"}
               </p>

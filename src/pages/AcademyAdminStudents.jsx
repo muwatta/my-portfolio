@@ -12,7 +12,7 @@ export default function AcademyAdminStudents() {
   const [message, setMessage] = useState("");
   const [stateFilter, setStateFilter] = useState("");
   const [schoolFilter, setSchoolFilter] = useState("");
-  const [levelFilter, setLevelFilter] = useState("");
+  const [courseFilter, setCourseFilter] = useState("");
   const [refreshing, setRefreshing] = useState(false);
   const [lastUpdated, setLastUpdated] = useState(null);
   const load = useCallback(async (background = false) => {
@@ -33,9 +33,9 @@ export default function AcademyAdminStudents() {
       window.removeEventListener("focus", refresh);
     };
   }, [load]);
-  async function changeLevel(studentId, levelId) {
-    const { error } = await assignAcademyStudentLevel(studentId, levelId);
-    setMessage(error?.message || "Student level updated.");
+  async function changeCourse(studentId, courseId) {
+    const { error } = await assignAcademyStudentLevel(studentId, courseId);
+    setMessage(error?.message || "Student course updated.");
     if (!error) await load();
   }
   const students = data.students.filter((student) => {
@@ -44,7 +44,7 @@ export default function AcademyAdminStudents() {
       searchText.toLowerCase().includes(search.toLowerCase()) &&
       (!stateFilter || student.state === stateFilter) &&
       (!schoolFilter || student.school_id === schoolFilter) &&
-      (!levelFilter || student.level_id === levelFilter)
+      (!courseFilter || student.current_course_id === courseFilter)
     );
   });
   const states = ["Plateau", "Kwara", "Lagos", "Abuja", "Other"];
@@ -70,12 +70,19 @@ export default function AcademyAdminStudents() {
                 : "Loading registered students..."}
             </p>
           </div>
-          <button type="button" className="button-secondary" onClick={() => load(true)} disabled={refreshing}>
+          <button
+            type="button"
+            className="button-secondary"
+            onClick={() => load(true)}
+            disabled={refreshing}
+          >
             {refreshing ? "Refreshing..." : "Refresh students"}
           </button>
         </div>
         <p className="text-xs text-slate-500 dark:text-slate-400">
-          {lastUpdated ? `Updated ${lastUpdated.toLocaleTimeString()} · Auto-refreshes every 30 seconds` : "Loading latest students..."}
+          {lastUpdated
+            ? `Updated ${lastUpdated.toLocaleTimeString()} · Auto-refreshes every 30 seconds`
+            : "Loading latest students..."}
         </p>
       </header>
       {message && (
@@ -120,14 +127,14 @@ export default function AcademyAdminStudents() {
         </select>
         <select
           className="field"
-          aria-label="Filter by level"
-          value={levelFilter}
-          onChange={(event) => setLevelFilter(event.target.value)}
+          aria-label="Filter by current course"
+          value={courseFilter}
+          onChange={(event) => setCourseFilter(event.target.value)}
         >
-          <option value="">All levels</option>
+          <option value="">All courses</option>
           {levels.map((level) => (
             <option key={level.id} value={level.id}>
-              {level.name}
+              {level.title}
             </option>
           ))}
         </select>
@@ -173,18 +180,18 @@ export default function AcademyAdminStudents() {
                 </div>
                 <div className="mt-4 grid gap-3 sm:grid-cols-2">
                   <label className="label text-xs">
-                    Level
+                    Current course
                     <select
                       className="field mt-1"
-                      value={student.level_id || ""}
+                      value={student.current_course_id || ""}
                       onChange={(event) =>
-                        changeLevel(student.id, event.target.value)
+                        changeCourse(student.id, event.target.value)
                       }
                     >
                       <option value="">Unassigned</option>
                       {data.levels.map((level) => (
                         <option key={level.id} value={level.id}>
-                          {level.name}
+                          {level.title}
                         </option>
                       ))}
                     </select>
@@ -225,15 +232,15 @@ export default function AcademyAdminStudents() {
                     <td className="px-5 py-4">
                       <select
                         className="field"
-                        value={student.level_id || ""}
+                        value={student.current_course_id || ""}
                         onChange={(event) =>
-                          changeLevel(student.id, event.target.value)
+                          changeCourse(student.id, event.target.value)
                         }
                       >
                         <option value="">Unassigned</option>
                         {data.levels.map((level) => (
                           <option key={level.id} value={level.id}>
-                            {level.name}
+                            {level.title}
                           </option>
                         ))}
                       </select>
