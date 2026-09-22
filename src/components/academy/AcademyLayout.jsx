@@ -115,22 +115,12 @@ export default function AcademyLayout() {
   }, [isStudent, pathname, user.id]);
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
+    <div className="flex min-h-screen flex-col bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
       <header className="border-b border-slate-200 bg-white/95 dark:border-slate-800 dark:bg-slate-950/95">
         <div className="mx-auto flex min-h-20 max-w-7xl items-center gap-2 px-4 py-3 sm:gap-4 sm:px-6">
-          <button
-            type="button"
-            className="order-first grid h-10 w-10 shrink-0 place-items-center rounded-lg border border-slate-200 text-slate-700 hover:border-blue-400 hover:text-blue-600 lg:hidden dark:border-slate-700 dark:text-slate-200"
-            onClick={() => setNavigationOpen((open) => !open)}
-            aria-label={navigationOpen ? "Close Academy navigation" : "Open Academy navigation"}
-            aria-expanded={navigationOpen}
-            aria-controls="academy-navigation"
-          >
-            {navigationOpen ? <FiX aria-hidden="true" /> : <FiMenu aria-hidden="true" />}
-          </button>
           <Link
             to={isAdmin ? "/academy/admin" : "/academy/dashboard"}
-            className="order-2 flex min-w-0 shrink-0 items-center gap-3 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-950 sm:order-none"
+            className="flex min-w-0 shrink-0 items-center gap-3 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-950"
             aria-label="Academy dashboard"
           >
             <span className="grid h-9 w-9 place-items-center rounded-lg bg-blue-600 text-sm font-bold text-white">
@@ -145,20 +135,7 @@ export default function AcademyLayout() {
               </span>
             </span>
           </Link>
-          <div className="order-3 ml-auto grid grid-cols-[auto_auto] items-center gap-2 sm:order-none sm:flex sm:min-w-0 sm:items-center sm:gap-3">
-            <button
-              type="button"
-              className="button-secondary grid min-h-9 min-w-9 place-items-center px-2 py-1.5"
-              onClick={toggle}
-              aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
-              title={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
-            >
-              {theme === "dark" ? (
-                <FiSun aria-hidden="true" />
-              ) : (
-                <FiMoon aria-hidden="true" />
-              )}
-            </button>
+          <div className="ml-auto flex min-w-0 items-center gap-2">
             <span className="hidden min-w-0 max-w-[12rem] text-right sm:block sm:max-w-[14rem]">
               <span className="hidden truncate text-sm text-slate-600 dark:text-slate-300 sm:block">
                 {displayName}
@@ -167,12 +144,33 @@ export default function AcademyLayout() {
                 {accessLabel}
               </span>
             </span>
+            <div className="hidden items-center gap-2 lg:flex">
+              <button
+                type="button"
+                className="button-secondary grid min-h-9 min-w-9 place-items-center px-2 py-1.5"
+                onClick={toggle}
+                aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
+                title={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
+              >
+                {theme === "dark" ? <FiSun aria-hidden="true" /> : <FiMoon aria-hidden="true" />}
+              </button>
+              <button
+                type="button"
+                className="button-secondary min-h-9 px-3 py-1.5 text-sm"
+                onClick={signOut}
+              >
+                Sign out
+              </button>
+            </div>
             <button
               type="button"
-              className="button-secondary min-h-9 shrink-0 justify-center px-2 py-1.5 text-xs sm:px-3 sm:text-sm"
-              onClick={signOut}
+              className="grid h-10 w-10 shrink-0 place-items-center rounded-lg border border-slate-200 text-slate-700 hover:border-blue-400 hover:text-blue-600 lg:hidden dark:border-slate-700 dark:text-slate-200"
+              onClick={() => setNavigationOpen((open) => !open)}
+              aria-label={navigationOpen ? "Close Academy navigation" : "Open Academy navigation"}
+              aria-expanded={navigationOpen}
+              aria-controls="academy-navigation"
             >
-              Sign out
+              {navigationOpen ? <FiX aria-hidden="true" /> : <FiMenu aria-hidden="true" />}
             </button>
           </div>
         </div>
@@ -185,7 +183,7 @@ export default function AcademyLayout() {
           onClick={() => setNavigationOpen(false)}
         />
       )}
-      <div className="mx-auto flex max-w-7xl flex-col gap-6 px-4 py-6 sm:px-6 lg:flex-row">
+      <div className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-6 px-4 py-6 sm:px-6 lg:flex-row">
         <nav
           id="academy-navigation"
           aria-label="Academy navigation"
@@ -211,12 +209,35 @@ export default function AcademyLayout() {
             </NavLink>
           ))}
           </div>
+          <div className="mt-6 border-t border-slate-200 pt-4 dark:border-slate-800 lg:hidden">
+            <div className="mb-3 flex items-center justify-between gap-3">
+              <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+                Appearance
+              </span>
+              <button
+                type="button"
+                className="button-secondary grid min-h-9 min-w-9 place-items-center px-2 py-1.5"
+                onClick={toggle}
+                aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
+                title={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
+              >
+                {theme === "dark" ? <FiSun aria-hidden="true" /> : <FiMoon aria-hidden="true" />}
+              </button>
+            </div>
+            <button
+              type="button"
+              className="button-secondary w-full justify-center"
+              onClick={signOut}
+            >
+              Sign out
+            </button>
+          </div>
         </nav>
         <main className="min-w-0 flex-1">
           <Outlet />
         </main>
       </div>
-      <footer className="mt-10 border-t border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950">
+      <footer className="mt-auto border-t border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950">
         <div className="mx-auto grid max-w-7xl gap-6 px-4 py-8 sm:grid-cols-[1fr_auto] sm:items-end sm:px-6">
           <div>
             <p className="text-sm font-bold text-slate-800 dark:text-slate-100">
