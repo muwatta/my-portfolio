@@ -32,9 +32,10 @@ export default function AcademyHome() {
             Learn. Build. Practice. Grow.
           </h1>
           <p className="mt-5 max-w-xl text-lg leading-8 text-slate-300">
-            A practical learning environment for students developing skills in
-            programming, backend engineering, C++, embedded systems, Python,
-            artificial intelligence, machine learning, and digital technology.
+            A practical learning environment focused first on Python for
+            artificial intelligence and machine learning, alongside C++ for
+            embedded systems. PictoBlox can support introductory activities as
+            the curriculum expands.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
             <Link
@@ -58,7 +59,7 @@ export default function AcademyHome() {
           </div>
         </div>
         <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
-          {["11-week path", "Practical code", "Clear progress"].map((item) => (
+          {["Python for AI/ML", "C++ for embedded systems", "Assignment submissions"].map((item) => (
             <div
               key={item}
               className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900"
