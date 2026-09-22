@@ -61,7 +61,7 @@ export default function AcademyTeacherAnalytics() {
               <thead className="border-b border-slate-200 text-xs uppercase text-slate-500 dark:border-slate-800">
                 <tr>
                   <th className="px-5 py-4">Student</th>
-                  <th className="px-5 py-4">Level</th>
+                  <th className="px-5 py-4">Current course</th>
                   <th className="px-5 py-4">Learning time</th>
                   <th className="px-5 py-4">Lessons complete</th>
                   <th className="px-5 py-4">Last active</th>
@@ -74,7 +74,7 @@ export default function AcademyTeacherAnalytics() {
                       {student.display_name || "Unnamed student"}
                     </td>
                     <td className="px-5 py-4">
-                      {student.academy_levels?.name || "Unassigned"}
+                      {student.academy_courses?.title || "Unassigned"}
                     </td>
                     <td className="px-5 py-4">
                       {Math.floor(student.activity.seconds / 3600)}h{" "}

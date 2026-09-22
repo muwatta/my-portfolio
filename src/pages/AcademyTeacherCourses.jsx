@@ -12,7 +12,6 @@ const emptyCourse = {
   description: "",
   duration_weeks: 11,
   subject_id: "",
-  level_id: "",
   published: false,
 };
 
@@ -67,7 +66,7 @@ export default function AcademyTeacherCourses() {
         </p>
         <h1 className="mt-2 text-3xl font-bold tracking-tight">Courses</h1>
         <p className="mt-2 max-w-2xl text-slate-600 dark:text-slate-300">
-          Create and publish level-aware learning paths. Lessons and weeks can
+          Create and publish course-based learning paths. Lessons and weeks can
           be added after the course exists.
         </p>
       </header>
@@ -133,23 +132,6 @@ export default function AcademyTeacherCourses() {
             </select>
           </label>
           <label className="label">
-            Level
-            <select
-              className="field"
-              name="level_id"
-              value={form.level_id}
-              onChange={updateField}
-              required
-            >
-              <option value="">Select level</option>
-              {options.levels.map((item) => (
-                <option key={item.id} value={item.id}>
-                  {item.name}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="label">
             Duration in weeks
             <input
               className="field"
@@ -202,7 +184,7 @@ export default function AcademyTeacherCourses() {
               <p className="font-bold">{course.title}</p>
               <p className="text-sm text-slate-500">
                 {course.academy_subjects?.name || "No subject"} ·{" "}
-                {course.academy_levels?.name || "No level"}
+                {course.course_family || "General"}
               </p>
             </div>
             <span className="text-sm font-semibold">
