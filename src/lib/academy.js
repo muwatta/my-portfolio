@@ -1,11 +1,44 @@
 import { supabase } from "./supabase";
 
-const COURSE_SLUG = "python-for-ai-machine-learning";
+const DEFAULT_PROGRAMMING_COURSE_SLUG = "python-for-ai-machine-learning";
 
 const lessonSelect =
   "id, title, slug, lesson_number, objectives, content, academy_weeks!inner(id, week_number, title, academy_courses!inner(id, slug, title, duration_weeks))";
 
 const unavailable = (data = null) => ({ data, error: null, configured: false });
+
+async function getActiveCourseForStudent(studentId) {
+  if (!supabase || !studentId) return null;
+
+  const { data: profileData } = await supabase
+    .from("academy_profiles")
+    .select("current_course_id")
+    .eq("id", studentId)
+    .maybeSingle();
+
+  if (profileData?.current_course_id) {
+    const { data: courseData } = await supabase
+      .from("academy_courses")
+      .select("id, slug, title, description, duration_weeks")
+      .eq("id", profileData.current_course_id)
+      .maybeSingle();
+
+    return courseData ?? null;
+  }
+
+  const { data: enrollmentData } = await supabase
+    .from("academy_enrollments")
+    .select(
+      "course_id, academy_courses(id, slug, title, description, duration_weeks)",
+    )
+    .eq("student_id", studentId)
+    .eq("status", "active")
+    .order("enrolled_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  return enrollmentData?.academy_courses ?? null;
+}
 
 export async function getAcademyStudentOverview(studentId) {
   if (!supabase) return unavailable(null);
@@ -19,7 +52,7 @@ export async function getAcademyStudentOverview(studentId) {
     supabase
       .from("academy_enrollments")
       .select(
-        "id, status, enrolled_at, academy_courses(id, slug, title, duration_weeks, academy_subjects(name), academy_levels(name))",
+        "id, status, enrolled_at, academy_courses(id, slug, title, duration_weeks, academy_subjects(name), course_family)",
       )
       .eq("student_id", studentId)
       .eq("status", "active"),
@@ -67,7 +100,7 @@ export async function getAcademyCourses() {
   const { data, error } = await supabase
     .from("academy_courses")
     .select(
-      "id, slug, title, description, duration_weeks, academy_subjects(name, slug), academy_levels(name, slug)",
+      "id, slug, title, description, duration_weeks, academy_subjects(name, slug), course_family, is_programming_course",
     )
     .eq("published", true)
     .order("title");
@@ -196,14 +229,14 @@ export async function getAcademyTeacherStudents() {
     supabase
       .from("academy_profiles")
       .select(
-        "id, display_name, role, level_id, school_id, state, city, student_level, updated_at, academy_levels(id, name, slug), academy_schools(id, name, code, state, city)",
+        "id, display_name, role, current_course_id, school_id, state, city, student_level, updated_at, academy_courses!current_course_id(id, slug, title), academy_schools(id, name, code, state, city)",
       )
       .eq("role", "student")
       .order("display_name"),
     supabase
-      .from("academy_levels")
-      .select("id, name, slug")
-      .eq("active", true)
+      .from("academy_courses")
+      .select("id, slug, title")
+      .eq("is_active", true)
       .order("sort_order"),
     supabase
       .from("academy_learning_sessions")
@@ -246,7 +279,7 @@ export async function getAcademyTeacherAnalytics() {
   ] = await Promise.all([
     supabase
       .from("academy_profiles")
-      .select("id, display_name, level_id, academy_levels(name)")
+      .select("id, display_name, current_course_id, academy_courses!current_course_id(title, slug)")
       .eq("role", "student"),
     supabase
       .from("academy_learning_sessions")
@@ -302,7 +335,7 @@ export async function getAcademyAdminOverview() {
     supabase
       .from("academy_profiles")
       .select(
-        "id, display_name, role, level_id, updated_at, academy_levels(name)",
+        "id, display_name, role, current_course_id, updated_at, academy_courses!current_course_id(title, slug)",
       ),
     supabase.from("academy_courses").select("id, published"),
     supabase
@@ -379,7 +412,7 @@ export async function getAcademyStudentProfile(studentId) {
     supabase
       .from("academy_profiles")
       .select(
-        "id, display_name, role, avatar_url, level_id, school_id, state, city, student_level, updated_at, academy_levels(name), academy_schools(id, name, code, state, city)",
+        "id, display_name, role, avatar_url, current_course_id, school_id, state, city, student_level, updated_at, academy_courses!current_course_id(title, slug), academy_schools(id, name, code, state, city)",
       )
       .eq("id", studentId)
       .maybeSingle(),
@@ -420,7 +453,7 @@ export async function getAcademyTeacherCourses() {
   const { data, error } = await supabase
     .from("academy_courses")
     .select(
-      "id, slug, title, description, duration_weeks, published, subject_id, level_id, academy_subjects(name), academy_levels(name)",
+      "id, slug, title, description, duration_weeks, published, subject_id, academy_subjects(name), course_family, is_programming_course",
     )
     .order("title");
   return { data: data ?? [], error, configured: true };
@@ -433,9 +466,9 @@ export async function getAcademyCourseOptions() {
     { data: subjects, error: subjectError },
   ] = await Promise.all([
     supabase
-      .from("academy_levels")
-      .select("id, name")
-      .eq("active", true)
+      .from("academy_courses")
+      .select("id, slug, title")
+      .eq("is_active", true)
       .order("sort_order"),
     supabase
       .from("academy_subjects")
@@ -459,7 +492,7 @@ export async function saveAcademyCourse(course) {
     description: course.description.trim(),
     duration_weeks: Number(course.duration_weeks),
     subject_id: course.subject_id || null,
-    level_id: course.level_id || null,
+),
     published: Boolean(course.published),
   };
   const query = course.id
@@ -467,7 +500,7 @@ export async function saveAcademyCourse(course) {
     : supabase.from("academy_courses").insert(payload);
   const { data, error } = await query
     .select(
-      "id, slug, title, description, duration_weeks, published, subject_id, level_id",
+      "id, slug, title, description, duration_weeks, published, subject_id",
     )
     .single();
   return { data, error };
@@ -573,7 +606,7 @@ export async function assignAcademyStudentLevel(studentId, levelId) {
     return { data: null, error: new Error("Academy is not configured.") };
   const { data, error } = await supabase.rpc("academy_assign_student_level", {
     target_student_id: studentId,
-    target_level_id: levelId || null,
+    target_course_id: levelId || null,
   });
   return { data, error };
 }
@@ -786,18 +819,24 @@ export async function submitAssignment({
 
 export async function getAcademyProgress(studentId) {
   if (!supabase) return { data: null, error: null, configured: false };
+
+  const activeCourse = await getActiveCourseForStudent(studentId);
+  const courseId = activeCourse?.id ?? null;
+
   const [
     { data: lessons, error: lessonsError },
     { data: progress, error: progressError },
     { count: submissions, error: submissionsError },
   ] = await Promise.all([
-    supabase
-      .from("academy_lessons")
-      .select(
-        "id, academy_weeks!inner(week_number, academy_courses!inner(slug, duration_weeks))",
-      )
-      .eq("published", true)
-      .eq("academy_weeks.academy_courses.slug", COURSE_SLUG),
+    courseId
+      ? supabase
+          .from("academy_lessons")
+          .select(
+            "id, academy_weeks!inner(week_number, course_id, academy_courses!inner(id, slug, title, duration_weeks))",
+          )
+          .eq("published", true)
+          .eq("academy_weeks.course_id", courseId)
+      : Promise.resolve({ data: [], error: null }),
     supabase
       .from("academy_lesson_progress")
       .select("lesson_id, completed_at")
@@ -808,6 +847,7 @@ export async function getAcademyProgress(studentId) {
       .select("id", { count: "exact", head: true })
       .eq("student_id", studentId),
   ]);
+
   const completedLessonIds = new Set(
     (progress ?? []).map((item) => item.lesson_id),
   );
@@ -820,6 +860,7 @@ export async function getAcademyProgress(studentId) {
         (week, lesson) => Math.max(week, lesson.academy_weeks.week_number),
         0,
       ) ?? 0;
+
   return {
     data: {
       lessonCount,
@@ -829,6 +870,7 @@ export async function getAcademyProgress(studentId) {
         : 0,
       currentWeek: Math.min(currentWeek + 1, 11),
       submissions: submissions ?? 0,
+      activeCourse: activeCourse ?? null,
     },
     error: lessonsError ?? progressError ?? submissionsError,
     configured: true,
