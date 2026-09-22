@@ -1,4 +1,5 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import { FiMenu, FiX } from "react-icons/fi";
 import { NavLink, Outlet, Link, useLocation } from "react-router-dom";
 import { useAcademyAuth } from "../../hooks/useAcademyAuth";
 import { useTheme } from "../../context/useTheme";
@@ -48,11 +49,23 @@ export default function AcademyLayout() {
     useAcademyAuth();
   const { theme, toggle } = useTheme();
   const { pathname } = useLocation();
+  const [navigationOpen, setNavigationOpen] = useState(false);
   const learningSession = useRef(null);
   const lastActivity = useRef(Date.now());
   const displayName =
     profile?.display_name || user?.email?.split("@")[0] || "Student";
   const accessLabel = isAdmin ? "Admin" : isTeacher ? "Teacher" : "Student";
+  const navigationLinks = isAdmin
+    ? adminLinks
+    : isTeacher
+      ? teacherLinks
+      : isStudent
+        ? links
+        : [];
+
+  useEffect(() => {
+    setNavigationOpen(false);
+  }, [pathname]);
 
   useEffect(() => {
     if (!isStudent) return undefined;
@@ -106,10 +119,20 @@ export default function AcademyLayout() {
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
       <header className="border-b border-slate-200 bg-white/95 dark:border-slate-800 dark:bg-slate-950/95">
-        <div className="mx-auto flex min-h-20 max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-3 sm:flex-nowrap sm:gap-4 sm:px-6">
+        <div className="mx-auto flex min-h-20 max-w-7xl items-center gap-2 px-4 py-3 sm:gap-4 sm:px-6">
+          <button
+            type="button"
+            className="order-first grid h-10 w-10 shrink-0 place-items-center rounded-lg border border-slate-200 text-slate-700 hover:border-blue-400 hover:text-blue-600 lg:hidden dark:border-slate-700 dark:text-slate-200"
+            onClick={() => setNavigationOpen((open) => !open)}
+            aria-label={navigationOpen ? "Close Academy navigation" : "Open Academy navigation"}
+            aria-expanded={navigationOpen}
+            aria-controls="academy-navigation"
+          >
+            {navigationOpen ? <FiX aria-hidden="true" /> : <FiMenu aria-hidden="true" />}
+          </button>
           <Link
             to={isAdmin ? "/academy/admin" : "/academy/dashboard"}
-            className="flex min-w-0 shrink-0 items-center gap-3 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-950"
+            className="order-2 flex min-w-0 shrink-0 items-center gap-3 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-950 sm:order-none"
             aria-label="Academy dashboard"
           >
             <span className="grid h-9 w-9 place-items-center rounded-lg bg-blue-600 text-sm font-bold text-white">
@@ -124,17 +147,17 @@ export default function AcademyLayout() {
               </span>
             </span>
           </Link>
-          <div className="flex min-w-0 flex-1 items-center justify-end gap-2 sm:flex-none sm:gap-3">
+          <div className="order-3 ml-auto grid grid-cols-[auto_auto] items-center gap-2 sm:order-none sm:flex sm:min-w-0 sm:items-center sm:gap-3">
             <button
               type="button"
-              className="button-secondary min-h-9 px-2 py-1.5 text-xs sm:px-3 sm:text-sm"
+              className="button-secondary min-h-9 justify-center px-2 py-1.5 text-xs sm:px-3 sm:text-sm"
               onClick={toggle}
               aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
               title={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
             >
               {theme === "dark" ? "Light" : "Dark"}
             </button>
-            <span className="min-w-0 max-w-[9rem] text-right sm:max-w-[14rem]">
+            <span className="hidden min-w-0 max-w-[12rem] text-right sm:block sm:max-w-[14rem]">
               <span className="hidden truncate text-sm text-slate-600 dark:text-slate-300 sm:block">
                 {displayName}
               </span>
@@ -144,7 +167,7 @@ export default function AcademyLayout() {
             </span>
             <button
               type="button"
-              className="button-secondary min-h-9 shrink-0 px-2 py-1.5 text-xs sm:px-3 sm:text-sm"
+              className="button-secondary min-h-9 shrink-0 justify-center px-2 py-1.5 text-xs sm:px-3 sm:text-sm"
               onClick={signOut}
             >
               Sign out
@@ -152,19 +175,25 @@ export default function AcademyLayout() {
           </div>
         </div>
       </header>
+      {navigationOpen && (
+        <button
+          type="button"
+          className="fixed inset-0 z-30 bg-slate-950/40 lg:hidden"
+          aria-label="Close Academy navigation"
+          onClick={() => setNavigationOpen(false)}
+        />
+      )}
       <div className="mx-auto flex max-w-7xl flex-col gap-6 px-4 py-6 sm:px-6 lg:flex-row">
         <nav
+          id="academy-navigation"
           aria-label="Academy navigation"
-          className="flex snap-x gap-1 overflow-x-auto pb-1 lg:w-52 lg:flex-col lg:gap-2 lg:overflow-visible"
+          className={`${navigationOpen ? "translate-x-0" : "-translate-x-full"} fixed inset-y-0 left-0 z-40 w-72 overflow-y-auto bg-white px-4 pb-6 pt-28 shadow-2xl transition-transform dark:bg-slate-950 lg:static lg:z-auto lg:block lg:w-52 lg:translate-x-0 lg:overflow-visible lg:bg-transparent lg:p-0 lg:shadow-none lg:transition-none`}
         >
-          {(isAdmin
-            ? adminLinks
-            : isTeacher
-              ? teacherLinks
-              : isStudent
-                ? links
-                : []
-          ).map((link) => (
+          <div className="mb-4 border-b border-slate-200 pb-4 text-xs font-semibold uppercase tracking-[0.16em] text-slate-500 dark:border-slate-800 dark:text-slate-400 lg:hidden">
+            Academy menu
+          </div>
+          <div className="flex flex-col gap-2">
+          {navigationLinks.map((link) => (
             <NavLink
               key={link.to}
               to={link.to}
@@ -179,14 +208,30 @@ export default function AcademyLayout() {
               {link.label}
             </NavLink>
           ))}
+          </div>
         </nav>
         <main className="min-w-0 flex-1">
           <Outlet />
         </main>
       </div>
-      <footer className="mt-10 w-full border-t border-slate-200 dark:border-slate-800">
-        <div className="mx-auto max-w-7xl px-4 py-6 text-xs text-slate-500 dark:text-slate-400 sm:px-6">
-          Algorise Tech Explorers (ATE) · ATE Academy · RC No. RC-8665201
+      <footer className="mt-10 border-t border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950">
+        <div className="mx-auto grid max-w-7xl gap-6 px-4 py-8 sm:grid-cols-[1fr_auto] sm:items-end sm:px-6">
+          <div>
+            <p className="text-sm font-bold text-slate-800 dark:text-slate-100">
+              ATE Academy
+            </p>
+            <p className="mt-1 max-w-md text-sm leading-6 text-slate-500 dark:text-slate-400">
+              Practical learning in Python for AI/ML and C++ for embedded systems.
+            </p>
+            <p className="mt-3 text-xs text-slate-400 dark:text-slate-500">
+              Algorise Tech Explorers (ATE) · RC No. RC-8665201
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-x-5 gap-y-2 text-sm font-semibold text-slate-600 dark:text-slate-300">
+            <Link to="/academy/dashboard" className="hover:text-blue-600">Dashboard</Link>
+            <Link to="/academy/assignments" className="hover:text-blue-600">Assignments</Link>
+            <Link to="/" className="hover:text-blue-600">Portfolio</Link>
+          </div>
         </div>
       </footer>
     </div>
