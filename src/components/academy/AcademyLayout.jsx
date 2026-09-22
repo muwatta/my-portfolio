@@ -86,7 +86,12 @@ export default function AcademyLayout() {
         activeRecently &&
         learningSession.current
       ) {
-        heartbeatAcademyLearningSession(learningSession.current.id, pathname);
+        heartbeatAcademyLearningSession(
+          learningSession.current.id,
+          pathname,
+          "visible",
+          true,
+        );
       }
     }, 30000);
     const recordVisibleTime = () => {
@@ -95,7 +100,12 @@ export default function AcademyLayout() {
         return;
       }
       if (learningSession.current) {
-        heartbeatAcademyLearningSession(learningSession.current.id, pathname);
+        heartbeatAcademyLearningSession(
+          learningSession.current.id,
+          pathname,
+          "hidden",
+          false,
+        );
       }
     };
     document.addEventListener("visibilitychange", recordVisibleTime);
@@ -105,7 +115,13 @@ export default function AcademyLayout() {
       window.clearInterval(heartbeat);
       document.removeEventListener("visibilitychange", recordVisibleTime);
       if (learningSession.current) {
-        heartbeatAcademyLearningSession(learningSession.current.id, pathname);
+        heartbeatAcademyLearningSession(
+          learningSession.current.id,
+          pathname,
+          document.visibilityState === "visible" ? "visible" : "hidden",
+          document.visibilityState === "visible" &&
+            Date.now() - lastActivity.current <= 60000,
+        );
       }
       activityEvents.forEach((eventName) =>
         window.removeEventListener(eventName, markActivity),
@@ -152,7 +168,11 @@ export default function AcademyLayout() {
                 aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
                 title={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
               >
-                {theme === "dark" ? <FiSun aria-hidden="true" /> : <FiMoon aria-hidden="true" />}
+                {theme === "dark" ? (
+                  <FiSun aria-hidden="true" />
+                ) : (
+                  <FiMoon aria-hidden="true" />
+                )}
               </button>
               <button
                 type="button"
@@ -166,11 +186,19 @@ export default function AcademyLayout() {
               type="button"
               className="grid h-10 w-10 shrink-0 place-items-center rounded-lg border border-slate-200 text-slate-700 hover:border-blue-400 hover:text-blue-600 lg:hidden dark:border-slate-700 dark:text-slate-200"
               onClick={() => setNavigationOpen((open) => !open)}
-              aria-label={navigationOpen ? "Close Academy navigation" : "Open Academy navigation"}
+              aria-label={
+                navigationOpen
+                  ? "Close Academy navigation"
+                  : "Open Academy navigation"
+              }
               aria-expanded={navigationOpen}
               aria-controls="academy-navigation"
             >
-              {navigationOpen ? <FiX aria-hidden="true" /> : <FiMenu aria-hidden="true" />}
+              {navigationOpen ? (
+                <FiX aria-hidden="true" />
+              ) : (
+                <FiMenu aria-hidden="true" />
+              )}
             </button>
           </div>
         </div>
@@ -193,21 +221,21 @@ export default function AcademyLayout() {
             Academy menu
           </div>
           <div className="flex flex-col gap-1.5">
-          {navigationLinks.map((link) => (
-            <NavLink
-              key={link.to}
-              to={link.to}
-              className={({ isActive }) =>
-                `snap-start whitespace-nowrap rounded-lg px-2.5 py-2 text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-950 sm:px-3 sm:text-sm ${
-                  isActive
-                    ? "bg-blue-600 text-white"
-                    : "text-slate-600 hover:bg-slate-200 dark:text-slate-300 dark:hover:bg-slate-800"
-                }`
-              }
-            >
-              {link.label}
-            </NavLink>
-          ))}
+            {navigationLinks.map((link) => (
+              <NavLink
+                key={link.to}
+                to={link.to}
+                className={({ isActive }) =>
+                  `snap-start whitespace-nowrap rounded-lg px-2.5 py-2 text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-950 sm:px-3 sm:text-sm ${
+                    isActive
+                      ? "bg-blue-600 text-white"
+                      : "text-slate-600 hover:bg-slate-200 dark:text-slate-300 dark:hover:bg-slate-800"
+                  }`
+                }
+              >
+                {link.label}
+              </NavLink>
+            ))}
           </div>
           <div className="mt-6 border-t border-slate-200 pt-4 dark:border-slate-800 lg:hidden">
             <div className="mb-3 flex items-center justify-between gap-3">
@@ -221,7 +249,11 @@ export default function AcademyLayout() {
                 aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
                 title={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
               >
-                {theme === "dark" ? <FiSun aria-hidden="true" /> : <FiMoon aria-hidden="true" />}
+                {theme === "dark" ? (
+                  <FiSun aria-hidden="true" />
+                ) : (
+                  <FiMoon aria-hidden="true" />
+                )}
               </button>
             </div>
             <button
@@ -244,16 +276,23 @@ export default function AcademyLayout() {
               ATE Academy
             </p>
             <p className="mt-1 max-w-md text-sm leading-6 text-slate-500 dark:text-slate-400">
-              Practical learning in Python for AI/ML and C++ for embedded systems.
+              Practical learning in Python for AI/ML and C++ for embedded
+              systems.
             </p>
             <p className="mt-3 text-xs text-slate-400 dark:text-slate-500">
               Algorise Tech Explorers (ATE) · RC No. RC-8665201
             </p>
           </div>
           <div className="flex flex-wrap gap-x-5 gap-y-2 text-sm font-semibold text-slate-600 dark:text-slate-300">
-            <Link to="/academy/dashboard" className="hover:text-blue-600">Dashboard</Link>
-            <Link to="/academy/assignments" className="hover:text-blue-600">Assignments</Link>
-            <Link to="/" className="hover:text-blue-600">Portfolio</Link>
+            <Link to="/academy/dashboard" className="hover:text-blue-600">
+              Dashboard
+            </Link>
+            <Link to="/academy/assignments" className="hover:text-blue-600">
+              Assignments
+            </Link>
+            <Link to="/" className="hover:text-blue-600">
+              Portfolio
+            </Link>
           </div>
         </div>
       </footer>

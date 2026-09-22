@@ -192,9 +192,22 @@ export default function AcademyAssignment() {
               )}
               {result?.ai_feedback && (
                 <p className="mt-2 text-sm text-cyan-700 dark:text-cyan-300">
-                  AI feedback: {result.ai_feedback}
+                  AI feedback:{" "}
+                  {typeof result.ai_feedback === "string"
+                    ? result.ai_feedback
+                    : result.ai_feedback.text ||
+                      JSON.stringify(result.ai_feedback)}
                 </p>
               )}
+              {!result?.ai_feedback &&
+                result?.ai_feedback_status &&
+                result.ai_feedback_status !== "available" && (
+                  <p className="mt-2 text-sm text-slate-500">
+                    Supplemental AI feedback unavailable (
+                    {result.ai_feedback_status}); the deterministic result
+                    remains authoritative.
+                  </p>
+                )}
             </div>
           );
         })}
