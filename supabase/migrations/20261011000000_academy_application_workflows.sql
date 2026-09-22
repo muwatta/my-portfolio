@@ -94,15 +94,17 @@ begin
 
   insert into public.academy_submission_results (
     submission_id, assignment_id, student_id, objective_score, objective_status,
-    final_score, teacher_feedback, ai_feedback, ai_feedback_status
+     final_score, score, max_score, teacher_feedback, ai_feedback, ai_feedback_status
   ) values (
     submission_row.id, submission_row.assignment_id, submission_row.student_id,
     target_objective_score,
     case when target_objective_score >= 70 then 'passed' when target_objective_score > 0 then 'partial' else 'failed' end,
-    target_final_score, target_teacher_feedback, target_ai_feedback, target_ai_feedback_status
+    target_final_score, coalesce(target_final_score, target_objective_score), 100, target_teacher_feedback,
+    case when target_ai_feedback is null then null else to_jsonb(target_ai_feedback) end,
+    target_ai_feedback_status
   ) on conflict (submission_id) do update set
     objective_score = excluded.objective_score, objective_status = excluded.objective_status,
-    final_score = excluded.final_score, teacher_feedback = excluded.teacher_feedback,
+     final_score = excluded.final_score, score = excluded.score, max_score = excluded.max_score, teacher_feedback = excluded.teacher_feedback,
     ai_feedback = excluded.ai_feedback, ai_feedback_status = excluded.ai_feedback_status,
     updated_at = now()
   returning * into result_row;

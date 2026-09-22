@@ -44,6 +44,11 @@ begin
       last_route = p_route,
       visibility_state = coalesce(p_visibility_state, visibility_state),
       is_active = coalesce(p_active, is_active),
+      active_seconds = coalesce(active_seconds, 0) + case
+        when coalesce(p_active, false) and coalesce(p_visibility_state, visibility_state) = 'visible'
+          then greatest(0, least(inactivity_threshold_seconds, extract(epoch from (now() - v_session.last_heartbeat_at))::integer))
+        else 0
+      end,
       updated_at = now()
   where id = p_session_id;
 

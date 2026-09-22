@@ -248,15 +248,11 @@ export async function markProjectMilestoneComplete(
   notes = "",
 ) {
   if (!supabase) return { error: new Error("Academy is not configured.") };
-  const { error } = await supabase.from("academy_project_progress").upsert(
-    {
-      milestone_id: milestoneId,
-      student_id: studentId,
-      completed_at: new Date().toISOString(),
-      notes,
-    },
-    { onConflict: "milestone_id,student_id" },
-  );
+  if (!studentId) return { error: new Error("Authentication required.") };
+  const { error } = await supabase.rpc("academy_complete_project_milestone", {
+    target_milestone_id: milestoneId,
+    target_notes: notes,
+  });
   return { error };
 }
 
@@ -661,11 +657,21 @@ export async function startAcademyLearningSession(route) {
   });
 }
 
-export async function heartbeatAcademyLearningSession(sessionId, route) {
+export async function heartbeatAcademyLearningSession(
+  sessionId,
+  route,
+  visibilityState = "visible",
+  active = true,
+) {
   if (!supabase) return { error: new Error("Academy is not configured.") };
   const { data, error } = await supabase.rpc(
-    "academy_record_learning_heartbeat",
-    { target_session_id: sessionId, target_route: route },
+    "academy_heartbeat_learning_session",
+    {
+      p_session_id: sessionId,
+      p_route: route,
+      p_visibility_state: visibilityState,
+      p_active: active,
+    },
   );
   return { data, error };
 }
@@ -712,13 +718,10 @@ export async function getAcademyLessons(studentId) {
 
 export async function markLessonStarted(lessonId, studentId) {
   if (!supabase) return { error: new Error("Academy is not configured.") };
-  const { error } = await supabase.from("academy_lesson_progress").upsert(
-    {
-      lesson_id: lessonId,
-      student_id: studentId,
-    },
-    { onConflict: "lesson_id,student_id", ignoreDuplicates: false },
-  );
+  if (!studentId) return { error: new Error("Authentication required.") };
+  const { error } = await supabase.rpc("academy_start_lesson", {
+    target_lesson_id: lessonId,
+  });
   return { error };
 }
 
@@ -771,15 +774,10 @@ export async function getAcademyLesson(id, studentId) {
 
 export async function markLessonComplete(lessonId, studentId) {
   if (!supabase) return { error: new Error("Academy is not configured.") };
-  const { error } = await supabase.from("academy_lesson_progress").upsert(
-    {
-      lesson_id: lessonId,
-      student_id: studentId,
-      completed_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    },
-    { onConflict: "lesson_id,student_id" },
-  );
+  if (!studentId) return { error: new Error("Authentication required.") };
+  const { error } = await supabase.rpc("academy_complete_lesson", {
+    target_lesson_id: lessonId,
+  });
   return { error };
 }
 
@@ -954,6 +952,24 @@ export async function gradeAcademySubmission({
     target_ai_feedback: aiFeedback || null,
     target_ai_feedback_status: aiFeedbackStatus,
   });
+  return { data, error };
+}
+
+export async function requestAcademyAiFeedback(
+  submissionId,
+  deterministicFeedback = null,
+) {
+  if (!supabase)
+    return { data: null, error: new Error("Academy is not configured.") };
+  const { data, error } = await supabase.functions.invoke(
+    "academy-ai-feedback",
+    {
+      body: {
+        submission_id: submissionId,
+        deterministic_feedback: deterministicFeedback,
+      },
+    },
+  );
   return { data, error };
 }
 

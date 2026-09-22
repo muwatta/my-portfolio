@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import {
   getAcademyTeacherSubmissions,
   gradeAcademySubmission,
+  requestAcademyAiFeedback,
 } from "../lib/academy";
 
 export default function AcademyTeacherSubmissions() {
@@ -45,11 +46,20 @@ export default function AcademyTeacherSubmissions() {
       aiFeedback: form.aiFeedback,
       aiFeedbackStatus: form.aiFeedback ? "available" : "disabled",
     });
-    setNotice(
-      error
-        ? error.message
-        : "Grade saved and the learner can now see the result.",
-    );
+    if (!error && !form.aiFeedback) {
+      const aiResult = await requestAcademyAiFeedback(submission.id);
+      setNotice(
+        aiResult.error
+          ? `Grade saved. AI feedback is unavailable: ${aiResult.error.message}`
+          : `Grade saved. AI feedback status: ${aiResult.data?.ai_feedback_status ?? "unavailable"}.`,
+      );
+    } else {
+      setNotice(
+        error
+          ? error.message
+          : "Grade saved and the learner can now see the result.",
+      );
+    }
     setGradingId("");
     if (!error) await load();
   }
