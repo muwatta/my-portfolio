@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Helmet } from "react-helmet-async";
 import { Link, Navigate } from "react-router-dom";
 import { FiPlus, FiTrash2 } from "react-icons/fi";
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "../hooks/useAuth";
 import { useAdminGuard } from "../hooks/useAdminGuard";
 import {
   courseStatusValues,

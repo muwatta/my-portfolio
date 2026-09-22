@@ -1,14 +1,27 @@
 import { useEffect, useState } from "react";
-import { getAcademyLeaderboard } from "../lib/academy";
+import { getAcademyWeeklyLeaderboard } from "../lib/academy";
+import { supabase } from "../lib/supabase";
 
 export default function AcademyLeaderboard() {
   const [rows, setRows] = useState([]);
   const [state, setState] = useState("loading");
   useEffect(() => {
-    getAcademyLeaderboard().then(({ data, error, configured }) => {
+    getAcademyWeeklyLeaderboard().then(({ data, error, configured }) => {
       setRows(data ?? []);
       setState(error ? "error" : configured ? "ready" : "unconfigured");
     });
+    if (!supabase) return undefined;
+    const channel = supabase
+      .channel("academy-weekly-leaderboard")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "academy_leaderboard_points" },
+        () => {
+          getAcademyWeeklyLeaderboard().then(({ data }) => setRows(data ?? []));
+        },
+      )
+      .subscribe();
+    return () => supabase.removeChannel(channel);
   }, []);
   return (
     <div className="space-y-8">
@@ -49,7 +62,9 @@ export default function AcademyLeaderboard() {
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
               {rows.map((row) => (
                 <tr key={row.student_id}>
-                  <td className="px-5 py-4 font-bold">{row.rank}</td>
+                  <td className="px-5 py-4 font-bold">
+                    {rows.indexOf(row) + 1}
+                  </td>
                   <td className="px-5 py-4">{row.display_name || "Student"}</td>
                   <td className="px-5 py-4 font-semibold">{row.points}</td>
                 </tr>

@@ -1,11 +1,11 @@
 import { supabase } from "./supabase";
 
 const lessonSelect =
-  "id, title, slug, lesson_number, objectives, content, academy_weeks!inner(id, week_number, title, academy_courses!inner(id, slug, title, duration_weeks))";
+  "id, title, slug, lesson_number, objectives, content, prerequisite_lesson_id, completion_requirement, completion_mode, preview_allowed, academy_weeks!inner(id, week_number, title, academy_courses!inner(id, slug, title, duration_weeks))";
 
 const unavailable = (data = null) => ({ data, error: null, configured: false });
 
-async function getActiveCourseForStudent(studentId) {
+export async function getActiveCourseForStudent(studentId) {
   if (!supabase || !studentId) return null;
 
   const { data: profileData } = await supabase
@@ -36,6 +36,16 @@ async function getActiveCourseForStudent(studentId) {
     .maybeSingle();
 
   return enrollmentData?.academy_courses ?? null;
+}
+
+export async function selectAcademyCourse(studentId, courseId) {
+  if (!supabase)
+    return { data: null, error: new Error("Academy is not configured.") };
+  const { data, error } = await supabase.rpc("academy_select_course", {
+    target_course_id: courseId,
+    target_student_id: studentId,
+  });
+  return { data, error };
 }
 
 export async function getAcademyStudentOverview(studentId) {
@@ -109,6 +119,40 @@ export async function getAcademyLeaderboard() {
   if (!supabase) return unavailable([]);
   const { data, error } = await supabase.rpc("academy_leaderboard");
   return { data: data ?? [], error, configured: true };
+}
+
+export async function getAcademyWeeklyLeaderboard() {
+  if (!supabase) return unavailable([]);
+  const { data: period, error: periodError } = await supabase
+    .rpc("academy_current_week_period")
+    .maybeSingle();
+  if (periodError || !period)
+    return { data: [], error: periodError, configured: true };
+  const { data, error } = await supabase
+    .from("academy_leaderboard_points")
+    .select(
+      "student_id, points, source_type, source_label, earned_at, academy_profiles!inner(display_name)",
+    )
+    .eq("period_id", period.id)
+    .eq("verification_status", "verified")
+    .order("points", { ascending: false });
+  const totals = new Map();
+  (data ?? []).forEach((item) => {
+    const current = totals.get(item.student_id) ?? {
+      student_id: item.student_id,
+      display_name: item.academy_profiles?.display_name ?? "Learner",
+      points: 0,
+    };
+    current.points += item.points ?? 0;
+    totals.set(item.student_id, current);
+  });
+  return {
+    data: [...totals.values()].sort(
+      (left, right) => right.points - left.points,
+    ),
+    error: error ?? periodError,
+    configured: true,
+  };
 }
 
 export async function getAcademyNotifications(studentId) {
@@ -602,12 +646,10 @@ export async function scheduleAcademyLesson(schedule) {
 export async function assignAcademyStudentLevel(studentId, courseId) {
   if (!supabase)
     return { data: null, error: new Error("Academy is not configured.") };
-  const { data, error } = await supabase
-    .from("academy_profiles")
-    .update({ current_course_id: courseId || null })
-    .eq("id", studentId)
-    .select("id, current_course_id")
-    .single();
+  const { data, error } = await supabase.rpc("academy_assign_student_course", {
+    target_student_id: studentId,
+    target_course_id: courseId || null,
+  });
   return { data, error };
 }
 
@@ -631,10 +673,14 @@ export async function heartbeatAcademyLearningSession(sessionId, route) {
 export async function getAcademyLessons(studentId) {
   if (!supabase) return unavailable([]);
 
+  const activeCourse = await getActiveCourseForStudent(studentId);
+  if (!activeCourse) return { data: [], error: null, configured: true };
+
   const { data, error } = await supabase
     .from("academy_lessons")
     .select(lessonSelect)
     .eq("published", true)
+    .eq("academy_weeks.course_id", activeCourse.id)
     .order("lesson_number");
 
   if (error || !studentId) return { data: data ?? [], error, configured: true };
@@ -646,8 +692,6 @@ export async function getAcademyLessons(studentId) {
   const progressByLesson = new Map(
     (progress ?? []).map((item) => [item.lesson_id, item]),
   );
-  let foundAvailable = false;
-
   return {
     data: (data ?? []).map((lesson) => ({
       ...lesson,
@@ -656,9 +700,10 @@ export async function getAcademyLessons(studentId) {
         ? "completed"
         : progressByLesson.get(lesson.id)?.started_at
           ? "in-progress"
-          : foundAvailable
+          : lesson.prerequisite_lesson_id &&
+              !progressByLesson.get(lesson.prerequisite_lesson_id)?.completed_at
             ? "locked"
-            : ((foundAvailable = true), "available"),
+            : "available",
     })),
     error: error ?? progressError,
     configured: true,
@@ -688,25 +733,37 @@ export async function getAcademyLesson(id, studentId) {
     .maybeSingle();
   if (error || !data) return { data, error, configured: true };
 
-  const [{ data: exercises }, { data: progress }] = await Promise.all([
-    supabase
-      .from("academy_exercises")
-      .select(
-        "id, lesson_id, title, instructions, starter_code, difficulty, expected_concepts, hints, explanation",
-      )
-      .eq("lesson_id", id),
-    studentId
-      ? supabase
-          .from("academy_lesson_progress")
-          .select("lesson_id, completed_at")
-          .eq("lesson_id", id)
-          .eq("student_id", studentId)
-          .maybeSingle()
-      : Promise.resolve({ data: null }),
-  ]);
+  const [{ data: exercises }, { data: subtopics }, { data: progress }] =
+    await Promise.all([
+      supabase
+        .from("academy_exercises")
+        .select(
+          "id, lesson_id, title, instructions, starter_code, difficulty, expected_concepts, hints, explanation",
+        )
+        .eq("lesson_id", id),
+      supabase
+        .from("academy_lesson_subtopics")
+        .select("id, title, concept, explanation, example, ordering")
+        .eq("lesson_id", id)
+        .eq("published", true)
+        .order("ordering"),
+      studentId
+        ? supabase
+            .from("academy_lesson_progress")
+            .select("lesson_id, completed_at")
+            .eq("lesson_id", id)
+            .eq("student_id", studentId)
+            .maybeSingle()
+        : Promise.resolve({ data: null }),
+    ]);
 
   return {
-    data: { ...data, exercises: exercises ?? [], progress: progress ?? null },
+    data: {
+      ...data,
+      exercises: exercises ?? [],
+      subtopics: subtopics ?? [],
+      progress: progress ?? null,
+    },
     error,
     configured: true,
   };
@@ -726,14 +783,17 @@ export async function markLessonComplete(lessonId, studentId) {
   return { error };
 }
 
-export async function getAcademyAssignments() {
+export async function getAcademyAssignments(studentId) {
   if (!supabase) return unavailable([]);
+  const activeCourse = await getActiveCourseForStudent(studentId);
+  if (!activeCourse) return { data: [], error: null, configured: true };
   const { data, error } = await supabase
     .from("academy_assignments")
     .select(
       "id, course_id, lesson_id, title, instructions, due_at, points, allowed_submission_types, starter_code, hints, retry_limit, published, created_at",
     )
     .eq("published", true)
+    .eq("course_id", activeCourse.id)
     .order("due_at", { ascending: true, nullsFirst: false });
   return { data: data ?? [], error, configured: true };
 }
@@ -785,6 +845,116 @@ export async function getSubmissionCount(assignmentId, studentId) {
     .eq("assignment_id", assignmentId)
     .eq("student_id", studentId);
   return { count: count ?? 0, error };
+}
+
+export async function getAcademySubmissionHistory(assignmentId, studentId) {
+  if (!supabase) return unavailable([]);
+  const { data, error } = await supabase
+    .from("academy_submissions")
+    .select(
+      "id, attempt_number, status, submitted_at, original_filename, academy_submission_results(id, objective_score, objective_status, final_score, ai_feedback_status, ai_feedback, rubric_feedback, teacher_feedback, updated_at)",
+    )
+    .eq("assignment_id", assignmentId)
+    .eq("student_id", studentId)
+    .order("attempt_number", { ascending: false });
+  return { data: data ?? [], error, configured: true };
+}
+
+export async function getAcademyTeacherSubmissions() {
+  if (!supabase) return unavailable([]);
+  const { data, error } = await supabase
+    .from("academy_submissions")
+    .select(
+      "id, assignment_id, student_id, attempt_number, status, original_filename, submitted_at, source_code, academy_assignments(title, points), academy_profiles!student_id(display_name), academy_submission_results(objective_score, objective_status, final_score, ai_feedback_status, ai_feedback, teacher_feedback)",
+    )
+    .order("submitted_at", { ascending: false });
+  return { data: data ?? [], error, configured: true };
+}
+
+export async function getAcademyTeacherAssignments() {
+  if (!supabase) return unavailable([]);
+  const { data, error } = await supabase
+    .from("academy_assignments")
+    .select(
+      "id, course_id, lesson_id, title, instructions, due_at, points, retry_limit, published, is_draft, ai_feedback_enabled, academy_courses(title)",
+    )
+    .order("created_at", { ascending: false });
+  return { data: data ?? [], error, configured: true };
+}
+
+export async function getAcademyTeacherClasses() {
+  if (!supabase) return unavailable([]);
+  const { data, error } = await supabase
+    .from("academy_classes")
+    .select(
+      "id, name, description, course_id, academy_courses(title), academy_class_members(student_id, status, academy_profiles(display_name))",
+    )
+    .order("name");
+  return { data: data ?? [], error, configured: true };
+}
+
+export async function saveAcademyClass(classroom) {
+  if (!supabase)
+    return { data: null, error: new Error("Academy is not configured.") };
+  const { data: userResult } = await supabase.auth.getUser();
+  const payload = {
+    course_id: classroom.course_id,
+    name: classroom.name.trim(),
+    description: classroom.description.trim(),
+    created_by: userResult.user?.id,
+  };
+  const query = classroom.id
+    ? supabase.from("academy_classes").update(payload).eq("id", classroom.id)
+    : supabase.from("academy_classes").insert(payload);
+  return query.select("id, name, description, course_id").single();
+}
+
+export async function saveAcademyAssignment(assignment) {
+  if (!supabase)
+    return { data: null, error: new Error("Academy is not configured.") };
+  const { data: userResult } = await supabase.auth.getUser();
+  const payload = {
+    course_id: assignment.course_id,
+    title: assignment.title.trim(),
+    instructions: assignment.instructions.trim(),
+    points: Number(assignment.points),
+    retry_limit: Number(assignment.retry_limit),
+    published: Boolean(assignment.published),
+    is_draft: !assignment.published,
+    ai_feedback_enabled: Boolean(assignment.ai_feedback_enabled),
+    created_by: userResult.user?.id,
+  };
+  const query = assignment.id
+    ? supabase
+        .from("academy_assignments")
+        .update(payload)
+        .eq("id", assignment.id)
+    : supabase.from("academy_assignments").insert(payload);
+  const { data, error } = await query
+    .select("id, title, published, retry_limit, points")
+    .single();
+  return { data, error };
+}
+
+export async function gradeAcademySubmission({
+  submissionId,
+  objectiveScore,
+  finalScore,
+  teacherFeedback,
+  aiFeedback,
+  aiFeedbackStatus = "disabled",
+}) {
+  if (!supabase)
+    return { data: null, error: new Error("Academy is not configured.") };
+  const { data, error } = await supabase.rpc("academy_grade_submission", {
+    target_submission_id: submissionId,
+    target_objective_score: objectiveScore,
+    target_final_score: finalScore ?? objectiveScore,
+    target_teacher_feedback: teacherFeedback || null,
+    target_ai_feedback: aiFeedback || null,
+    target_ai_feedback_status: aiFeedbackStatus,
+  });
+  return { data, error };
 }
 
 export async function submitAssignment({

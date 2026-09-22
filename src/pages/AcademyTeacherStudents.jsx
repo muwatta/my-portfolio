@@ -26,9 +26,9 @@ export default function AcademyTeacherStudents() {
     setSavingId(studentId);
     const { error } = await assignAcademyStudentLevel(studentId, levelId);
     if (error) {
-      setMessage(error.message || "The student level could not be updated.");
+      setMessage(error.message || "The student course could not be updated.");
     } else {
-      setMessage("Student level updated.");
+      setMessage("Student course updated.");
       await loadStudents();
     }
     setSavingId(null);
@@ -42,8 +42,8 @@ export default function AcademyTeacherStudents() {
         </p>
         <h1 className="mt-2 text-3xl font-bold tracking-tight">Students</h1>
         <p className="mt-2 max-w-2xl text-slate-600 dark:text-slate-300">
-          Assign learning levels from the Academy database. Students cannot
-          change their own level.
+          Assign each student to the active course for their current learning
+          path. Students cannot change their own course assignment.
         </p>
       </header>
 

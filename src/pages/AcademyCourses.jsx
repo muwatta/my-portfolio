@@ -1,10 +1,14 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { getAcademyCourses } from "../lib/academy";
+import { getAcademyCourses, selectAcademyCourse } from "../lib/academy";
+import { useAcademyAuth } from "../hooks/useAcademyAuth";
 
 export default function AcademyCourses() {
   const [courses, setCourses] = useState([]);
   const [state, setState] = useState("loading");
+  const [notice, setNotice] = useState("");
+  const [selecting, setSelecting] = useState("");
+  const { user } = useAcademyAuth();
 
   useEffect(() => {
     let mounted = true;
@@ -17,6 +21,16 @@ export default function AcademyCourses() {
       mounted = false;
     };
   }, []);
+
+  async function selectCourse(courseId) {
+    setSelecting(courseId);
+    setNotice("");
+    const { error } = await selectAcademyCourse(user.id, courseId);
+    setNotice(
+      error ? error.message : "Course selected. Your lessons are ready.",
+    );
+    setSelecting("");
+  }
 
   return (
     <div className="space-y-8">
@@ -73,9 +87,22 @@ export default function AcademyCourses() {
                 View lessons
               </Link>
             </div>
+            <button
+              type="button"
+              className="mt-4 w-full rounded-lg bg-cyan-400 px-4 py-2 text-sm font-bold text-slate-950 disabled:opacity-50"
+              disabled={selecting === course.id}
+              onClick={() => selectCourse(course.id)}
+            >
+              {selecting === course.id ? "Selecting..." : "Select this course"}
+            </button>
           </article>
         ))}
       </div>
+      {notice && (
+        <p role="status" className="text-sm text-slate-600 dark:text-slate-300">
+          {notice}
+        </p>
+      )}
     </div>
   );
 }

@@ -59,12 +59,21 @@ export default function AcademyAdminAccess() {
         </p>
         <h1 className="mt-2 text-3xl font-bold">Access and roles</h1>
         <p className="mt-2 max-w-2xl text-slate-600 dark:text-slate-300">
-          Appoint trusted administrators and set teaching roles. Student level
+          Appoint trusted administrators and set teaching roles. Current-course
           assignment remains a staff-only action.
         </p>
         <div className="mt-4 flex flex-wrap items-center gap-3 text-xs text-slate-500 dark:text-slate-400">
-          <span>{lastUpdated ? `Updated ${lastUpdated.toLocaleTimeString()}` : "Loading latest access records..."}</span>
-          <button type="button" className="button-secondary px-3 py-1.5" onClick={() => load(true)} disabled={refreshing}>
+          <span>
+            {lastUpdated
+              ? `Updated ${lastUpdated.toLocaleTimeString()}`
+              : "Loading latest access records..."}
+          </span>
+          <button
+            type="button"
+            className="button-secondary px-3 py-1.5"
+            onClick={() => load(true)}
+            disabled={refreshing}
+          >
             {refreshing ? "Refreshing..." : "Refresh now"}
           </button>
           <span>Auto-refreshes every 30 seconds</span>
