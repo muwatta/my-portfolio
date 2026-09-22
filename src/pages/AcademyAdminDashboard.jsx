@@ -1,16 +1,30 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { getAcademyAdminOverview } from "../lib/academy";
 
 export default function AcademyAdminDashboard() {
   const [overview, setOverview] = useState(null);
   const [state, setState] = useState("loading");
-  useEffect(() => {
-    getAcademyAdminOverview().then(({ data, error }) => {
-      setOverview(data);
-      setState(error ? "error" : "ready");
-    });
+  const [refreshing, setRefreshing] = useState(false);
+  const [lastUpdated, setLastUpdated] = useState(null);
+  const load = useCallback(async (background = false) => {
+    if (background) setRefreshing(true);
+    const { data, error } = await getAcademyAdminOverview();
+    setOverview(data);
+    setState(error ? "error" : "ready");
+    setLastUpdated(new Date());
+    setRefreshing(false);
   }, []);
+  useEffect(() => {
+    load();
+    const refresh = () => load(true);
+    const interval = window.setInterval(refresh, 30000);
+    window.addEventListener("focus", refresh);
+    return () => {
+      window.clearInterval(interval);
+      window.removeEventListener("focus", refresh);
+    };
+  }, [load]);
   const cards = [
     ["Students", overview?.students ?? 0],
     ["Teachers", overview?.teachers ?? 0],
@@ -27,6 +41,13 @@ export default function AcademyAdminDashboard() {
         <p className="mt-2 text-slate-600 dark:text-slate-300">
           Manage people, curriculum, and activity from one protected workspace.
         </p>
+        <div className="mt-4 flex flex-wrap items-center gap-3 text-xs text-slate-500 dark:text-slate-400">
+          <span>{lastUpdated ? `Updated ${lastUpdated.toLocaleTimeString()}` : "Loading latest data..."}</span>
+          <button type="button" className="button-secondary px-3 py-1.5" onClick={() => load(true)} disabled={refreshing}>
+            {refreshing ? "Refreshing..." : "Refresh now"}
+          </button>
+          <span>Auto-refreshes every 30 seconds</span>
+        </div>
       </header>
       {state === "loading" && <p>Loading overview...</p>}
       {state === "error" && (

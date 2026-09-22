@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   assignAcademyStudentLevel,
@@ -13,14 +13,26 @@ export default function AcademyAdminStudents() {
   const [stateFilter, setStateFilter] = useState("");
   const [schoolFilter, setSchoolFilter] = useState("");
   const [levelFilter, setLevelFilter] = useState("");
-  async function load() {
+  const [refreshing, setRefreshing] = useState(false);
+  const [lastUpdated, setLastUpdated] = useState(null);
+  const load = useCallback(async (background = false) => {
+    if (background) setRefreshing(true);
     const result = await getAcademyTeacherStudents();
     setData(result.data ?? { students: [], levels: [] });
     setState(result.error ? "error" : "ready");
-  }
+    setLastUpdated(new Date());
+    setRefreshing(false);
+  }, []);
   useEffect(() => {
     load();
-  }, []);
+    const refresh = () => load(true);
+    const interval = window.setInterval(refresh, 30000);
+    window.addEventListener("focus", refresh);
+    return () => {
+      window.clearInterval(interval);
+      window.removeEventListener("focus", refresh);
+    };
+  }, [load]);
   async function changeLevel(studentId, levelId) {
     const { error } = await assignAcademyStudentLevel(studentId, levelId);
     setMessage(error?.message || "Student level updated.");
@@ -58,10 +70,13 @@ export default function AcademyAdminStudents() {
                 : "Loading registered students..."}
             </p>
           </div>
-          <button type="button" className="button-secondary" onClick={load}>
-            Refresh students
+          <button type="button" className="button-secondary" onClick={() => load(true)} disabled={refreshing}>
+            {refreshing ? "Refreshing..." : "Refresh students"}
           </button>
         </div>
+        <p className="text-xs text-slate-500 dark:text-slate-400">
+          {lastUpdated ? `Updated ${lastUpdated.toLocaleTimeString()} · Auto-refreshes every 30 seconds` : "Loading latest students..."}
+        </p>
       </header>
       {message && (
         <p
