@@ -63,7 +63,7 @@ export default function AcademyTeacherCourses() {
     <div className="space-y-8">
       <header>
         <p className="text-sm font-semibold uppercase tracking-[0.18em] text-cyan-600 dark:text-cyan-300">
-          Teacher control center
+          Admin control center
         </p>
         <h1 className="mt-2 text-3xl font-bold tracking-tight">Courses</h1>
         <p className="mt-2 max-w-2xl text-slate-600 dark:text-slate-300">

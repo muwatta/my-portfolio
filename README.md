@@ -1,78 +1,422 @@
-# Abdullahi Musliudeen — Developer Portfolio
+# Abdullahi Musliudeen — Backend Engineer & Full-Stack Developer
 
-[![Live Demo](https://img.shields.io/badge/Live-vercel.com-000000?style=flat-square&logo=vercel)](https://my-portfolio.vercel.app/)
-[![React](https://img.shields.io/badge/React-18-61DAFB?style=flat-square&logo=react)](https://react.dev/)
-[![Vite](https://img.shields.io/badge/Vite-5-646CFF?style=flat-square&logo=vite)](https://vitejs.dev/)
-[![TailwindCSS](https://img.shields.io/badge/Tailwind-3-38BDF8?style=flat-square&logo=tailwindcss)](https://tailwindcss.com/)
-[![Decap CMS](https://img.shields.io/badge/Decap%20CMS-GitHub-181717?style=flat-square&logo=github)](https://decapcms.org/)
+[![Live Portfolio](https://img.shields.io/badge/Live-muwatta.com.ng-000000?style=flat-square\&logo=vercel)](https://www.muwatta.com.ng/)
+[![React](https://img.shields.io/badge/React-18-61DAFB?style=flat-square\&logo=react)](https://react.dev/)
+[![Python](https://img.shields.io/badge/Python-3-3776AB?style=flat-square\&logo=python\&logoColor=white)](https://www.python.org/)
+[![Django](https://img.shields.io/badge/Django-Backend-092E20?style=flat-square\&logo=django\&logoColor=white)](https://www.djangoproject.com/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Database-4169E1?style=flat-square\&logo=postgresql\&logoColor=white)](https://www.postgresql.org/)
+[![Supabase](https://img.shields.io/badge/Supabase-Academy-3ECF8E?style=flat-square\&logo=supabase)](https://supabase.com/)
+[![Vite](https://img.shields.io/badge/Vite-5-646CFF?style=flat-square\&logo=vite)](https://vitejs.dev/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind-3-38BDF8?style=flat-square\&logo=tailwindcss)](https://tailwindcss.com/)
 
-A modern, fully responsive personal portfolio built with React and Vite — showcasing full-stack engineering projects, technical skills, and writing.
+I am a **Backend Engineer & Full-Stack Developer** working primarily with **Python, Django, Django REST Framework, PostgreSQL, React, and TypeScript**.
 
-🔗 **Live:** hosted on Vercel
+My work focuses on building practical software systems — particularly backend APIs, business applications, learning platforms, AI-integrated systems, and technology solutions that solve real operational problems.
 
----
+I also work in **technology education through Algorise Tech Explorers (ATE)**, where I design and facilitate programming, AI, robotics, IoT, and digital-skills learning programmes for young learners.
 
-## ✨ Features
-
-- **Dark / Light theme** — persists across sessions via localStorage
-- **Mobile-first design** — fully responsive across all screen sizes
-- **Animated UI** — smooth page transitions and micro-interactions via Framer Motion
-- **Blog system** — Markdown-backed with search and category filtering
-- **Admin editor** — Decap CMS at `/admin/`, backed by GitHub (works on your phone)
-- **Contact form** — powered by EmailJS, no backend required
-- **SEO ready** — dynamic meta tags via React Helmet Async
-- **Performance optimized** — code splitting, chunk caching, and asset optimization via Vite
-- **Academy learning space** — Supabase-authenticated student routes for the Python to AI/ML cohort
+🌐 **Portfolio:** https://www.muwatta.com.ng/
 
 ---
 
-## 🛠 Tech Stack
+## About Me
 
-| Layer              | Technology                 |
-| ------------------ | -------------------------- |
-| Framework          | React 18                   |
-| Build Tool         | Vite 5                     |
-| Styling            | Tailwind CSS 3             |
-| Animation          | Framer Motion              |
-| Routing            | React Router v6            |
-| Forms              | EmailJS                    |
-| Content management | Decap CMS + GitHub         |
-| SEO                | React Helmet Async         |
-| Icons              | React Icons                |
-| Fonts              | Google Fonts (Syne + Lora) |
-| Deployment         | Vercel                     |
+My background sits at the intersection of **education, software engineering, and technology entrepreneurship**.
 
----
+I studied **Education (Arabic)** at Ahmadu Bello University, Zaria, while developing my software engineering skills through practical projects and self-directed learning.
 
-## 📁 Project Structure
+That combination eventually led me toward building educational technology systems and teaching programming alongside software development.
 
+My current engineering focus is:
+
+```text
+Python
+  ↓
+Django / Django REST Framework
+  ↓
+PostgreSQL / Database Design
+  ↓
+APIs / Authentication / RBAC
+  ↓
+React / TypeScript
+  ↓
+AI / ML / IoT integrations
 ```
+
+I am particularly interested in backend systems that have real users, real data, and real operational requirements rather than purely demonstrative applications.
+
+---
+
+# Engineering Focus
+
+### Backend Engineering
+
+* Python
+* Django
+* Django REST Framework
+* PostgreSQL
+* REST API design
+* Authentication and authorization
+* JWT
+* Role-based access control
+* Database design
+* Query optimization
+* Caching
+* Background processing
+* Redis
+* Celery / task queues
+
+### Full-Stack Development
+
+* React
+* TypeScript
+* JavaScript
+* React Router
+* Tailwind CSS
+* Vite
+* API integration
+* Responsive interfaces
+
+### Systems & Infrastructure
+
+* Git / GitHub
+* Linux / CLI
+* HTTP / REST
+* JSON
+* Networking fundamentals
+* Environment configuration
+* Deployment
+* Supabase
+* Firebase
+
+### AI / ML / Computer Vision
+
+* Python-based AI applications
+* Computer vision
+* OpenCV
+* TensorFlow Lite
+* Machine-learning workflows
+* AI-integrated web applications
+
+### IoT & Embedded Systems
+
+* Arduino
+* ESP32
+* Raspberry Pi
+* Sensors
+* Embedded programming
+* Python/C++ integration
+* Robotics education
+
+---
+
+# Selected Projects
+
+## Muwatta Academy
+
+**Integrated Learning Management System**
+
+Muwatta Academy is a learning platform being developed inside this portfolio for programming and technology education.
+
+It is designed for secondary-school learners and supports the complete learning workflow:
+
+```text
+Student
+   ↓
+Authentication
+   ↓
+Dashboard
+   ↓
+Courses
+   ↓
+Lessons
+   ↓
+Practice
+   ↓
+Assignments
+   ↓
+Submission
+   ↓
+Grading / Feedback
+   ↓
+Progress
+   ↓
+Projects
+```
+
+### Current architecture
+
+* React
+* Vite
+* Tailwind CSS
+* Supabase Auth
+* PostgreSQL
+* Supabase Storage
+* Supabase Row Level Security
+* Supabase Realtime where required
+
+The Academy is an **additive part of the existing portfolio**, not a separate frontend application.
+
+### Learning capabilities
+
+The platform is designed to support:
+
+* student accounts
+* administrator/teacher management
+* student levels
+* courses
+* lessons
+* exercises
+* assignments
+* submissions
+* automated practice scoring
+* learning-time tracking
+* projects
+* progress tracking
+* badges
+* leaderboard
+* scheduling
+* learning materials
+* live classroom functionality
+
+The initial technical curriculum includes **Python, Python for AI/ML, and C++/embedded systems**, with the architecture designed to support additional subjects later.
+
+🔗 **Academy:** https://www.muwatta.com.ng/academy
+
+---
+
+## SSC Cooperative Management System
+
+**Django / React / PostgreSQL**
+
+A production cooperative management system built for a staff cooperative environment.
+
+The system supports more than a simple CRUD workflow and includes role-based business operations for:
+
+* administrators
+* committee members
+* heads of section
+* staff members
+
+Key areas include:
+
+* member management
+* contributions
+* cooperative records
+* loan-related workflows
+* authorization
+* financial rules
+* database-backed business logic
+* auditability
+
+The application has been used by **100+ regular users**, making it one of my practical examples of building software around real operational requirements.
+
+---
+
+## AgroGuard AI
+
+**Python / Flask / OpenCV / TensorFlow Lite / Arduino**
+
+An AI-assisted agricultural monitoring prototype combining computer vision and physical automation.
+
+The system uses computer vision to identify selected crop pests and integrates the result with an Arduino-controlled irrigation/pumping workflow.
+
+Technologies include:
+
+* Python
+* Flask
+* OpenCV
+* TensorFlow Lite
+* MobileNetV2
+* Arduino
+* image classification
+* sensor/actuator integration
+
+The project explored the practical connection between:
+
+```text
+Computer Vision
+      ↓
+Prediction
+      ↓
+Decision
+      ↓
+Physical Device
+```
+
+---
+
+## Gesture Chess
+
+**Python / OpenCV / MediaPipe / python-chess**
+
+A computer-vision-based chess interaction project exploring gesture-controlled board interaction.
+
+The project combines:
+
+* Python
+* OpenCV
+* MediaPipe
+* `python-chess`
+* computer vision
+* gesture recognition
+* chess rules/state management
+
+The goal is to explore how vision-based human-computer interaction can be connected to a deterministic software engine.
+
+---
+
+## NexusLMS / Education Technology Systems
+
+I have also worked on learning-management systems and education-focused software using technologies such as:
+
+* Django
+* PostgreSQL
+* React
+* authentication
+* role-based access
+* course management
+* assignments
+* student progress
+* educational workflows
+
+These projects complement my practical work in technology education.
+
+---
+
+# Algorise Tech Explorers
+
+I am the founder of **Algorise Tech Explorers (ATE)**, an education initiative focused on expanding access to programming, AI, robotics, IoT, and digital skills.
+
+ATE works particularly with young learners and schools where access to practical technology education can be limited.
+
+Programmes have included:
+
+* Python programming
+* Web development
+* Artificial Intelligence
+* Robotics
+* Arduino
+* Raspberry Pi
+* PictoBlox
+* digital productivity
+* embedded systems
+* project-based learning
+
+ATE programmes have reached **150+ learners**, with activities across multiple schools and locations.
+
+The educational work has also included supporting students participating in programming and technology competitions.
+
+The Academy project grows naturally from this experience: rather than treating education as separate from engineering, I am building software systems around the learning problems I encounter directly.
+
+---
+
+# Muwatta Portfolio
+
+This repository contains my personal portfolio and the integrated Academy platform.
+
+The portfolio showcases:
+
+* software engineering projects
+* backend/full-stack work
+* AI/ML projects
+* IoT projects
+* education technology
+* technical writing
+* professional experience
+
+The site is built as one application so that the public portfolio and Academy can coexist without requiring a separate student-facing website.
+
+---
+
+# Architecture
+
+The repository currently contains two distinct application concerns:
+
+```text
+                         Muwatta Website
+                               │
+              ┌────────────────┴────────────────┐
+              │                                 │
+        Portfolio / Blog                    Academy
+              │                                 │
+       Existing systems                    Supabase
+              │                                 │
+       Firebase / Decap                 Auth / PostgreSQL
+              │                         Storage / RLS
+              │                         Realtime
+              │                                 │
+              └──────────── React Application ───┘
+```
+
+The existing blog infrastructure is intentionally kept separate from Academy.
+
+Academy uses Supabase for its authentication, database, storage, authorization, and related backend functionality.
+
+---
+
+# Tech Stack
+
+| Area                 | Technology                                 |
+| -------------------- | ------------------------------------------ |
+| Primary Backend      | Python                                     |
+| Backend Framework    | Django                                     |
+| API Framework        | Django REST Framework                      |
+| Frontend             | React                                      |
+| Language             | JavaScript / TypeScript                    |
+| Build Tool           | Vite                                       |
+| Styling              | Tailwind CSS                               |
+| Database             | PostgreSQL                                 |
+| Academy Backend      | Supabase                                   |
+| Authentication       | Supabase Auth / application authentication |
+| Authorization        | Row Level Security / RBAC                  |
+| Storage              | Supabase Storage                           |
+| Realtime             | Supabase Realtime                          |
+| AI / Computer Vision | OpenCV / TensorFlow Lite                   |
+| IoT                  | Arduino / ESP32 / Raspberry Pi             |
+| Caching / Tasks      | Redis / Celery                             |
+| Blog CMS             | Decap CMS                                  |
+| Blog Infrastructure  | Existing Firebase-backed system            |
+| Deployment           | Vercel                                     |
+| Version Control      | Git / GitHub                               |
+
+---
+
+# Repository Structure
+
+```text
 my-portfolio/
+│
 ├── public/
-│   ├── blog.json          # Generated blog index
-│   ├── admin/             # Decap CMS entry point and configuration
-│   └── images/            # Static images
+│   ├── admin/
+│   │   └── Decap CMS configuration
+│   ├── images/
+│   ├── blog.json
+│   ├── manifest.json
+│   └── service worker
+│
 ├── src/
 │   ├── components/
-│   │   ├── layout/        # Navbar, Footer, AnimatedBackground, Loader
-│   │   └── ui/            # SectionHeader, Badge, MagneticButton
+│   │   ├── academy/
+│   │   ├── layout/
+│   │   └── ui/
+│   │
 │   ├── context/
-│   │   ├── ThemeContext.jsx
-│   │   └── AuthContext.jsx # Legacy auth context
-│   ├── data/
-│   │   ├── projects.js
-│   │   ├── skills.js
-│   │   ├── testimonials.js
-│   │   ├── stats.js
-│   │   └── navigation.js
+│   │   ├── AcademyAuthContext.jsx
+│   │   ├── AuthContext.jsx
+│   │   └── ThemeContext.jsx
+│   │
 │   ├── features/
+│   │   ├── academy/
 │   │   ├── home/
 │   │   └── portfolio/
+│   │
 │   ├── hooks/
-│   │   └── useInView.js
+│   │
 │   ├── lib/
-│   │   ├── supabase.js    # Optional legacy content client
-│   │   └── blog.js        # Static blog data service
+│   │   ├── supabase.js
+│   │   └── blog.js
+│   │
 │   └── pages/
 │       ├── Home.jsx
 │       ├── Portfolio.jsx
@@ -80,138 +424,257 @@ my-portfolio/
 │       ├── About.jsx
 │       ├── Blog.jsx
 │       ├── BlogPost.jsx
-│       ├── Admin.jsx      # Private editor for blog posts
-│       └── Contact.jsx
+│       ├── Admin.jsx
+│       ├── Contact.jsx
+│       └── Academy pages
+│
+├── content/
+│   └── blog/
+│
 ├── scripts/
-│   ├── build-blog.js      # Generates blog.json from Markdown
-│   └── import-posts.js    # Legacy Supabase import utility
-├── content/blog/          # Markdown posts managed by Decap CMS
-├── vercel.json            # SPA rewrites for Vercel
-└── vite.config.js
+│   ├── build-blog.js
+│   └── import-posts.js
+│
+├── supabase/
+│   ├── migrations/
+│   └── seed.sql
+│
+├── vercel.json
+├── vite.config.js
+└── package.json
 ```
+
+The exact Academy structure continues to evolve as the LMS is developed.
 
 ---
 
-## 🚀 Getting Started
+# Getting Started
 
-### Prerequisites
+## Prerequisites
 
-- Node.js 18+
-- npm
+* Node.js 18+
+* npm
+* Git
 
-### Installation
+## Installation
 
 ```bash
-git clone https://github.com/Muwatta/my-portfolio.git
+git clone https://github.com/muwatta/my-portfolio.git
+
 cd my-portfolio
+
 npm install
+
 npm run dev
 ```
 
-Open [http://localhost:5173](http://localhost:5173).
+Open:
 
-### Production Build
+```text
+http://localhost:5173
+```
+
+---
+
+# Production Build
 
 ```bash
 npm run build
+```
+
+Preview the production build:
+
+```bash
 npm run preview
 ```
 
----
-
-## 📝 Managing Blog Posts
-
-### From your phone (recommended)
-
-A private admin editor is available at **`/admin/`**. Sign in with GitHub and
-you can create, edit, and delete posts with a phone-friendly form.
-
-1. Configure GitHub OAuth for Decap CMS and update `public/admin/config.yml`.
-2. Visit `https://<your-site>/admin/`
-3. Log in with GitHub and create or edit posts.
-
-### How it works (security)
-
-- Blog posts live as Markdown files in `content/blog/`.
-- Decap CMS uses GitHub commits or pull requests for editorial changes.
-- Configure OAuth before deploying; never put a GitHub client secret in the frontend.
-
-### Setup checklist
-
-1. Create a GitHub OAuth App with callback URL
-   `https://www.muwatta.com.ng/api/callback`.
-2. Add `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET`, and `SITE_URL` to Vercel.
-3. Deploy and visit `https://www.muwatta.com.ng/admin/`.
-4. Commit CMS changes so the deployment rebuilds `public/blog.json`.
-
-**Categories:** `Tech` · `Education` · `IoT` · `Frontend`
-
-> `public/blog.json` is generated at build time from Markdown files in
-> `content/blog/`. No database or runtime environment variables are required.
+Before deployment, verify both the existing website and Academy routes.
 
 ---
 
-## 📬 Contact Form
+# Environment Variables
 
-Uses [EmailJS](https://emailjs.com). Update credentials in `src/pages/Contact.jsx`:
+Academy requires browser-safe Supabase configuration:
 
-```js
-emailjs.send("SERVICE_ID", "TEMPLATE_ID", payload, "PUBLIC_KEY");
+```text
+VITE_SUPABASE_URL=
+VITE_SUPABASE_PUBLISHABLE_KEY=
 ```
 
----
+For backward compatibility, the application may also support:
 
-## 🌐 Deployment
+```text
+VITE_SUPABASE_ANON_KEY=
+```
 
-Hosted on **Vercel** with auto-deploys from the `master` branch (GitHub).
+Other integrations may require their own environment variables.
 
-`vercel.json` configures SPA rewrites for application routes. The static
-`/admin/` directory is served directly by Vercel for Decap CMS.
+Never commit:
 
-### Env vars (Project Settings → Environment Variables)
+* Supabase service-role keys
+* AI provider secret keys
+* GitHub OAuth client secrets
+* private API credentials
 
-| Variable     | Purpose                             |
-| ------------ | ----------------------------------- |
-| GitHub OAuth | Required by Decap CMS for `/admin/` |
-
-### Academy setup
-
-Academy is an additive route group inside the existing React application. It uses
-Supabase Auth and PostgreSQL, while the existing Firebase auth context remains in
-place for legacy `/admin` functionality.
-
-1. Create or select the Supabase project for Academy.
-2. Run the migration and seed files in order:
-   `supabase/migrations/20260921000000_academy_foundation.sql`,
-   `supabase/migrations/20260922000000_academy_access_control.sql`, then
-   `supabase/seed.sql`. Review the target project before applying migrations.
-3. Add `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` to `.env.local` and
-   your deployment environment. `VITE_SUPABASE_ANON_KEY` remains supported for
-   backward compatibility. Only browser-safe keys belong in Vite variables.
-4. Create teacher accounts in Supabase Auth, then promote them by updating their
-   `academy_profiles.role` to `teacher` using the Supabase SQL editor.
-
-The current Academy foundation is available at `/academy`. Student lesson,
-assignment, grading, upload, and teacher workflows are being added on top of the
-RLS-protected schema in subsequent increments.
+Secrets required by server-side functionality must never be exposed through the Vite frontend.
 
 ---
 
-## 📄 License
+# Database & Migrations
+
+Academy database changes are maintained through Supabase migrations:
+
+```text
+supabase/migrations/
+```
+
+The database uses:
+
+* foreign keys
+* indexes
+* constraints
+* database functions
+* Row Level Security
+* timestamped migrations
+
+Production migrations should be reviewed against the existing remote migration history before deployment.
+
+A production database should not be reset simply because a migration needs correction.
+
+---
+
+# Blog Management
+
+The existing blog remains separate from Academy.
+
+Blog content is stored as Markdown:
+
+```text
+content/blog/
+```
+
+Decap CMS provides the editing interface:
+
+```text
+/admin/
+```
+
+The build process generates:
+
+```text
+public/blog.json
+```
+
+The blog system continues to use its existing infrastructure and is not migrated into the Academy backend.
+
+---
+
+# Deployment
+
+The application is deployed to Vercel.
+
+Production:
+
+```text
+https://www.muwatta.com.ng/
+```
+
+Academy:
+
+```text
+https://www.muwatta.com.ng/academy
+```
+
+GitHub repository:
+
+```text
+https://github.com/muwatta/my-portfolio
+```
+
+The application is deployed from the `master` branch.
+
+---
+
+# Engineering Principles
+
+This project follows a few principles that guide its development:
+
+### Build for real use
+
+Features should solve actual problems rather than exist only to make a demo look impressive.
+
+### Backend matters
+
+The portfolio is positioned around backend/full-stack engineering, so database design, authorization, business logic, API architecture, and reliability are treated as first-class concerns.
+
+### Don't fake functionality
+
+A dashboard metric should represent real data.
+
+A badge should have a real condition.
+
+A grade should come from an actual grading process.
+
+A progress percentage should come from actual activity.
+
+### Security belongs in the backend
+
+Frontend route guards improve user experience but do not replace database authorization.
+
+### Keep systems maintainable
+
+Prefer a simple architecture that can be understood, tested, deployed, and maintained by one developer.
+
+### Education should remain practical
+
+Technology education should lead toward students building things, not simply completing theoretical lessons.
+
+---
+
+# Current Direction
+
+The long-term direction of this project is the intersection of:
+
+```text
+Software Engineering
+        +
+Education Technology
+        +
+AI / Machine Learning
+        +
+IoT / Embedded Systems
+```
+
+The portfolio demonstrates the engineering side.
+
+**Algorise Tech Explorers** provides the practical education environment.
+
+**Muwatta Academy** connects the two by turning that educational experience into a real software platform.
+
+---
+
+# License
 
 MIT — free to use as a template. Attribution appreciated.
 
 ---
 
-## 👤 Author
+# Author
 
-**Abdullahi Musliudeen Oladipupo**
+## Abdullahi Musliudeen Oladipupo
 
-- 🌐 [www.muwatta.com.ng](https://www.muwatta.com.ng/)
-- 💼 [github.com/Muwatta](https://github.com/Muwatta)
-- 🔗 [LinkedIn](https://www.linkedin.com/in/abdullahi-musliudeen-166b751b6)
-- 🐦 [@MusliudeenAbdu1](https://x.com/MusliudeenAbdu1)
+**Backend Engineer & Full-Stack Developer**
+
+Software engineering • Education Technology • AI/ML • IoT
+
+🌐 [www.muwatta.com.ng](https://www.muwatta.com.ng/)
+
+💻 [github.com/Muwatta](https://github.com/Muwatta)
+
+🔗 [LinkedIn](https://www.linkedin.com/in/abdullahi-musliudeen-166b751b6)
+
+🐦 [@MusliudeenAbdu1](https://x.com/MusliudeenAbdu1)
 
 ---
 
-> Built with ☕ and late nights in Jos, Nigeria.
+> Building practical software and creating pathways into technology education.

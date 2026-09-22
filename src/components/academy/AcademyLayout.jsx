@@ -35,9 +35,11 @@ const adminLinks = [
   { label: "Admin overview", to: "/academy/admin" },
   { label: "Students", to: "/academy/admin/students" },
   { label: "Access", to: "/academy/admin/access" },
-  { label: "Courses", to: "/academy/teacher/courses" },
-  { label: "Lessons", to: "/academy/teacher/lessons" },
-  { label: "Analytics", to: "/academy/teacher/analytics" },
+  { label: "Manage courses", to: "/academy/teacher/courses" },
+  { label: "Manage lessons", to: "/academy/teacher/lessons" },
+  { label: "Student analytics", to: "/academy/teacher/analytics" },
+  { label: "Assignments", to: "/academy/teacher/assignments" },
+  { label: "Submissions", to: "/academy/teacher/submissions" },
   { label: "Live classroom", to: "/academy/live" },
 ];
 
@@ -104,7 +106,7 @@ export default function AcademyLayout() {
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
       <header className="border-b border-slate-200 bg-white/95 dark:border-slate-800 dark:bg-slate-950/95">
-        <div className="mx-auto flex min-h-20 max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
+        <div className="mx-auto flex min-h-20 max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-3 sm:flex-nowrap sm:gap-4 sm:px-6">
           <Link
             to={isAdmin ? "/academy/admin" : "/academy/dashboard"}
             className="flex min-w-0 shrink-0 items-center gap-3 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-950"
@@ -122,7 +124,7 @@ export default function AcademyLayout() {
               </span>
             </span>
           </Link>
-          <div className="flex items-center gap-2 sm:gap-3">
+          <div className="flex min-w-0 flex-1 items-center justify-end gap-2 sm:flex-none sm:gap-3">
             <button
               type="button"
               className="button-secondary min-h-9 px-2 py-1.5 text-xs sm:px-3 sm:text-sm"
@@ -132,17 +134,17 @@ export default function AcademyLayout() {
             >
               {theme === "dark" ? "Light" : "Dark"}
             </button>
-            <span className="text-right">
-              <span className="hidden text-sm text-slate-600 dark:text-slate-300 sm:block">
+            <span className="min-w-0 max-w-[9rem] text-right sm:max-w-[14rem]">
+              <span className="hidden truncate text-sm text-slate-600 dark:text-slate-300 sm:block">
                 {displayName}
               </span>
-              <span className="block rounded-full bg-cyan-50 px-2.5 py-1 text-[0.68rem] font-semibold uppercase tracking-wide text-cyan-700 dark:bg-cyan-950/50 dark:text-cyan-300">
+              <span className="block truncate rounded-full bg-cyan-50 px-2.5 py-1 text-[0.68rem] font-semibold uppercase tracking-wide text-cyan-700 dark:bg-cyan-950/50 dark:text-cyan-300">
                 {accessLabel}
               </span>
             </span>
             <button
               type="button"
-              className="button-secondary min-h-9 px-2 py-1.5 text-xs sm:px-3 sm:text-sm"
+              className="button-secondary min-h-9 shrink-0 px-2 py-1.5 text-xs sm:px-3 sm:text-sm"
               onClick={signOut}
             >
               Sign out
