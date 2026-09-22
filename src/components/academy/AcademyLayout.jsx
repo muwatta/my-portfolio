@@ -187,7 +187,7 @@ export default function AcademyLayout() {
         <nav
           id="academy-navigation"
           aria-label="Academy navigation"
-          className={`${navigationOpen ? "translate-x-0" : "-translate-x-full"} fixed inset-y-0 left-0 z-40 w-72 overflow-y-auto bg-white px-4 pb-6 pt-28 shadow-2xl transition-transform dark:bg-slate-950 lg:static lg:z-auto lg:block lg:w-52 lg:translate-x-0 lg:overflow-visible lg:bg-transparent lg:p-0 lg:shadow-none lg:transition-none`}
+          className={`${navigationOpen ? "translate-x-0" : "-translate-x-full"} fixed inset-y-0 left-0 z-40 w-72 overflow-y-auto bg-white px-4 pb-6 pt-20 shadow-2xl transition-transform dark:bg-slate-950 lg:static lg:z-auto lg:block lg:w-52 lg:translate-x-0 lg:overflow-visible lg:bg-transparent lg:p-0 lg:shadow-none lg:transition-none`}
         >
           <div className="mb-4 border-b border-slate-200 pb-4 text-xs font-semibold uppercase tracking-[0.16em] text-slate-500 dark:border-slate-800 dark:text-slate-400 lg:hidden">
             Academy menu
