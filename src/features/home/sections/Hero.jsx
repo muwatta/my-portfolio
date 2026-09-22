@@ -55,7 +55,7 @@ export const Hero = () => {
               />
               <div className="absolute inset-4 rounded-full bg-gradient-to-br from-blue-500/20 to-purple-500/20 p-1">
                 <img
-                  src="https://res.cloudinary.com/dee5edoss/image/upload/v1763611836/national_image_otksdm.jpg"
+                  src="/images/profile_pics.jpg"
                   alt="Abdullahi Musliudeen"
                   width={576}
                   height={576}
