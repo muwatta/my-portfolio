@@ -55,7 +55,7 @@ export default function AcademyAssignment() {
     setNotice("");
     try {
       let filePath = null;
-      if (file && !file.name.toLowerCase().endsWith(".py")) {
+      if (file) {
         const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
         filePath = `${user.id}/${assignment.id}/${crypto.randomUUID()}-${safeName}`;
         const { error: uploadError } = await supabase.storage
@@ -75,6 +75,7 @@ export default function AcademyAssignment() {
       });
       if (error) throw error;
       setAttempts((value) => value + 1);
+      setFile(null);
       setNotice("Submitted. Your work is recorded for review.");
     } catch (error) {
       setNotice(error.message || "Submission failed.");
