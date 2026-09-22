@@ -15,16 +15,16 @@ export const ValueProposition = () => {
           className="mb-12 max-w-3xl"
         >
           <p className="text-sm font-semibold uppercase tracking-[0.2em] text-blue-400">
-            A different path into technology
+            Backend-first engineering
           </p>
           <h2 className="mt-3 text-3xl font-bold sm:text-4xl">
-            Education shaped how I build.
+            Production systems from backend to interface.
           </h2>
           <p className="mt-4 leading-relaxed text-slate-400">
-            I studied Arabic Education at Ahmadu Bello University, Zaria, then
-            moved through teaching and technology education into software
-            engineering. Today my work spans production software, embedded
-            systems, AI, and IoT.
+            I build dependable backend systems and full-stack products: APIs,
+            authentication, business workflows, data platforms, and responsive
+            interfaces. My background in education strengthens how I understand
+            users and explain complex systems.
           </p>
         </motion.div>
         <motion.div
@@ -43,16 +43,16 @@ export const ValueProposition = () => {
           </div>
           <div>
             <h3 className="text-lg font-semibold text-white mb-2">
-              Technology Education
+              Product Delivery
             </h3>
             <p className="text-slate-400">
-              Practical programming, web development, Scratch, embedded systems,
-              robotics, and AI concepts for learners.
+              From architecture and APIs to frontend delivery, deployment, and
+              ongoing maintenance.
             </p>
           </div>
           <div>
             <h3 className="text-lg font-semibold text-white mb-2">
-              Hardware & Physical Computing
+              Supporting Expertise
             </h3>
             <ul className="space-y-1">
               {[

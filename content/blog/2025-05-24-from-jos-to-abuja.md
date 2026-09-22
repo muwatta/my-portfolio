@@ -1,5 +1,5 @@
 ---
-title: "From Jos to Nationals: How 3 Girls Used Tech to Dream Bigger"
+title: "From Lagos to Nationals: How 3 Girls Used Tech to Dream Bigger"
 date: "2025-05-24T06:00:00.000Z"
 excerpt: "Discover how three girls from Plateau State became national finalists in Nigeria's Girls in ICT competition and what it revealed about grassroots tech education."
 image: "/images/atTheNational.jpg"
@@ -80,4 +80,3 @@ You’re not too small.
 You’re not too late.
 You’re not alone.
 Let’s keep building.
-

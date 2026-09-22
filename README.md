@@ -1,4 +1,4 @@
-# Abdullahi Musliudeen — Backend Engineer & Full-Stack Developer
+# Abdullahi Musliudeen — Software Developer
 
 [![Live Portfolio](https://img.shields.io/badge/Live-muwatta.com.ng-000000?style=flat-square\&logo=vercel)](https://www.muwatta.com.ng/)
 [![React](https://img.shields.io/badge/React-18-61DAFB?style=flat-square\&logo=react)](https://react.dev/)
@@ -9,11 +9,11 @@
 [![Vite](https://img.shields.io/badge/Vite-5-646CFF?style=flat-square\&logo=vite)](https://vitejs.dev/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind-3-38BDF8?style=flat-square\&logo=tailwindcss)](https://tailwindcss.com/)
 
-I am a **Backend Engineer & Full-Stack Developer** working primarily with **Python, Django, Django REST Framework, PostgreSQL, React, and TypeScript**.
+I am a **Software Developer** focused on backend and full-stack delivery, working primarily with **Python, Django, Django REST Framework, PostgreSQL, React, and TypeScript**.
 
 My work focuses on building practical software systems — particularly backend APIs, business applications, learning platforms, AI-integrated systems, and technology solutions that solve real operational problems.
 
-I also work in **technology education through Algorise Tech Explorers (ATE)**, where I design and facilitate programming, AI, robotics, IoT, and digital-skills learning programmes for young learners.
+I have delivered **10+ production projects** and provide technology services for **six schools across Lagos, Jos, and Kwara**, including DGHIA, CIMAI, MMS, and other education teams. I also work in technology education through Algorise Tech Explorers (ATE).
 
 🌐 **Portfolio:** https://www.muwatta.com.ng/
 
@@ -663,7 +663,7 @@ MIT — free to use as a template. Attribution appreciated.
 
 ## Abdullahi Musliudeen Oladipupo
 
-**Backend Engineer & Full-Stack Developer**
+**Software Developer · Backend & Full-Stack**
 
 Software engineering • Education Technology • AI/ML • IoT
 

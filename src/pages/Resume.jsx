@@ -9,7 +9,7 @@ export const Resume = () => {
     <div className="min-h-screen bg-white dark:bg-[#06090f] text-slate-800 dark:text-slate-200">
       <Seo
         title="Resume | Abdullahi Musliudeen"
-        description="Resume and CV for Abdullahi Musliudeen: Backend Engineer & Full-Stack Developer building production systems with Django, DRF, PostgreSQL, Redis and React."
+        description="Resume and CV for Abdullahi Musliudeen: Software Developer building production systems with Django, DRF, PostgreSQL, Redis and React."
         path="/resume"
       />
 
@@ -33,7 +33,7 @@ export const Resume = () => {
             Abdullahi Musliudeen Oladipupo
           </h1>
           <p className="text-lg text-blue-600 dark:text-blue-400 font-semibold mb-4">
-            Backend Engineer · Full-Stack Developer
+            Software Developer · Backend & Full-Stack
           </p>
           <div className="flex flex-wrap justify-center gap-4 text-sm text-slate-600 dark:text-slate-400">
             <a
@@ -90,12 +90,15 @@ export const Resume = () => {
               Professional Summary
             </h2>
             <p className="text-slate-700 dark:text-slate-300 leading-relaxed">
-              Backend engineer specializing in Django and Django REST Framework.
+              Backend engineer and full-stack developer specializing in Django,
+              Django REST Framework, React, and production APIs.
               I design and build production-grade systems handling complex
               business logic: role-based authorization, financial workflows,
               multi-tenant architectures, and real-time data processing. Founded
               Algorise Tech Explorers, mentoring 150+ learners. 100+ users on
-              production platforms built end-to-end.
+              production platforms built end-to-end. Delivered 10+ production
+              projects and technology services for six schools across Lagos,
+              Jos, and Kwara, including DGHIA, CIMAI, and MMS.
             </p>
           </motion.section>
 
@@ -147,7 +150,7 @@ export const Resume = () => {
                 </p>
                 <ul className="list-disc list-inside space-y-1 text-slate-700 dark:text-slate-300 text-sm">
                   <li>
-                    Delivered 6+ production systems: ATE Management, SSC
+                    Delivered 10+ production projects: ATE Management, SSC
                     Cooperative, KMA Spices, NexusLMS, etc.
                   </li>
                   <li>
@@ -161,6 +164,10 @@ export const Resume = () => {
                   <li>
                     Full ownership: architecture, backend, frontend, deployment,
                     maintenance
+                  </li>
+                  <li>
+                    Provided technology services for six schools across Lagos,
+                    Jos, and Kwara, including DGHIA, CIMAI, and MMS
                   </li>
                 </ul>
               </div>

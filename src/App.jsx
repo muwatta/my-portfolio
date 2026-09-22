@@ -14,6 +14,7 @@ import Loader from "./components/layout/Loader";
 const Home = lazy(() => import("./pages/Home"));
 const Portfolio = lazy(() => import("./pages/Portfolio"));
 const ProjectDetail = lazy(() => import("./pages/ProjectDetail"));
+const CourseDetail = lazy(() => import("./pages/CourseDetail"));
 const Contact = lazy(() => import("./pages/Contact"));
 const About = lazy(() => import("./pages/About"));
 const Blog = lazy(() => import("./pages/Blog"));
@@ -123,6 +124,8 @@ function App() {
                           path="/portfolio/:id"
                           element={<ProjectDetail />}
                         />
+                        <Route path="/courses" element={<Portfolio />} />
+                        <Route path="/courses/:slug" element={<CourseDetail />} />
                         <Route path="/skills" element={<Skills />} />
                         <Route path="/about" element={<About />} />
                         <Route path="/blog" element={<Blog />} />
