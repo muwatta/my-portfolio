@@ -7,6 +7,7 @@ import {
 } from "../lib/academy";
 import { useAcademyAuth } from "../hooks/useAcademyAuth";
 import LessonContent from "../components/academy/LessonContent";
+import PythonEditor from "../components/academy/PythonEditor";
 
 export default function AcademyLesson() {
   const { id } = useParams();
@@ -72,6 +73,22 @@ export default function AcademyLesson() {
         </ul>
       </section>
       <LessonContent content={content} />
+      {lesson.academy_weeks.academy_courses.slug ===
+        "python-for-ai-machine-learning" && (
+        <section className="space-y-3">
+          <div>
+            <p className="text-sm font-semibold uppercase tracking-[0.18em] text-blue-600">
+              Practice terminal
+            </p>
+            <h2 className="mt-1 text-2xl font-bold">Rewrite and run the code</h2>
+            <p className="mt-2 text-slate-600 dark:text-slate-300">
+              Edit the starter code, run it in your browser, and experiment
+              with your own changes. Nothing is sent to the server.
+            </p>
+          </div>
+          <PythonEditor starterCode={content.starter_code || "print('Hello, engineer!')"} />
+        </section>
+      )}
       {lesson.exercises?.length > 0 && (
         <section className="rounded-xl border border-slate-200 p-5 dark:border-slate-800">
           <h2 className="text-xl font-bold">Practice for this lesson</h2>
