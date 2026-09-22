@@ -1,4 +1,5 @@
 -- Phase 7: admin activity feed for real-time dashboard data
+
 create table if not exists public.academy_activity_feed (
   id uuid primary key default gen_random_uuid(),
   actor_id uuid references auth.users(id) on delete set null,
@@ -12,9 +13,11 @@ create table if not exists public.academy_activity_feed (
   created_at timestamptz not null default now()
 );
 
-create index if not exists academy_activity_feed_recent_idx on public.academy_activity_feed (created_at desc, activity_type);
+create index if not exists academy_activity_feed_recent_idx
+  on public.academy_activity_feed (created_at desc, activity_type);
 
-create policy if not exists academy_activity_feed_read
+drop policy if exists academy_activity_feed_read on public.academy_activity_feed;
+create policy academy_activity_feed_read
 on public.academy_activity_feed
 for select to authenticated
 using (
@@ -23,9 +26,14 @@ using (
   or actor_id = auth.uid()
 );
 
-create policy if not exists academy_activity_feed_write
+drop policy if exists academy_activity_feed_write on public.academy_activity_feed;
+create policy academy_activity_feed_write
 on public.academy_activity_feed
 for insert to authenticated
 with check (
   public.academy_is_teacher() or public.academy_is_admin() or actor_id = auth.uid()
 );
+
+-- Realtime subscriptions should target these tables: academy_activity_feed,
+-- academy_submissions, academy_submission_results, academy_learning_sessions,
+-- academy_leaderboard_points.

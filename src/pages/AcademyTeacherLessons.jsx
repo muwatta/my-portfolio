@@ -19,7 +19,6 @@ const initialLesson = {
 const initialSchedule = {
   course_id: "",
   lesson_id: "",
-  level_id: "",
   title: "",
   description: "",
   starts_at: "",
