@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   getAcademyAdminAccess,
   setAcademyAdmin,
@@ -9,16 +9,28 @@ export default function AcademyAdminAccess() {
   const [data, setData] = useState({ profiles: [], admins: [] });
   const [state, setState] = useState("loading");
   const [message, setMessage] = useState("");
+  const [refreshing, setRefreshing] = useState(false);
+  const [lastUpdated, setLastUpdated] = useState(null);
 
-  async function load() {
+  const load = useCallback(async (background = false) => {
+    if (background) setRefreshing(true);
     const result = await getAcademyAdminAccess();
     setData(result.data ?? { profiles: [], admins: [] });
     setState(result.error ? "error" : "ready");
-  }
+    setLastUpdated(new Date());
+    setRefreshing(false);
+  }, []);
 
   useEffect(() => {
     load();
-  }, []);
+    const refresh = () => load(true);
+    const interval = window.setInterval(refresh, 30000);
+    window.addEventListener("focus", refresh);
+    return () => {
+      window.clearInterval(interval);
+      window.removeEventListener("focus", refresh);
+    };
+  }, [load]);
 
   async function changeAdmin(userId, enabled) {
     const { error } = await setAcademyAdmin(userId, enabled);
@@ -50,6 +62,13 @@ export default function AcademyAdminAccess() {
           Appoint trusted administrators and set teaching roles. Student level
           assignment remains a staff-only action.
         </p>
+        <div className="mt-4 flex flex-wrap items-center gap-3 text-xs text-slate-500 dark:text-slate-400">
+          <span>{lastUpdated ? `Updated ${lastUpdated.toLocaleTimeString()}` : "Loading latest access records..."}</span>
+          <button type="button" className="button-secondary px-3 py-1.5" onClick={() => load(true)} disabled={refreshing}>
+            {refreshing ? "Refreshing..." : "Refresh now"}
+          </button>
+          <span>Auto-refreshes every 30 seconds</span>
+        </div>
       </header>
       {message && (
         <p
