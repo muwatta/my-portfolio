@@ -1,15 +1,15 @@
 export const SITE = {
   name: "Muwatta",
   title:
-    "Muwatta | Abdullahi Musliudeen: Software Engineer, Technology Educator & Builder",
+    "Muwatta | Abdullahi Musliudeen: Software Developer",
   description:
-    "Portfolio of Abdullahi Musliudeen, a Nigerian software engineer, technology educator, and builder working across backend systems, React, embedded systems, AI, and IoT.",
+    "Portfolio of Abdullahi Musliudeen, a Nigerian backend engineer and full-stack developer building production APIs, Django systems, React applications, and data-driven platforms.",
   url: "https://www.muwatta.com.ng",
   canonical: "https://www.muwatta.com.ng/",
   twitter: "@MusliudeenAbdu1",
   locale: "en_NG",
   image:
-    "https://res.cloudinary.com/dee5edoss/image/upload/w_600,ar_1:1,c_fill,g_auto,e_art:hokusai/v1741434757/IMG-20241231-WA0094_jf4axb.jpg",
+    "https://www.muwatta.com.ng/images/profile_pics.jpg",
 };
 
 export const PERSON_ID = `${SITE.url}/#person`;
@@ -30,7 +30,7 @@ export const personSchema = {
   alternateName: ["Abdullahi Musliudeen", "Muwatta"],
   url: SITE.url,
   image: SITE.image,
-  jobTitle: "Software Engineer, Technology Educator & Builder",
+  jobTitle: "Software Developer",
   description: SITE.description,
   knowsAbout: [
     "Python",

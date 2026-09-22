@@ -217,7 +217,7 @@ const BlogPost = () => {
             <div className="flex items-center gap-3">
               <div className="w-9 h-9 rounded-full overflow-hidden ring-1 ring-slate-700 flex-shrink-0">
                 <img
-                  src="https://res.cloudinary.com/dee5edoss/image/upload/w_400,ar_1:1,c_fill,g_auto,e_art:hokusai/v1741434757/IMG-20241231-WA0094_jf4axb.jpg"
+                  src="/images/profile_pics.jpg"
                   alt="Abdullahi Musliudeen"
                   className="w-full h-full object-cover"
                 />
@@ -227,7 +227,7 @@ const BlogPost = () => {
                   Abdullahi Musliudeen
                 </p>
                 <p className="text-[10px] text-slate-600">
-                  Backend Engineer · Full-Stack Developer
+                  Software Developer · Backend & Full-Stack
                 </p>
               </div>
             </div>

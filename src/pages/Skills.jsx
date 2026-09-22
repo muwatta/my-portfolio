@@ -139,7 +139,7 @@ export default function Skills() {
     <div className="min-h-screen bg-white dark:bg-[#080c14] text-slate-800 dark:text-slate-200 relative overflow-hidden">
       <Seo
         title="Skills | Abdullahi Musliudeen Oladipupo"
-        description="Backend Engineer & Full-Stack Developer: Python, Django, Django REST Framework, PostgreSQL, Redis, Celery, Docker and React."
+        description="Software Developer: Python, Django, Django REST Framework, PostgreSQL, Redis, Celery, Docker and React."
         path="/skills"
       >
         <link
@@ -176,7 +176,7 @@ export default function Skills() {
           >
             <div className="w-28 h-28 rounded-2xl overflow-hidden ring-1 ring-slate-700">
               <img
-                src="https://res.cloudinary.com/dee5edoss/image/upload/w_400,ar_1:1,c_fill,g_auto,e_art:hokusai/v1741434757/IMG-20241231-WA0094_jf4axb.jpg"
+                src="/images/profile_pics.jpg"
                 alt="Abdullahi Musliudeen Oladipupo"
                 className="w-full h-full object-cover"
                 loading="eager"
@@ -194,7 +194,7 @@ export default function Skills() {
               transition={{ delay: 0.1 }}
               className="text-xs tracking-[0.25em] uppercase text-blue-400 mb-2 font-mono"
             >
-              Backend Engineer · Full-Stack Developer
+              Software Developer · Backend & Full-Stack
             </motion.p>
             <motion.h1
               initial={{ opacity: 0, y: 15 }}

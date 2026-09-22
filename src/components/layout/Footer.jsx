@@ -206,7 +206,7 @@ export default function Footer() {
                 </span>
               </Link>
               <p className="text-slate-500 dark:text-slate-400 text-sm leading-relaxed mb-5 max-w-xs">
-                Backend Engineer & Full-Stack Developer, building production
+                Software Developer focused on backend and full-stack products,
                 systems with Django, PostgreSQL, and React, and mentoring the
                 next generation of Nigerian developers.
               </p>
@@ -298,7 +298,7 @@ export default function Footer() {
               </motion.span>
               in Lagos, Nigeria
             </p>
-            <p>Backend Engineer · Full-Stack Developer</p>
+            <p>Software Developer · Backend & Full-Stack</p>
           </div>
         </div>
       </footer>

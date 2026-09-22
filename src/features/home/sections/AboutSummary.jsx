@@ -23,12 +23,14 @@ export const AboutSummary = () => {
               <p>
                 I build production-grade backend systems: REST APIs, role-based
                 workflows, financial operations, and data-driven platforms.
+                I have delivered 10+ production projects for real users.
               </p>
               <p>
                 My work also includes teaching programming and introducing
                 learners to embedded systems, AI, IoT, and practical computing.
                 I founded Algorise Tech Explorers and have mentored 150+
-                learners.
+                learners while providing technology services for six schools
+                across Lagos, Jos, and Kwara, including DGHIA, CIMAI, and MMS.
               </p>
               <p>
                 I hold a Bachelor of Education (B.Ed.) in Arabic Education from

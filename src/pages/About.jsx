@@ -99,9 +99,9 @@ const TESTIMONIALS = [
   },
   {
     quote:
-      "Muwatta's bootcamps are transforming tech education in Jos. He makes complex systems accessible.",
+      "Muwatta's bootcamps are transforming tech education in Lagos. He makes complex systems accessible.",
     author: "Student",
-    location: "Jos",
+    location: "Lagos",
   },
 ];
 
@@ -139,8 +139,8 @@ const About = () => {
       style={{ fontFamily: "'Syne', sans-serif" }}
     >
       <Seo
-        title="About Abdullahi Musliudeen | Software Engineer & Educator"
-        description="Learn about Abdullahi Musliudeen, a Nigerian Backend Engineer and Full-Stack Developer working with Python, Django, React, TypeScript, APIs, and EdTech while mentoring new developers."
+        title="About Abdullahi Musliudeen | Software Developer"
+        description="Learn about Abdullahi Musliudeen, a Nigerian software developer building production APIs, Django systems, React applications, and data-driven platforms."
         path="/about"
         type="profile"
       >
@@ -172,7 +172,7 @@ const About = () => {
           >
             <div className="w-32 h-32 rounded-2xl overflow-hidden ring-1 ring-slate-800">
               <img
-                src="https://res.cloudinary.com/dee5edoss/image/upload/w_400,ar_1:1,c_fill,g_auto,e_art:hokusai/v1741434757/IMG-20241231-WA0094_jf4axb.jpg"
+                src="/images/profile_pics.jpg"
                 alt="Abdullahi Musliudeen"
                 className="w-full h-full object-cover"
                 loading="eager"
@@ -190,7 +190,7 @@ const About = () => {
             className="flex-1 min-w-0 w-full text-center lg:text-left"
           >
             <p className="text-[11px] font-mono tracking-[0.28em] uppercase text-blue-400 mb-3">
-              Backend Engineer · Full-Stack Developer · Founder
+              Software Developer · Backend & Full-Stack · Technical Lead
             </p>
             <h1 className="text-4xl sm:text-6xl font-extrabold text-slate-900 dark:text-white leading-[1.05] mb-5 break-words">
               About Abdullahi Musliudeen:
@@ -203,9 +203,10 @@ const About = () => {
               className="text-slate-400 text-[15px] max-w-xl mx-auto lg:mx-0 leading-relaxed mb-8"
               style={{ fontFamily: "'Lora', serif" }}
             >
-              Backend-heavy engineer who builds production systems. Also mentor
-              developer talent through Algorise Tech Explorers. From Arabic
-              Education into systems architecture.
+              Backend-heavy engineer who has delivered 10+ production projects
+              and provides technology services for six schools across Lagos,
+              Jos, and Kwara. I also mentor developer talent through Algorise
+              Tech Explorers.
             </p>
             <div className="flex flex-col sm:flex-row justify-center lg:justify-start gap-3">
               <Link
@@ -221,6 +222,17 @@ const About = () => {
                 View Resume
               </Link>
             </div>
+            <div className="mt-5 flex flex-wrap justify-center gap-x-5 gap-y-2 text-sm lg:justify-start">
+              <Link className="font-semibold text-cyan-500 hover:text-cyan-400" to="/portfolio">
+                Explore my work →
+              </Link>
+              <Link className="font-semibold text-cyan-500 hover:text-cyan-400" to="/academy">
+                Visit the Academy →
+              </Link>
+              <Link className="font-semibold text-cyan-500 hover:text-cyan-400" to="/blog">
+                Read my writing →
+              </Link>
+            </div>
           </motion.div>
 
           {/* STAT CARDS */}
@@ -233,7 +245,7 @@ const About = () => {
             {[
               { value: "100+", label: "Active Users" },
               { value: "150+", label: "Learners Trained" },
-              { value: "6+", label: "Production Systems" },
+              { value: "10+", label: "Production Projects" },
               { value: "2024", label: "ATE Founded" },
             ].map((s) => (
               <div
@@ -248,6 +260,22 @@ const About = () => {
             ))}
           </motion.div>
         </div>
+
+        <motion.section
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.25 }}
+          className="mb-24 rounded-2xl border border-cyan-200 bg-cyan-50/60 p-6 dark:border-cyan-900/60 dark:bg-cyan-950/20 sm:p-8"
+        >
+          <SectionLabel>Education technology footprint</SectionLabel>
+          <p className="max-w-3xl text-[15px] leading-relaxed text-slate-600 dark:text-slate-300">
+            Through Algorise Tech Explorers, I provide technology and learning
+            services for six schools across three Nigerian locations: Lagos,
+            Jos, and Kwara. School partners include DGHIA, CIMAI, MMS, and
+            other education teams working to give learners practical access to
+            software, AI, embedded systems, and digital skills.
+          </p>
+        </motion.section>
 
         {/* STORY ACCORDION */}
         <motion.div

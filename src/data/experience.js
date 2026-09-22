@@ -27,11 +27,11 @@ export const engineeringExperience = [
     period: "2024 – Present",
     type: "engineering",
     description:
-      "Delivered production systems for multiple clients and organizations. Specialized in backend architecture, REST APIs, and complex business logic workflows.",
+      "Delivered 10+ production projects for clients and organizations. Specialized in backend architecture, REST APIs, and complex business logic workflows.",
     highlights: [
       "SSC Cooperative: Live financial management system (loan approvals, savings tracking)",
       "KMA Spices: Production e-commerce platform",
-      "DGHI Academy: School management platform",
+      "DGHIA, CIMAI, MMS and other schools: School and learning platforms",
       "NexusLMS: Full-featured learning management system",
     ],
     technologies: [
@@ -43,9 +43,10 @@ export const engineeringExperience = [
       "Supabase",
     ],
     metrics: {
-      systems: "6+ production",
+      systems: "10+ production",
       clients: "Multiple",
       delivery: "End-to-end",
+      schools: "6 schools across Lagos, Jos and Kwara",
     },
   },
   {

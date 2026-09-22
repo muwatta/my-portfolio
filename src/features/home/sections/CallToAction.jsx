@@ -141,7 +141,7 @@ export const CallToAction = () => {
             
             
             <span className="font-mono text-xs">
-              📍 Jos, Nigeria (WAT · UTC+1)
+              📍 Lagos, Nigeria (WAT · UTC+1)
             </span>
           </motion.div>
         </motion.div>
