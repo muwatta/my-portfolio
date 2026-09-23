@@ -3,6 +3,7 @@ import {
   getAcademyLiveMessages,
   getAcademyLiveRooms,
   joinAcademyLiveRoom,
+  leaveAcademyLiveRoom,
   sendAcademyLiveMessage,
 } from "../lib/academy";
 import { supabase } from "../lib/supabase";
@@ -86,6 +87,7 @@ export default function AcademyLiveRoom() {
       peers.clear();
       localStreamRef.current?.getTracks().forEach((track) => track.stop());
       localStreamRef.current = null;
+      leaveAcademyLiveRoom(roomId);
       setConnectedPeers([]);
       setParticipants([]);
     };
