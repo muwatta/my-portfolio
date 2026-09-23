@@ -27,7 +27,7 @@ export async function getActiveCourseForStudent(studentId) {
   const { data: enrollmentData } = await supabase
     .from("academy_enrollments")
     .select(
-      "course_id, academy_courses(id, slug, title, description, duration_weeks)",
+      "course_id, academy_courses!academy_enrollments_course_id_fkey(id, slug, title, description, duration_weeks)",
     )
     .eq("student_id", studentId)
     .eq("status", "active")
@@ -60,7 +60,7 @@ export async function getAcademyStudentOverview(studentId) {
     supabase
       .from("academy_enrollments")
       .select(
-        "id, status, enrolled_at, academy_courses(id, slug, title, duration_weeks, academy_subjects(name), course_family)",
+        "id, status, enrolled_at, academy_courses!academy_enrollments_course_id_fkey(id, slug, title, duration_weeks, academy_subjects!academy_courses_subject_id_fkey(name), course_family)",
       )
       .eq("student_id", studentId)
       .eq("status", "active"),
@@ -275,7 +275,7 @@ export async function getAcademyTeacherStudents() {
     supabase
       .from("academy_profiles")
       .select(
-        "id, display_name, role, current_course_id, school_id, state, city, student_level, updated_at, academy_courses!current_course_id(id, slug, title), academy_schools(id, name, code, state, city)",
+        "id, display_name, role, current_course_id, school_id, state, city, student_level, updated_at, academy_courses!academy_profiles_current_course_id_fkey(id, slug, title), academy_schools!academy_profiles_school_id_fkey(id, name, code, state, city)",
       )
       .eq("role", "student")
       .order("display_name"),
@@ -326,7 +326,7 @@ export async function getAcademyTeacherAnalytics() {
     supabase
       .from("academy_profiles")
       .select(
-        "id, display_name, current_course_id, academy_courses!current_course_id(title, slug)",
+        "id, display_name, current_course_id, academy_courses!academy_profiles_current_course_id_fkey(title, slug)",
       )
       .eq("role", "student"),
     supabase
@@ -383,7 +383,7 @@ export async function getAcademyAdminOverview() {
     supabase
       .from("academy_profiles")
       .select(
-        "id, display_name, role, current_course_id, updated_at, academy_courses!current_course_id(title, slug)",
+        "id, display_name, role, current_course_id, updated_at, academy_courses!academy_profiles_current_course_id_fkey(title, slug)",
       ),
     supabase.from("academy_courses").select("id, published"),
     supabase
@@ -460,7 +460,7 @@ export async function getAcademyStudentProfile(studentId) {
     supabase
       .from("academy_profiles")
       .select(
-        "id, display_name, role, avatar_url, current_course_id, school_id, state, city, student_level, updated_at, academy_courses!current_course_id(title, slug), academy_schools(id, name, code, state, city)",
+        "id, display_name, role, avatar_url, current_course_id, school_id, state, city, student_level, updated_at, academy_courses!academy_profiles_current_course_id_fkey(title, slug), academy_schools!academy_profiles_school_id_fkey(id, name, code, state, city)",
       )
       .eq("id", studentId)
       .maybeSingle(),
