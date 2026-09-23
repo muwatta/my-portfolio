@@ -491,7 +491,7 @@ export async function updateAcademyStudentProfile(studentId, updates) {
     .update(updates)
     .eq("id", studentId)
     .select(
-      "id, display_name, avatar_url, school_id, state, city, student_level, academy_schools(id, name, code, state, city)",
+      "id, display_name, avatar_url, school_id, state, city, student_level, academy_schools!academy_profiles_school_id_fkey(id, name, code, state, city)",
     )
     .single();
 }
