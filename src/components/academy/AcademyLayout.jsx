@@ -9,15 +9,19 @@ import {
 } from "../../lib/academy";
 
 const links = [
+  { label: "Dashboard", to: "/academy/dashboard" },
   { label: "Courses", to: "/academy/courses" },
   { label: "Lessons", to: "/academy/lessons" },
   { label: "Practice", to: "/academy/practice" },
   { label: "Assignments", to: "/academy/assignments" },
-  { label: "Progress", to: "/academy/progress" },
   { label: "Projects", to: "/academy/projects" },
+  { label: "Progress", to: "/academy/progress" },
   { label: "Leaderboard", to: "/academy/leaderboard" },
+  { label: "Achievements", to: "/academy/achievements" },
+  { label: "Materials", to: "/academy/materials" },
   { label: "Notifications", to: "/academy/notifications" },
   { label: "Live classroom", to: "/academy/live" },
+  { label: "Profile", to: "/academy/profile" },
 ];
 
 const teacherLinks = [
@@ -32,17 +36,24 @@ const teacherLinks = [
 ];
 
 const adminLinks = [
+  { label: "Dashboard", to: "/academy/admin" },
   { label: "Students", to: "/academy/admin/students" },
-  { label: "Access", to: "/academy/admin/access" },
-  { label: "Manage courses", to: "/academy/teacher/courses" },
-  { label: "Manage lessons", to: "/academy/teacher/lessons" },
-  { label: "Student analytics", to: "/academy/teacher/analytics" },
-  { label: "Assignments", to: "/academy/teacher/assignments" },
-  { label: "Submissions", to: "/academy/teacher/submissions" },
-  { label: "Live classroom", to: "/academy/live" },
+  { label: "Levels", to: "/academy/admin/levels" },
+  { label: "Courses", to: "/academy/admin/courses" },
+  { label: "Lessons", to: "/academy/admin/lessons" },
+  { label: "Practice", to: "/academy/admin/practice" },
+  { label: "Assignments", to: "/academy/admin/assignments" },
+  { label: "Projects", to: "/academy/admin/projects" },
+  { label: "Schedule", to: "/academy/admin/schedule" },
+  { label: "Submissions", to: "/academy/admin/submissions" },
+  { label: "Materials", to: "/academy/admin/materials" },
+  { label: "Live classroom", to: "/academy/admin/live" },
+  { label: "Leaderboard", to: "/academy/admin/leaderboard" },
+  { label: "Analytics", to: "/academy/admin/analytics" },
+  { label: "Settings", to: "/academy/admin/settings" },
 ];
 
-export default function AcademyLayout() {
+export default function AcademyLayout({ workspace = "student" }) {
   const { profile, user, signOut, isAdmin, isTeacher, isStudent } =
     useAcademyAuth();
   const { theme, toggle } = useTheme();
@@ -53,13 +64,14 @@ export default function AcademyLayout() {
   const displayName =
     profile?.display_name || user?.email?.split("@")[0] || "Student";
   const accessLabel = isAdmin ? "Admin" : isTeacher ? "Teacher" : "Student";
-  const navigationLinks = isAdmin
-    ? adminLinks
-    : isTeacher
-      ? teacherLinks
+  const navigationLinks =
+    workspace === "admin"
+      ? adminLinks
       : isStudent
         ? links
-        : [];
+        : isTeacher || isAdmin
+          ? teacherLinks
+          : [];
 
   useEffect(() => {
     setNavigationOpen(false);
@@ -135,7 +147,7 @@ export default function AcademyLayout() {
       <header className="border-b border-slate-200 bg-white/95 dark:border-slate-800 dark:bg-slate-950/95">
         <div className="mx-auto flex min-h-20 max-w-7xl items-center gap-2 px-4 py-3 sm:gap-4 sm:px-6">
           <Link
-            to={isAdmin ? "/academy/admin" : "/academy/dashboard"}
+            to={workspace === "admin" ? "/academy/admin" : "/academy/dashboard"}
             className="flex min-w-0 shrink-0 items-center gap-3 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-950"
             aria-label="Academy dashboard"
           >
@@ -144,7 +156,7 @@ export default function AcademyLayout() {
             </span>
             <span className="min-w-0">
               <span className="block truncate text-sm font-bold tracking-wide">
-                {isAdmin ? "ATE Academy Admin" : "ATE Academy"}
+                {workspace === "admin" ? "ATE Academy Admin" : "ATE Academy"}
               </span>
               <span className="block max-w-[13rem] truncate text-xs text-slate-500 dark:text-slate-400">
                 Software, embedded, and AI/ML
@@ -284,11 +296,29 @@ export default function AcademyLayout() {
             </p>
           </div>
           <div className="flex flex-wrap gap-x-5 gap-y-2 text-sm font-semibold text-slate-600 dark:text-slate-300">
-            <Link to="/academy/dashboard" className="hover:text-blue-600">
+            <Link
+              to={
+                workspace === "admin"
+                  ? "/academy/admin"
+                  : workspace === "teacher"
+                    ? "/academy/teacher"
+                    : "/academy/dashboard"
+              }
+              className="hover:text-blue-600"
+            >
               Dashboard
             </Link>
-            <Link to="/academy/assignments" className="hover:text-blue-600">
-              Assignments
+            <Link
+              to={
+                workspace === "admin"
+                  ? "/academy/admin/submissions"
+                  : workspace === "teacher"
+                    ? "/academy/teacher/submissions"
+                    : "/academy/assignments"
+              }
+              className="hover:text-blue-600"
+            >
+              {workspace === "student" ? "Assignments" : "Submissions"}
             </Link>
             <Link to="/" className="hover:text-blue-600">
               Portfolio
