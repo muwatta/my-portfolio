@@ -4,9 +4,9 @@ const ASSETS_CACHE = `${CACHE_PREFIX}-assets`;
 const API_CACHE = `${CACHE_PREFIX}-api`;
 
 const CACHE_VERSIONS = {
-  runtime: 2,
-  assets: 2,
-  api: 2,
+  runtime: 3,
+  assets: 3,
+  api: 3,
 };
 
 const CACHE_NAME_PREFIX = (type) =>
@@ -47,12 +47,15 @@ self.addEventListener("activate", (event) => {
       try {
         const cacheNames = await caches.keys();
         const cachePrefix = CACHE_PREFIX;
+        const currentCaches = [
+          CACHE_NAME_PREFIX("runtime"),
+          CACHE_NAME_PREFIX("assets"),
+          CACHE_NAME_PREFIX("api"),
+        ];
         const cachesToDelete = cacheNames.filter(
           (name) =>
             name.startsWith(cachePrefix) &&
-            !Object.values(CACHE_NAME_PREFIX("runtime")).includes(name) &&
-            !Object.values(CACHE_NAME_PREFIX("assets")).includes(name) &&
-            !Object.values(CACHE_NAME_PREFIX("api")).includes(name),
+            !currentCaches.includes(name),
         );
 
         await Promise.all(cachesToDelete.map((name) => caches.delete(name)));

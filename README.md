@@ -544,6 +544,10 @@ A production database should not be reset simply because a migration needs corre
 ## Academy production checklist
 
 1. Apply every file in `supabase/migrations/` to the target Supabase project.
+   In an existing deployment, confirm
+   `20261015000000_academy_course_schema_repair.sql` has been applied before
+   loading Academy dashboards; it restores the profile/course/school foreign
+   keys and course metadata used by PostgREST embeds.
 2. Seed the initial courses and content with `supabase/seed.sql` or the
    repository's documented seed script, then verify published courses and
    active enrollments.
