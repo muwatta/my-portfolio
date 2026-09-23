@@ -379,6 +379,8 @@ export async function getAcademyAdminOverview() {
     { data: profiles, error: profileError },
     { data: courses, error: courseError },
     { data: sessions, error: sessionError },
+    { data: assignments, error: assignmentError },
+    { data: submissions, error: submissionError },
   ] = await Promise.all([
     supabase
       .from("academy_profiles")
@@ -389,7 +391,21 @@ export async function getAcademyAdminOverview() {
     supabase
       .from("academy_learning_sessions")
       .select("student_id, last_heartbeat_at"),
+    supabase
+      .from("academy_assignments")
+      .select("id, due_at, published")
+      .eq("published", true),
+    supabase
+      .from("academy_submissions")
+      .select("id, status, submitted_at"),
   ]);
+  const pendingSubmissions = (submissions ?? []).filter(
+    (submission) => submission.status !== "graded",
+  ).length;
+  const overdueAssignments = (assignments ?? []).filter(
+    (assignment) =>
+      assignment.due_at && new Date(assignment.due_at).getTime() < Date.now(),
+  ).length;
   return {
     data: {
       students: (profiles ?? []).filter((profile) => profile.role === "student")
@@ -406,8 +422,15 @@ export async function getAcademyAdminOverview() {
           )
           .map((session) => session.student_id),
       ).size,
+      pendingSubmissions,
+      overdueAssignments,
     },
-    error: profileError || courseError || sessionError,
+    error:
+      profileError ||
+      courseError ||
+      sessionError ||
+      assignmentError ||
+      submissionError,
     configured: true,
   };
 }

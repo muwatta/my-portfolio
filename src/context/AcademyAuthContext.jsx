@@ -66,9 +66,7 @@ export function AcademyAuthProvider({ children }) {
         if (cancelled) return;
         setProfile(data ?? null);
         setAdminStatus(
-          Boolean(isAdmin) ||
-            session.user.email?.toLowerCase() ===
-              "abdullahmusliudeen@gmail.com",
+          Boolean(isAdmin),
         );
         setError(profileError ?? null);
         setProfileLoading(false);

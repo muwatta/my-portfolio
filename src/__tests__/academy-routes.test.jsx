@@ -131,8 +131,12 @@ describe("Academy routes", () => {
 
   it.each([
     "/academy/admin",
+    "/academy/admin/dashboard",
     "/academy/admin/students",
     "/academy/admin/students/student-id",
+    "/academy/admin/courses",
+    "/academy/admin/assignments",
+    "/academy/admin/submissions",
     "/academy/profile",
   ])("protects the role-specific route %s", async (route) => {
     render(
