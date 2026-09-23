@@ -210,6 +210,14 @@ export async function joinAcademyLiveRoom(roomId, studentId) {
   return { error };
 }
 
+export async function leaveAcademyLiveRoom(roomId) {
+  if (!supabase) return { error: new Error("Academy is not configured.") };
+  const { error } = await supabase.rpc("academy_leave_live_room", {
+    target_room_id: roomId,
+  });
+  return { error };
+}
+
 export async function markAcademyNotificationRead(notificationId) {
   if (!supabase) return { error: new Error("Academy is not configured.") };
   const { error } = await supabase

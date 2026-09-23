@@ -541,6 +541,26 @@ Production migrations should be reviewed against the existing remote migration h
 
 A production database should not be reset simply because a migration needs correction.
 
+## Academy production checklist
+
+1. Apply every file in `supabase/migrations/` to the target Supabase project.
+2. Seed the initial courses and content with `supabase/seed.sql` or the
+   repository's documented seed script, then verify published courses and
+   active enrollments.
+3. Configure the private `assignment-submissions` Storage bucket and apply
+   the storage policies from the migrations.
+4. Enable Supabase Realtime for leaderboard points, activity feed, live
+   messages, and any other tables listed in the Realtime migrations.
+5. Deploy `supabase/functions/academy-ai-feedback` and configure
+   `AI_PROVIDER_API_KEY` and optional `AI_FEEDBACK_MODEL` as Edge Function
+   secrets. Keep service-role and provider keys out of Vite environment
+   variables.
+6. Confirm the `academy-live-retention` scheduled job exists. If `pg_cron` is
+   unavailable, create an equivalent daily scheduled invocation of
+   `select public.academy_cleanup_live_data();` using the Supabase scheduler.
+7. Run `npm test -- --run`, `npm run lint`, and `npm run build` before
+   promoting the frontend.
+
 ---
 
 # Blog Management

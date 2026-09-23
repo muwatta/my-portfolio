@@ -37,14 +37,29 @@ Deno.serve(async (request) => {
   if (!teacher && !admin)
     return json({ error: "Teacher or admin access required" }, 403);
 
-  let input: { submission_id?: string; deterministic_feedback?: unknown };
+  const contentLength = Number(request.headers.get("content-length") ?? 0);
+  if (contentLength > 16_384) {
+    return json({ error: "Request body is too large" }, 413);
+  }
+
+  let input: { submission_id?: string };
   try {
-    input = await request.json();
+    const body = await request.text();
+    if (body.length > 16_384) {
+      return json({ error: "Request body is too large" }, 413);
+    }
+    input = JSON.parse(body);
   } catch {
     return json({ error: "Malformed JSON" }, 400);
   }
-  if (!input.submission_id)
+  if (
+    typeof input.submission_id !== "string" ||
+    !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+      input.submission_id,
+    )
+  ) {
     return json({ error: "submission_id is required" }, 400);
+  }
 
   const serviceClient = createClient(supabaseUrl, serviceKey);
   const { data: result, error: resultError } = await serviceClient
@@ -57,9 +72,9 @@ Deno.serve(async (request) => {
   if (resultError || !result)
     return json({ error: "Deterministic result not found" }, 404);
 
-  // AI receives only objective grading metadata, never names, email addresses, or source files.
-  const deterministicFeedback =
-    input.deterministic_feedback ?? result.deterministic_feedback ?? {};
+  // AI receives only server-stored grading metadata, never client-supplied
+  // scores, names, email addresses, or source files.
+  const deterministicFeedback = result.deterministic_feedback ?? {};
   if (!providerKey) {
     return json(
       {
@@ -150,7 +165,7 @@ Deno.serve(async (request) => {
   } catch (error) {
     const status =
       error instanceof DOMException && error.name === "AbortError"
-        ? "failed"
+        ? "timeout"
         : "failed";
     await updateAiResult(serviceClient, input.submission_id, status, null);
     return json({
