@@ -555,10 +555,14 @@ A production database should not be reset simply because a migration needs corre
    `AI_PROVIDER_API_KEY` and optional `AI_FEEDBACK_MODEL` as Edge Function
    secrets. Keep service-role and provider keys out of Vite environment
    variables.
-6. Confirm the `academy-live-retention` scheduled job exists. If `pg_cron` is
+6. Deploy `supabase/functions/academy-grade-submission` and configure
+   `GRADING_EXECUTOR_URL`, `GRADING_EXECUTOR_KEY`, and optional executor name
+   and version secrets. The executor must be an isolated, no-network Python
+   sandbox; the Edge Function deliberately does not execute student code.
+7. Confirm the `academy-live-retention` scheduled job exists. If `pg_cron` is
    unavailable, create an equivalent daily scheduled invocation of
    `select public.academy_cleanup_live_data();` using the Supabase scheduler.
-7. Run `npm test -- --run`, `npm run lint`, and `npm run build` before
+8. Run `npm test -- --run`, `npm run lint`, and `npm run build` before
    promoting the frontend.
 
 ---
