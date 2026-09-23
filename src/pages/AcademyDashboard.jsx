@@ -86,26 +86,40 @@ export default function AcademyDashboard() {
         {[
           {
             label: "Completed lessons",
-            value: progress?.completedLessons ?? 0,
-            detail: `${progress?.lessonCount ?? 0} lessons in this course`,
+            value:
+              progress == null ? "—" : (progress.completedLessons ?? 0),
+            detail:
+              progress == null
+                ? "Progress is unavailable."
+                : `${progress.lessonCount ?? 0} lessons in this course`,
           },
           {
             label: "Pending assignments",
-            value: assignmentCount,
-            detail: assignmentCount
+            value: state === "error" ? "—" : assignmentCount,
+            detail: state === "error"
+              ? "Assignments are unavailable."
+              : assignmentCount
               ? "Keep your next deadline in sight."
               : "No assignments yet.",
           },
           {
             label: "Current week",
-            value: `${progress?.currentWeek ?? 1} / ${course?.duration_weeks ?? 11}`,
-            detail: "Your course position is calculated from completions.",
+            value:
+              progress?.currentWeek == null || course?.duration_weeks == null
+                ? "—"
+                : `${progress.currentWeek} / ${course.duration_weeks}`,
+            detail:
+              progress == null
+                ? "Course position is unavailable."
+                : "Calculated from completed lessons.",
           },
           {
             label: "Learning time",
-            value: `${learningMinutes} min`,
+            value: overview == null ? "—" : `${learningMinutes} min`,
             detail:
-              "Server-recorded time while Academy was visible and active.",
+              overview == null
+                ? "Learning time is unavailable."
+                : "Server-recorded active Academy time.",
           },
         ].map((card) => (
           <div

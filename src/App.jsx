@@ -76,8 +76,19 @@ const AcademyTeacherClasses = lazy(
   () => import("./pages/AcademyTeacherClasses"),
 );
 const AcademyPlaceholder = lazy(() => import("./pages/AcademyPlaceholder"));
-const AcademyLayout = lazy(() => import("./components/academy/AcademyLayout"));
+const AcademyStudentLayout = lazy(
+  () => import("./components/academy/AcademyStudentLayout"),
+);
+const AcademyAdminLayout = lazy(
+  () => import("./components/academy/AcademyAdminLayout"),
+);
+const AcademyTeacherLayout = lazy(
+  () => import("./components/academy/AcademyTeacherLayout"),
+);
 const AcademyGuard = lazy(() => import("./components/academy/AcademyGuard"));
+const AcademyStudentGuard = lazy(
+  () => import("./components/academy/AcademyStudentGuard"),
+);
 const AcademyTeacherGuard = lazy(
   () => import("./components/academy/AcademyTeacherGuard"),
 );
@@ -185,7 +196,8 @@ function App() {
                           element={<AcademyForgotPassword />}
                         />
                         <Route element={<AcademyGuard />}>
-                          <Route element={<AcademyLayout />}>
+                          <Route element={<AcademyStudentGuard />}>
+                            <Route element={<AcademyStudentLayout />}>
                             <Route
                               path="/academy/dashboard"
                               element={<AcademyDashboard />}
@@ -238,10 +250,19 @@ function App() {
                               path="/academy/profile"
                               element={<AcademyProfile />}
                             />
+                            <Route
+                              path="/academy/achievements"
+                              element={<AcademyLeaderboard />}
+                            />
+                            <Route
+                              path="/academy/materials"
+                              element={<AcademyPlaceholder />}
+                            />
+                            </Route>
                           </Route>
                         </Route>
                         <Route element={<AcademyTeacherGuard />}>
-                          <Route element={<AcademyLayout />}>
+                          <Route element={<AcademyTeacherLayout />}>
                             <Route
                               path="/academy/teacher"
                               element={<AcademyTeacherPlaceholder />}
@@ -277,9 +298,13 @@ function App() {
                           </Route>
                         </Route>
                         <Route element={<AcademyAdminGuard />}>
-                          <Route element={<AcademyLayout />}>
+                          <Route element={<AcademyAdminLayout />}>
                             <Route
                               path="/academy/admin"
+                              element={<AcademyAdminDashboard />}
+                            />
+                            <Route
+                              path="/academy/admin/dashboard"
                               element={<AcademyAdminDashboard />}
                             />
                             <Route
@@ -292,6 +317,74 @@ function App() {
                             />
                             <Route
                               path="/academy/admin/access"
+                              element={<AcademyAdminAccess />}
+                            />
+                            <Route
+                              path="/academy/admin/levels"
+                              element={<AcademyAdminStudents />}
+                            />
+                            <Route
+                              path="/academy/admin/courses"
+                              element={<AcademyTeacherCourses />}
+                            />
+                            <Route
+                              path="/academy/admin/courses/:courseId"
+                              element={<AcademyTeacherCourses />}
+                            />
+                            <Route
+                              path="/academy/admin/lessons"
+                              element={<AcademyTeacherLessons />}
+                            />
+                            <Route
+                              path="/academy/admin/lessons/:lessonId"
+                              element={<AcademyTeacherLessons />}
+                            />
+                            <Route
+                              path="/academy/admin/practice"
+                              element={<AcademyTeacherPlaceholder />}
+                            />
+                            <Route
+                              path="/academy/admin/assignments"
+                              element={<AcademyTeacherAssignments />}
+                            />
+                            <Route
+                              path="/academy/admin/assignments/:assignmentId"
+                              element={<AcademyTeacherAssignments />}
+                            />
+                            <Route
+                              path="/academy/admin/projects"
+                              element={<AcademyTeacherPlaceholder />}
+                            />
+                            <Route
+                              path="/academy/admin/schedule"
+                              element={<AcademyTeacherClasses />}
+                            />
+                            <Route
+                              path="/academy/admin/submissions"
+                              element={<AcademyTeacherSubmissions />}
+                            />
+                            <Route
+                              path="/academy/admin/submissions/:submissionId"
+                              element={<AcademyTeacherSubmissions />}
+                            />
+                            <Route
+                              path="/academy/admin/materials"
+                              element={<AcademyTeacherPlaceholder />}
+                            />
+                            <Route
+                              path="/academy/admin/live"
+                              element={<AcademyLiveRoom />}
+                            />
+                            <Route
+                              path="/academy/admin/leaderboard"
+                              element={<AcademyLeaderboard />}
+                            />
+                            <Route
+                              path="/academy/admin/analytics"
+                              element={<AcademyTeacherAnalytics />}
+                            />
+                            <Route
+                              path="/academy/admin/settings"
                               element={<AcademyAdminAccess />}
                             />
                           </Route>

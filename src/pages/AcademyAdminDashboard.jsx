@@ -27,9 +27,10 @@ export default function AcademyAdminDashboard() {
   }, [load]);
   const cards = [
     ["Students", overview?.students ?? 0],
-    ["Teachers", overview?.teachers ?? 0],
     ["Courses", overview?.courses ?? 0],
     ["Active learners", overview?.activeLearners ?? 0],
+    ["Pending submissions", overview?.pendingSubmissions ?? 0],
+    ["Overdue assignments", overview?.overdueAssignments ?? 0],
   ];
   return (
     <div className="space-y-8">
@@ -85,6 +86,35 @@ export default function AcademyAdminDashboard() {
               Manage access
             </Link>
           </div>
+          <section className="grid gap-4 lg:grid-cols-2">
+            <div className="border border-amber-200 bg-amber-50 p-5 dark:border-amber-900 dark:bg-amber-950/30">
+              <p className="text-sm font-semibold uppercase tracking-wide text-amber-800 dark:text-amber-200">
+                Needs attention
+              </p>
+              <p className="mt-3 text-sm text-amber-900 dark:text-amber-100">
+                {overview?.pendingSubmissions ?? 0} submission
+                {overview?.pendingSubmissions === 1 ? "" : "s"} awaiting grading
+                {" · "}
+                {overview?.overdueAssignments ?? 0} published assignment
+                {overview?.overdueAssignments === 1 ? "" : "s"} past due
+              </p>
+              <Link
+                className="button-secondary mt-4 inline-flex"
+                to="/academy/admin/submissions"
+              >
+                Review submissions
+              </Link>
+            </div>
+            <div className="border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+              <p className="text-sm font-semibold uppercase tracking-wide text-slate-500">
+                Teaching control center
+              </p>
+              <p className="mt-3 text-sm text-slate-600 dark:text-slate-300">
+                Publish course content, assign learning paths, and monitor
+                student activity from the admin workspace.
+              </p>
+            </div>
+          </section>
         </>
       )}
     </div>
