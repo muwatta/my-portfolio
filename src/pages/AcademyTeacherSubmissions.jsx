@@ -27,7 +27,14 @@ export default function AcademyTeacherSubmissions() {
 
   async function grade(submission) {
     const form = scores[submission.id] ?? {};
-    const objectiveScore = Number(form.objectiveScore);
+    const existingResult = Array.isArray(
+      submission.academy_submission_results,
+    )
+      ? submission.academy_submission_results[0]
+      : submission.academy_submission_results;
+    const objectiveScore = Number(
+      form.objectiveScore ?? existingResult?.objective_score,
+    );
     if (
       !Number.isFinite(objectiveScore) ||
       objectiveScore < 0 ||
@@ -136,6 +143,13 @@ export default function AcademyTeacherSubmissions() {
                   {result?.final_score != null ? "/100" : ""}
                 </span>
               </div>
+              {result && (
+                <p className="mt-2 text-sm text-slate-500">
+                  Tests: {result.passed_tests ?? 0}/{result.tests_total ?? 0}
+                  {" · "}
+                  Deterministic status: {result.objective_status ?? "pending"}
+                </p>
+              )}
               {submission.source_code && (
                 <pre className="mt-4 max-h-48 overflow-auto rounded-lg bg-slate-950 p-4 text-xs text-slate-100">
                   {submission.source_code}
@@ -143,20 +157,14 @@ export default function AcademyTeacherSubmissions() {
               )}
               <div className="mt-4 grid gap-3 md:grid-cols-2">
                 <label className="text-sm font-semibold">
-                  Objective score
+                  Deterministic score (read-only)
                   <input
                     className="field mt-1"
                     type="number"
                     min="0"
                     max="100"
                     value={form.objectiveScore ?? result?.objective_score ?? ""}
-                    onChange={(event) =>
-                      updateScore(
-                        submission.id,
-                        "objectiveScore",
-                        event.target.value,
-                      )
-                    }
+                    readOnly
                   />
                 </label>
                 <label className="text-sm font-semibold">

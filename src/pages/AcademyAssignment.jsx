@@ -4,6 +4,7 @@ import {
   getAcademyAssignment,
   getSubmissionCount,
   getAcademySubmissionHistory,
+  requestAcademyDeterministicGrading,
   submitAssignment,
 } from "../lib/academy";
 import { validateAcademyFile } from "../lib/academyFiles";
@@ -78,11 +79,14 @@ export default function AcademyAssignment() {
         fileSizeBytes: file?.size || null,
       });
       if (error) throw error;
+      const submitted = await getAcademySubmissionHistory(id, user.id);
+      const submission = submitted.data?.[0];
+      if (submission?.id) await requestAcademyDeterministicGrading(submission.id);
       setAttempts((value) => value + 1);
       const refreshed = await getAcademySubmissionHistory(id, user.id);
       setHistory(refreshed.data ?? []);
       setFile(null);
-      setNotice("Submitted. Your work is recorded for review.");
+      setNotice("Submitted. Deterministic grading has started.");
     } catch (error) {
       setNotice(error.message || "Submission failed.");
     } finally {
@@ -179,12 +183,20 @@ export default function AcademyAssignment() {
               <div className="flex flex-wrap justify-between gap-2 text-sm">
                 <span>
                   Attempt {submission.attempt_number} · {submission.status}
+                  {submission.grading_error
+                    ? ` · ${submission.grading_error}`
+                    : ""}
                 </span>
                 <span>
                   {result?.final_score ?? "Awaiting grade"}
                   {result?.final_score != null ? "/100" : ""}
                 </span>
               </div>
+              {result && (
+                <p className="mt-2 text-sm text-slate-500">
+                  Tests: {result.passed_tests ?? 0}/{result.tests_total ?? 0}
+                </p>
+              )}
               {result?.teacher_feedback && (
                 <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
                   {result.teacher_feedback}
