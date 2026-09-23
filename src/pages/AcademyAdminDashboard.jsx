@@ -56,7 +56,8 @@ export default function AcademyAdminDashboard() {
           role="alert"
           className="rounded-xl bg-red-50 p-4 text-sm text-red-700"
         >
-          Admin data could not be loaded. Check administrator RLS permissions.
+          Admin data could not be loaded. Check the Academy database migration
+          status and administrator permissions.
         </p>
       )}
       {state === "ready" && (
