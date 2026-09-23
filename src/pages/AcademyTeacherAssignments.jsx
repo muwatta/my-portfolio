@@ -13,6 +13,7 @@ const initialForm = {
   retry_limit: 3,
   published: false,
   ai_feedback_enabled: true,
+  automated_tests: "[]",
 };
 
 export default function AcademyTeacherAssignments() {
@@ -120,6 +121,21 @@ export default function AcademyTeacherAssignments() {
               setForm({ ...form, instructions: event.target.value })
             }
           />
+        </label>
+        <label className="text-sm font-semibold">
+          Deterministic tests (JSON)
+          <textarea
+            className="field mt-1 min-h-32 font-mono text-xs"
+            value={form.automated_tests}
+            onChange={(event) =>
+              setForm({ ...form, automated_tests: event.target.value })
+            }
+            placeholder={'[{"name":"normal values","input":[10,20,30],"expected":20}]'}
+          />
+          <span className="mt-1 block text-xs font-normal text-slate-500">
+            Hidden expected values are used by the trusted grading executor and
+            are never shown to students.
+          </span>
         </label>
         <div className="grid gap-4 sm:grid-cols-2">
           <label className="text-sm font-semibold">

@@ -858,7 +858,7 @@ export async function getAcademySubmissionHistory(assignmentId, studentId) {
   const { data, error } = await supabase
     .from("academy_submissions")
     .select(
-      "id, attempt_number, status, submitted_at, original_filename, academy_submission_results(id, objective_score, objective_status, final_score, ai_feedback_status, ai_feedback, rubric_feedback, teacher_feedback, updated_at)",
+      "id, attempt_number, status, grading_error, submitted_at, original_filename, academy_submission_results(id, objective_score, objective_status, final_score, passed_tests, failed_tests, tests_total, ai_feedback_status, ai_feedback, rubric_feedback, teacher_feedback, updated_at)",
     )
     .eq("assignment_id", assignmentId)
     .eq("student_id", studentId)
@@ -871,7 +871,7 @@ export async function getAcademyTeacherSubmissions() {
   const { data, error } = await supabase
     .from("academy_submissions")
     .select(
-      "id, assignment_id, student_id, attempt_number, status, original_filename, submitted_at, source_code, academy_assignments(title, points), academy_profiles!student_id(display_name), academy_submission_results(objective_score, objective_status, final_score, ai_feedback_status, ai_feedback, teacher_feedback)",
+      "id, assignment_id, student_id, attempt_number, status, grading_error, original_filename, submitted_at, source_code, academy_assignments(title, points), academy_profiles!student_id(display_name), academy_submission_results(objective_score, objective_status, final_score, passed_tests, failed_tests, tests_total, ai_feedback_status, ai_feedback, teacher_feedback)",
     )
     .order("submitted_at", { ascending: false });
   return { data: data ?? [], error, configured: true };
@@ -919,6 +919,15 @@ export async function saveAcademyAssignment(assignment) {
   if (!supabase)
     return { data: null, error: new Error("Academy is not configured.") };
   const { data: userResult } = await supabase.auth.getUser();
+  let automatedTests = null;
+  try {
+    automatedTests =
+      typeof assignment.automated_tests === "string"
+        ? JSON.parse(assignment.automated_tests)
+        : assignment.automated_tests ?? null;
+  } catch {
+    return { data: null, error: new Error("Deterministic tests must be valid JSON.") };
+  }
   const payload = {
     course_id: assignment.course_id,
     title: assignment.title.trim(),
@@ -928,6 +937,7 @@ export async function saveAcademyAssignment(assignment) {
     published: Boolean(assignment.published),
     is_draft: !assignment.published,
     ai_feedback_enabled: Boolean(assignment.ai_feedback_enabled),
+    automated_tests: automatedTests,
     created_by: userResult.user?.id,
   };
   const query = assignment.id
@@ -1007,6 +1017,16 @@ export async function submitAssignment({
     })
     .select("id, assignment_id, attempt_number, status, submitted_at")
     .single();
+  return { data, error };
+}
+
+export async function requestAcademyDeterministicGrading(submissionId) {
+  if (!supabase)
+    return { data: null, error: new Error("Academy is not configured.") };
+  const { data, error } = await supabase.functions.invoke(
+    "academy-grade-submission",
+    { body: { submission_id: submissionId } },
+  );
   return { data, error };
 }
 
