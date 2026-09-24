@@ -77,7 +77,7 @@ export default function AcademyDashboard() {
         )}
         <p className="mt-3 max-w-2xl text-slate-300">
           {course?.title
-            ? "Your learning path is ready. Pick up where you left off — one step at a time."
+             ? "Your learning path is ready. Pick up where you left off, one step at a time."
             : "Choose the learning path you want to explore. Once you pick a course, it becomes your current path."}
         </p>
         <Link
@@ -101,7 +101,7 @@ export default function AcademyDashboard() {
           {
             label: "Completed lessons",
             value:
-              progress == null ? "—" : (progress.completedLessons ?? 0),
+              progress == null ? "Loading" : (progress.completedLessons ?? 0),
             detail:
               progress == null
                 ? "Progress is unavailable."
@@ -109,7 +109,7 @@ export default function AcademyDashboard() {
           },
           {
             label: "Pending assignments",
-             value: sectionState.assignments === "error" ? "—" : assignmentCount,
+             value: sectionState.assignments === "error" ? "Unavailable" : assignmentCount,
              detail: sectionState.assignments === "error"
               ? "Assignments are unavailable."
               : assignmentCount
@@ -120,7 +120,7 @@ export default function AcademyDashboard() {
             label: "Current week",
             value:
               progress?.currentWeek == null || course?.duration_weeks == null
-                ? "—"
+                ? "Loading"
                 : `${progress.currentWeek} / ${course.duration_weeks}`,
             detail:
               progress == null
@@ -129,7 +129,7 @@ export default function AcademyDashboard() {
           },
           {
             label: "Learning time",
-            value: overview == null ? "—" : `${learningMinutes} min`,
+             value: overview == null ? "Loading" : `${learningMinutes} min`,
             detail:
               overview == null
                 ? "Learning time is unavailable."
@@ -163,8 +163,8 @@ export default function AcademyDashboard() {
               <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
                 {course?.title
                   ? course.duration_weeks
-                    ? `A ${course.duration_weeks}-week hands-on path. This is your current path — switching requires your teacher.`
-                    : "A hands-on path. This is your current path — switching requires your teacher."
+                     ? `A ${course.duration_weeks}-week hands-on path. This is your current path. Switching requires your teacher.`
+                     : "A hands-on path. This is your current path. Switching requires your teacher."
                   : "Choose your first path to start learning with hands-on lessons and projects."}
               </p>
             </div>
