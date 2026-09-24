@@ -61,6 +61,8 @@ export default function AcademyLayout({ workspace = "student" }) {
   const { pathname } = useLocation();
   const [navigationOpen, setNavigationOpen] = useState(false);
   const learningSession = useRef(null);
+  const heartbeatInFlight = useRef(false);
+  const lastHiddenSession = useRef(null);
   const lastActivity = useRef(Date.now());
   const routeRef = useRef(pathname);
   routeRef.current = pathname;
@@ -84,8 +86,36 @@ export default function AcademyLayout({ workspace = "student" }) {
     if (!isStudent) return undefined;
     let cancelled = false;
     const currentPath = () => routeRef.current;
+    heartbeatInFlight.current = false;
+    lastHiddenSession.current = null;
+
+    const sendHeartbeat = async (
+      sessionId,
+      visibilityState = "visible",
+      active = true,
+    ) => {
+      if (!sessionId || heartbeatInFlight.current) return;
+      if (!active && lastHiddenSession.current === sessionId) return;
+      heartbeatInFlight.current = true;
+      try {
+        await heartbeatAcademyLearningSession(
+          sessionId,
+          currentPath(),
+          visibilityState,
+          active,
+        );
+        if (!active) lastHiddenSession.current = sessionId;
+      } finally {
+        heartbeatInFlight.current = false;
+      }
+    };
+
     startAcademyLearningSession(currentPath()).then(({ data }) => {
-      if (!cancelled) learningSession.current = data;
+      if (cancelled) {
+        if (data?.id) void sendHeartbeat(data.id, "hidden", false);
+        return;
+      }
+      learningSession.current = data;
     });
 
     const markActivity = () => {
@@ -102,12 +132,7 @@ export default function AcademyLayout({ workspace = "student" }) {
         activeRecently &&
         learningSession.current
       ) {
-        heartbeatAcademyLearningSession(
-          learningSession.current.id,
-          currentPath(),
-          "visible",
-          true,
-        );
+        void sendHeartbeat(learningSession.current.id, "visible", true);
       }
     }, 30000);
     const recordVisibleTime = () => {
@@ -116,12 +141,7 @@ export default function AcademyLayout({ workspace = "student" }) {
         return;
       }
       if (learningSession.current) {
-        heartbeatAcademyLearningSession(
-          learningSession.current.id,
-          currentPath(),
-          "hidden",
-          false,
-        );
+        void sendHeartbeat(learningSession.current.id, "hidden", false);
       }
     };
     document.addEventListener("visibilitychange", recordVisibleTime);
@@ -131,13 +151,7 @@ export default function AcademyLayout({ workspace = "student" }) {
       window.clearInterval(heartbeat);
       document.removeEventListener("visibilitychange", recordVisibleTime);
       if (learningSession.current) {
-        heartbeatAcademyLearningSession(
-          learningSession.current.id,
-          currentPath(),
-          document.visibilityState === "visible" ? "visible" : "hidden",
-          document.visibilityState === "visible" &&
-            Date.now() - lastActivity.current <= 60000,
-        );
+        void sendHeartbeat(learningSession.current.id, "hidden", false);
       }
       activityEvents.forEach((eventName) =>
         window.removeEventListener(eventName, markActivity),

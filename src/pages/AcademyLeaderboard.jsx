@@ -1,5 +1,8 @@
 import { useEffect, useState } from "react";
-import { getAcademyWeeklyLeaderboard } from "../lib/academy";
+import {
+  getAcademyWeeklyLeaderboard,
+  invalidateAcademyCache,
+} from "../lib/academy";
 import { useAcademyAuth } from "../hooks/useAcademyAuth";
 import { supabase } from "../lib/supabase";
 
@@ -10,28 +13,44 @@ export default function AcademyLeaderboard() {
 
   useEffect(() => {
     let mounted = true;
-    getAcademyWeeklyLeaderboard().then(({ data, error, configured }) => {
-      if (!mounted) return;
-      const resolved = data ?? [];
-      setRows(resolved);
-      setState(error ? "error" : configured ? "ready" : "unconfigured");
-    });
-    if (!supabase) return undefined;
+    let refreshTimer;
+    let refreshInFlight = false;
+    const refresh = (delay = 0) => {
+      window.clearTimeout(refreshTimer);
+      refreshTimer = window.setTimeout(async () => {
+        if (refreshInFlight) {
+          refresh(250);
+          return;
+        }
+        refreshInFlight = true;
+        invalidateAcademyCache("leaderboard:weekly");
+        const { data, error, configured } = await getAcademyWeeklyLeaderboard();
+        refreshInFlight = false;
+        if (!mounted) return;
+        setRows(data ?? []);
+        setState(error ? "error" : configured ? "ready" : "unconfigured");
+      }, delay);
+    };
+
+    refresh();
+    if (!supabase) {
+      return () => {
+        mounted = false;
+        window.clearTimeout(refreshTimer);
+      };
+    }
     const channel = supabase
       .channel("academy-weekly-leaderboard")
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "academy_leaderboard_standings" },
-        () => {
-          getAcademyWeeklyLeaderboard().then(({ data }) => {
-            if (mounted) setRows(data ?? []);
-          });
-        },
+        () => refresh(400),
       )
       .subscribe();
     return () => {
       mounted = false;
-      supabase.removeChannel(channel);
+      window.clearTimeout(refreshTimer);
+      void supabase.removeChannel(channel);
     };
   }, []);
   const currentUserRow = rows.find((row) => row.student_id === user?.id);

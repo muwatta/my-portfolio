@@ -3,13 +3,22 @@ import { Routes, Route, useLocation } from "react-router-dom";
 import { HelmetProvider } from "react-helmet-async";
 import { MotionConfig } from "framer-motion";
 import { ThemeProvider } from "./context/ThemeContext";
-import { AuthProvider } from "./context/AuthContext";
-import { AcademyAuthProvider } from "./context/AcademyAuthContext";
 import PWAInstallPrompt from "./components/PWAInstallPrompt";
 
 import Navbar from "./components/layout/Navbar";
 import Footer from "./components/layout/Footer";
 import Loader from "./components/layout/Loader";
+
+const AuthProvider = lazy(() =>
+  import("./context/AuthContext").then((module) => ({
+    default: module.AuthProvider,
+  })),
+);
+const AcademyAuthProvider = lazy(() =>
+  import("./context/AcademyAuthContext").then((module) => ({
+    default: module.AcademyAuthProvider,
+  })),
+);
 
 const Home = lazy(() => import("./pages/Home"));
 const Portfolio = lazy(() => import("./pages/Portfolio"));
@@ -118,7 +127,7 @@ const PageLoader = () => (
   </div>
 );
 
-function App() {
+function AppShell() {
   const { pathname, search } = useLocation();
   const isAdminRoute = pathname.startsWith("/admin");
   const isAcademyRoute = pathname.startsWith("/academy");
@@ -130,9 +139,7 @@ function App() {
   return (
     <HelmetProvider>
       <ThemeProvider>
-        <AuthProvider>
-          <AcademyAuthProvider>
-            <MotionConfig reducedMotion="user">
+        <MotionConfig reducedMotion="user">
               <div className="min-h-screen bg-white text-slate-900 dark:bg-slate-950 dark:text-slate-100 transition-colors duration-300">
                 <a
                   href="#main-content"
@@ -409,10 +416,28 @@ function App() {
                 {!isAdminRoute && !isAcademyRoute && <PWAInstallPrompt />}
               </div>
             </MotionConfig>
-          </AcademyAuthProvider>
-        </AuthProvider>
       </ThemeProvider>
     </HelmetProvider>
+  );
+}
+
+function App() {
+  const { pathname } = useLocation();
+  const isAcademyRoute = pathname.startsWith("/academy");
+  const needsFirebaseAuth =
+    pathname.startsWith("/admin") || pathname.startsWith("/courses");
+  const app = <AppShell />;
+
+  return (
+    <Suspense fallback={<PageLoader />}>
+      {isAcademyRoute ? (
+        <AcademyAuthProvider>{app}</AcademyAuthProvider>
+      ) : needsFirebaseAuth ? (
+        <AuthProvider>{app}</AuthProvider>
+      ) : (
+        app
+      )}
+    </Suspense>
   );
 }
 
