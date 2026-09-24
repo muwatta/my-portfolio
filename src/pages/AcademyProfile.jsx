@@ -138,6 +138,12 @@ export default function AcademyProfile() {
             <dt className="text-sm text-slate-500">Role</dt>
             <dd className="mt-1 font-semibold">{accessLabel}</dd>
           </div>
+          <div>
+            <dt className="text-sm text-slate-500">Academy Registration No.</dt>
+            <dd className="mt-1 font-semibold tracking-[0.12em]">
+              {profile?.academy_registration_codes?.registration_number || "Not assigned"}
+            </dd>
+          </div>
         </dl>
       </section>
       <Link className="button-secondary inline-flex" to="/academy/dashboard">

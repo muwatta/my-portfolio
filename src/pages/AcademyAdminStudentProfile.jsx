@@ -42,8 +42,14 @@ export default function AcademyAdminStudentProfile() {
       {state === "ready" && (
         <>
           <section className="grid gap-4 sm:grid-cols-2">
-            <div className="border-l-4 border-cyan-400 bg-white p-5 dark:bg-slate-900">
-              <p className="text-sm text-slate-500">Current course</p>
+             <div className="border-l-4 border-cyan-400 bg-white p-5 dark:bg-slate-900">
+               <p className="text-sm text-slate-500">Academy Registration No.</p>
+               <p className="mt-2 text-xl font-bold tracking-[0.1em]">
+                 {profile?.academy_registration_codes?.registration_number || "Not assigned"}
+               </p>
+             </div>
+             <div className="border-l-4 border-cyan-400 bg-white p-5 dark:bg-slate-900">
+               <p className="text-sm text-slate-500">Current course</p>
               <p className="mt-2 text-xl font-bold">
                 {profile?.academy_courses?.title ||
                   overview?.enrollment?.academy_courses?.title ||

@@ -243,11 +243,13 @@ export async function getAcademyTeacherStudents() {
     { data: students, error: studentError },
     { data: levels, error: levelError },
     { data: sessions, error: sessionError },
+    { data: enrollments, error: enrollmentError },
+    { data: progress, error: progressError },
   ] = await Promise.all([
     supabase
       .from("academy_profiles")
       .select(
-        "id, display_name, role, current_course_id, school_id, state, city, student_level, updated_at, academy_courses!academy_profiles_current_course_id_fkey(id, slug, title), academy_schools!academy_profiles_school_id_fkey(id, name, code, state, city)",
+        "id, display_name, role, current_course_id, school_id, state, city, student_level, registration_code_id, updated_at, academy_registration_codes!academy_profiles_registration_code_id_fkey(registration_number, status), academy_courses!academy_profiles_current_course_id_fkey(id, slug, title), academy_schools!academy_profiles_school_id_fkey(id, name, code, state, city)",
       )
       .eq("role", "student")
       .order("display_name"),
@@ -259,7 +261,28 @@ export async function getAcademyTeacherStudents() {
     supabase
       .from("academy_learning_sessions")
       .select("student_id, active_seconds, last_heartbeat_at"),
+    supabase
+      .from("academy_enrollments")
+      .select("student_id, status, enrolled_at, completed_at, course_id")
+      .order("enrolled_at", { ascending: false }),
+    supabase
+      .from("academy_lesson_progress")
+      .select("student_id, completed_at")
+      .not("completed_at", "is", null),
   ]);
+  const enrollmentByStudent = new Map();
+  (enrollments  ??  []).forEach((enrollment) => {
+    if (!enrollmentByStudent.has(enrollment.student_id)) {
+      enrollmentByStudent.set(enrollment.student_id, enrollment);
+    }
+  });
+  const completedLessonsByStudent = new Map();
+  (progress  ??  []).forEach((item) => {
+    completedLessonsByStudent.set(
+      item.student_id,
+      (completedLessonsByStudent.get(item.student_id)  ??  0) + 1,
+    );
+  });
   const activityByStudent = new Map();
   (sessions  ??  []).forEach((session) => {
     const activity = activityByStudent.get(session.student_id)  ??  {
@@ -279,10 +302,12 @@ export async function getAcademyTeacherStudents() {
           seconds: 0,
           lastActive: null,
         },
+        enrollment: enrollmentByStudent.get(student.id)  ??  null,
+        completedLessons: completedLessonsByStudent.get(student.id)  ??  0,
       })),
       levels: levels  ??  [],
     },
-    error: studentError || levelError || sessionError,
+    error: studentError || levelError || sessionError || enrollmentError || progressError,
     configured: true,
   };
 }
@@ -469,7 +494,7 @@ export async function getAcademyStudentProfile(studentId) {
     supabase
       .from("academy_profiles")
       .select(
-        "id, display_name, role, avatar_url, current_course_id, school_id, state, city, student_level, updated_at, academy_courses!academy_profiles_current_course_id_fkey(title, slug), academy_schools!academy_profiles_school_id_fkey(id, name, code, state, city)",
+        "id, display_name, role, avatar_url, current_course_id, school_id, state, city, student_level, registration_code_id, updated_at, academy_registration_codes!academy_profiles_registration_code_id_fkey(registration_number, status), academy_courses!academy_profiles_current_course_id_fkey(title, slug), academy_schools!academy_profiles_school_id_fkey(id, name, code, state, city)",
       )
       .eq("id", studentId)
       .maybeSingle(),
@@ -922,6 +947,71 @@ export async function scheduleAcademyLesson(schedule) {
     })
     .select("id, title, starts_at, published")
     .single();
+  return { data, error };
+}
+
+export async function getAcademyRegistrationCodes(searchText = "", status = "") {
+  if (!supabase) return unavailable([]);
+  const { data, error } = await supabase.rpc("academy_admin_registration_list", {
+    search_text: searchText.trim() || null,
+    status_filter: status || null,
+  });
+  return { data: data ?? [], error, configured: true };
+}
+
+export async function generateAcademyRegistrationCodes(year, count) {
+  if (!supabase)
+    return { data: null, error: new Error("Academy is not configured.") };
+  const { data, error } = await supabase.rpc(
+    "academy_generate_registration_codes",
+    {
+      target_year: Number(year),
+      number_to_generate: Number(count),
+    },
+  );
+  return { data: data ?? [], error };
+}
+
+export async function assignAcademyRegistrationCode(studentId, registrationNumber) {
+  if (!supabase)
+    return { data: null, error: new Error("Academy is not configured.") };
+  const { data, error } = await supabase.rpc("academy_assign_registration_code", {
+    target_student_id: studentId,
+    target_registration_number: registrationNumber.trim().toUpperCase(),
+  });
+  return { data, error };
+}
+
+export async function suspendAcademyRegistrationCode(
+  registrationNumber,
+  reason,
+) {
+  if (!supabase)
+    return { data: null, error: new Error("Academy is not configured.") };
+  const { data, error } = await supabase.rpc("academy_suspend_registration_code", {
+    target_registration_number: registrationNumber.trim().toUpperCase(),
+    suspension_reason: reason.trim(),
+  });
+  return { data, error };
+}
+
+export async function reassignAcademyRegistrationCode({
+  studentId,
+  oldRegistrationNumber,
+  newRegistrationNumber,
+  reason,
+}) {
+  if (!supabase)
+    return { data: null, error: new Error("Academy is not configured.") };
+  const { data, error } = await supabase.rpc(
+    "academy_reassign_registration_code",
+    {
+      target_student_id: studentId,
+      old_registration_number: oldRegistrationNumber.trim().toUpperCase(),
+      new_registration_number: newRegistrationNumber.trim().toUpperCase(),
+      reassignment_reason: reason.trim(),
+    },
+  );
   return { data, error };
 }
 
