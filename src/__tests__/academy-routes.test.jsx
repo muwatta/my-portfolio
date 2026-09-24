@@ -133,6 +133,7 @@ describe("Academy routes", () => {
     "/academy/admin",
     "/academy/admin/dashboard",
     "/academy/admin/students",
+    "/academy/admin/registrations",
     "/academy/admin/students/student-id",
     "/academy/admin/courses",
     "/academy/admin/assignments",
