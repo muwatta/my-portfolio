@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Link, Navigate, useNavigate } from "react-router-dom";
 import { useAcademyAuth } from "../hooks/useAcademyAuth";
 import { useTheme } from "../context/useTheme";
 import {
+  getAcademySignupErrorMessage,
   isValidAcademyRegistrationNumber,
   normalizeAcademyRegistrationNumber,
 } from "../lib/registration";
@@ -22,6 +23,7 @@ export default function AcademySignup() {
   const [signupStarted, setSignupStarted] = useState(false);
   const [created, setCreated] = useState(false);
   const [createdRegistrationNumber, setCreatedRegistrationNumber] = useState("");
+  const signupRequestStarted = useRef(false);
 
   if (loading) {
     return (
@@ -35,6 +37,7 @@ export default function AcademySignup() {
 
   async function handleSubmit(event) {
     event.preventDefault();
+    if (signupRequestStarted.current) return;
     setError("");
 
     const name = displayName.trim();
@@ -52,9 +55,11 @@ export default function AcademySignup() {
     if (password !== confirmPassword)
       return setError("Passwords do not match.");
 
+    signupRequestStarted.current = true;
     setSubmitting(true);
     setSignupStarted(true);
     setError("");
+    let completed = false;
     try {
       const { error: signUpError } = await signUp(
         normalizedEmail,
@@ -65,12 +70,14 @@ export default function AcademySignup() {
       if (signUpError) throw signUpError;
       setCreatedRegistrationNumber(normalizedRegistrationNumber);
       setCreated(true);
-    } catch {
-      setSignupStarted(false);
-      setError(
-        "We couldn't verify this registration number. Please check your Academy registration details or contact your teacher.",
-      );
+      completed = true;
+    } catch (signUpError) {
+      setError(getAcademySignupErrorMessage(signUpError));
     } finally {
+      if (!completed) {
+        signupRequestStarted.current = false;
+        setSignupStarted(false);
+      }
       setSubmitting(false);
     }
   }
@@ -157,8 +164,8 @@ export default function AcademySignup() {
                 <span className="font-semibold text-slate-800 dark:text-slate-100">
                   {email.trim().toLowerCase()}
                 </span>
-                . Please confirm your email address before signing in and
-                starting your learning journey.
+                . If this email already has an Academy account, sign in
+                instead; we will not create a duplicate account.
               </p>
               <div className="mt-6 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
                 <button
@@ -171,7 +178,11 @@ export default function AcademySignup() {
                 <button
                   type="button"
                   className="button-secondary"
-                  onClick={() => setCreated(false)}
+                  onClick={() => {
+                    signupRequestStarted.current = false;
+                    setSignupStarted(false);
+                    setCreated(false);
+                  }}
                 >
                   Not the right email?
                 </button>
@@ -267,7 +278,9 @@ export default function AcademySignup() {
                 type="submit"
                 disabled={submitting}
               >
-                {submitting ? "Creating account..." : "Create student account"}
+                 {submitting
+                   ? "Creating your Academy account..."
+                   : "Create student account"}
               </button>
             </form>
           )}

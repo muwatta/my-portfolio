@@ -1,6 +1,10 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { getAcademyCourseMaterials } from "../lib/academy";
+import { useAcademyAuth } from "../hooks/useAcademyAuth";
+import {
+  getAcademyCourseMaterials,
+  getActiveCourseForStudent,
+} from "../lib/academy";
 
 function assetUrl(storagePath) {
   const path = String(storagePath  ??  "");
@@ -19,14 +23,22 @@ function formatBytes(bytes) {
 const fileName = (storagePath) => (storagePath ?? "").split("/").pop();
 
 export default function AcademyMaterials() {
+  const { user } = useAcademyAuth();
   const [materials, setMaterials] = useState([]);
   const [state, setState] = useState("loading");
   useEffect(() => {
-    getAcademyCourseMaterials().then(({ data, error }) => {
-      setMaterials(data ?? []);
-      setState(error ? "error" : "ready");
-    });
-  }, []);
+    let cancelled = false;
+    getActiveCourseForStudent(user.id).then((course) =>
+      getAcademyCourseMaterials(course?.id).then(({ data, error }) => {
+        if (cancelled) return;
+        setMaterials(data ?? []);
+        setState(error ? "error" : "ready");
+      }),
+    );
+    return () => {
+      cancelled = true;
+    };
+  }, [user.id]);
   return (
     <div className="space-y-8">
       <header>

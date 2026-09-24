@@ -67,7 +67,15 @@ export default function AcademyLiveRoom() {
           table: "academy_live_messages",
           filter: `room_id=eq.${roomId}`,
         },
-        (payload) => setMessages((current) => [...current, payload.new]),
+        (payload) =>
+          setMessages((current) => {
+            if (current.some((message) => message.id === payload.new.id)) {
+              return current;
+            }
+            return [...current, payload.new].sort((a, b) =>
+              String(a.created_at).localeCompare(String(b.created_at)),
+            );
+          }),
       )
       .subscribe(async (status) => {
         if (status === "SUBSCRIBED") {
@@ -82,7 +90,7 @@ export default function AcademyLiveRoom() {
       // The room owns this mutable peer registry until its channel closes.
       // eslint-disable-next-line react-hooks/exhaustive-deps
       const peers = peersRef.current;
-      supabase.removeChannel(channel);
+      void supabase.removeChannel(channel);
       channelRef.current = null;
       peers.forEach((peer) => peer.close());
       peers.clear();

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   assignAcademyStudentLevel,
@@ -15,14 +15,23 @@ export default function AcademyAdminStudents() {
   const [schoolFilter, setSchoolFilter] = useState("");
   const [courseFilter, setCourseFilter] = useState("");
   const [refreshing, setRefreshing] = useState(false);
+  const loadingRef = useRef(false);
   const [lastUpdated, setLastUpdated] = useState(null);
   const load = useCallback(async (background = false) => {
+    if (loadingRef.current) return;
+    loadingRef.current = true;
     if (background) setRefreshing(true);
-    const result = await getAcademyTeacherStudents();
-    setData(result.data ?? { students: [], levels: [] });
-    setState(result.error ? "error" : "ready");
-    setLastUpdated(new Date());
-    setRefreshing(false);
+    try {
+      const result = await getAcademyTeacherStudents();
+      if (result.data) setData(result.data);
+      if (!background || !result.error) {
+        setState(result.error ? "error" : "ready");
+      }
+      setLastUpdated(new Date());
+    } finally {
+      loadingRef.current = false;
+      setRefreshing(false);
+    }
   }, []);
   useEffect(() => {
     load();

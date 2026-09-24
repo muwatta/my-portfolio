@@ -16,7 +16,8 @@ export default function AcademyNotifications() {
     });
   }, [user.id]);
   async function read(id) {
-    await markAcademyNotificationRead(id);
+    const { error } = await markAcademyNotificationRead(id, user.id);
+    if (error) return;
     setItems((current) =>
       current.map((item) =>
         item.id === id ? { ...item, read_at: new Date().toISOString() } : item,
