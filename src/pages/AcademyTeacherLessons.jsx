@@ -6,6 +6,7 @@ import {
   publishAcademyWeek,
   scheduleAcademyLesson,
 } from "../lib/academy";
+import { friendlyError } from "../lib/utils";
 
 const emptyWeek = { id: "", course_id: "", week_number: 0, title: "", description: "" };
 const emptyLesson = {
@@ -48,7 +49,8 @@ export default function AcademyTeacherLessons() {
   async function submit(action, value, reset) {
     setMessage("");
     const { error } = await action(value);
-    if (error) setMessage(error.message || "Could not save this item.");
+    if (error)
+      setMessage(friendlyError(error, "Could not save this item."));
     else {
       setMessage("Saved successfully.");
       reset();
@@ -98,7 +100,10 @@ export default function AcademyTeacherLessons() {
       ...lessonRow,
       published: !lessonRow.published,
     });
-    if (error) setMessage(error.message || "Publish state could not be changed.");
+    if (error)
+      setMessage(
+        friendlyError(error, "Publish state could not be changed."),
+      );
     else {
       setMessage(`Lesson ${lessonRow.published ? "unpublished" : "published"}.`);
       await load();
@@ -108,7 +113,10 @@ export default function AcademyTeacherLessons() {
   async function toggleWeekPublish(weekRow) {
     setMessage("");
     const { data, error } = await publishAcademyWeek(weekRow.id, !weekRow.published);
-    if (error) setMessage(error.message || "Week publish state could not be changed.");
+    if (error)
+      setMessage(
+        friendlyError(error, "Week publish state could not be changed."),
+      );
     else {
       setMessage(
         `Published ${data.length} lesson${data.length === 1 ? "" : "s"} for week ${weekRow.week_number}.`,

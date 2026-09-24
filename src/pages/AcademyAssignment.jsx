@@ -8,6 +8,7 @@ import {
   submitAssignment,
 } from "../lib/academy";
 import { validateAcademyFile } from "../lib/academyFiles";
+import { friendlyError } from "../lib/utils";
 import { supabase } from "../lib/supabase";
 import { useAcademyAuth } from "../hooks/useAcademyAuth";
 import PythonEditor from "../components/academy/PythonEditor";
@@ -88,7 +89,7 @@ export default function AcademyAssignment() {
       setFile(null);
       setNotice("Submitted. Deterministic grading has started.");
     } catch (error) {
-      setNotice(error.message || "Submission failed.");
+      setNotice(friendlyError(error, "Submission failed."));
     } finally {
       setSubmitting(false);
     }

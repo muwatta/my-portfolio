@@ -2,6 +2,7 @@ import { useAcademyAuth } from "../hooks/useAcademyAuth";
 import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { getAcademySchools, updateAcademyStudentProfile } from "../lib/academy";
+import { friendlyError } from "../lib/utils";
 
 export default function AcademyProfile() {
   const { user, profile, isAdmin, isTeacher } = useAcademyAuth();
@@ -35,7 +36,7 @@ export default function AcademyProfile() {
       city: form.city.trim(),
     });
     if (saveError)
-      setError(saveError.message || "Profile could not be updated.");
+      setError(friendlyError(saveError, "Profile could not be updated."));
     else setMessage("Profile updated.");
   }
   return (

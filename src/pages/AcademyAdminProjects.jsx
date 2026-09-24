@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { getAcademyAdminProjects, saveAcademyProject } from "../lib/academy";
+import { friendlyError } from "../lib/utils";
 
 const emptyProject = {
   id: "",
@@ -37,7 +38,7 @@ async function submit(event) {
     setMessage("");
     const { error } = await saveAcademyProject(form);
     if (error) {
-      setMessage(error.message || "Project could not be saved.");
+      setMessage(friendlyError(error, "Project could not be saved."));
       return;
     }
     setMessage("Project saved.");

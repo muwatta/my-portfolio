@@ -4,6 +4,7 @@ import {
   gradeAcademySubmission,
   requestAcademyAiFeedback,
 } from "../lib/academy";
+import { friendlyError } from "../lib/utils";
 
 export default function AcademyTeacherSubmissions() {
   const [submissions, setSubmissions] = useState([]);
@@ -57,13 +58,13 @@ export default function AcademyTeacherSubmissions() {
       const aiResult = await requestAcademyAiFeedback(submission.id);
       setNotice(
         aiResult.error
-          ? `Grade saved. AI feedback is unavailable: ${aiResult.error.message}`
+          ? `Grade saved. AI feedback is unavailable: ${friendlyError(aiResult.error, "try again later.")}`
           : `Grade saved. AI feedback status: ${aiResult.data?.ai_feedback_status ?? "unavailable"}.`,
       );
     } else {
       setNotice(
         error
-          ? error.message
+          ? friendlyError(error, "Grade could not be saved.")
           : "Grade saved and the learner can now see the result.",
       );
     }

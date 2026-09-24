@@ -8,6 +8,7 @@ import {
 } from "../lib/academy";
 import { supabase } from "../lib/supabase";
 import { useAcademyAuth } from "../hooks/useAcademyAuth";
+import { friendlyError } from "../lib/utils";
 
 export default function AcademyLiveRoom() {
   const { user } = useAcademyAuth();
@@ -202,7 +203,7 @@ export default function AcademyLiveRoom() {
       );
     } catch (error) {
       setMediaState("off");
-      setMediaError(error.message || "Microphone access was denied.");
+      setMediaError(friendlyError(error, "Microphone access was denied."));
     }
   }
 

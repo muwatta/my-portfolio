@@ -4,6 +4,7 @@ import {
   assignAcademyStudentLevel,
   getAcademyTeacherStudents,
 } from "../lib/academy";
+import { friendlyError } from "../lib/utils";
 
 export default function AcademyAdminStudents() {
   const [data, setData] = useState({ students: [], levels: [] });
@@ -35,7 +36,7 @@ export default function AcademyAdminStudents() {
   }, [load]);
   async function changeCourse(studentId, courseId) {
     const { error } = await assignAcademyStudentLevel(studentId, courseId);
-    setMessage(error?.message || "Student course updated.");
+    setMessage(friendlyError(error, "Student course updated."));
     if (!error) await load();
   }
   const students = data.students.filter((student) => {

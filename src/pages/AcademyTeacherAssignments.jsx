@@ -4,6 +4,7 @@ import {
   getAcademyTeacherCourses,
   saveAcademyAssignment,
 } from "../lib/academy";
+import { friendlyError } from "../lib/utils";
 
 const initialForm = {
   course_id: "",
@@ -42,7 +43,9 @@ export default function AcademyTeacherAssignments() {
     event.preventDefault();
     setNotice("");
     const { error } = await saveAcademyAssignment(form);
-    setNotice(error ? error.message : "Assignment saved.");
+    setNotice(
+      error ? friendlyError(error, "Assignment could not be saved.") : "Assignment saved.",
+    );
     if (!error) {
       setForm({ ...initialForm, course_id: form.course_id });
       await load();

@@ -4,6 +4,7 @@ import {
   setAcademyAdmin,
   setAcademyUserRole,
 } from "../lib/academy";
+import { friendlyError } from "../lib/utils";
 
 export default function AcademyAdminAccess() {
   const [data, setData] = useState({ profiles: [], admins: [] });
@@ -35,17 +36,17 @@ export default function AcademyAdminAccess() {
   async function changeAdmin(userId, enabled) {
     const { error } = await setAcademyAdmin(userId, enabled);
     setMessage(
-      error?.message ||
-        (enabled
-          ? "Administrator appointed."
-          : "Administrator access removed."),
+      friendlyError(
+        error,
+        enabled ? "Administrator appointed." : "Administrator access removed.",
+      ),
     );
     if (!error) await load();
   }
 
   async function changeRole(userId, role) {
     const { error } = await setAcademyUserRole(userId, role);
-    setMessage(error?.message || "Role updated.");
+    setMessage(friendlyError(error, "Role updated."));
     if (!error) await load();
   }
 

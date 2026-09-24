@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, Navigate, useNavigate } from "react-router-dom";
 import { useAcademyAuth } from "../hooks/useAcademyAuth";
 import { useTheme } from "../context/useTheme";
+import { friendlyError } from "../lib/utils";
 
 export default function AcademySignup() {
   const { user, loading, signUp, isConfigured } = useAcademyAuth();
@@ -53,9 +54,7 @@ export default function AcademySignup() {
       }
       setCreated(true);
     } catch (signUpError) {
-      setError(
-        signUpError.message || "We could not create your Academy account.",
-      );
+      setError(friendlyError(signUpError, "Your account could not be created."));
     } finally {
       setSubmitting(false);
     }

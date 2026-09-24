@@ -4,6 +4,7 @@ import {
   getAcademyTeacherCourses,
   saveAcademyClass,
 } from "../lib/academy";
+import { friendlyError } from "../lib/utils";
 
 export default function AcademyTeacherClasses() {
   const [classes, setClasses] = useState([]);
@@ -33,7 +34,7 @@ export default function AcademyTeacherClasses() {
   async function save(event) {
     event.preventDefault();
     const { error } = await saveAcademyClass(form);
-    setNotice(error ? error.message : "Class created.");
+    setNotice(error ? friendlyError(error, "Class could not be created.") : "Class created.");
     if (!error) {
       setForm({ course_id: form.course_id, name: "", description: "" });
       await load();
