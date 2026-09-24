@@ -31,6 +31,7 @@ create index if not exists academy_notifications_user_idx
 
 alter table public.academy_notifications enable row level security;
 
+drop policy if exists academy_notifications_self_read on public.academy_notifications;
 create policy academy_notifications_self_read
 on public.academy_notifications
 for select to authenticated
@@ -40,6 +41,7 @@ using (
   or public.academy_is_admin()
 );
 
+drop policy if exists academy_notifications_self_update on public.academy_notifications;
 create policy academy_notifications_self_update
 on public.academy_notifications
 for update to authenticated
@@ -50,6 +52,7 @@ with check (
   user_id = auth.uid()
 );
 
+drop policy if exists academy_notifications_teacher_insert on public.academy_notifications;
 create policy academy_notifications_teacher_insert
 on public.academy_notifications
 for insert to authenticated
