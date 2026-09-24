@@ -1,3 +1,4 @@
+
 -- C++ Programming for Embedded Systems & Robotics: full manual curriculum.
 -- Spreads the complete 24-week manual across the existing course content model:
 --   * rich lesson content jsonb (paragraphs, examples, activities, hints,
@@ -306,7 +307,7 @@ join (
         'reflection', 'Why is a measured, calibrated threshold better than an invented number?'
       )
     ),
-    (9, 'Level 8: Sensors in Depth', 'level-9-sensors-in-depth',
+    (9, 'Level 9: Sensors in Depth', 'level-9-sensors-in-depth',
       array['Explain digital and analog sensors', 'Read buttons, potentiometers, LDRs, and ultrasonic distance', 'Connect sensor readings to real-world applications'],
       jsonb_build_object(
         'phase', 'Sensors, Actuators & Automation',
@@ -332,7 +333,7 @@ join (
         'reflection', 'Which of the four sensors is digital and which are analog? How would you detect each one in code?'
       )
     ),
-    (10, 'Level 9: Actuators', 'level-10-actuators',
+    (10, 'Level 10: Actuators', 'level-10-actuators',
       array['Control buzzers, servos, motors, and relays', 'Explain PWM and motor-driver safety', 'Build a sensor-triggered actuator chain'],
       jsonb_build_object(
         'phase', 'Sensors, Actuators & Automation',
@@ -407,7 +408,7 @@ join (
         'reflection', 'When must an automation run on time rather than on sensor input?'
       )
     ),
-    (13, 'Level 10: Robotics Fundamentals', 'level-10-robotics-fundamentals',
+    (13, 'Level 11: Robotics Fundamentals', 'level-11-robotics-fundamentals',
       array['Explain a 2WD robot chassis', 'Use a motor driver safely', 'Write reusable movement functions', 'Test movement one step at a time'],
       jsonb_build_object(
         'phase', 'Robotics Fundamentals',
@@ -449,7 +450,8 @@ join (
         'activities', jsonb_build_array(
           'Confirm the robot drives straight for two metres.',
           'Make it turn exactly 90 degrees (adjust the delay).',
-          'Swap one motor pair and observe the direction change.')
+          'Swap one motor pair and observe the direction change.'
+        ),
         'hints', jsonb_build_array('Slow speed first, then increase.', 'Swapping physical wires is faster than swapping code.'),
         'challenge', 'Drive a precise square: forward + 90-degree left turn, repeated four times. Adjust the turn delay until the robot returns to its start.',
         'reflection', 'Which is more likely to be wrong when a robot reverses instead of going forward: code or wiring? How do you test it?'
@@ -569,7 +571,8 @@ join (
         'activities', jsonb_build_array(
           'Test ball detection in three positions.',
           'Chase the ball across the room and count touches.',
-          'Change one tuning value and compare scores.' ),
+          'Change one tuning value and compare scores.'
+        ),
         'hints', jsonb_build_array('Centre the ball before pushing.', 'Record one change per test.'),
         'challenge', 'Add a goal-cornered escape: if no ball is seen, the robot spins the servo to find it, then returns to chasing — never stuck in a corner.',
         'reflection', 'How did the trial-and-error loop of one-change-per-test improve your soccer robot''s score?'
@@ -850,7 +853,6 @@ where course.slug = 'cpp-embedded-robotics'
 -- ---------------------------------------------------------------
 -- 5. Flagship projects plus the capstone, with milestones
 -- ---------------------------------------------------------------
--- ---------------------------------------------------------------
 insert into public.academy_projects (course_id, title, description)
 select course.id, project.title, project.description
 from public.academy_courses course
@@ -875,7 +877,7 @@ where course.slug = 'cpp-embedded-robotics'
   );
 
 insert into public.academy_project_milestones (project_id, milestone_number, title)
-select project.id, milestone.milestone_number, milestone.title
+select project.id, (m.key)::smallint, m.value
 from public.academy_projects project
 join public.academy_courses course on course.id = project.course_id
 join (

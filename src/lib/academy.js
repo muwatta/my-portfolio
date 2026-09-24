@@ -707,6 +707,20 @@ export async function getAcademyAdminMaterials() {
   };
 }
 
+export async function getAcademyCourseMaterials(courseId) {
+  if (!supabase) return unavailable([]);
+  let query = supabase
+    .from("academy_materials")
+    .select(
+      "id, course_id, lesson_id, title, storage_path, mime_type, file_size_bytes, created_at, academy_courses!academy_materials_course_id_fkey(title)",
+    )
+    .eq("published", true)
+    .order("created_at", { ascending: false });
+  if (courseId) query = query.eq("course_id", courseId);
+  const { data, error } = await query;
+  return { data: data  ??  [], error, configured: true };
+}
+
 export async function saveAcademyMaterial(material) {
   if (!supabase)
     return { data: null, error: new Error("Academy is not configured.") };
