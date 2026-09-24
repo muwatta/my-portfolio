@@ -1,3 +1,11 @@
+alter table public.academy_exercises
+  add column if not exists question_type text not null default 'programming'
+    check (question_type in ('multiple_choice', 'true_false', 'short_answer', 'programming')),
+  add column if not exists choices jsonb not null default '[]'::jsonb,
+  add column if not exists correct_answer text,
+  add column if not exists attempt_limit smallint not null default 3
+    check (attempt_limit >= 0);
+
 -- Scored practice exercises (quiz-style, auto-graded) for BOTH courses.
 --   * Python (11 weeks): three published questions per week, attached to the
 --     new fun-lab lessons (lesson_number 6 = Lab, 7 = Bug Hunt, 8 = Mission).
