@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { getAcademyAdminPractice, saveAcademyExercise } from "../lib/academy";
+import { friendlyError } from "../lib/utils";
 
 const emptyExercise = {
   id: "",
@@ -44,7 +45,7 @@ export default function AcademyAdminPractice() {
     setMessage("");
     const { error } = await saveAcademyExercise(form);
     if (error) {
-      setMessage(error.message || "Exercise could not be saved.");
+      setMessage(friendlyError(error, "Exercise could not be saved."));
       return;
     }
     setMessage("Exercise saved.");
@@ -80,7 +81,10 @@ export default function AcademyAdminPractice() {
       ...exercise,
       published: !exercise.published,
     });
-    if (error) setMessage(error.message || "Publish state could not be changed.");
+    if (error)
+      setMessage(
+        friendlyError(error, "Publish state could not be changed."),
+      );
     else {
       setMessage(`Exercise ${exercise.published ? "unpublished" : "published"}.`);
       await load();

@@ -4,6 +4,7 @@ import {
   markProjectMilestoneComplete,
 } from "../lib/academy";
 import { useAcademyAuth } from "../hooks/useAcademyAuth";
+import { friendlyError } from "../lib/utils";
 
 export default function AcademyProjects() {
   const { user } = useAcademyAuth();
@@ -28,7 +29,8 @@ export default function AcademyProjects() {
   async function complete(milestoneId) {
     setNotice("");
     const { error } = await markProjectMilestoneComplete(milestoneId, user.id);
-    if (error) setNotice(error.message || "Milestone could not be updated.");
+    if (error)
+      setNotice(friendlyError(error, "Milestone could not be updated."));
     else {
       setNotice("Milestone completed.");
       const result = await getAcademyProjects(user.id);

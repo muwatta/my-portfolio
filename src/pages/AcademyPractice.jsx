@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { getAcademyExercises, submitObjectiveAnswer } from "../lib/academy";
 import PythonEditor from "../components/academy/PythonEditor";
 import { useAcademyAuth } from "../hooks/useAcademyAuth";
+import { friendlyError } from "../lib/utils";
 
 export default function AcademyPractice() {
   const { user } = useAcademyAuth();
@@ -26,7 +27,9 @@ export default function AcademyPractice() {
     );
     setResults((current) => ({
       ...current,
-      [exerciseId]: error ? { error: error.message } : data,
+      [exerciseId]: error
+        ? { error: friendlyError(error, "Your answer could not be checked.") }
+        : data,
     }));
     setSubmitting(null);
   }

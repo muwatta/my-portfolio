@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
 import { useAcademyAuth } from "../hooks/useAcademyAuth";
 import { useTheme } from "../context/useTheme";
+import { friendlyError } from "../lib/utils";
 
 export default function AcademyLogin() {
   const { user, loading, signIn, isConfigured } = useAcademyAuth();
@@ -34,7 +35,7 @@ export default function AcademyLogin() {
       if (signInError) throw signInError;
       navigate(location.state?.from || "/academy/dashboard", { replace: true });
     } catch (signInError) {
-      setError(signInError.message || "We could not sign you in.");
+      setError(friendlyError(signInError, "We could not sign you in."));
     } finally {
       setSubmitting(false);
     }

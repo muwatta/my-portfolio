@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useAcademyAuth } from "../hooks/useAcademyAuth";
+import { friendlyError } from "../lib/utils";
 
 export default function AcademyForgotPassword() {
   const { sendPasswordReset, isConfigured } = useAcademyAuth();
@@ -19,7 +20,7 @@ export default function AcademyForgotPassword() {
     );
     setSubmitting(false);
     if (resetError)
-      setError(resetError.message || "We could not send the reset email.");
+      setError(friendlyError(resetError, "We could not send the reset email."));
     else
       setMessage(
         "If an account exists for that email, a secure reset link is on its way.",
