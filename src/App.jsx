@@ -102,6 +102,10 @@ const AcademyAdminStudents = lazy(() => import("./pages/AcademyAdminStudents"));
 const AcademyAdminStudentProfile = lazy(
   () => import("./pages/AcademyAdminStudentProfile"),
 );
+const AcademyAdminLevels = lazy(() => import("./pages/AcademyAdminLevels"));
+const AcademyAdminPractice = lazy(() => import("./pages/AcademyAdminPractice"));
+const AcademyAdminProjects = lazy(() => import("./pages/AcademyAdminProjects"));
+const AcademyAdminMaterials = lazy(() => import("./pages/AcademyAdminMaterials"));
 const AcademyAdminAccess = lazy(() => import("./pages/AcademyAdminAccess"));
 const AcademyProfile = lazy(() => import("./pages/AcademyProfile"));
 
@@ -321,7 +325,7 @@ function App() {
                             />
                             <Route
                               path="/academy/admin/levels"
-                              element={<AcademyAdminStudents />}
+                              element={<AcademyAdminLevels />}
                             />
                             <Route
                               path="/academy/admin/courses"
@@ -341,7 +345,7 @@ function App() {
                             />
                             <Route
                               path="/academy/admin/practice"
-                              element={<AcademyTeacherPlaceholder />}
+                              element={<AcademyAdminPractice />}
                             />
                             <Route
                               path="/academy/admin/assignments"
@@ -353,7 +357,7 @@ function App() {
                             />
                             <Route
                               path="/academy/admin/projects"
-                              element={<AcademyTeacherPlaceholder />}
+                              element={<AcademyAdminProjects />}
                             />
                             <Route
                               path="/academy/admin/schedule"
@@ -369,7 +373,7 @@ function App() {
                             />
                             <Route
                               path="/academy/admin/materials"
-                              element={<AcademyTeacherPlaceholder />}
+                              element={<AcademyAdminMaterials />}
                             />
                             <Route
                               path="/academy/admin/live"
