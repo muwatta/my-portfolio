@@ -25,12 +25,14 @@ export default function AcademyAdminDashboard() {
       window.removeEventListener("focus", refresh);
     };
   }, [load]);
+  const learningHours = Math.round((overview?.learningSeconds ?? 0) / 3600);
   const cards = [
     ["Students", overview?.students ?? 0],
     ["Courses", overview?.courses ?? 0],
     ["Active learners", overview?.activeLearners ?? 0],
+    ["Verified points", overview?.verifiedPoints ?? 0],
+    ["Learning time", `${learningHours}h`],
     ["Pending submissions", overview?.pendingSubmissions ?? 0],
-    ["Overdue assignments", overview?.overdueAssignments ?? 0],
   ];
   return (
     <div className="space-y-8">

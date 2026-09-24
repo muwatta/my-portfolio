@@ -52,6 +52,41 @@ export default function AcademyAdminPractice() {
     await load();
   }
 
+  function editExercise(exercise) {
+    setForm({
+      id: exercise.id,
+      lesson_id: exercise.lesson_id,
+      title: exercise.title,
+      instructions: exercise.instructions,
+      starter_code: exercise.starter_code ?? "",
+      difficulty: exercise.difficulty,
+      expected_concepts: Array.isArray(exercise.expected_concepts)
+        ? exercise.expected_concepts.join("\n")
+        : exercise.expected_concepts ?? "",
+      hints: Array.isArray(exercise.hints)
+        ? exercise.hints.join("\n")
+        : exercise.hints ?? "",
+      explanation: exercise.explanation ?? "",
+      tests: JSON.stringify(exercise.tests ?? []),
+      solution_code: exercise.solution_code ?? "",
+      published: exercise.published,
+    });
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  async function togglePublish(exercise) {
+    setMessage("");
+    const { error } = await saveAcademyExercise({
+      ...exercise,
+      published: !exercise.published,
+    });
+    if (error) setMessage(error.message || "Publish state could not be changed.");
+    else {
+      setMessage(`Exercise ${exercise.published ? "unpublished" : "published"}.`);
+      await load();
+    }
+  }
+
   return (
     <div className="space-y-8">
       <header>
@@ -85,7 +120,9 @@ export default function AcademyAdminPractice() {
         className="grid gap-4 rounded-xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900"
         onSubmit={submit}
       >
-        <h2 className="text-xl font-bold">Create exercise</h2>
+        <h2 className="text-xl font-bold">
+          {form.id ? "Edit exercise" : "Create exercise"}
+        </h2>
         <div className="grid gap-4 md:grid-cols-2">
           <label className="label">
             Lesson
@@ -196,9 +233,20 @@ export default function AcademyAdminPractice() {
             onChange={updateField}
           />
         </label>
-        <button className="button-primary w-fit" type="submit">
-          Save exercise
-        </button>
+        <div className="flex w-fit items-center gap-3">
+          <button className="button-primary" type="submit">
+            Save exercise
+          </button>
+          {form.id && (
+            <button
+              className="button-secondary"
+              type="button"
+              onClick={() => setForm(emptyExercise)}
+            >
+              Cancel edit
+            </button>
+          )}
+        </div>
       </form>
       <section className="space-y-3">
         <h2 className="text-xl font-bold">Existing exercises</h2>
@@ -221,6 +269,31 @@ export default function AcademyAdminPractice() {
             <span className="text-sm font-semibold uppercase tracking-wide text-cyan-700 dark:text-cyan-300">
               {exercise.difficulty}
             </span>
+            <div className="flex flex-wrap items-center gap-3">
+              <span
+                className={`text-sm font-semibold ${
+                  exercise.published
+                    ? "text-emerald-600 dark:text-emerald-400"
+                    : "text-amber-600 dark:text-amber-400"
+                }`}
+              >
+                {exercise.published ? "published" : "draft"}
+              </span>
+              <button
+                className="button-ghost text-xs"
+                type="button"
+                onClick={() => editExercise(exercise)}
+              >
+                Edit
+              </button>
+              <button
+                className="button-ghost text-xs"
+                type="button"
+                onClick={() => togglePublish(exercise)}
+              >
+                {exercise.published ? "Unpublish" : "Publish"}
+              </button>
+            </div>
           </div>
         ))}
       </section>

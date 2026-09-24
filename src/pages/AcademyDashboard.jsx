@@ -49,6 +49,7 @@ export default function AcademyDashboard() {
     lessons[lessons.length - 1];
   const course = overview?.enrollment?.academy_courses;
   const learningMinutes = Math.floor((overview?.learningSeconds ?? 0) / 60);
+  const hasCourse = Boolean(course);
 
   return (
     <div className="space-y-8">
@@ -61,14 +62,18 @@ export default function AcademyDashboard() {
         </h1>
         <p className="mt-3 max-w-2xl text-slate-300">
           {course?.title
-            ? "Your assigned learning path is ready for your next step."
-            : "Your Academy team will assign a learning path when you begin."}
+            ? "Your learning path is ready. Pick up where you left off — one step at a time."
+            : "Choose the learning path you want to explore. You can choose one path and switch whenever you like."}
         </p>
         <Link
-          to="/academy/lessons"
+          to={hasCourse ? "/academy/lessons" : "/academy/courses"}
           className="mt-6 inline-flex min-h-11 items-center rounded-lg bg-cyan-400 px-4 py-2 text-sm font-bold text-slate-950 hover:bg-cyan-300"
         >
-          {nextLesson ? "Continue learning" : "Explore lessons"}
+          {hasCourse
+            ? nextLesson
+              ? "Continue learning"
+              : "Explore lessons"
+            : "Choose a learning path"}
         </Link>
       </section>
       {state === "loading" && (
@@ -147,13 +152,23 @@ export default function AcademyDashboard() {
                 {course?.title || "Path pending"}
               </h2>
               <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
-                Your Academy team manages placement and access.
+                {course?.title
+                  ? course.duration_weeks
+                    ? `A ${course.duration_weeks}-week hands-on path. You can switch paths anytime.`
+                    : "A hands-on path. You can switch paths anytime."
+                  : "Choose your first path to start learning with hands-on lessons and projects."}
               </p>
             </div>
             <span className="rounded-full bg-cyan-100 px-3 py-1 text-xs font-bold text-cyan-800 dark:bg-cyan-950 dark:text-cyan-200">
-              Admin assigned
+              {course?.title ? "Selected by you" : "Not started"}
             </span>
           </div>
+          <Link
+            to="/academy/courses"
+            className="mt-5 inline-flex font-semibold text-blue-600 hover:text-blue-700"
+          >
+            {course?.title ? "Switch learning path" : "Choose a learning path"}
+          </Link>
         </div>
         <div className="rounded-xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900">
           <p className="text-sm font-semibold text-slate-500 dark:text-slate-400">
@@ -186,38 +201,40 @@ export default function AcademyDashboard() {
           )}
         </div>
       </section>
-      <section className="rounded-xl border border-cyan-200 bg-cyan-50 p-6 dark:border-cyan-900 dark:bg-cyan-950/30">
-        <p className="text-sm font-semibold uppercase tracking-[0.18em] text-cyan-700 dark:text-cyan-300">
-          Today's task
-        </p>
-        <h2 className="mt-2 text-xl font-bold">
-          {overview?.schedules?.[0]?.title ||
-            nextLesson?.title ||
-            "Continue your current lesson"}
-        </h2>
-        <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
-          Open your current lesson or pending assignment to keep your learning
-          moving.
-        </p>
-        <div className="mt-4 flex flex-wrap gap-3">
-          <Link
-            className="button-primary inline-flex"
-            to={
-              nextLesson
-                ? `/academy/lessons/${nextLesson.id}`
-                : "/academy/lessons"
-            }
-          >
-            Open lesson
-          </Link>
-          <Link
-            className="button-secondary inline-flex"
-            to="/academy/assignments"
-          >
-            View assignments
-          </Link>
-        </div>
-      </section>
+      {hasCourse && (
+        <section className="rounded-xl border border-cyan-200 bg-cyan-50 p-6 dark:border-cyan-900 dark:bg-cyan-950/30">
+          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-cyan-700 dark:text-cyan-300">
+            Today's task
+          </p>
+          <h2 className="mt-2 text-xl font-bold">
+            {overview?.schedules?.[0]?.title ||
+              nextLesson?.title ||
+              "Continue your current lesson"}
+          </h2>
+          <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
+            Open your current lesson or pending assignment to keep your learning
+            moving.
+          </p>
+          <div className="mt-4 flex flex-wrap gap-3">
+            <Link
+              className="button-primary inline-flex"
+              to={
+                nextLesson
+                  ? `/academy/lessons/${nextLesson.id}`
+                  : "/academy/lessons"
+              }
+            >
+              Open lesson
+            </Link>
+            <Link
+              className="button-secondary inline-flex"
+              to="/academy/assignments"
+            >
+              View assignments
+            </Link>
+          </div>
+        </section>
+      )}
       <section className="rounded-xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900">
         <div className="flex items-center justify-between gap-4">
           <h2 className="text-xl font-bold">Pending assignments</h2>
@@ -282,33 +299,49 @@ export default function AcademyDashboard() {
           </p>
         )}
       </section>
-      <section className="rounded-xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900">
-        <h2 className="text-xl font-bold">Your learning path</h2>
-        <div className="mt-5">
-          <ProgressBar
-            value={progress?.completionPercent ?? 0}
-            label="Course progress"
-          />
-        </div>
-        <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <p className="text-sm font-semibold text-slate-500">
-              Continue learning
-            </p>
-            <p className="mt-1 font-bold">
-              {nextLesson?.title || "No lessons published yet."}
-            </p>
+      {hasCourse ? (
+        <section className="rounded-xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900">
+          <h2 className="text-xl font-bold">Your learning path</h2>
+          <div className="mt-5">
+            <ProgressBar
+              value={progress?.completionPercent ?? 0}
+              label="Course progress"
+            />
           </div>
-          {nextLesson && (
-            <Link
-              className="button-primary inline-flex"
-              to={`/academy/lessons/${nextLesson.id}`}
-            >
-              Open lesson
-            </Link>
-          )}
-        </div>
-      </section>
+          <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="text-sm font-semibold text-slate-500">
+                Continue learning
+              </p>
+              <p className="mt-1 font-bold">
+                {nextLesson?.title || "No lessons published yet."}
+              </p>
+            </div>
+            {nextLesson && (
+              <Link
+                className="button-primary inline-flex"
+                to={`/academy/lessons/${nextLesson.id}`}
+              >
+                Open lesson
+              </Link>
+            )}
+          </div>
+        </section>
+      ) : (
+        <section className="rounded-xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900">
+          <h2 className="text-xl font-bold">Ready when you are</h2>
+          <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
+            Pick a learning path to unlock your lessons, practice, and
+            projects.
+          </p>
+          <Link
+            className="button-primary mt-5 inline-flex"
+            to="/academy/courses"
+          >
+            Choose a learning path
+          </Link>
+        </section>
+      )}
     </div>
   );
 }

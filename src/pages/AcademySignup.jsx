@@ -1,8 +1,7 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Link, Navigate, useNavigate } from "react-router-dom";
 import { useAcademyAuth } from "../hooks/useAcademyAuth";
 import { useTheme } from "../context/useTheme";
-import { getAcademySchools } from "../lib/academy";
 
 export default function AcademySignup() {
   const { user, loading, signUp, isConfigured } = useAcademyAuth();
@@ -12,18 +11,10 @@ export default function AcademySignup() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [schoolCode, setSchoolCode] = useState("");
-  const [state, setState] = useState("");
-  const [city, setCity] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
-  const [message, setMessage] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const [schools, setSchools] = useState([]);
-
-  useEffect(() => {
-    getAcademySchools().then(({ data }) => setSchools(data ?? []));
-  }, []);
+  const [created, setCreated] = useState(false);
 
   if (loading) {
     return (
@@ -38,7 +29,6 @@ export default function AcademySignup() {
   async function handleSubmit(event) {
     event.preventDefault();
     setError("");
-    setMessage("");
 
     const name = displayName.trim();
     const normalizedEmail = email.trim().toLowerCase();
@@ -55,16 +45,13 @@ export default function AcademySignup() {
         normalizedEmail,
         password,
         name,
-        { schoolCode, state, city: city.trim() },
       );
       if (signUpError) throw signUpError;
       if (data.session) {
         navigate("/academy/dashboard", { replace: true });
         return;
       }
-      setMessage(
-        "Account created. Check your email to confirm your account, then sign in.",
-      );
+      setCreated(true);
     } catch (signUpError) {
       setError(
         signUpError.message || "We could not create your Academy account.",
@@ -129,6 +116,47 @@ export default function AcademySignup() {
             <div className="mt-6 rounded-lg border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">
               Academy sign-up is not configured in this environment.
             </div>
+          ) : created ? (
+            <div
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="signup-success-title"
+              className="mt-6 rounded-2xl border border-emerald-300 bg-emerald-50 p-8 text-center dark:border-emerald-800 dark:bg-emerald-950/40"
+            >
+              <div className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-emerald-100 text-2xl dark:bg-emerald-900">
+                ✓
+              </div>
+              <h3
+                id="signup-success-title"
+                className="mt-5 text-2xl font-bold"
+              >
+                Your account is ready
+              </h3>
+              <p className="mt-3 text-sm leading-6 text-slate-600 dark:text-slate-300">
+                We sent a confirmation link to{" "}
+                <span className="font-semibold text-slate-800 dark:text-slate-100">
+                  {email.trim().toLowerCase()}
+                </span>
+                . Check your inbox and confirm your email so you can sign in
+                and start learning with ATE Academy.
+              </p>
+              <div className="mt-6 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
+                <button
+                  type="button"
+                  className="button-primary"
+                  onClick={() => navigate("/academy/login")}
+                >
+                  Go to sign in
+                </button>
+                <button
+                  type="button"
+                  className="button-secondary"
+                  onClick={() => setCreated(false)}
+                >
+                  Not the right email?
+                </button>
+              </div>
+            </div>
           ) : (
             <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
               <label className="label">
@@ -150,49 +178,6 @@ export default function AcademySignup() {
                   autoComplete="email"
                   value={email}
                   onChange={(event) => setEmail(event.target.value)}
-                  required
-                />
-              </label>
-              <label className="label">
-                School code
-                <select
-                  className="field"
-                  value={schoolCode}
-                  onChange={(event) => setSchoolCode(event.target.value)}
-                  required
-                >
-                  <option value="">Select your school</option>
-                  {schools.map((school) => (
-                    <option key={school.code} value={school.code}>
-                      {school.name} · {school.city}
-                    </option>
-                  ))}
-                  <option value="OTHER">Other</option>
-                </select>
-              </label>
-              <label className="label">
-                State
-                <select
-                  className="field"
-                  value={state}
-                  onChange={(event) => setState(event.target.value)}
-                  required
-                >
-                  <option value="">Select your state</option>
-                  <option>Plateau</option>
-                  <option>Kwara</option>
-                  <option>Lagos</option>
-                  <option>Abuja</option>
-                  <option>Other</option>
-                </select>
-              </label>
-              <label className="label">
-                City or location
-                <input
-                  className="field"
-                  type="text"
-                  value={city}
-                  onChange={(event) => setCity(event.target.value)}
                   required
                 />
               </label>
@@ -240,14 +225,6 @@ export default function AcademySignup() {
                   {error}
                 </p>
               )}
-              {message && (
-                <p
-                  role="status"
-                  className="rounded-lg bg-green-50 p-3 text-sm text-green-700 dark:bg-green-950/40 dark:text-green-300"
-                >
-                  {message}
-                </p>
-              )}
               <button
                 className="button-primary w-full"
                 type="submit"
@@ -257,15 +234,6 @@ export default function AcademySignup() {
               </button>
             </form>
           )}
-          <p className="mt-6 text-center text-sm text-slate-600 dark:text-slate-300">
-            Already have an Academy account?{" "}
-            <Link
-              to="/academy/login"
-              className="font-semibold text-blue-600 hover:text-blue-700"
-            >
-              Sign in
-            </Link>
-          </p>
         </div>
       </div>
     </div>

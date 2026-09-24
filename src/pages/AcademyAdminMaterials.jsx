@@ -49,6 +49,20 @@ export default function AcademyAdminMaterials() {
     await load();
   }
 
+  function editMaterial(material) {
+    setForm({
+      id: material.id,
+      course_id: material.course_id || "",
+      lesson_id: material.lesson_id || "",
+      title: material.title,
+      storage_path: material.storage_path,
+      mime_type: material.mime_type,
+      file_size_bytes: material.file_size_bytes ?? 0,
+      published: material.published,
+    });
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
   return (
     <div className="space-y-8">
       <header>
@@ -81,7 +95,9 @@ export default function AcademyAdminMaterials() {
         className="grid gap-4 rounded-xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900"
         onSubmit={submit}
       >
-        <h2 className="text-xl font-bold">Create material</h2>
+        <h2 className="text-xl font-bold">
+          {form.id ? "Edit material" : "Create material"}
+        </h2>
         <div className="grid gap-4 md:grid-cols-2">
           <label className="label">
             Course
@@ -165,9 +181,20 @@ export default function AcademyAdminMaterials() {
           />
           Publish this material
         </label>
-        <button className="button-primary w-fit" type="submit">
-          Save material
-        </button>
+        <div className="flex w-fit items-center gap-3">
+          <button className="button-primary" type="submit">
+            Save material
+          </button>
+          {form.id && (
+            <button
+              className="button-secondary"
+              type="button"
+              onClick={() => setForm(emptyMaterial)}
+            >
+              Cancel edit
+            </button>
+          )}
+        </div>
       </form>
       <section className="space-y-3">
         <h2 className="text-xl font-bold">Existing materials</h2>
@@ -187,9 +214,18 @@ export default function AcademyAdminMaterials() {
                 {(material.academy_courses?.title || "No course")} � {(material.academy_lessons?.title || "No lesson")}
               </p>
             </div>
+            <div className="flex flex-wrap items-center gap-3">
             <span className="text-sm font-semibold">
               {material.published ? "Published" : "Draft"}
             </span>
+            <button
+              className="button-ghost text-xs"
+              type="button"
+              onClick={() => editMaterial(material)}
+            >
+              Edit
+            </button>
+          </div>
           </div>
         ))}
       </section>

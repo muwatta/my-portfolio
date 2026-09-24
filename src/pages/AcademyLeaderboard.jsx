@@ -1,13 +1,19 @@
 import { useEffect, useState } from "react";
 import { getAcademyWeeklyLeaderboard } from "../lib/academy";
+import { useAcademyAuth } from "../hooks/useAcademyAuth";
 import { supabase } from "../lib/supabase";
 
 export default function AcademyLeaderboard() {
   const [rows, setRows] = useState([]);
   const [state, setState] = useState("loading");
+  const { user } = useAcademyAuth();
+
   useEffect(() => {
+    let mounted = true;
     getAcademyWeeklyLeaderboard().then(({ data, error, configured }) => {
-      setRows(data ?? []);
+      if (!mounted) return;
+      const resolved = data ?? [];
+      setRows(resolved);
       setState(error ? "error" : configured ? "ready" : "unconfigured");
     });
     if (!supabase) return undefined;
@@ -15,14 +21,20 @@ export default function AcademyLeaderboard() {
       .channel("academy-weekly-leaderboard")
       .on(
         "postgres_changes",
-        { event: "*", schema: "public", table: "academy_leaderboard_points" },
+        { event: "*", schema: "public", table: "academy_leaderboard_standings" },
         () => {
-          getAcademyWeeklyLeaderboard().then(({ data }) => setRows(data ?? []));
+          getAcademyWeeklyLeaderboard().then(({ data }) => {
+            if (mounted) setRows(data ?? []);
+          });
         },
       )
       .subscribe();
-    return () => supabase.removeChannel(channel);
+    return () => {
+      mounted = false;
+      supabase.removeChannel(channel);
+    };
   }, []);
+  const currentUserRow = rows.find((row) => row.student_id === user?.id);
   return (
     <div className="space-y-8">
       <header>
@@ -34,6 +46,13 @@ export default function AcademyLeaderboard() {
           Points come from recorded lessons and practice, not manual client
           updates.
         </p>
+        {currentUserRow && (
+          <p className="mt-4 inline-flex gap-3 rounded-lg bg-cyan-50 px-4 py-2 text-sm font-semibold text-cyan-800 dark:bg-cyan-950/50 dark:text-cyan-200">
+            <span>Your rank: #{currentUserRow.rank}</span>
+            <span>·</span>
+            <span>{currentUserRow.points} pts this week</span>
+          </p>
+        )}
       </header>
       {state === "loading" && <p>Loading leaderboard...</p>}
       {state === "error" && (
@@ -46,7 +65,8 @@ export default function AcademyLeaderboard() {
       )}
       {state === "ready" && rows.length === 0 && (
         <p className="rounded-xl border border-dashed border-slate-300 p-8 text-sm dark:border-slate-700">
-          No verified activity yet.
+          No verified activity yet. Complete lessons and practice to earn
+          points.
         </p>
       )}
       {rows.length > 0 && (
@@ -61,9 +81,17 @@ export default function AcademyLeaderboard() {
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
               {rows.map((row) => (
-                <tr key={row.student_id}>
+                <tr
+                  key={row.student_id}
+                  className={
+                    row.student_id === user?.id
+                      ? "bg-cyan-50 dark:bg-cyan-950/40"
+                      : undefined
+                  }
+                >
                   <td className="px-5 py-4 font-bold">
-                    {rows.indexOf(row) + 1}
+                    #{row.rank ?? rows.indexOf(row) + 1}
+                    {row.student_id === user?.id && " · you"}
                   </td>
                   <td className="px-5 py-4">{row.display_name || "Student"}</td>
                   <td className="px-5 py-4 font-semibold">{row.points}</td>

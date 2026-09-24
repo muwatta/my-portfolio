@@ -32,7 +32,7 @@ export default function AcademyAdminProjects() {
     }));
   }
 
-  async function submit(event) {
+async function submit(event) {
     event.preventDefault();
     setMessage("");
     const { error } = await saveAcademyProject(form);
@@ -43,6 +43,16 @@ export default function AcademyAdminProjects() {
     setMessage("Project saved.");
     setForm(emptyProject);
     await load();
+  }
+
+  function editProject(project) {
+    setForm({
+      id: project.id,
+      course_id: project.course_id,
+      title: project.title,
+      description: project.description,
+    });
+    window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   return (
@@ -78,7 +88,9 @@ export default function AcademyAdminProjects() {
         className="grid gap-4 rounded-xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900"
         onSubmit={submit}
       >
-        <h2 className="text-xl font-bold">Create project</h2>
+        <h2 className="text-xl font-bold">
+          {form.id ? "Edit project" : "Create project"}
+        </h2>
         <div className="grid gap-4 md:grid-cols-2">
           <label className="label">
             Course
@@ -118,9 +130,20 @@ export default function AcademyAdminProjects() {
             required
           />
         </label>
-        <button className="button-primary w-fit" type="submit">
-          Save project
-        </button>
+<div className="flex w-fit items-center gap-3">
+          <button className="button-primary" type="submit">
+            Save project
+          </button>
+          {form.id && (
+            <button
+              className="button-secondary"
+              type="button"
+              onClick={() => setForm(emptyProject)}
+            >
+              Cancel edit
+            </button>
+          )}
+        </div>
       </form>
       <section className="space-y-3">
         <h2 className="text-xl font-bold">Existing projects</h2>
@@ -140,9 +163,18 @@ export default function AcademyAdminProjects() {
                 {project.academy_courses?.title || "Unassigned course"}
               </p>
             </div>
+<div className="flex flex-wrap items-center gap-3">
             <span className="text-sm text-slate-500 dark:text-slate-400">
               {new Date(project.created_at).toLocaleDateString()}
             </span>
+            <button
+              className="button-ghost text-xs"
+              type="button"
+              onClick={() => editProject(project)}
+            >
+              Edit
+            </button>
+          </div>
           </div>
         ))}
       </section>

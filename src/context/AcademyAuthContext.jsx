@@ -92,7 +92,7 @@ export function AcademyAuthProvider({ children }) {
     return supabase.auth.signInWithPassword({ email, password });
   };
 
-  const signUp = (email, password, displayName, profileDetails = {}) => {
+  const signUp = (email, password, displayName) => {
     if (!supabase) {
       throw new Error("Academy authentication is not configured yet.");
     }
@@ -102,9 +102,6 @@ export function AcademyAuthProvider({ children }) {
       options: {
         data: {
           display_name: displayName,
-          school_code: profileDetails.schoolCode,
-          state: profileDetails.state,
-          city: profileDetails.city,
         },
       },
     });
