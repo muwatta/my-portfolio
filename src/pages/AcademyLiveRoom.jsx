@@ -21,6 +21,16 @@ export default function AcademyLiveRoom() {
   const [connectedPeers, setConnectedPeers] = useState([]);
   const [mediaState, setMediaState] = useState("off");
   const [mediaError, setMediaError] = useState("");
+  const [offline, setOffline] = useState(!navigator.onLine);
+  useEffect(() => {
+    const setConnection = () => setOffline(!navigator.onLine);
+    window.addEventListener("online", setConnection);
+    window.addEventListener("offline", setConnection);
+    return () => {
+      window.removeEventListener("online", setConnection);
+      window.removeEventListener("offline", setConnection);
+    };
+  }, []);
   const [muted, setMuted] = useState(false);
   const channelRef = useRef(null);
   const peersRef = useRef(new Map());
@@ -224,7 +234,7 @@ export default function AcademyLiveRoom() {
   }
   async function send(event) {
     event.preventDefault();
-    if (!body.trim() || !roomId) return;
+    if (offline || !body.trim() || !roomId) return;
     const { data } = await sendAcademyLiveMessage(roomId, user.id, body);
     if (data)
       setMessages((current) =>
@@ -244,8 +254,13 @@ export default function AcademyLiveRoom() {
         <p className="mt-2 text-slate-600 dark:text-slate-300">
           Join an active room for attendance and moderated text chat.
         </p>
-      </header>
-      {state === "loading" && <p>Loading rooms...</p>}
+       </header>
+       {offline && (
+         <p className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">
+           Live classroom requires an internet connection. Downloaded lesson materials remain available offline.
+         </p>
+       )}
+       {state === "loading" && <p>Loading rooms...</p>}
       {state === "error" && (
         <p
           role="alert"

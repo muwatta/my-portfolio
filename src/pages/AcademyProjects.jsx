@@ -5,17 +5,26 @@ import {
 } from "../lib/academy";
 import { useAcademyAuth } from "../hooks/useAcademyAuth";
 import { friendlyError } from "../lib/utils";
+import { fetchWithOfflineFallback } from "../lib/academyOffline";
+import { OFFLINE_STORES } from "../lib/offlineStore";
+import { enqueueAcademyOperation } from "../lib/academySync";
 
 export default function AcademyProjects() {
   const { user } = useAcademyAuth();
   const [projects, setProjects] = useState([]);
   const [state, setState] = useState("loading");
   const [notice, setNotice] = useState("");
+  const [offline, setOffline] = useState(false);
 
   useEffect(() => {
     let mounted = true;
-    getAcademyProjects(user.id).then((result) => {
+    fetchWithOfflineFallback({
+      userId: user.id,
+      store: OFFLINE_STORES.progress,
+      fetcher: () => getAcademyProjects(user.id),
+    }).then((result) => {
       if (!mounted) return;
+      setOffline(Boolean(result.offline));
       setProjects(result.data ?? []);
       setState(
         result.error ? "error" : result.configured ? "ready" : "unconfigured",
@@ -28,6 +37,25 @@ export default function AcademyProjects() {
 
   async function complete(milestoneId) {
     setNotice("");
+    if (!navigator.onLine) {
+      await enqueueAcademyOperation(user.id, {
+        type: "project_milestone_complete",
+        payload: { milestoneId, studentId: user.id },
+      });
+      setProjects((current) =>
+        current.map((project) => ({
+          ...project,
+          academy_project_milestones: project.academy_project_milestones.map(
+            (milestone) =>
+              milestone.id === milestoneId
+                ? { ...milestone, progress: { completed_at: new Date().toISOString() } }
+                : milestone,
+          ),
+        })),
+      );
+      setNotice("Milestone saved on this device and waiting to sync.");
+      return;
+    }
     const { error } = await markProjectMilestoneComplete(milestoneId, user.id);
     if (error)
       setNotice(friendlyError(error, "Milestone could not be updated."));
@@ -48,8 +76,13 @@ export default function AcademyProjects() {
         <p className="mt-2 max-w-2xl text-slate-600 dark:text-slate-300">
           Turn lessons into finished work through a clear milestone roadmap.
         </p>
-      </header>
-      {notice && (
+       </header>
+       {offline && (
+         <p className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">
+           Offline project mode. Milestone changes will sync when you reconnect.
+         </p>
+       )}
+       {notice && (
         <p
           role="status"
           className="rounded-lg bg-cyan-50 p-3 text-sm text-cyan-900 dark:bg-cyan-950/40 dark:text-cyan-100"

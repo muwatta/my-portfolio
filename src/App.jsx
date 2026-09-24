@@ -413,7 +413,7 @@ function AppShell() {
                   </main>
                   {!isAdminRoute && !isAcademyRoute && <Footer />}
                 </Loader>
-                {!isAdminRoute && !isAcademyRoute && <PWAInstallPrompt />}
+                 <PWAInstallPrompt />
               </div>
             </MotionConfig>
       </ThemeProvider>
