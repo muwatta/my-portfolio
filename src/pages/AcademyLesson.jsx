@@ -5,6 +5,9 @@ import {
   markLessonComplete,
   markLessonStarted,
 } from "../lib/academy";
+import { fetchWithOfflineFallback } from "../lib/academyOffline";
+import { OFFLINE_STORES } from "../lib/offlineStore";
+import { enqueueAcademyOperation } from "../lib/academySync";
 import { useAcademyAuth } from "../hooks/useAcademyAuth";
 import LessonContent from "../components/academy/LessonContent";
 import CppEditor from "../components/academy/CppEditor";
@@ -16,19 +19,49 @@ export default function AcademyLesson() {
   const [lesson, setLesson] = useState(null);
   const [state, setState] = useState("loading");
   const [completed, setCompleted] = useState(false);
+  const [notice, setNotice] = useState("");
 
   useEffect(() => {
-    markLessonStarted(id, user.id);
-    getAcademyLesson(id, user.id).then(({ data, error, configured }) => {
+    if (navigator.onLine) void markLessonStarted(id, user.id).catch(() => undefined);
+    fetchWithOfflineFallback({
+      userId: user.id,
+      store: OFFLINE_STORES.lessons,
+      id,
+      fetcher: () => getAcademyLesson(id, user.id),
+    }).then(({ data, error, configured, offline }) => {
       setLesson(data);
       setCompleted(Boolean(data?.progress?.completed_at));
       setState(error ? "error" : configured ? "ready" : "unconfigured");
+      if (offline) setCompleted(Boolean(data?.progress?.completed_at));
     });
   }, [id, user.id]);
 
   async function completeLesson() {
+    if (!navigator.onLine) {
+      await enqueueAcademyOperation(user.id, {
+        type: "lesson_complete",
+        payload: { lessonId: id, studentId: user.id },
+      });
+      setCompleted(true);
+      setNotice("Lesson completion saved on this device and will sync later.");
+      return;
+    }
     const { error } = await markLessonComplete(id, user.id);
-    if (!error) setCompleted(true);
+    if (error) {
+      if (!navigator.onLine) {
+        await enqueueAcademyOperation(user.id, {
+          type: "lesson_complete",
+          payload: { lessonId: id, studentId: user.id },
+        });
+        setCompleted(true);
+        setNotice("The connection dropped. Your lesson completion is waiting to sync.");
+        return;
+      }
+      setNotice("The server could not complete this lesson yet. Please try again.");
+      return;
+    }
+    setNotice("");
+    setCompleted(true);
   }
 
   if (state === "loading") return <p>Loading lesson...</p>;
@@ -121,6 +154,7 @@ export default function AcademyLesson() {
           </Link>
         </section>
       )}
+      {notice && <p role="status" className="rounded-lg bg-amber-50 p-3 text-sm text-amber-900">{notice}</p>}
       <button
         type="button"
         className="button-primary"

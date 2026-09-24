@@ -5,10 +5,13 @@ import {
 } from "../lib/academy";
 import { useAcademyAuth } from "../hooks/useAcademyAuth";
 import { supabase } from "../lib/supabase";
+import { fetchWithOfflineFallback } from "../lib/academyOffline";
+import { OFFLINE_STORES } from "../lib/offlineStore";
 
 export default function AcademyLeaderboard() {
   const [rows, setRows] = useState([]);
   const [state, setState] = useState("loading");
+  const [offline, setOffline] = useState(false);
   const { user } = useAcademyAuth();
 
   useEffect(() => {
@@ -24,16 +27,21 @@ export default function AcademyLeaderboard() {
         }
         refreshInFlight = true;
         invalidateAcademyCache("leaderboard:weekly");
-        const { data, error, configured } = await getAcademyWeeklyLeaderboard();
+        const result = await fetchWithOfflineFallback({
+          userId: user?.id,
+          store: OFFLINE_STORES.leaderboard,
+          fetcher: () => getAcademyWeeklyLeaderboard(),
+        });
         refreshInFlight = false;
         if (!mounted) return;
-        setRows(data ?? []);
-        setState(error ? "error" : configured ? "ready" : "unconfigured");
+        setOffline(Boolean(result.offline));
+        setRows(result.data ?? []);
+        setState(result.error ? "error" : result.configured ? "ready" : "unconfigured");
       }, delay);
     };
 
     refresh();
-    if (!supabase) {
+    if (!supabase || !navigator.onLine) {
       return () => {
         mounted = false;
         window.clearTimeout(refreshTimer);
@@ -52,7 +60,7 @@ export default function AcademyLeaderboard() {
       window.clearTimeout(refreshTimer);
       void supabase.removeChannel(channel);
     };
-  }, []);
+  }, [user?.id]);
   const currentUserRow = rows.find((row) => row.student_id === user?.id);
   return (
     <div className="space-y-8">
@@ -73,6 +81,11 @@ export default function AcademyLeaderboard() {
           </p>
         )}
       </header>
+      {offline && (
+        <p className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">
+          Last synchronized leaderboard snapshot. New positions require a connection.
+        </p>
+      )}
       {state === "loading" && <p>Loading leaderboard...</p>}
       {state === "error" && (
         <p
