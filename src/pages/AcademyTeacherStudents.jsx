@@ -3,6 +3,7 @@ import {
   assignAcademyStudentLevel,
   getAcademyTeacherStudents,
 } from "../lib/academy";
+import { friendlyError } from "../lib/utils";
 
 export default function AcademyTeacherStudents() {
   const [data, setData] = useState({ students: [], levels: [] });
@@ -26,7 +27,7 @@ export default function AcademyTeacherStudents() {
     setSavingId(studentId);
     const { error } = await assignAcademyStudentLevel(studentId, levelId);
     if (error) {
-      setMessage(error.message || "The student course could not be updated.");
+      setMessage(friendlyError(error, "The student course could not be updated."));
     } else {
       setMessage("Student course updated.");
       await loadStudents();

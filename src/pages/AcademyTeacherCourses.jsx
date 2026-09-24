@@ -4,6 +4,7 @@ import {
   getAcademyTeacherCourses,
   saveAcademyCourse,
 } from "../lib/academy";
+import { friendlyError } from "../lib/utils";
 
 const emptyCourse = {
   id: "",
@@ -50,7 +51,7 @@ export default function AcademyTeacherCourses() {
     setMessage("");
     const { error } = await saveAcademyCourse(form);
     if (error) {
-      setMessage(error.message || "Course could not be saved.");
+      setMessage(friendlyError(error, "Course could not be saved."));
       return;
     }
     setMessage("Course saved.");

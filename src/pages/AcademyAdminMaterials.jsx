@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { getAcademyAdminMaterials, saveAcademyMaterial } from "../lib/academy";
+import { friendlyError } from "../lib/utils";
 
 const emptyMaterial = {
   id: "",
@@ -41,7 +42,7 @@ export default function AcademyAdminMaterials() {
     setMessage("");
     const { error } = await saveAcademyMaterial(form);
     if (error) {
-      setMessage(error.message || "Material could not be saved.");
+      setMessage(friendlyError(error, "Material could not be saved."));
       return;
     }
     setMessage("Material saved.");

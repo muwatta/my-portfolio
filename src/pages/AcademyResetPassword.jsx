@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAcademyAuth } from "../hooks/useAcademyAuth";
+import { friendlyError } from "../lib/utils";
 
 export default function AcademyResetPassword() {
   const { updatePassword, user } = useAcademyAuth();
@@ -15,7 +16,7 @@ export default function AcademyResetPassword() {
     if (password.length < 8) return setError("Use at least 8 characters.");
     if (password !== confirm) return setError("Passwords do not match.");
     const { error: updateError } = await updatePassword(password);
-    if (updateError) setError(updateError.message || "Password reset failed.");
+    if (updateError) setError(friendlyError(updateError, "Password reset failed."));
     else {
       setMessage("Password updated. You can now continue to Academy.");
       setTimeout(

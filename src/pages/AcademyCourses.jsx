@@ -6,6 +6,7 @@ import {
   selectAcademyCourse,
 } from "../lib/academy";
 import { useAcademyAuth } from "../hooks/useAcademyAuth";
+import { friendlyError } from "../lib/utils";
 
 export default function AcademyCourses() {
   const [courses, setCourses] = useState([]);
@@ -36,7 +37,9 @@ export default function AcademyCourses() {
     setNotice("");
     const { error } = await selectAcademyCourse(user.id, courseId);
     setNotice(
-      error ? error.message : "Course selected. Your lessons are ready.",
+      error
+        ? friendlyError(error, "Course could not be selected.")
+        : "Course selected. Your lessons are ready.",
     );
     setSelecting("");
     if (!error) {

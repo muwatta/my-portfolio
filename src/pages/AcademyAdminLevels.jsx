@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { getAcademyAdminLevels, saveAcademyLevel } from "../lib/academy";
+import { friendlyError } from "../lib/utils";
 
 const emptyLevel = {
   id: "",
@@ -39,7 +40,7 @@ export default function AcademyAdminLevels() {
     setMessage("");
     const { error } = await saveAcademyLevel(form);
     if (error) {
-      setMessage(error.message || "Level could not be saved.");
+      setMessage(friendlyError(error, "Level could not be saved."));
       return;
     }
     setMessage("Level saved.");
