@@ -314,11 +314,11 @@ export default function AcademyAdminRegistrations() {
                   <tr key={row.registration_number}>
                     <td className="px-4 py-3 font-semibold tracking-[0.1em]">{row.registration_number}</td>
                     <td className="px-4 py-3"><span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${row.status === "available" ? "bg-emerald-100 text-emerald-800" : row.status === "claimed" ? "bg-blue-100 text-blue-800" : "bg-amber-100 text-amber-800"}`}>{row.status}</span></td>
-                    <td className="px-4 py-3">{row.student_name || "—"}</td>
-                    <td className="px-4 py-3">{row.student_email || "—"}</td>
-                    <td className="px-4 py-3">{row.course_title || "—"}</td>
+                    <td className="px-4 py-3">{row.student_name || "Not assigned"}</td>
+                    <td className="px-4 py-3">{row.student_email || "Not available"}</td>
+                    <td className="px-4 py-3">{row.course_title || "Not assigned"}</td>
                     <td className="px-4 py-3">{new Date(row.created_at).toLocaleDateString()}</td>
-                    <td className="px-4 py-3">{row.status !== "suspended" ? <button className="font-semibold text-red-600" type="button" onClick={() => setSuspendTarget(row)}>Suspend</button> : "—"}</td>
+                    <td className="px-4 py-3">{row.status !== "suspended" ? <button className="font-semibold text-red-600" type="button" onClick={() => setSuspendTarget(row)}>Suspend</button> : "Suspended"}</td>
                   </tr>
                 ))}
               </tbody>

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { getAcademyExercises, submitObjectiveAnswer } from "../lib/academy";
+import CppEditor from "../components/academy/CppEditor";
 import PythonEditor from "../components/academy/PythonEditor";
 import { useAcademyAuth } from "../hooks/useAcademyAuth";
 import { friendlyError } from "../lib/utils";
@@ -11,6 +12,7 @@ export default function AcademyPractice() {
   const [answers, setAnswers] = useState({});
   const [results, setResults] = useState({});
   const [submitting, setSubmitting] = useState(null);
+  const practiceLanguage = exercises[0]?.language || "python";
 
   useEffect(() => {
     getAcademyExercises(user.id).then(({ data, error, configured }) => {
@@ -40,10 +42,13 @@ export default function AcademyPractice() {
         <p className="text-sm font-semibold uppercase tracking-[0.18em] text-blue-600">
           Practice lab
         </p>
-        <h1 className="mt-2 text-3xl font-bold">Practice Python</h1>
+        <h1 className="mt-2 text-3xl font-bold">
+          {practiceLanguage === "cpp" ? "Practice C++" : "Practice Python"}
+        </h1>
         <p className="mt-2 text-slate-600 dark:text-slate-300">
-          Run beginner Python in your browser. The runtime loads only when you
-          run code.
+          {practiceLanguage === "cpp"
+            ? "Read each step, change the starter program, and run it in the beginner console lab."
+            : "Run beginner Python in your browser. The runtime loads only when you run code."}
         </p>
       </header>
       {state === "loading" && <p>Loading exercises...</p>}
@@ -79,8 +84,12 @@ export default function AcademyPractice() {
               {exercise.instructions}
             </p>
           </div>
-          {exercise.question_type === "programming" ? (
-            <PythonEditor starterCode={exercise.starter_code} />
+           {exercise.question_type === "programming" ? (
+             exercise.language === "cpp" ? (
+               <CppEditor starterCode={exercise.starter_code} />
+             ) : (
+               <PythonEditor starterCode={exercise.starter_code} />
+             )
           ) : (
             <div className="space-y-4">
               {exercise.question_type === "short_answer" ? (

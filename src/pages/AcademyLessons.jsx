@@ -53,7 +53,7 @@ export default function AcademyLessons() {
         </p>
         <h1 className="mt-2 text-3xl font-bold">Lessons</h1>
         <p className="mt-2 text-slate-600 dark:text-slate-300">
-          Work through your lessons week by week — from week 1 to the end of your
+           Work through your lessons week by week, from week 1 to the end of your
           course.
         </p>
       </header>
