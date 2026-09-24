@@ -4,38 +4,80 @@ const lessonSelect =
   "id, title, slug, lesson_number, sort_order, objectives, content, prerequisite_lesson_id, completion_requirement, completion_mode, preview_allowed, academy_weeks!inner(id, week_number, title, academy_courses!inner(id, slug, title, duration_weeks))";
 
 const unavailable = (data = null) => ({ data, error: null, configured: false });
+const academyCache = new Map();
+const academyRequests = new Map();
+let academyCacheGeneration = 0;
+
+function withAcademyCache(key, ttl, loader) {
+  const cached = academyCache.get(key);
+  if (cached && cached.expiresAt > Date.now()) {
+    return Promise.resolve(cached.value);
+  }
+  if (academyRequests.has(key)) return academyRequests.get(key);
+
+  const staleValue = cached?.value;
+  const generation = academyCacheGeneration;
+  const request = Promise.resolve()
+    .then(loader)
+    .then((value) => {
+      if (value?.error) {
+        return staleValue ? { ...value, data: staleValue.data, stale: true } : value;
+      }
+      if (generation === academyCacheGeneration) {
+        academyCache.set(key, { value, expiresAt: Date.now() + ttl });
+      }
+      return value;
+    })
+    .finally(() => academyRequests.delete(key));
+  academyRequests.set(key, request);
+  return request;
+}
+
+export function invalidateAcademyCache(...prefixes) {
+  academyCacheGeneration += 1;
+  if (!prefixes.length) {
+    academyCache.clear();
+    return;
+  }
+  for (const key of academyCache.keys()) {
+    if (prefixes.some((prefix) => key.startsWith(prefix))) {
+      academyCache.delete(key);
+    }
+  }
+}
 
 export async function getActiveCourseForStudent(studentId) {
   if (!supabase || !studentId) return null;
-
-  const { data: profileData } = await supabase
-    .from("academy_profiles")
-    .select("current_course_id")
-    .eq("id", studentId)
-    .maybeSingle();
-
-  if (profileData ?.current_course_id) {
-    const { data: courseData } = await supabase
-      .from("academy_courses")
-      .select("id, slug, title, description, duration_weeks")
-      .eq("id", profileData.current_course_id)
+  return withAcademyCache(`active-course:${studentId}`, 5 * 60 * 1000, async () => {
+    const { data: profileData } = await supabase
+      .from("academy_profiles")
+      .select("current_course_id")
+      .eq("id", studentId)
       .maybeSingle();
 
-    return courseData  ??  null;
-  }
+    if (profileData?.current_course_id) {
+      const { data: courseData } = await supabase
+        .from("academy_courses")
+        .select("id, slug, title, description, duration_weeks")
+        .eq("id", profileData.current_course_id)
+        .maybeSingle();
 
-  const { data: enrollmentData } = await supabase
-    .from("academy_enrollments")
-    .select(
-      "course_id, academy_courses!academy_enrollments_course_id_fkey(id, slug, title, description, duration_weeks)",
-    )
-    .eq("student_id", studentId)
-    .eq("status", "active")
-    .order("enrolled_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
+      return courseData ?? null;
+    }
 
-  return enrollmentData ?.academy_courses  ??  null;
+    const { data: enrollmentData } = await supabase
+      .from("academy_enrollments")
+      .select(
+        "course_id, academy_courses!academy_enrollments_course_id_fkey(id, slug, title, description, duration_weeks)",
+      )
+      .eq("student_id", studentId)
+      .eq("status", "active")
+      .order("enrolled_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    return enrollmentData?.academy_courses ?? null;
+  });
 }
 
 export async function selectAcademyCourse(studentId, courseId) {
@@ -45,74 +87,86 @@ export async function selectAcademyCourse(studentId, courseId) {
     target_course_id: courseId,
     target_student_id: studentId,
   });
+  if (!error) {
+    invalidateAcademyCache(
+      `active-course:${studentId}`,
+      `lessons:${studentId}`,
+      `progress:${studentId}`,
+      `assignments:${studentId}`,
+      `overview:${studentId}`,
+    );
+  }
   return { data, error };
 }
 
 export async function getAcademyStudentOverview(studentId) {
   if (!supabase) return unavailable(null);
+  return withAcademyCache(`overview:${studentId}`, 60 * 1000, async () => {
+    const [
+      { data: enrollments, error: enrollmentError },
+      { data: schedules, error: scheduleError },
+      { data: badges, error: badgeError },
+      { data: sessions, error: sessionError },
+    ] = await Promise.all([
+      supabase
+        .from("academy_enrollments")
+        .select(
+          "id, status, enrolled_at, academy_courses!academy_enrollments_course_id_fkey(id, slug, title, duration_weeks, academy_subjects!academy_courses_subject_id_fkey(name), course_family)",
+        )
+        .eq("student_id", studentId)
+        .eq("status", "active"),
+      supabase
+        .from("academy_schedules")
+        .select(
+          "id, activity_type, title, description, starts_at, ends_at, academy_courses(title), academy_lessons(title)",
+        )
+        .eq("published", true)
+        .gte("starts_at", new Date().toISOString())
+        .order("starts_at", { ascending: true })
+        .limit(5),
+      supabase
+        .from("academy_student_badges")
+        .select("awarded_at, academy_badges(name, description, icon)")
+        .eq("student_id", studentId)
+        .order("awarded_at", { ascending: false })
+        .limit(6),
+      supabase
+        .from("academy_learning_sessions")
+        .select("active_seconds, started_at, last_heartbeat_at")
+        .eq("student_id", studentId)
+        .order("started_at", { ascending: false })
+        .limit(100),
+    ]);
 
-  const [
-    { data: enrollments, error: enrollmentError },
-    { data: schedules, error: scheduleError },
-    { data: badges, error: badgeError },
-    { data: sessions, error: sessionError },
-  ] = await Promise.all([
-    supabase
-      .from("academy_enrollments")
-      .select(
-        "id, status, enrolled_at, academy_courses!academy_enrollments_course_id_fkey(id, slug, title, duration_weeks, academy_subjects!academy_courses_subject_id_fkey(name), course_family)",
-      )
-      .eq("student_id", studentId)
-      .eq("status", "active"),
-    supabase
-      .from("academy_schedules")
-      .select(
-        "id, activity_type, title, description, starts_at, ends_at, academy_courses(title), academy_lessons(title)",
-      )
-      .eq("published", true)
-      .gte("starts_at", new Date().toISOString())
-      .order("starts_at", { ascending: true })
-      .limit(5),
-    supabase
-      .from("academy_student_badges")
-      .select("awarded_at, academy_badges(name, description, icon)")
-      .eq("student_id", studentId)
-      .order("awarded_at", { ascending: false })
-      .limit(6),
-    supabase
-      .from("academy_learning_sessions")
-      .select("active_seconds, started_at, last_heartbeat_at")
-      .eq("student_id", studentId)
-      .order("started_at", { ascending: false })
-      .limit(100),
-  ]);
-
-  const errors = enrollmentError || scheduleError || badgeError || sessionError;
-  return {
-    data: {
-      enrollment: enrollments ?.[0]  ??  null,
-      schedules: schedules  ??  [],
-      badges: badges  ??  [],
-      learningSeconds: (sessions  ??  []).reduce(
-        (total, session) => total + (session.active_seconds  ??  0),
-        0,
-      ),
-    },
-    error: errors,
-    configured: true,
-  };
+    const errors = enrollmentError || scheduleError || badgeError || sessionError;
+    return {
+      data: {
+        enrollment: enrollments?.[0] ?? null,
+        schedules: schedules ?? [],
+        badges: badges ?? [],
+        learningSeconds: (sessions ?? []).reduce(
+          (total, session) => total + (session.active_seconds ?? 0),
+          0,
+        ),
+      },
+      error: errors,
+      configured: true,
+    };
+  });
 }
 
 export async function getAcademyCourses() {
   if (!supabase) return unavailable([]);
-  const { data, error } = await supabase
-    .from("academy_courses")
-    .select(
-      "id, slug, title, description, duration_weeks, academy_subjects(name, slug), course_family, is_programming_course",
-    )
-    .eq("published", true)
-    .order("title");
-  return { data: data  ??  [], error, configured: true };
+  return withAcademyCache("courses:published", 15 * 60 * 1000, async () => {
+    const { data, error } = await supabase
+      .from("academy_courses")
+      .select(
+        "id, slug, title, description, duration_weeks, academy_subjects(name, slug), course_family, is_programming_course",
+      )
+      .eq("published", true)
+      .order("title");
+    return { data: data ?? [], error, configured: true };
+  });
 }
 
 export async function getAcademyLeaderboard() {
@@ -122,21 +176,24 @@ export async function getAcademyLeaderboard() {
 }
 
 export async function getAcademyWeeklyLeaderboard() {
-  if (!supabase)
-    return unavailable([]);
-  const { data, error } = await supabase.rpc("academy_weekly_leaderboard");
-  return { data: data ?? [], error, configured: true };
+  if (!supabase) return unavailable([]);
+  return withAcademyCache("leaderboard:weekly", 30 * 1000, async () => {
+    const { data, error } = await supabase.rpc("academy_weekly_leaderboard");
+    return { data: data ?? [], error, configured: true };
+  });
 }
 
 export async function getAcademyNotifications(studentId) {
   if (!supabase) return unavailable([]);
-  const { data, error } = await supabase
-    .from("academy_notifications")
-    .select("id, type, title, body, read_at, created_at")
-    .eq("student_id", studentId)
-    .order("created_at", { ascending: false })
-    .limit(20);
-  return { data: data  ??  [], error, configured: true };
+  return withAcademyCache(`notifications:${studentId}`, 15 * 1000, async () => {
+    const { data, error } = await supabase
+      .from("academy_notifications")
+      .select("id, type, title, body, read_at, created_at")
+      .eq("user_id", studentId)
+      .order("created_at", { ascending: false })
+      .limit(20);
+    return { data: data ?? [], error, configured: true };
+  });
 }
 
 export async function getAcademyLiveRooms() {
@@ -191,36 +248,39 @@ export async function leaveAcademyLiveRoom(roomId) {
   return { error };
 }
 
-export async function markAcademyNotificationRead(notificationId) {
+export async function markAcademyNotificationRead(notificationId, studentId) {
   if (!supabase) return { error: new Error("Academy is not configured.") };
   const { error } = await supabase
     .from("academy_notifications")
     .update({ read_at: new Date().toISOString() })
     .eq("id", notificationId);
+  if (!error && studentId) invalidateAcademyCache(`notifications:${studentId}`);
   return { error };
 }
 
 export async function getAcademyProjects(studentId) {
   if (!supabase) return unavailable([]);
-  const { data, error } = await supabase
-    .from("academy_projects")
-    .select(
-      "id, title, description, academy_project_milestones(id, milestone_number, title, academy_project_progress(student_id, completed_at, notes))",
-    )
-    .order("created_at");
-  const projects = (data  ??  []).map((project) => ({
-    ...project,
-    academy_project_milestones: (project.academy_project_milestones  ??  []).map(
-      (milestone) => ({
-        ...milestone,
-        progress:
-          milestone.academy_project_progress ?.find(
-            (item) => item.student_id === studentId,
-          )  ??  null,
-      }),
-    ),
-  }));
-  return { data: projects, error, configured: true };
+  return withAcademyCache(`projects:${studentId}`, 2 * 60 * 1000, async () => {
+    const { data, error } = await supabase
+      .from("academy_projects")
+      .select(
+        "id, title, description, academy_project_milestones(id, milestone_number, title, academy_project_progress(student_id, completed_at, notes))",
+      )
+      .order("created_at");
+    const projects = (data ?? []).map((project) => ({
+      ...project,
+      academy_project_milestones: (project.academy_project_milestones ?? []).map(
+        (milestone) => ({
+          ...milestone,
+          progress:
+            milestone.academy_project_progress?.find(
+              (item) => item.student_id === studentId,
+            ) ?? null,
+        }),
+      ),
+    }));
+    return { data: projects, error, configured: true };
+  });
 }
 
 export async function markProjectMilestoneComplete(
@@ -234,12 +294,14 @@ export async function markProjectMilestoneComplete(
     target_milestone_id: milestoneId,
     target_notes: notes,
   });
+  if (!error) invalidateAcademyCache(`projects:${studentId}`);
   return { error };
 }
 
 export async function getAcademyTeacherStudents() {
   if (!supabase) return unavailable([]);
-  const [
+  return withAcademyCache("teacher-students", 10 * 1000, async () => {
+    const [
     { data: students, error: studentError },
     { data: levels, error: levelError },
     { data: sessions, error: sessionError },
@@ -307,9 +369,10 @@ export async function getAcademyTeacherStudents() {
       })),
       levels: levels  ??  [],
     },
-    error: studentError || levelError || sessionError || enrollmentError || progressError,
-    configured: true,
-  };
+      error: studentError || levelError || sessionError || enrollmentError || progressError,
+      configured: true,
+    };
+  });
 }
 
 export async function getAcademyTeacherAnalytics() {
@@ -532,37 +595,41 @@ export async function updateAcademyStudentProfile(studentId, updates) {
 
 export async function getAcademyTeacherCourses() {
   if (!supabase) return unavailable([]);
-  const { data, error } = await supabase
-    .from("academy_courses")
-    .select(
-      "id, slug, title, description, duration_weeks, published, subject_id, academy_subjects(name), course_family, is_programming_course",
-    )
-    .order("title");
-  return { data: data  ??  [], error, configured: true };
+  return withAcademyCache("courses:teacher", 10 * 60 * 1000, async () => {
+    const { data, error } = await supabase
+      .from("academy_courses")
+      .select(
+        "id, slug, title, description, duration_weeks, published, subject_id, academy_subjects(name), course_family, is_programming_course",
+      )
+      .order("title");
+    return { data: data ?? [], error, configured: true };
+  });
 }
 
 export async function getAcademyCourseOptions() {
   if (!supabase) return unavailable({ levels: [], subjects: [] });
-  const [
-    { data: levels, error: levelError },
-    { data: subjects, error: subjectError },
-  ] = await Promise.all([
-    supabase
-      .from("academy_courses")
-      .select("id, slug, title")
-      .eq("is_active", true)
-      .order("sort_order"),
-    supabase
-      .from("academy_subjects")
-      .select("id, name")
-      .eq("active", true)
-      .order("name"),
-  ]);
-  return {
-    data: { levels: levels  ??  [], subjects: subjects  ??  [] },
-    error: levelError || subjectError,
-    configured: true,
-  };
+  return withAcademyCache("courses:options", 10 * 60 * 1000, async () => {
+    const [
+      { data: levels, error: levelError },
+      { data: subjects, error: subjectError },
+    ] = await Promise.all([
+      supabase
+        .from("academy_courses")
+        .select("id, slug, title")
+        .eq("is_active", true)
+        .order("sort_order"),
+      supabase
+        .from("academy_subjects")
+        .select("id, name")
+        .eq("active", true)
+        .order("name"),
+    ]);
+    return {
+      data: { levels: levels ?? [], subjects: subjects ?? [] },
+      error: levelError || subjectError,
+      configured: true,
+    };
+  });
 }
 
 export async function getAcademyAdminLevels() {
@@ -734,16 +801,18 @@ export async function getAcademyAdminMaterials() {
 
 export async function getAcademyCourseMaterials(courseId) {
   if (!supabase) return unavailable([]);
-  let query = supabase
-    .from("academy_materials")
-    .select(
-      "id, course_id, lesson_id, title, storage_path, mime_type, file_size_bytes, created_at, academy_courses!academy_materials_course_id_fkey(title)",
-    )
-    .eq("published", true)
-    .order("created_at", { ascending: false });
-  if (courseId) query = query.eq("course_id", courseId);
-  const { data, error } = await query;
-  return { data: data  ??  [], error, configured: true };
+  return withAcademyCache(`materials:${courseId ?? "all"}`, 10 * 60 * 1000, async () => {
+    let query = supabase
+      .from("academy_materials")
+      .select(
+        "id, course_id, lesson_id, title, storage_path, mime_type, file_size_bytes, created_at, academy_courses!academy_materials_course_id_fkey(title)",
+      )
+      .eq("published", true)
+      .order("created_at", { ascending: false });
+    if (courseId) query = query.eq("course_id", courseId);
+    const { data, error } = await query;
+    return { data: data ?? [], error, configured: true };
+  });
 }
 
 export async function saveAcademyMaterial(material) {
@@ -780,6 +849,7 @@ export async function saveAcademyMaterial(material) {
       "id, course_id, lesson_id, title, storage_path, mime_type, file_size_bytes, published",
     )
     .single();
+  if (!error) invalidateAcademyCache("materials:");
   return { data, error };
 }
 
@@ -802,6 +872,7 @@ export async function saveAcademyCourse(course) {
       "id, slug, title, description, duration_weeks, published, subject_id",
     )
     .single();
+  if (!error) invalidateAcademyCache("courses:", "active-course:", "lessons:", "progress:", "assignments:", "teacher-students");
   return { data, error };
 }
 
@@ -911,6 +982,7 @@ export async function saveAcademyLesson(lesson) {
   const { data, error } = await query
     .select("id, week_id, title, slug, lesson_number, published, sort_order")
     .single();
+  if (!error) invalidateAcademyCache("lesson:", "lessons:", "progress:", "assignments:");
   return { data, error };
 }
 
@@ -923,6 +995,7 @@ export async function publishAcademyWeek(weekId, published) {
     .update({ published: Boolean(published) })
     .eq("week_id", weekId)
     .select("id, week_id, published");
+  if (!error) invalidateAcademyCache("lessons:", "progress:", "assignments:");
   return { data: data ?? [], error };
 }
 
@@ -1022,6 +1095,16 @@ export async function assignAcademyStudentLevel(studentId, courseId) {
     target_student_id: studentId,
     target_course_id: courseId || null,
   });
+  if (!error) {
+    invalidateAcademyCache(
+      `active-course:${studentId}`,
+      `lessons:${studentId}`,
+      `progress:${studentId}`,
+      `assignments:${studentId}`,
+      `overview:${studentId}`,
+      "teacher-students",
+    );
+  }
   return { data, error };
 }
 
@@ -1054,51 +1137,54 @@ export async function heartbeatAcademyLearningSession(
 
 export async function getAcademyLessons(studentId) {
   if (!supabase) return unavailable([]);
+  return withAcademyCache(`lessons:${studentId}`, 5 * 60 * 1000, async () => {
+    const activeCourse = await getActiveCourseForStudent(studentId);
+    if (!activeCourse) return { data: [], error: null, configured: true };
 
-  const activeCourse = await getActiveCourseForStudent(studentId);
-  if (!activeCourse) return { data: [], error: null, configured: true };
+    const { data, error } = await supabase
+      .from("academy_lessons")
+      .select(lessonSelect)
+      .eq("published", true)
+      .eq("academy_weeks.course_id", activeCourse.id)
+      .order("academy_weeks(week_number)")
+      .order("lesson_number");
 
-  const { data, error } = await supabase
-    .from("academy_lessons")
-    .select(lessonSelect)
-    .eq("published", true)
-    .eq("academy_weeks.course_id", activeCourse.id)
-    .order("academy_weeks(week_number)")
-    .order("lesson_number");
+    if (error || !studentId) {
+      return { data: data ?? [], error, configured: true };
+    }
 
-  if (error || !studentId) return { data: data  ??  [], error, configured: true };
-
-  const { data: progress, error: progressError } = await supabase
-    .from("academy_lesson_progress")
-    .select("lesson_id, completed_at")
-    .eq("student_id", studentId);
-  const progressByLesson = new Map(
-    (progress  ??  []).map((item) => [item.lesson_id, item]),
-  );
-  const ordered = (data ?? [])
-    .slice()
-    .sort(
-      (a, b) =>
-        (a.academy_weeks?.week_number ?? 0) -
-          (b.academy_weeks?.week_number ?? 0) ||
-        (a.lesson_number ?? 0) - (b.lesson_number ?? 0),
+    const { data: progress, error: progressError } = await supabase
+      .from("academy_lesson_progress")
+      .select("lesson_id, completed_at")
+      .eq("student_id", studentId);
+    const progressByLesson = new Map(
+      (progress ?? []).map((item) => [item.lesson_id, item]),
     );
-  return {
-    data: ordered.map((lesson) => ({
-      ...lesson,
-      progress: progressByLesson.get(lesson.id)  ??  null,
-      status: progressByLesson.get(lesson.id) ?.completed_at
-         ?  "completed"
-        : progressByLesson.get(lesson.id) ?.started_at
-           ?  "in-progress"
-          : lesson.prerequisite_lesson_id &&
-              !progressByLesson.get(lesson.prerequisite_lesson_id) ?.completed_at
-             ?  "locked"
-            : "available",
-    })),
-    error: error  ??  progressError,
-    configured: true,
-  };
+    const ordered = (data ?? [])
+      .slice()
+      .sort(
+        (a, b) =>
+          (a.academy_weeks?.week_number ?? 0) -
+            (b.academy_weeks?.week_number ?? 0) ||
+          (a.lesson_number ?? 0) - (b.lesson_number ?? 0),
+      );
+    return {
+      data: ordered.map((lesson) => ({
+        ...lesson,
+        progress: progressByLesson.get(lesson.id) ?? null,
+        status: progressByLesson.get(lesson.id)?.completed_at
+          ? "completed"
+          : progressByLesson.get(lesson.id)?.started_at
+            ? "in-progress"
+            : lesson.prerequisite_lesson_id &&
+                !progressByLesson.get(lesson.prerequisite_lesson_id)?.completed_at
+              ? "locked"
+              : "available",
+      })),
+      error: progressError,
+      configured: true,
+    };
+  });
 }
 
 export async function markLessonStarted(lessonId, studentId) {
@@ -1107,54 +1193,56 @@ export async function markLessonStarted(lessonId, studentId) {
   const { error } = await supabase.rpc("academy_start_lesson", {
     target_lesson_id: lessonId,
   });
+  if (!error) invalidateAcademyCache(`lesson:${lessonId}:${studentId}`, `lessons:${studentId}`, `progress:${studentId}`);
   return { error };
 }
 
 export async function getAcademyLesson(id, studentId) {
   if (!supabase) return unavailable(null);
+  return withAcademyCache(`lesson:${id}:${studentId ?? "anon"}`, 10 * 60 * 1000, async () => {
+    const { data, error } = await supabase
+      .from("academy_lessons")
+      .select(lessonSelect)
+      .eq("id", id)
+      .eq("published", true)
+      .maybeSingle();
+    if (error || !data) return { data, error, configured: true };
 
-  const { data, error } = await supabase
-    .from("academy_lessons")
-    .select(lessonSelect)
-    .eq("id", id)
-    .eq("published", true)
-    .maybeSingle();
-  if (error || !data) return { data, error, configured: true };
+    const [{ data: exercises }, { data: subtopics }, { data: progress }] =
+      await Promise.all([
+        supabase
+          .from("academy_exercises")
+          .select(
+            "id, lesson_id, title, instructions, starter_code, difficulty, expected_concepts, hints, explanation",
+          )
+          .eq("lesson_id", id),
+        supabase
+          .from("academy_lesson_subtopics")
+          .select("id, title, concept, explanation, example, ordering")
+          .eq("lesson_id", id)
+          .eq("published", true)
+          .order("ordering"),
+        studentId
+          ? supabase
+              .from("academy_lesson_progress")
+              .select("lesson_id, completed_at")
+              .eq("lesson_id", id)
+              .eq("student_id", studentId)
+              .maybeSingle()
+          : Promise.resolve({ data: null }),
+      ]);
 
-  const [{ data: exercises }, { data: subtopics }, { data: progress }] =
-    await Promise.all([
-      supabase
-        .from("academy_exercises")
-        .select(
-          "id, lesson_id, title, instructions, starter_code, difficulty, expected_concepts, hints, explanation",
-        )
-        .eq("lesson_id", id),
-      supabase
-        .from("academy_lesson_subtopics")
-        .select("id, title, concept, explanation, example, ordering")
-        .eq("lesson_id", id)
-        .eq("published", true)
-        .order("ordering"),
-      studentId
-         ?  supabase
-            .from("academy_lesson_progress")
-            .select("lesson_id, completed_at")
-            .eq("lesson_id", id)
-            .eq("student_id", studentId)
-            .maybeSingle()
-        : Promise.resolve({ data: null }),
-    ]);
-
-  return {
-    data: {
-      ...data,
-      exercises: exercises  ??  [],
-      subtopics: subtopics  ??  [],
-      progress: progress  ??  null,
-    },
-    error,
-    configured: true,
-  };
+    return {
+      data: {
+        ...data,
+        exercises: exercises ?? [],
+        subtopics: subtopics ?? [],
+        progress: progress ?? null,
+      },
+      error,
+      configured: true,
+    };
+  });
 }
 
 export async function markLessonComplete(lessonId, studentId) {
@@ -1163,22 +1251,34 @@ export async function markLessonComplete(lessonId, studentId) {
   const { error } = await supabase.rpc("academy_complete_lesson", {
     target_lesson_id: lessonId,
   });
+  if (!error) {
+    invalidateAcademyCache(
+      `lesson:${lessonId}:${studentId}`,
+      `lessons:${studentId}`,
+      `progress:${studentId}`,
+      `overview:${studentId}`,
+      "leaderboard:",
+    );
+  }
   return { error };
 }
 
 export async function getAcademyAssignments(studentId) {
   if (!supabase) return unavailable([]);
-  const activeCourse = await getActiveCourseForStudent(studentId);
-  if (!activeCourse) return { data: [], error: null, configured: true };
-  const { data, error } = await supabase
-    .from("academy_assignments")
-    .select(
-      "id, course_id, lesson_id, title, instructions, due_at, points, allowed_submission_types, starter_code, hints, retry_limit, published, created_at",
-    )
-    .eq("published", true)
-    .eq("course_id", activeCourse.id)
-    .order("due_at", { ascending: true, nullsFirst: false });
-  return { data: data  ??  [], error, configured: true };
+  if (!studentId) return { data: [], error: null, configured: true };
+  return withAcademyCache(`assignments:${studentId}`, 2 * 60 * 1000, async () => {
+    const activeCourse = await getActiveCourseForStudent(studentId);
+    if (!activeCourse) return { data: [], error: null, configured: true };
+    const { data, error } = await supabase
+      .from("academy_assignments")
+      .select(
+        "id, course_id, lesson_id, title, due_at, points, retry_limit, published, created_at",
+      )
+      .eq("published", true)
+      .eq("course_id", activeCourse.id)
+      .order("due_at", { ascending: true, nullsFirst: false });
+    return { data: data ?? [], error, configured: true };
+  });
 }
 
 export async function getAcademyExercises() {
@@ -1203,6 +1303,7 @@ export async function submitObjectiveAnswer(exerciseId, answer) {
       submitted_answer: answer,
     },
   );
+  if (!error) invalidateAcademyCache("leaderboard:");
   return { data, error };
 }
 
@@ -1347,6 +1448,7 @@ export async function gradeAcademySubmission({
     target_ai_feedback: aiFeedback || null,
     target_ai_feedback_status: aiFeedbackStatus,
   });
+  if (!error) invalidateAcademyCache("leaderboard:");
   return { data, error };
 }
 
@@ -1394,6 +1496,14 @@ export async function submitAssignment({
     })
     .select("id, assignment_id, attempt_number, status, submitted_at")
     .single();
+  if (!error) {
+    invalidateAcademyCache(
+      `progress:${studentId}`,
+      `assignments:${studentId}`,
+      `overview:${studentId}`,
+      "leaderboard:",
+    );
+  }
   return { data, error };
 }
 
@@ -1409,61 +1519,49 @@ export async function requestAcademyDeterministicGrading(submissionId) {
 
 export async function getAcademyProgress(studentId) {
   if (!supabase) return { data: null, error: null, configured: false };
+  if (!studentId) return { data: null, error: null, configured: true };
+  return withAcademyCache(`progress:${studentId}`, 60 * 1000, async () => {
+    const [activeCourse, lessonResult, submissionResult] = await Promise.all([
+      getActiveCourseForStudent(studentId),
+      getAcademyLessons(studentId),
+      supabase
+        .from("academy_submissions")
+        .select("id", { count: "exact", head: true })
+        .eq("student_id", studentId),
+    ]);
+    const lessons = lessonResult.data ?? [];
+    const completedLessonIds = new Set(
+      lessons
+        .filter((lesson) => lesson.progress?.completed_at)
+        .map((lesson) => lesson.id),
+    );
+    const lessonCount = lessons.length;
+    const completedLessons = completedLessonIds.size;
+    const currentWeek = lessons.reduce(
+      (week, lesson) =>
+        completedLessonIds.has(lesson.id)
+          ? Math.max(week, lesson.academy_weeks?.week_number ?? 0)
+          : week,
+      0,
+    );
 
-  const activeCourse = await getActiveCourseForStudent(studentId);
-  const courseId = activeCourse ?.id  ??  null;
-
-  const [
-    { data: lessons, error: lessonsError },
-    { data: progress, error: progressError },
-    { count: submissions, error: submissionsError },
-  ] = await Promise.all([
-    courseId
-       ?  supabase
-          .from("academy_lessons")
-          .select(
-            "id, academy_weeks!inner(week_number, course_id, academy_courses!inner(id, slug, title, duration_weeks))",
-          )
-          .eq("published", true)
-          .eq("academy_weeks.course_id", courseId)
-      : Promise.resolve({ data: [], error: null }),
-    supabase
-      .from("academy_lesson_progress")
-      .select("lesson_id, completed_at")
-      .eq("student_id", studentId)
-      .not("completed_at", "is", null),
-    supabase
-      .from("academy_submissions")
-      .select("id", { count: "exact", head: true })
-      .eq("student_id", studentId),
-  ]);
-
-  const completedLessonIds = new Set(
-    (progress  ??  []).map((item) => item.lesson_id),
-  );
-  const lessonCount = lessons ?.length  ??  0;
-  const completedLessons = completedLessonIds.size;
-  const currentWeek =
-    lessons
-       ?.filter((lesson) => completedLessonIds.has(lesson.id))
-      .reduce(
-        (week, lesson) => Math.max(week, lesson.academy_weeks.week_number),
-        0,
-      )  ??  0;
-
-  return {
-    data: {
-      lessonCount,
-      completedLessons,
-      completionPercent: lessonCount
-         ?  Math.round((completedLessons / lessonCount) * 100)
-        : 0,
-      currentWeek: Math.min(currentWeek + 1, 11),
-      submissions: submissions  ??  0,
-      activeCourse: activeCourse  ??  null,
-    },
-    error: lessonsError  ??  progressError  ??  submissionsError,
-    configured: true,
-  };
+    return {
+      data: {
+        lessonCount,
+        completedLessons,
+        completionPercent: lessonCount
+          ? Math.round((completedLessons / lessonCount) * 100)
+          : 0,
+        currentWeek: Math.min(
+          currentWeek + 1,
+          activeCourse?.duration_weeks ?? Number.POSITIVE_INFINITY,
+        ),
+        submissions: submissionResult.count ?? 0,
+        activeCourse: activeCourse ?? null,
+      },
+      error: lessonResult.error ?? submissionResult.error,
+      configured: true,
+    };
+  });
 }
 

@@ -17,31 +17,41 @@ export default function AcademyDashboard() {
   const [assignmentCount, setAssignmentCount] = useState(0);
   const [assignments, setAssignments] = useState([]);
   const [overview, setOverview] = useState(null);
-  const [state, setState] = useState("loading");
+  const [sectionState, setSectionState] = useState({
+    lessons: "loading",
+    progress: "loading",
+    assignments: "loading",
+    overview: "loading",
+  });
 
   useEffect(() => {
-    Promise.all([
-      getAcademyLessons(user.id),
-      getAcademyProgress(user.id),
-      getAcademyAssignments(),
-      getAcademyStudentOverview(user.id),
-    ]).then(
-      ([lessonResult, progressResult, assignmentResult, overviewResult]) => {
-        setLessons(lessonResult.data ?? []);
-        setProgress(progressResult.data);
-        setAssignmentCount(assignmentResult.data?.length ?? 0);
-        setAssignments(assignmentResult.data ?? []);
-        setOverview(overviewResult.data);
-        setState(
-          lessonResult.error ||
-            progressResult.error ||
-            assignmentResult.error ||
-            overviewResult.error
-            ? "error"
-            : "ready",
-        );
-      },
-    );
+    let cancelled = false;
+    const loadSection = (key, request, onData) => {
+      request()
+        .then((result) => {
+          if (cancelled) return;
+          onData(result.data ?? null);
+          setSectionState((current) => ({
+            ...current,
+            [key]: result.error ? "error" : "ready",
+          }));
+        })
+        .catch(() => {
+          if (!cancelled) {
+            setSectionState((current) => ({ ...current, [key]: "error" }));
+          }
+        });
+    };
+    loadSection("lessons", () => getAcademyLessons(user.id), (data) => setLessons(data ?? []));
+    loadSection("progress", () => getAcademyProgress(user.id), setProgress);
+    loadSection("assignments", () => getAcademyAssignments(user.id), (data) => {
+      setAssignments(data ?? []);
+      setAssignmentCount(data?.length ?? 0);
+    });
+    loadSection("overview", () => getAcademyStudentOverview(user.id), setOverview);
+    return () => {
+      cancelled = true;
+    };
   }, [user.id]);
 
   const nextLesson =
@@ -81,15 +91,9 @@ export default function AcademyDashboard() {
             : "Choose a learning path"}
         </Link>
       </section>
-      {state === "loading" && (
-        <p className="text-sm text-slate-500">Loading your course...</p>
-      )}
-      {state === "error" && (
-        <p
-          role="alert"
-          className="rounded-xl border border-red-300 bg-red-50 p-4 text-sm text-red-700"
-        >
-          Some dashboard data could not be loaded.
+      {(sectionState.lessons === "error" || sectionState.progress === "error" || sectionState.assignments === "error" || sectionState.overview === "error") && (
+        <p role="status" className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">
+          Some dashboard sections are temporarily unavailable. The rest of your Academy remains usable.
         </p>
       )}
       <section className="grid gap-4 sm:grid-cols-3">
@@ -105,8 +109,8 @@ export default function AcademyDashboard() {
           },
           {
             label: "Pending assignments",
-            value: state === "error" ? "—" : assignmentCount,
-            detail: state === "error"
+             value: sectionState.assignments === "error" ? "—" : assignmentCount,
+             detail: sectionState.assignments === "error"
               ? "Assignments are unavailable."
               : assignmentCount
               ? "Keep your next deadline in sight."

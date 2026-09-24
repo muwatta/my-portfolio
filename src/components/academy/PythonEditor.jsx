@@ -1,36 +1,95 @@
 import { useEffect, useRef, useState } from "react";
 
-const PYODIDE_URL = "https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.js";
-let pyodidePromise;
+const MAX_SOURCE_LENGTH = 100000;
+const EXECUTION_TIMEOUT = 5000;
+let sharedWorker;
+let activeJob;
+let jobQueue = [];
 
-function loadPyodide() {
-  if (!pyodidePromise) {
-    pyodidePromise = new Promise((resolve, reject) => {
-      const existing = document.querySelector(`script[src="${PYODIDE_URL}"]`);
-      if (existing) {
-        existing.addEventListener("load", () =>
-          resolve(
-            window.loadPyodide({
-              indexURL: PYODIDE_URL.replace("pyodide.js", ""),
-            }),
-          ),
-        );
-        existing.addEventListener("error", reject);
-        return;
-      }
-      const script = document.createElement("script");
-      script.src = PYODIDE_URL;
-      script.async = true;
-      script.onload = () =>
-        window
-          .loadPyodide({ indexURL: PYODIDE_URL.replace("pyodide.js", "") })
-          .then(resolve, reject);
-      script.onerror = () =>
-        reject(new Error("Python runtime could not be loaded."));
-      document.head.appendChild(script);
-    });
+function rejectJobs(message) {
+  const currentWorker = sharedWorker;
+  const currentJob = activeJob;
+  const queuedJobs = jobQueue;
+  sharedWorker = null;
+  activeJob = null;
+  jobQueue = [];
+  if (currentWorker) {
+    currentWorker.onmessage = null;
+    currentWorker.onerror = null;
+    currentWorker.terminate();
   }
-  return pyodidePromise;
+  if (currentJob) {
+    window.clearTimeout(currentJob.timeout);
+    currentJob.reject(new Error(message));
+  }
+  queuedJobs.forEach((job) => job.reject(new Error(message)));
+}
+
+function getWorker() {
+  if (sharedWorker) return sharedWorker;
+  sharedWorker = new Worker(
+    new URL("../../workers/pythonWorker.js", import.meta.url),
+  );
+  sharedWorker.onmessage = (event) => {
+    const job = activeJob;
+    if (!job || event.data?.id !== job.id) return;
+    if (event.data.type === "loading") job.onLoading?.(true);
+    if (event.data.type === "ready") job.onLoading?.(false);
+    if (event.data.type === "result") {
+      window.clearTimeout(job.timeout);
+      activeJob = null;
+      job.resolve(event.data.output);
+      dispatchJob();
+    }
+    if (event.data.type === "error") {
+      window.clearTimeout(job.timeout);
+      activeJob = null;
+      job.reject(new Error(event.data.message));
+      dispatchJob();
+    }
+  };
+  sharedWorker.onerror = (event) => {
+    rejectJobs(event.message || "Python runtime failed.");
+  };
+  return sharedWorker;
+}
+
+function dispatchJob() {
+  if (!sharedWorker || activeJob || !jobQueue.length) return;
+  activeJob = jobQueue.shift();
+  activeJob.timeout = window.setTimeout(() => {
+    rejectJobs(
+      "Execution stopped. Your program took too long to finish. Check for infinite loops or very large operations.",
+    );
+  }, EXECUTION_TIMEOUT);
+  sharedWorker.postMessage({
+    type: "run",
+    id: activeJob.id,
+    code: activeJob.code,
+  });
+}
+
+function runPython(code, onLoading) {
+  if (code.length > MAX_SOURCE_LENGTH) {
+    return Promise.reject(
+      new Error("Program is too large to run in the browser practice terminal."),
+    );
+  }
+  return new Promise((resolve, reject) => {
+    jobQueue.push({
+      id: `${Date.now()}-${Math.random()}`,
+      code,
+      onLoading,
+      resolve,
+      reject,
+    });
+    try {
+      getWorker();
+      dispatchJob();
+    } catch (error) {
+      rejectJobs(error.message || "Python runtime could not be started.");
+    }
+  });
 }
 
 export default function PythonEditor({ starterCode = "", onSubmit }) {
@@ -38,37 +97,43 @@ export default function PythonEditor({ starterCode = "", onSubmit }) {
   const [output, setOutput] = useState("");
   const [error, setError] = useState("");
   const [running, setRunning] = useState(false);
+  const [loadingRuntime, setLoadingRuntime] = useState(false);
   const runId = useRef(0);
 
-  useEffect(() => setCode(starterCode), [starterCode]);
+  useEffect(() => {
+    runId.current += 1;
+    setCode(starterCode);
+    setOutput("");
+    setError("");
+  }, [starterCode]);
+
+  useEffect(
+    () => () => {
+      runId.current += 1;
+    },
+    [],
+  );
 
   async function run() {
+    if (running || loadingRuntime) return;
     const currentRun = ++runId.current;
     setRunning(true);
     setOutput("");
     setError("");
     try {
-      const pyodide = await loadPyodide();
-      const wrapped = `import io, contextlib\n_output = io.StringIO()\nwith contextlib.redirect_stdout(_output):\n    exec(${JSON.stringify(code)}, {})\n_output.getvalue()`;
-      const result = await Promise.race([
-        pyodide.runPythonAsync(wrapped),
-        new Promise((_, reject) =>
-          setTimeout(
-            () =>
-              reject(
-                new Error("Execution timed out. Check for an infinite loop."),
-              ),
-            5000,
-          ),
-        ),
-      ]);
-      if (currentRun === runId.current)
-        setOutput(String(result || "No output."));
+      const result = await runPython(code, (loading) => {
+        if (currentRun === runId.current) setLoadingRuntime(loading);
+      });
+      if (currentRun === runId.current) setOutput(result);
     } catch (runError) {
-      if (currentRun === runId.current)
+      if (currentRun === runId.current) {
         setError(runError.message || "Python execution failed.");
+      }
     } finally {
-      if (currentRun === runId.current) setRunning(false);
+      if (currentRun === runId.current) {
+        setLoadingRuntime(false);
+        setRunning(false);
+      }
     }
   }
 
@@ -86,14 +151,19 @@ export default function PythonEditor({ starterCode = "", onSubmit }) {
           type="button"
           className="button-primary"
           onClick={run}
-          disabled={running}
+          disabled={running || loadingRuntime}
         >
-          {running ? "Running..." : "Run Python"}
+          {loadingRuntime
+            ? "Preparing Python..."
+            : running
+              ? "Running..."
+              : "Run Python"}
         </button>
         <button
           type="button"
           className="button-secondary border-slate-700 text-slate-200"
           onClick={() => {
+            runId.current += 1;
             setCode(starterCode);
             setOutput("");
             setError("");
@@ -106,6 +176,7 @@ export default function PythonEditor({ starterCode = "", onSubmit }) {
             type="button"
             className="button-secondary border-slate-700 text-slate-200"
             onClick={() => onSubmit(code)}
+            disabled={running || loadingRuntime}
           >
             Submit code
           </button>
@@ -114,7 +185,7 @@ export default function PythonEditor({ starterCode = "", onSubmit }) {
       {(output || error) && (
         <pre
           role={error ? "alert" : "status"}
-          className={`border-t border-slate-800 p-4 text-sm whitespace-pre-wrap ${error ? "text-red-300" : "text-emerald-300"}`}
+          className={`max-h-96 overflow-auto whitespace-pre-wrap border-t border-slate-800 p-4 text-sm ${error ? "text-red-300" : "text-emerald-300"}`}
         >
           {error || output}
         </pre>
