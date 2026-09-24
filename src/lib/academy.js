@@ -1,7 +1,7 @@
 import { supabase } from "./supabase";
 
 const lessonSelect =
-  "id, title, slug, lesson_number, objectives, content, prerequisite_lesson_id, completion_requirement, completion_mode, preview_allowed, academy_weeks!inner(id, week_number, title, academy_courses!inner(id, slug, title, duration_weeks))";
+  "id, title, slug, lesson_number, sort_order, objectives, content, prerequisite_lesson_id, completion_requirement, completion_mode, preview_allowed, academy_weeks!inner(id, week_number, title, academy_courses!inner(id, slug, title, duration_weeks))";
 
 const unavailable = (data = null) => ({ data, error: null, configured: false });
 
@@ -973,6 +973,7 @@ export async function getAcademyLessons(studentId) {
     .select(lessonSelect)
     .eq("published", true)
     .eq("academy_weeks.course_id", activeCourse.id)
+    .order("academy_weeks(week_number)")
     .order("lesson_number");
 
   if (error || !studentId) return { data: data  ??  [], error, configured: true };
@@ -984,8 +985,16 @@ export async function getAcademyLessons(studentId) {
   const progressByLesson = new Map(
     (progress  ??  []).map((item) => [item.lesson_id, item]),
   );
+  const ordered = (data ?? [])
+    .slice()
+    .sort(
+      (a, b) =>
+        (a.academy_weeks?.week_number ?? 0) -
+          (b.academy_weeks?.week_number ?? 0) ||
+        (a.lesson_number ?? 0) - (b.lesson_number ?? 0),
+    );
   return {
-    data: (data  ??  []).map((lesson) => ({
+    data: ordered.map((lesson) => ({
       ...lesson,
       progress: progressByLesson.get(lesson.id)  ??  null,
       status: progressByLesson.get(lesson.id) ?.completed_at

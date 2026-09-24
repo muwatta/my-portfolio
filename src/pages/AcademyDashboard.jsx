@@ -63,7 +63,7 @@ export default function AcademyDashboard() {
         <p className="mt-3 max-w-2xl text-slate-300">
           {course?.title
             ? "Your learning path is ready. Pick up where you left off — one step at a time."
-            : "Choose the learning path you want to explore. You can choose one path and switch whenever you like."}
+            : "Choose the learning path you want to explore. Once you pick a course, it becomes your current path."}
         </p>
         <Link
           to={hasCourse ? "/academy/lessons" : "/academy/courses"}
@@ -154,8 +154,8 @@ export default function AcademyDashboard() {
               <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
                 {course?.title
                   ? course.duration_weeks
-                    ? `A ${course.duration_weeks}-week hands-on path. You can switch paths anytime.`
-                    : "A hands-on path. You can switch paths anytime."
+                    ? `A ${course.duration_weeks}-week hands-on path. This is your current path — switching requires your teacher.`
+                    : "A hands-on path. This is your current path — switching requires your teacher."
                   : "Choose your first path to start learning with hands-on lessons and projects."}
               </p>
             </div>
@@ -167,7 +167,7 @@ export default function AcademyDashboard() {
             to="/academy/courses"
             className="mt-5 inline-flex font-semibold text-blue-600 hover:text-blue-700"
           >
-            {course?.title ? "Switch learning path" : "Choose a learning path"}
+            {course?.title ? "View courses" : "Choose a learning path"}
           </Link>
         </div>
         <div className="rounded-xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900">

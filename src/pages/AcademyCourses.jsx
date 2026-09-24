@@ -53,8 +53,9 @@ export default function AcademyCourses() {
         </p>
         <h1 className="mt-2 text-3xl font-bold tracking-tight">Courses</h1>
         <p className="mt-2 max-w-2xl text-slate-600 dark:text-slate-300">
-          Choose one learning path to focus on. You can switch paths anytime —
-          your saved progress stays with you.
+          Choose one learning path to focus on. Once you pick a course, it
+          becomes your current path and the others are locked — ask your teacher
+          or admin to change it if needed.
         </p>
       </header>
 
@@ -77,11 +78,16 @@ export default function AcademyCourses() {
       <div className="grid gap-4 md:grid-cols-2">
         {courses.map((course) => {
           const isActive = activeCourse?.id === course.id;
+          const isLocked = Boolean(activeCourse) && !isActive;
           return (
             <article
               key={course.id}
               className={`border-l-4 bg-white p-6 shadow-sm dark:bg-slate-900 ${
-                isActive ? "border-emerald-400" : "border-cyan-400"
+                isActive
+                  ? "border-emerald-400"
+                  : isLocked
+                    ? "border-slate-300 opacity-60 dark:border-slate-700"
+                    : "border-cyan-400"
               }`}
             >
               <div className="flex flex-wrap gap-2 text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
@@ -91,6 +97,11 @@ export default function AcademyCourses() {
                 {isActive && (
                   <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300">
                     Current path
+                  </span>
+                )}
+                {isLocked && (
+                  <span className="rounded-full bg-slate-200 px-2 py-0.5 text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                    Locked
                   </span>
                 )}
               </div>
@@ -111,15 +122,17 @@ export default function AcademyCourses() {
               </div>
               <button
                 type="button"
-                className="mt-4 w-full rounded-lg bg-cyan-400 px-4 py-2 text-sm font-bold text-slate-950 disabled:opacity-50"
-                disabled={selecting === course.id || isActive}
+                className="mt-4 w-full rounded-lg bg-cyan-400 px-4 py-2 text-sm font-bold text-slate-950 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-500 dark:disabled:bg-slate-800 dark:disabled:text-slate-500"
+                disabled={selecting === course.id || isActive || isLocked}
                 onClick={() => selectCourse(course.id)}
               >
                 {isActive
                   ? "This is your current path"
-                  : selecting === course.id
-                    ? "Selecting..."
-                    : "Select this course"}
+                  : isLocked
+                    ? "Locked — contact your teacher"
+                    : selecting === course.id
+                      ? "Selecting..."
+                      : "Select this course"}
               </button>
             </article>
           );
