@@ -75,7 +75,6 @@ const AcademyTeacherAssignments = lazy(
 const AcademyTeacherClasses = lazy(
   () => import("./pages/AcademyTeacherClasses"),
 );
-const AcademyPlaceholder = lazy(() => import("./pages/AcademyPlaceholder"));
 const AcademyStudentLayout = lazy(
   () => import("./components/academy/AcademyStudentLayout"),
 );
@@ -106,6 +105,7 @@ const AcademyAdminLevels = lazy(() => import("./pages/AcademyAdminLevels"));
 const AcademyAdminPractice = lazy(() => import("./pages/AcademyAdminPractice"));
 const AcademyAdminProjects = lazy(() => import("./pages/AcademyAdminProjects"));
 const AcademyAdminMaterials = lazy(() => import("./pages/AcademyAdminMaterials"));
+const AcademyMaterials = lazy(() => import("./pages/AcademyMaterials"));
 const AcademyAdminAccess = lazy(() => import("./pages/AcademyAdminAccess"));
 const AcademyProfile = lazy(() => import("./pages/AcademyProfile"));
 
@@ -260,7 +260,7 @@ function App() {
                             />
                             <Route
                               path="/academy/materials"
-                              element={<AcademyPlaceholder />}
+                              element={<AcademyMaterials />}
                             />
                             </Route>
                           </Route>
