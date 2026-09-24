@@ -7,6 +7,7 @@ import {
 } from "../lib/academy";
 import { useAcademyAuth } from "../hooks/useAcademyAuth";
 import LessonContent from "../components/academy/LessonContent";
+import CppEditor from "../components/academy/CppEditor";
 import PythonEditor from "../components/academy/PythonEditor";
 
 export default function AcademyLesson() {
@@ -73,6 +74,22 @@ export default function AcademyLesson() {
         </ul>
       </section>
       <LessonContent content={content} />
+      {lesson.academy_weeks.academy_courses.slug ===
+        "cpp-embedded-robotics" && content.starter_code && (
+        <section className="space-y-3">
+          <div>
+            <p className="text-sm font-semibold uppercase tracking-[0.18em] text-blue-600">
+              C++ practice terminal
+            </p>
+            <h2 className="mt-1 text-2xl font-bold">Run the starter program</h2>
+            <p className="mt-2 text-slate-600 dark:text-slate-300">
+              Change one small part, run it, and explain what changed. This lab
+              supports the beginner console skills used in the first weeks.
+            </p>
+          </div>
+          <CppEditor starterCode={content.starter_code} />
+        </section>
+      )}
       {lesson.academy_weeks.academy_courses.slug ===
         "python-for-ai-machine-learning" && (
         <section className="space-y-3">

@@ -57,7 +57,7 @@ export default function AcademyCourses() {
         <h1 className="mt-2 text-3xl font-bold tracking-tight">Courses</h1>
         <p className="mt-2 max-w-2xl text-slate-600 dark:text-slate-300">
           Choose one learning path to focus on. Once you pick a course, it
-          becomes your current path and the others are locked — ask your teacher
+          becomes your current path and the others are locked. Ask your teacher
           or admin to change it if needed.
         </p>
       </header>
@@ -132,7 +132,7 @@ export default function AcademyCourses() {
                 {isActive
                   ? "This is your current path"
                   : isLocked
-                    ? "Locked — contact your teacher"
+                     ? "Locked. Contact your teacher"
                     : selecting === course.id
                       ? "Selecting..."
                       : "Select this course"}

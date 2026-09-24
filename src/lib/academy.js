@@ -1213,9 +1213,10 @@ export async function getAcademyLesson(id, studentId) {
         supabase
           .from("academy_exercises")
           .select(
-            "id, lesson_id, title, instructions, starter_code, difficulty, expected_concepts, hints, explanation",
+            "id, lesson_id, title, instructions, starter_code, difficulty, expected_concepts, hints, explanation, question_type, choices, attempt_limit",
           )
-          .eq("lesson_id", id),
+          .eq("lesson_id", id)
+          .eq("published", true),
         supabase
           .from("academy_lesson_subtopics")
           .select("id, title, concept, explanation, example, ordering")
@@ -1281,16 +1282,32 @@ export async function getAcademyAssignments(studentId) {
   });
 }
 
-export async function getAcademyExercises() {
+export async function getAcademyExercises(studentId) {
   if (!supabase) return unavailable([]);
+  if (!studentId) return { data: [], error: null, configured: true };
+  const activeCourse = await getActiveCourseForStudent(studentId);
+  if (!activeCourse) return { data: [], error: null, configured: true };
   const { data, error } = await supabase
     .from("academy_exercises")
     .select(
-      "id, lesson_id, title, instructions, starter_code, difficulty, expected_concepts, hints, explanation, question_type, choices, attempt_limit, academy_lessons!inner(title, published)",
+      "id, lesson_id, title, instructions, starter_code, difficulty, expected_concepts, hints, explanation, question_type, choices, attempt_limit, academy_lessons!inner(title, published, academy_weeks!inner(academy_courses!inner(id, slug, title)))",
     )
+    .eq("published", true)
     .eq("academy_lessons.published", true)
+    .eq("academy_lessons.academy_weeks.course_id", activeCourse.id)
     .order("title");
-  return { data: data  ??  [], error, configured: true };
+  return {
+    data: (data ?? []).map((exercise) => ({
+      ...exercise,
+      language:
+        exercise.academy_lessons?.academy_weeks?.academy_courses?.slug ===
+        "cpp-embedded-robotics"
+          ? "cpp"
+          : "python",
+    })),
+    error,
+    configured: true,
+  };
 }
 
 export async function submitObjectiveAnswer(exerciseId, answer) {
