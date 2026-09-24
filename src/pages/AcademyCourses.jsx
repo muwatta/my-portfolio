@@ -1,10 +1,15 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { getAcademyCourses, selectAcademyCourse } from "../lib/academy";
+import {
+  getAcademyCourses,
+  getActiveCourseForStudent,
+  selectAcademyCourse,
+} from "../lib/academy";
 import { useAcademyAuth } from "../hooks/useAcademyAuth";
 
 export default function AcademyCourses() {
   const [courses, setCourses] = useState([]);
+  const [activeCourse, setActiveCourse] = useState(null);
   const [state, setState] = useState("loading");
   const [notice, setNotice] = useState("");
   const [selecting, setSelecting] = useState("");
@@ -12,15 +17,19 @@ export default function AcademyCourses() {
 
   useEffect(() => {
     let mounted = true;
-    getAcademyCourses().then(({ data, error }) => {
+    Promise.all([
+      getAcademyCourses(),
+      user?.id ? getActiveCourseForStudent(user.id) : Promise.resolve(null),
+    ]).then(([{ data, error }, active]) => {
       if (!mounted) return;
       setCourses(data ?? []);
+      setActiveCourse(active ?? null);
       setState(error ? "error" : "ready");
     });
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [user?.id]);
 
   async function selectCourse(courseId) {
     setSelecting(courseId);
@@ -30,6 +39,10 @@ export default function AcademyCourses() {
       error ? error.message : "Course selected. Your lessons are ready.",
     );
     setSelecting("");
+    if (!error) {
+      const active = await getActiveCourseForStudent(user.id);
+      setActiveCourse(active);
+    }
   }
 
   return (
@@ -40,8 +53,8 @@ export default function AcademyCourses() {
         </p>
         <h1 className="mt-2 text-3xl font-bold tracking-tight">Courses</h1>
         <p className="mt-2 max-w-2xl text-slate-600 dark:text-slate-300">
-          Explore published paths in software, C++, embedded systems, Python,
-          and AI/ML.
+          Choose one learning path to focus on. You can switch paths anytime —
+          your saved progress stays with you.
         </p>
       </header>
 
@@ -55,48 +68,62 @@ export default function AcademyCourses() {
       )}
       {state === "ready" && courses.length === 0 && (
         <div className="rounded-xl border border-dashed border-slate-300 p-8 text-center dark:border-slate-700">
-          <h2 className="font-bold">No courses published yet</h2>
+          <h2 className="font-bold">Learning paths are on the way</h2>
           <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
-            Your teacher will publish learning paths here when they are ready.
+            Your teacher is preparing learning paths. Check back soon.
           </p>
         </div>
       )}
       <div className="grid gap-4 md:grid-cols-2">
-        {courses.map((course) => (
-          <article
-            key={course.id}
-            className="border-l-4 border-cyan-400 bg-white p-6 shadow-sm dark:bg-slate-900"
-          >
-            <div className="flex flex-wrap gap-2 text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-              {course.academy_subjects?.name && (
-                <span>{course.academy_subjects.name}</span>
-              )}
-            </div>
-            <h2 className="mt-3 text-xl font-bold">{course.title}</h2>
-            <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">
-              {course.description || "A structured Academy learning path."}
-            </p>
-            <div className="mt-5 flex items-center justify-between gap-4 text-sm">
-              <span className="text-slate-500 dark:text-slate-400">
-                {course.duration_weeks} weeks
-              </span>
-              <Link
-                className="font-semibold text-blue-600 hover:text-blue-700"
-                to="/academy/lessons"
-              >
-                View lessons
-              </Link>
-            </div>
-            <button
-              type="button"
-              className="mt-4 w-full rounded-lg bg-cyan-400 px-4 py-2 text-sm font-bold text-slate-950 disabled:opacity-50"
-              disabled={selecting === course.id}
-              onClick={() => selectCourse(course.id)}
+        {courses.map((course) => {
+          const isActive = activeCourse?.id === course.id;
+          return (
+            <article
+              key={course.id}
+              className={`border-l-4 bg-white p-6 shadow-sm dark:bg-slate-900 ${
+                isActive ? "border-emerald-400" : "border-cyan-400"
+              }`}
             >
-              {selecting === course.id ? "Selecting..." : "Select this course"}
-            </button>
-          </article>
-        ))}
+              <div className="flex flex-wrap gap-2 text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                {course.academy_subjects?.name && (
+                  <span>{course.academy_subjects.name}</span>
+                )}
+                {isActive && (
+                  <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300">
+                    Current path
+                  </span>
+                )}
+              </div>
+              <h2 className="mt-3 text-xl font-bold">{course.title}</h2>
+              <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">
+                {course.description || "A structured Academy learning path."}
+              </p>
+              <div className="mt-5 flex items-center justify-between gap-4 text-sm">
+                <span className="text-slate-500 dark:text-slate-400">
+                  {course.duration_weeks} weeks
+                </span>
+                <Link
+                  className="font-semibold text-blue-600 hover:text-blue-700"
+                  to="/academy/lessons"
+                >
+                  View lessons
+                </Link>
+              </div>
+              <button
+                type="button"
+                className="mt-4 w-full rounded-lg bg-cyan-400 px-4 py-2 text-sm font-bold text-slate-950 disabled:opacity-50"
+                disabled={selecting === course.id || isActive}
+                onClick={() => selectCourse(course.id)}
+              >
+                {isActive
+                  ? "This is your current path"
+                  : selecting === course.id
+                    ? "Selecting..."
+                    : "Select this course"}
+              </button>
+            </article>
+          );
+        })}
       </div>
       {notice && (
         <p role="status" className="text-sm text-slate-600 dark:text-slate-300">

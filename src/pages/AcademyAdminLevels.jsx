@@ -47,6 +47,18 @@ export default function AcademyAdminLevels() {
     await load();
   }
 
+  function editLevel(level) {
+    setForm({
+      id: level.id,
+      slug: level.slug,
+      name: level.name,
+      description: level.description,
+      sort_order: level.sort_order,
+      active: level.active,
+    });
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
   return (
     <div className="space-y-8">
       <header>
@@ -80,7 +92,9 @@ export default function AcademyAdminLevels() {
         className="grid gap-4 rounded-xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900"
         onSubmit={submit}
       >
-        <h2 className="text-xl font-bold">Create level</h2>
+        <h2 className="text-xl font-bold">
+          {form.id ? "Edit level" : "Create level"}
+        </h2>
         <div className="grid gap-4 md:grid-cols-2">
           <label className="label">
             Name
@@ -133,9 +147,20 @@ export default function AcademyAdminLevels() {
             onChange={updateField}
           />
         </label>
-        <button className="button-primary w-fit" type="submit">
-          Save level
-        </button>
+        <div className="flex w-fit items-center gap-3">
+          <button className="button-primary" type="submit">
+            Save level
+          </button>
+          {form.id && (
+            <button
+              className="button-secondary"
+              type="button"
+              onClick={() => setForm(emptyLevel)}
+            >
+              Cancel edit
+            </button>
+          )}
+        </div>
       </form>
       <section className="space-y-3">
         <h2 className="text-xl font-bold">Existing levels</h2>
@@ -155,9 +180,18 @@ export default function AcademyAdminLevels() {
                 {level.slug} � Order {level.sort_order}
               </p>
             </div>
+            <div className="flex flex-wrap items-center gap-3">
             <span className="text-sm font-semibold">
               {level.active ? "Active" : "Inactive"}
             </span>
+            <button
+              className="button-ghost text-xs"
+              type="button"
+              onClick={() => editLevel(level)}
+            >
+              Edit
+            </button>
+          </div>
           </div>
         ))}
       </section>
