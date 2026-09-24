@@ -58,6 +58,19 @@ export default function AcademyTeacherCourses() {
     await load();
   }
 
+  function editCourse(course) {
+    setForm({
+      id: course.id,
+      slug: course.slug,
+      title: course.title,
+      description: course.description ?? "",
+      duration_weeks: course.duration_weeks ?? 1,
+      subject_id: course.subject_id || "",
+      published: course.published,
+    });
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
   return (
     <div className="space-y-8">
       <header>
@@ -91,7 +104,9 @@ export default function AcademyTeacherCourses() {
         className="grid gap-4 rounded-xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900"
         onSubmit={submit}
       >
-        <h2 className="text-xl font-bold">Create course</h2>
+        <h2 className="text-xl font-bold">
+          {form.id ? "Edit course" : "Create course"}
+        </h2>
         <div className="grid gap-4 md:grid-cols-2">
           <label className="label">
             Title
@@ -164,9 +179,20 @@ export default function AcademyTeacherCourses() {
           />{" "}
           Publish this course
         </label>
-        <button className="button-primary w-fit" type="submit">
-          Save course
-        </button>
+        <div className="flex w-fit items-center gap-3">
+          <button className="button-primary" type="submit">
+            Save course
+          </button>
+          {form.id && (
+            <button
+              className="button-secondary"
+              type="button"
+              onClick={() => setForm(emptyCourse)}
+            >
+              Cancel edit
+            </button>
+          )}
+        </div>
       </form>
       <section className="space-y-3">
         <h2 className="text-xl font-bold">Existing courses</h2>
@@ -187,9 +213,18 @@ export default function AcademyTeacherCourses() {
                 {course.course_family || "General"}
               </p>
             </div>
-            <span className="text-sm font-semibold">
-              {course.published ? "Published" : "Draft"}
-            </span>
+<div className="flex flex-wrap items-center gap-3">
+              <span className="text-sm font-semibold">
+                {course.published ? "Published" : "Draft"}
+              </span>
+              <button
+                className="button-ghost text-xs"
+                type="button"
+                onClick={() => editCourse(course)}
+              >
+                Edit
+              </button>
+            </div>
           </div>
         ))}
       </section>

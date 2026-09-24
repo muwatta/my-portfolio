@@ -122,37 +122,10 @@ export async function getAcademyLeaderboard() {
 }
 
 export async function getAcademyWeeklyLeaderboard() {
-  if (!supabase) return unavailable([]);
-  const { data: period, error: periodError } = await supabase
-    .rpc("academy_current_week_period")
-    .maybeSingle();
-  if (periodError || !period)
-    return { data: [], error: periodError, configured: true };
-  const { data, error } = await supabase
-    .from("academy_leaderboard_points")
-    .select(
-      "student_id, points, source_type, source_label, earned_at, academy_profiles!inner(display_name)",
-    )
-    .eq("period_id", period.id)
-    .eq("verification_status", "verified")
-    .order("points", { ascending: false });
-  const totals = new Map();
-  (data  ??  []).forEach((item) => {
-    const current = totals.get(item.student_id)  ??  {
-      student_id: item.student_id,
-      display_name: item.academy_profiles ?.display_name  ??  "Learner",
-      points: 0,
-    };
-    current.points += item.points  ??  0;
-    totals.set(item.student_id, current);
-  });
-  return {
-    data: [...totals.values()].sort(
-      (left, right) => right.points - left.points,
-    ),
-    error: error  ??  periodError,
-    configured: true,
-  };
+  if (!supabase)
+    return unavailable([]);
+  const { data, error } = await supabase.rpc("academy_weekly_leaderboard");
+  return { data: data ?? [], error, configured: true };
 }
 
 export async function getAcademyNotifications(studentId) {
@@ -380,6 +353,7 @@ export async function getAcademyAdminOverview() {
     { data: sessions, error: sessionError },
     { data: assignments, error: assignmentError },
     { data: submissions, error: submissionError },
+    { data: points, error: pointsError },
   ] = await Promise.all([
     supabase
       .from("academy_profiles")
@@ -389,7 +363,7 @@ export async function getAcademyAdminOverview() {
     supabase.from("academy_courses").select("id, published"),
     supabase
       .from("academy_learning_sessions")
-      .select("student_id, last_heartbeat_at"),
+      .select("student_id, last_heartbeat_at, active_seconds"),
     supabase
       .from("academy_assignments")
       .select("id, due_at, published")
@@ -397,6 +371,9 @@ export async function getAcademyAdminOverview() {
     supabase
       .from("academy_submissions")
       .select("id, status, submitted_at"),
+    supabase
+      .from("academy_leaderboard_points")
+      .select("points, verification_status"),
   ]);
   const pendingSubmissions = (submissions  ??  []).filter(
     (submission) => submission.status !== "graded",
@@ -405,6 +382,13 @@ export async function getAcademyAdminOverview() {
     (assignment) =>
       assignment.due_at && new Date(assignment.due_at).getTime() < Date.now(),
   ).length;
+  const learningSeconds = (sessions  ??  []).reduce(
+    (total, session) => total + Number(session.active_seconds ?? 0),
+    0,
+  );
+  const verifiedPoints = (points  ??  [])
+    .filter((point) => point.verification_status === "verified")
+    .reduce((total, point) => total + Number(point.points ?? 0), 0);
   return {
     data: {
       students: (profiles  ??  []).filter((profile) => profile.role === "student")
@@ -423,13 +407,16 @@ export async function getAcademyAdminOverview() {
       ).size,
       pendingSubmissions,
       overdueAssignments,
+      learningSeconds,
+      verifiedPoints,
     },
     error:
       profileError ||
       courseError ||
       sessionError ||
       assignmentError ||
-      submissionError,
+      submissionError ||
+      pointsError,
     configured: true,
   };
 }
@@ -601,7 +588,7 @@ export async function getAcademyAdminPractice() {
     supabase
       .from("academy_exercises")
       .select(
-        "id, lesson_id, title, instructions, starter_code, difficulty, expected_concepts, hints, explanation, academy_lessons!inner(id, title)",
+        "id, lesson_id, title, instructions, starter_code, difficulty, expected_concepts, hints, explanation, tests, solution_code, published, academy_lessons!inner(id, title)",
       )
       .order("title"),
   ]);
@@ -631,6 +618,7 @@ export async function saveAcademyExercise(exercise) {
     explanation: String(exercise.explanation  ??  "").trim() || null,
     tests: exercise.tests  ?  JSON.parse(exercise.tests) : [],
     solution_code: String(exercise.solution_code  ??  "").trim() || null,
+    published: Boolean(exercise.published),
   };
   if (!payload.lesson_id || !payload.title || !payload.instructions) {
     return {
@@ -787,16 +775,16 @@ export async function getAcademyTeacherCurriculum() {
   ] = await Promise.all([
     supabase
       .from("academy_courses")
-      .select("id, title, duration_weeks")
+      .select("id, title, duration_weeks, published")
       .order("title"),
     supabase
       .from("academy_weeks")
-      .select("id, course_id, week_number, title")
+      .select("id, course_id, week_number, title, description, sort_order, published")
       .order("week_number"),
     supabase
       .from("academy_lessons")
       .select(
-        "id, week_id, title, slug, lesson_number, objectives, content, published",
+        "id, week_id, title, slug, lesson_number, objectives, content, published, sort_order",
       )
       .order("lesson_number"),
   ]);
@@ -814,14 +802,28 @@ export async function getAcademyTeacherCurriculum() {
 export async function saveAcademyWeek(week) {
   if (!supabase)
     return { data: null, error: new Error("Academy is not configured.") };
-  const { data, error } = await supabase
-    .from("academy_weeks")
-    .insert({
-      course_id: week.course_id,
-      week_number: Number(week.week_number),
-      title: week.title.trim(),
-    })
-    .select("id, course_id, week_number, title")
+  const payload = {
+    course_id: week.course_id || null,
+    week_number: Number(week.week_number),
+    title: String(week.title ?? "").trim(),
+    description: String(week.description ?? "").trim() || null,
+    sort_order: Number(week.sort_order ?? 0),
+    published: Boolean(week.published),
+  };
+  if (!payload.course_id || !payload.title || payload.week_number < 1) {
+    return {
+      data: null,
+      error: new Error("Course, week number, and title are required."),
+    };
+  }
+  const query = week.id
+    ? supabase
+        .from("academy_weeks")
+        .update(payload)
+        .eq("id", week.id)
+    : supabase.from("academy_weeks").insert(payload);
+  const { data, error } = await query
+    .select("id, course_id, week_number, title, description, sort_order, published")
     .single();
   return { data, error };
 }
@@ -829,23 +831,60 @@ export async function saveAcademyWeek(week) {
 export async function saveAcademyLesson(lesson) {
   if (!supabase)
     return { data: null, error: new Error("Academy is not configured.") };
-  const { data, error } = await supabase
-    .from("academy_lessons")
-    .insert({
-      week_id: lesson.week_id,
-      title: lesson.title.trim(),
-      slug: lesson.slug.trim().toLowerCase(),
-      lesson_number: Number(lesson.lesson_number),
-      objectives: lesson.objectives
-        .split("\n")
+  const objectives = Array.isArray(lesson.objectives)
+    ? lesson.objectives
+    : String(lesson.objectives ?? "")
+        .split(/[\n,]+/)
         .map((item) => item.trim())
-        .filter(Boolean),
-      content: { explanation: lesson.content.trim() },
-      published: Boolean(lesson.published),
-    })
-    .select("id, week_id, title, slug, lesson_number, published")
+        .filter(Boolean);
+  let content = lesson.content;
+  if (typeof content === "string") {
+    content = content.trim();
+    try {
+      const parsed = JSON.parse(content);
+      content = parsed && typeof parsed === "object" ? parsed : { explanation: content };
+    } catch {
+      content = { explanation: content };
+    }
+  }
+  const payload = {
+    week_id: lesson.week_id || null,
+    title: String(lesson.title ?? "").trim(),
+    slug: String(lesson.slug ?? "").trim().toLowerCase(),
+    lesson_number: Number(lesson.lesson_number),
+    objectives,
+    content: content || {},
+    published: Boolean(lesson.published),
+    sort_order: Number(lesson.sort_order ?? 0),
+  };
+  if (!payload.week_id || !payload.title || !payload.slug) {
+    return {
+      data: null,
+      error: new Error("Week, title, and slug are required."),
+    };
+  }
+  const query = lesson.id
+    ? supabase
+        .from("academy_lessons")
+        .update(payload)
+        .eq("id", lesson.id)
+    : supabase.from("academy_lessons").insert(payload);
+  const { data, error } = await query
+    .select("id, week_id, title, slug, lesson_number, published, sort_order")
     .single();
   return { data, error };
+}
+
+export async function publishAcademyWeek(weekId, published) {
+  if (!supabase)
+    return { data: null, error: new Error("Academy is not configured.") };
+  if (!weekId) return { data: null, error: new Error("Week is required.") };
+  const { data, error } = await supabase
+    .from("academy_lessons")
+    .update({ published: Boolean(published) })
+    .eq("week_id", weekId)
+    .select("id, week_id, published");
+  return { data: data ?? [], error };
 }
 
 export async function scheduleAcademyLesson(schedule) {

@@ -61,6 +61,8 @@ export default function AcademyLayout({ workspace = "student" }) {
   const [navigationOpen, setNavigationOpen] = useState(false);
   const learningSession = useRef(null);
   const lastActivity = useRef(Date.now());
+  const routeRef = useRef(pathname);
+  routeRef.current = pathname;
   const displayName =
     profile?.display_name || user?.email?.split("@")[0] || "Student";
   const accessLabel = isAdmin ? "Admin" : isTeacher ? "Teacher" : "Student";
@@ -80,7 +82,8 @@ export default function AcademyLayout({ workspace = "student" }) {
   useEffect(() => {
     if (!isStudent) return undefined;
     let cancelled = false;
-    startAcademyLearningSession(pathname).then(({ data }) => {
+    const currentPath = () => routeRef.current;
+    startAcademyLearningSession(currentPath()).then(({ data }) => {
       if (!cancelled) learningSession.current = data;
     });
 
@@ -100,7 +103,7 @@ export default function AcademyLayout({ workspace = "student" }) {
       ) {
         heartbeatAcademyLearningSession(
           learningSession.current.id,
-          pathname,
+          currentPath(),
           "visible",
           true,
         );
@@ -114,7 +117,7 @@ export default function AcademyLayout({ workspace = "student" }) {
       if (learningSession.current) {
         heartbeatAcademyLearningSession(
           learningSession.current.id,
-          pathname,
+          currentPath(),
           "hidden",
           false,
         );
@@ -129,7 +132,7 @@ export default function AcademyLayout({ workspace = "student" }) {
       if (learningSession.current) {
         heartbeatAcademyLearningSession(
           learningSession.current.id,
-          pathname,
+          currentPath(),
           document.visibilityState === "visible" ? "visible" : "hidden",
           document.visibilityState === "visible" &&
             Date.now() - lastActivity.current <= 60000,
@@ -140,7 +143,7 @@ export default function AcademyLayout({ workspace = "student" }) {
       );
       learningSession.current = null;
     };
-  }, [isStudent, pathname, user.id]);
+  }, [isStudent, user.id]);
 
   return (
     <div className="flex min-h-screen flex-col bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
