@@ -40,7 +40,7 @@ export default function AcademyAdminStudents() {
     if (!error) await load();
   }
   const students = data.students.filter((student) => {
-    const searchText = `${student.display_name || ""} ${student.academy_schools?.name || ""} ${student.academy_schools?.code || ""}`;
+    const searchText = `${student.display_name || ""} ${student.academy_registration_codes?.registration_number || ""} ${student.academy_schools?.name || ""} ${student.academy_schools?.code || ""}`;
     return (
       searchText.toLowerCase().includes(search.toLowerCase()) &&
       (!stateFilter || student.state === stateFilter) &&
@@ -98,7 +98,7 @@ export default function AcademyAdminStudents() {
         <input
           className="field"
           aria-label="Search students"
-          placeholder="Search by name or school..."
+          placeholder="Search by name, registration number, or school..."
           value={search}
           onChange={(event) => setSearch(event.target.value)}
         />
@@ -167,6 +167,9 @@ export default function AcademyAdminStudents() {
                     <h2 className="font-semibold">
                       {student.display_name || "Unnamed student"}
                     </h2>
+                    <p className="mt-1 text-sm font-medium text-cyan-700 dark:text-cyan-300">
+                      {student.academy_registration_codes?.registration_number || "Registration not assigned"}
+                    </p>
                     <p className="mt-1 text-sm text-slate-500">
                       {student.academy_schools?.name || "Other"} ·{" "}
                       {student.state || "Not set"}
@@ -216,10 +219,14 @@ export default function AcademyAdminStudents() {
               <thead className="border-b border-slate-200 text-xs uppercase text-slate-500 dark:border-slate-800">
                 <tr>
                   <th className="px-5 py-4">Name</th>
-                  <th className="px-5 py-4">Level</th>
+                  <th className="px-5 py-4">Course</th>
+                  <th className="px-5 py-4">Registration No.</th>
                   <th className="px-5 py-4">School</th>
                   <th className="px-5 py-4">State</th>
+                  <th className="px-5 py-4">Status</th>
                   <th className="px-5 py-4">Academy time</th>
+                  <th className="px-5 py-4">Last active</th>
+                  <th className="px-5 py-4">Progress</th>
                   <th className="px-5 py-4">Updated</th>
                   <th className="px-5 py-4">Actions</th>
                 </tr>
@@ -246,23 +253,45 @@ export default function AcademyAdminStudents() {
                         ))}
                       </select>
                     </td>
+                    <td className="px-5 py-4 font-semibold tracking-[0.1em]">
+                      {student.academy_registration_codes?.registration_number || "Unassigned"}
+                    </td>
                     <td className="px-5 py-4">
                       {student.academy_schools?.name || "Other"}
                     </td>
                     <td className="px-5 py-4">{student.state || "Not set"}</td>
+                    <td className="px-5 py-4 capitalize">
+                      {student.enrollment?.status || "Unassigned"}
+                    </td>
                     <td className="px-5 py-4">
                       {Math.floor((student.activity?.seconds ?? 0) / 60)} min
+                    </td>
+                    <td className="px-5 py-4">
+                      {student.activity?.lastActive
+                        ? new Date(student.activity.lastActive).toLocaleDateString()
+                        : "Not active"}
+                    </td>
+                    <td className="px-5 py-4">
+                      {student.completedLessons ?? 0} lessons
                     </td>
                     <td className="px-5 py-4">
                       {new Date(student.updated_at).toLocaleDateString()}
                     </td>
                     <td className="px-5 py-4">
-                      <Link
-                        className="font-semibold text-blue-600"
-                        to={`/academy/admin/students/${student.id}`}
-                      >
-                        View profile
-                      </Link>
+                      <div className="flex flex-wrap gap-3">
+                        <Link
+                          className="font-semibold text-blue-600"
+                          to={`/academy/admin/students/${student.id}`}
+                        >
+                          View profile
+                        </Link>
+                        <Link
+                          className="font-semibold text-cyan-700"
+                          to={`/academy/admin/registrations?student=${student.id}`}
+                        >
+                          Assign registration
+                        </Link>
+                      </div>
                     </td>
                   </tr>
                 ))}

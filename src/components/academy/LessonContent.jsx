@@ -11,9 +11,46 @@ function CodeBlock({ code }) {
 export default function LessonContent({ content = {} }) {
   const [visibleHintCount, setVisibleHintCount] = useState(0);
   const hints = Array.isArray(content.hints) ? content.hints : [];
+  const weeklyPlan = Array.isArray(content.weekly_plan) ? content.weekly_plan : [];
+  const weeklyMinutes = weeklyPlan.reduce(
+    (total, activity) => total + (Number(activity.minutes) || 0),
+    0,
+  );
+  const weeklyHours = Math.floor(weeklyMinutes / 60);
+  const weeklyRemainder = weeklyMinutes % 60;
 
   return (
     <div className="space-y-6 text-[15px] leading-7 text-slate-700 dark:text-slate-200">
+      {weeklyPlan.length > 0 && (
+        <section className="rounded-xl border border-indigo-200 bg-indigo-50 p-5 dark:border-indigo-900 dark:bg-indigo-950/30">
+          <div className="flex flex-wrap items-baseline justify-between gap-2">
+            <h2 className="text-xl font-bold text-slate-900 dark:text-white">
+              Your weekly plan
+            </h2>
+            <span className="rounded-full bg-indigo-100 px-3 py-1 text-sm font-semibold text-indigo-800 dark:bg-indigo-900 dark:text-indigo-100">
+              {weeklyHours}h {weeklyRemainder ? `${weeklyRemainder}m` : ""}
+            </span>
+          </div>
+          <ol className="mt-4 space-y-3">
+            {weeklyPlan.map((activity, index) => (
+              <li
+                key={`${activity.label}-${index}`}
+                className="grid gap-1 border-l-2 border-indigo-300 pl-3 sm:grid-cols-[9rem_1fr] sm:gap-3"
+              >
+                <span className="font-semibold text-slate-900 dark:text-white">
+                  {activity.label}
+                </span>
+                <span>
+                  <span className="mr-2 font-medium text-indigo-700 dark:text-indigo-200">
+                    {activity.minutes} min
+                  </span>
+                  {activity.activity}
+                </span>
+              </li>
+            ))}
+          </ol>
+        </section>
+      )}
       {content.explanation && <p>{content.explanation}</p>}
       {Array.isArray(content.paragraphs) &&
         content.paragraphs.map((paragraph) => (

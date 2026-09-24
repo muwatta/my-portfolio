@@ -56,7 +56,7 @@ export function AcademyAuthProvider({ children }) {
       supabase
         .from("academy_profiles")
         .select(
-          "id, display_name, role, avatar_url, current_course_id, school_id, state, city, student_level, academy_courses!academy_profiles_current_course_id_fkey(id, slug, title), academy_schools!academy_profiles_school_id_fkey(id, name, code, state, city)",
+          "id, display_name, role, avatar_url, current_course_id, school_id, state, city, student_level, registration_code_id, academy_registration_codes!academy_profiles_registration_code_id_fkey(registration_number, status), academy_courses!academy_profiles_current_course_id_fkey(id, slug, title), academy_schools!academy_profiles_school_id_fkey(id, name, code, state, city)",
         )
         .eq("id", session.user.id)
         .maybeSingle(),
@@ -92,7 +92,7 @@ export function AcademyAuthProvider({ children }) {
     return supabase.auth.signInWithPassword({ email, password });
   };
 
-  const signUp = (email, password, displayName) => {
+  const signUp = (email, password, displayName, registrationNumber) => {
     if (!supabase) {
       throw new Error("Academy authentication is not configured yet.");
     }
@@ -102,6 +102,7 @@ export function AcademyAuthProvider({ children }) {
       options: {
         data: {
           display_name: displayName,
+          registration_number: registrationNumber,
         },
       },
     });

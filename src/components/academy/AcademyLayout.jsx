@@ -38,6 +38,7 @@ const teacherLinks = [
 const adminLinks = [
   { label: "Dashboard", to: "/academy/admin" },
   { label: "Students", to: "/academy/admin/students" },
+  { label: "Registrations", to: "/academy/admin/registrations" },
   { label: "Levels", to: "/academy/admin/levels" },
   { label: "Courses", to: "/academy/admin/courses" },
   { label: "Lessons", to: "/academy/admin/lessons" },

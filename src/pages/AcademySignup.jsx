@@ -2,20 +2,26 @@ import { useState } from "react";
 import { Link, Navigate, useNavigate } from "react-router-dom";
 import { useAcademyAuth } from "../hooks/useAcademyAuth";
 import { useTheme } from "../context/useTheme";
-import { friendlyError } from "../lib/utils";
+import {
+  isValidAcademyRegistrationNumber,
+  normalizeAcademyRegistrationNumber,
+} from "../lib/registration";
 
 export default function AcademySignup() {
   const { user, loading, signUp, isConfigured } = useAcademyAuth();
   const { theme, toggle } = useTheme();
   const navigate = useNavigate();
   const [displayName, setDisplayName] = useState("");
+  const [registrationNumber, setRegistrationNumber] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [signupStarted, setSignupStarted] = useState(false);
   const [created, setCreated] = useState(false);
+  const [createdRegistrationNumber, setCreatedRegistrationNumber] = useState("");
 
   if (loading) {
     return (
@@ -25,7 +31,7 @@ export default function AcademySignup() {
     );
   }
 
-  if (user) return <Navigate to="/academy/dashboard" replace />;
+  if (user && !signupStarted) return <Navigate to="/academy/dashboard" replace />;
 
   async function handleSubmit(event) {
     event.preventDefault();
@@ -33,7 +39,13 @@ export default function AcademySignup() {
 
     const name = displayName.trim();
     const normalizedEmail = email.trim().toLowerCase();
+    const normalizedRegistrationNumber = normalizeAcademyRegistrationNumber(
+      registrationNumber,
+    );
     if (!name) return setError("Please enter your full name.");
+    if (!isValidAcademyRegistrationNumber(normalizedRegistrationNumber)) {
+      return setError("Enter your Academy registration number in the format ATE-26-001.");
+    }
     if (password.length < 8) {
       return setError("Your password must be at least 8 characters.");
     }
@@ -41,20 +53,23 @@ export default function AcademySignup() {
       return setError("Passwords do not match.");
 
     setSubmitting(true);
+    setSignupStarted(true);
+    setError("");
     try {
-      const { data, error: signUpError } = await signUp(
+      const { error: signUpError } = await signUp(
         normalizedEmail,
         password,
         name,
+        normalizedRegistrationNumber,
       );
       if (signUpError) throw signUpError;
-      if (data.session) {
-        navigate("/academy/dashboard", { replace: true });
-        return;
-      }
+      setCreatedRegistrationNumber(normalizedRegistrationNumber);
       setCreated(true);
-    } catch (signUpError) {
-      setError(friendlyError(signUpError, "Your account could not be created."));
+    } catch {
+      setSignupStarted(false);
+      setError(
+        "We couldn't verify this registration number. Please check your Academy registration details or contact your teacher.",
+      );
     } finally {
       setSubmitting(false);
     }
@@ -129,15 +144,21 @@ export default function AcademySignup() {
                 id="signup-success-title"
                 className="mt-5 text-2xl font-bold"
               >
-                Your account is ready
+                Welcome to Muwatta Academy!
               </h3>
               <p className="mt-3 text-sm leading-6 text-slate-600 dark:text-slate-300">
+                Your Academy Registration Number is:
+              </p>
+              <p className="mt-2 text-2xl font-bold tracking-[0.18em] text-cyan-700 dark:text-cyan-300">
+                {createdRegistrationNumber}
+              </p>
+              <p className="mt-4 text-sm leading-6 text-slate-600 dark:text-slate-300">
                 We sent a confirmation link to{" "}
                 <span className="font-semibold text-slate-800 dark:text-slate-100">
                   {email.trim().toLowerCase()}
                 </span>
-                . Check your inbox and confirm your email so you can sign in
-                and start learning with ATE Academy.
+                . Please confirm your email address before signing in and
+                starting your learning journey.
               </p>
               <div className="mt-6 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
                 <button
@@ -158,6 +179,23 @@ export default function AcademySignup() {
             </div>
           ) : (
             <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
+              <label className="label">
+                Academy Registration Number
+                <input
+                  className="field uppercase tracking-[0.12em]"
+                  type="text"
+                  inputMode="text"
+                  autoComplete="off"
+                  autoCapitalize="characters"
+                  maxLength={10}
+                  placeholder="ATE-26-001"
+                  value={registrationNumber}
+                  onChange={(event) =>
+                    setRegistrationNumber(event.target.value.toUpperCase())
+                  }
+                  required
+                />
+              </label>
               <label className="label">
                 Full name
                 <input

@@ -98,6 +98,9 @@ const AcademyAdminDashboard = lazy(
   () => import("./pages/AcademyAdminDashboard"),
 );
 const AcademyAdminStudents = lazy(() => import("./pages/AcademyAdminStudents"));
+const AcademyAdminRegistrations = lazy(
+  () => import("./pages/AcademyAdminRegistrations"),
+);
 const AcademyAdminStudentProfile = lazy(
   () => import("./pages/AcademyAdminStudentProfile"),
 );
@@ -314,6 +317,10 @@ function App() {
                             <Route
                               path="/academy/admin/students"
                               element={<AcademyAdminStudents />}
+                            />
+                            <Route
+                              path="/academy/admin/registrations"
+                              element={<AcademyAdminRegistrations />}
                             />
                             <Route
                               path="/academy/admin/students/:studentId"

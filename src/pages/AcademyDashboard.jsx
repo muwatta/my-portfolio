@@ -60,6 +60,11 @@ export default function AcademyDashboard() {
         <h1 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">
           Good to see you, {name}.
         </h1>
+        {profile?.academy_registration_codes?.registration_number && (
+          <p className="mt-3 text-sm font-semibold uppercase tracking-[0.18em] text-cyan-300">
+            Academy Registration No. {profile.academy_registration_codes.registration_number}
+          </p>
+        )}
         <p className="mt-3 max-w-2xl text-slate-300">
           {course?.title
             ? "Your learning path is ready. Pick up where you left off — one step at a time."
