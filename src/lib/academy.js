@@ -4,6 +4,9 @@ const lessonSelect =
   "id, title, slug, lesson_number, sort_order, objectives, content, prerequisite_lesson_id, completion_requirement, completion_mode, preview_allowed, academy_weeks!inner(id, week_number, title, academy_courses!inner(id, slug, title, duration_weeks))";
 
 const unavailable = (data = null) => ({ data, error: null, configured: false });
+const createClientOperationId = () =>
+  globalThis.crypto?.randomUUID?.() ||
+  `academy-${Date.now()}-${Math.random().toString(36).slice(2)}`;
 const academyCache = new Map();
 const academyRequests = new Map();
 let academyCacheGeneration = 0;
@@ -1310,15 +1313,21 @@ export async function getAcademyExercises(studentId) {
   };
 }
 
-export async function submitObjectiveAnswer(exerciseId, answer) {
+export async function submitObjectiveAnswer(
+  exerciseId,
+  answer,
+  clientOperationId = null,
+) {
   if (!supabase)
     return { data: null, error: new Error("Academy is not configured.") };
+  const args = {
+    target_exercise_id: exerciseId,
+    submitted_answer: answer,
+  };
+  if (clientOperationId) args.client_operation_key = clientOperationId;
   const { data, error } = await supabase.rpc(
     "academy_submit_objective_answer",
-    {
-      target_exercise_id: exerciseId,
-      submitted_answer: answer,
-    },
+    args,
   );
   if (!error) invalidateAcademyCache("leaderboard:");
   return { data, error };
@@ -1496,23 +1505,35 @@ export async function submitAssignment({
   originalFilename = null,
   mimeType = null,
   fileSizeBytes = null,
+  clientOperationId = null,
 }) {
   if (!supabase)
     return { data: null, error: new Error("Academy is not configured.") };
+  const operationId = clientOperationId || createClientOperationId();
+  const submission = {
+    assignment_id: assignmentId,
+    student_id: studentId,
+    attempt_number: attemptNumber,
+    source_code: sourceCode,
+    file_path: filePath,
+    original_filename: originalFilename,
+    mime_type: mimeType,
+    file_size_bytes: fileSizeBytes,
+    client_operation_id: operationId,
+  };
   const { data, error } = await supabase
     .from("academy_submissions")
-    .insert({
-      assignment_id: assignmentId,
-      student_id: studentId,
-      attempt_number: attemptNumber,
-      source_code: sourceCode,
-      file_path: filePath,
-      original_filename: originalFilename,
-      mime_type: mimeType,
-      file_size_bytes: fileSizeBytes,
-    })
+    .insert(submission)
     .select("id, assignment_id, attempt_number, status, submitted_at")
     .single();
+  if (error?.code === "23505") {
+    const { data: existing, error: existingError } = await supabase
+      .from("academy_submissions")
+      .select("id, assignment_id, attempt_number, status, submitted_at")
+      .eq("client_operation_id", operationId)
+      .single();
+    if (!existingError) return { data: existing, error: null };
+  }
   if (!error) {
     invalidateAcademyCache(
       `progress:${studentId}`,

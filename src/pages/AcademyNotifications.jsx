@@ -4,20 +4,36 @@ import {
   markAcademyNotificationRead,
 } from "../lib/academy";
 import { useAcademyAuth } from "../hooks/useAcademyAuth";
+import { fetchWithOfflineFallback } from "../lib/academyOffline";
+import { OFFLINE_STORES } from "../lib/offlineStore";
+import { enqueueAcademyOperation } from "../lib/academySync";
 
 export default function AcademyNotifications() {
   const { user } = useAcademyAuth();
   const [items, setItems] = useState([]);
   const [state, setState] = useState("loading");
+  const [offline, setOffline] = useState(false);
   useEffect(() => {
-    getAcademyNotifications(user.id).then(({ data, error, configured }) => {
+    fetchWithOfflineFallback({
+      userId: user.id,
+      store: OFFLINE_STORES.notifications,
+      fetcher: () => getAcademyNotifications(user.id),
+    }).then(({ data, error, configured, offline: isOffline }) => {
+      setOffline(Boolean(isOffline));
       setItems(data ?? []);
       setState(error ? "error" : configured ? "ready" : "unconfigured");
     });
   }, [user.id]);
   async function read(id) {
-    const { error } = await markAcademyNotificationRead(id, user.id);
-    if (error) return;
+    if (!navigator.onLine) {
+      await enqueueAcademyOperation(user.id, {
+        type: "notification_read",
+        payload: { notificationId: id, studentId: user.id },
+      });
+    } else {
+      const { error } = await markAcademyNotificationRead(id, user.id);
+      if (error) return;
+    }
     setItems((current) =>
       current.map((item) =>
         item.id === id ? { ...item, read_at: new Date().toISOString() } : item,
@@ -32,6 +48,11 @@ export default function AcademyNotifications() {
         </p>
         <h1 className="mt-2 text-3xl font-bold">Notifications</h1>
       </header>
+      {offline && (
+        <p className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">
+          Offline mode. Read markers are saved locally and will sync when you reconnect.
+        </p>
+      )}
       {state === "loading" && <p>Loading notifications...</p>}
       {state === "error" && (
         <p

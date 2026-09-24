@@ -5,6 +5,8 @@ import {
   getAcademyCourseMaterials,
   getActiveCourseForStudent,
 } from "../lib/academy";
+import { cacheOfflineAsset, removeOfflineAsset, OFFLINE_STORES } from "../lib/offlineStore";
+import { fetchWithOfflineFallback } from "../lib/academyOffline";
 
 function assetUrl(storagePath) {
   const path = String(storagePath  ??  "");
@@ -26,19 +28,38 @@ export default function AcademyMaterials() {
   const { user } = useAcademyAuth();
   const [materials, setMaterials] = useState([]);
   const [state, setState] = useState("loading");
+  const [downloaded, setDownloaded] = useState({});
+  const [downloading, setDownloading] = useState("");
   useEffect(() => {
     let cancelled = false;
-    getActiveCourseForStudent(user.id).then((course) =>
-      getAcademyCourseMaterials(course?.id).then(({ data, error }) => {
-        if (cancelled) return;
-        setMaterials(data ?? []);
-        setState(error ? "error" : "ready");
-      }),
-    );
+    async function load() {
+      const course = navigator.onLine ? await getActiveCourseForStudent(user.id) : { data: null };
+      const result = await fetchWithOfflineFallback({
+        userId: user.id,
+        store: OFFLINE_STORES.materials,
+        id: "list:materials",
+        fetcher: () => getAcademyCourseMaterials(course?.data?.id),
+      });
+      if (cancelled) return;
+      setMaterials(result.data ?? []);
+      setState(result.error ? "error" : "ready");
+    }
+    void load();
     return () => {
       cancelled = true;
     };
   }, [user.id]);
+
+  useEffect(() => {
+    if (!materials.length || !("caches" in window)) return;
+    void Promise.all(
+      materials.map(async (material) => {
+        const url = assetUrl(material.storage_path);
+        return [material.id, url ? Boolean(await caches.match(url)) : false];
+      }),
+    ).then((entries) => setDownloaded(Object.fromEntries(entries)));
+  }, [materials]);
+
   return (
     <div className="space-y-8">
       <header>
@@ -51,6 +72,11 @@ export default function AcademyMaterials() {
           browser and can be saved to your device.
         </p>
       </header>
+      {!navigator.onLine && (
+        <p className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">
+          Offline learning mode. Downloaded materials remain available from this device.
+        </p>
+      )}
       {state === "loading" && <p>Loading materials...</p>}
       {state === "error" && (
         <p
@@ -69,7 +95,26 @@ export default function AcademyMaterials() {
         <ul className="grid gap-4 md:grid-cols-2">
           {materials.map((material) => {
             const url = assetUrl(material.storage_path);
-            return (
+  async function downloadMaterial(material) {
+    const url = assetUrl(material.storage_path);
+    if (!url) return;
+    setDownloading(material.id);
+    try {
+      await cacheOfflineAsset(url);
+      setDownloaded((current) => ({ ...current, [material.id]: true }));
+    } finally {
+      setDownloading("");
+    }
+  }
+
+  async function removeMaterial(material) {
+    const url = assetUrl(material.storage_path);
+    if (!url) return;
+    await removeOfflineAsset(url);
+    setDownloaded((current) => ({ ...current, [material.id]: false }));
+  }
+
+  return (
               <li
                 key={material.id}
                 className="flex flex-col justify-between gap-4 border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900"
@@ -86,14 +131,36 @@ export default function AcademyMaterials() {
                   </p>
                 </div>
                 {url && (
-                  <a
-                    className="button-primary w-fit"
-                    href={url}
-                    download={fileName(material.storage_path)}
-                    rel="noreferrer"
-                  >
-                    Download
-                  </a>
+                  <div className="flex flex-wrap gap-2">
+                    <a
+                      className="button-primary w-fit"
+                      href={url}
+                      download={fileName(material.storage_path)}
+                      rel="noreferrer"
+                    >
+                      Open
+                    </a>
+                    {downloaded[material.id] ? (
+                      <button
+                        type="button"
+                        className="button-secondary"
+                        onClick={() => removeMaterial(material)}
+                      >
+                        Remove download
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        className="button-secondary"
+                        onClick={() => downloadMaterial(material)}
+                        disabled={downloading === material.id}
+                      >
+                        {downloading === material.id
+                          ? "Downloading..."
+                          : "Download for Offline"}
+                      </button>
+                    )}
+                  </div>
                 )}
               </li>
             );

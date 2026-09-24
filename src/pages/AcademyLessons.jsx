@@ -2,14 +2,23 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAcademyAuth } from "../hooks/useAcademyAuth";
 import { getAcademyLessons } from "../lib/academy";
+import { fetchWithOfflineFallback } from "../lib/academyOffline";
+import { OFFLINE_STORES } from "../lib/offlineStore";
+import DownloadedCourseManager from "../components/academy/DownloadedCourseManager";
 
 export default function AcademyLessons() {
   const [weeks, setWeeks] = useState([]);
   const [state, setState] = useState("loading");
+  const [offline, setOffline] = useState(false);
   const { user } = useAcademyAuth();
 
   useEffect(() => {
-    getAcademyLessons(user.id).then(({ data, error, configured }) => {
+    fetchWithOfflineFallback({
+      userId: user.id,
+      store: OFFLINE_STORES.lessons,
+      fetcher: () => getAcademyLessons(user.id),
+    }).then(({ data, error, configured, offline: isOffline }) => {
+      setOffline(Boolean(isOffline));
       if (error) setState("error");
       else if (!configured) setState("unconfigured");
       else {
@@ -57,6 +66,11 @@ export default function AcademyLessons() {
           course.
         </p>
       </header>
+      {offline && (
+        <p className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">
+          Offline learning mode. You are viewing lessons saved on this device.
+        </p>
+      )}
       {state === "loading" && (
         <p className="text-sm text-slate-500">Loading lessons...</p>
       )}
@@ -89,8 +103,14 @@ export default function AcademyLessons() {
                 Week {week.week_number}
               </p>
               <h2 className="mt-1 text-xl font-bold">{week.week_title}</h2>
-            </header>
-            <div className="grid gap-4 p-5 sm:grid-cols-2">
+             </header>
+             <div className="px-5 pt-4">
+               <DownloadedCourseManager
+                 course={week.lessons[0]?.academy_weeks?.academy_courses}
+                 week={week}
+               />
+             </div>
+             <div className="grid gap-4 p-5 sm:grid-cols-2">
               {week.lessons.map((lesson) => (
                 <Link
                   key={lesson.id}

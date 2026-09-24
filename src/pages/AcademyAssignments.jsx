@@ -1,16 +1,24 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { getAcademyAssignments } from "../lib/academy";
+import { fetchWithOfflineFallback } from "../lib/academyOffline";
+import { OFFLINE_STORES } from "../lib/offlineStore";
 import { useAcademyAuth } from "../hooks/useAcademyAuth";
 
 export default function AcademyAssignments() {
   const [assignments, setAssignments] = useState([]);
   const [state, setState] = useState("loading");
+  const [offline, setOffline] = useState(false);
   const { user } = useAcademyAuth();
 
   useEffect(() => {
     if (!user?.id) return;
-    getAcademyAssignments(user.id).then(({ data, error, configured }) => {
+    fetchWithOfflineFallback({
+      userId: user.id,
+      store: OFFLINE_STORES.assignments,
+      fetcher: () => getAcademyAssignments(user.id),
+    }).then(({ data, error, configured, offline: isOffline }) => {
+      setOffline(Boolean(isOffline));
       setAssignments(data ?? []);
       setState(error ? "error" : configured ? "ready" : "unconfigured");
     });
@@ -27,6 +35,11 @@ export default function AcademyAssignments() {
           Only assignments targeted to you or one of your classes appear here.
         </p>
       </header>
+      {offline && (
+        <p className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">
+          Offline learning mode. Downloaded assignment briefs are available on this device.
+        </p>
+      )}
       {state === "loading" && <p>Loading assignments...</p>}
       {state === "unconfigured" && (
         <p className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">

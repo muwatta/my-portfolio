@@ -4,18 +4,27 @@ import CppEditor from "../components/academy/CppEditor";
 import PythonEditor from "../components/academy/PythonEditor";
 import { useAcademyAuth } from "../hooks/useAcademyAuth";
 import { friendlyError } from "../lib/utils";
+import { fetchWithOfflineFallback } from "../lib/academyOffline";
+import { OFFLINE_STORES } from "../lib/offlineStore";
+import { enqueueAcademyOperation } from "../lib/academySync";
 
 export default function AcademyPractice() {
   const { user } = useAcademyAuth();
   const [exercises, setExercises] = useState([]);
   const [state, setState] = useState("loading");
+  const [offline, setOffline] = useState(false);
   const [answers, setAnswers] = useState({});
   const [results, setResults] = useState({});
   const [submitting, setSubmitting] = useState(null);
   const practiceLanguage = exercises[0]?.language || "python";
 
   useEffect(() => {
-    getAcademyExercises(user.id).then(({ data, error, configured }) => {
+    fetchWithOfflineFallback({
+      userId: user.id,
+      store: OFFLINE_STORES.exercises,
+      fetcher: () => getAcademyExercises(user.id),
+    }).then(({ data, error, configured, offline: isOffline }) => {
+      setOffline(Boolean(isOffline));
       setExercises(data ?? []);
       setState(error ? "error" : configured ? "ready" : "unconfigured");
     });
@@ -23,6 +32,26 @@ export default function AcademyPractice() {
 
   async function submitAnswer(exerciseId) {
     setSubmitting(exerciseId);
+    if (!navigator.onLine) {
+      const clientOperationId =
+        globalThis.crypto?.randomUUID?.() ||
+        `practice-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+      await enqueueAcademyOperation(user.id, {
+        operationId: clientOperationId,
+        type: "objective_answer",
+        payload: {
+          exerciseId,
+          answer: answers[exerciseId] || "",
+          clientOperationId,
+        },
+      });
+      setResults((current) => ({
+        ...current,
+        [exerciseId]: { pending: true },
+      }));
+      setSubmitting(null);
+      return;
+    }
     const { data, error } = await submitObjectiveAnswer(
       exerciseId,
       answers[exerciseId] || "",
@@ -51,6 +80,11 @@ export default function AcademyPractice() {
             : "Run beginner Python in your browser. The runtime loads only when you run code."}
         </p>
       </header>
+      {offline && (
+        <p className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">
+          Offline practice mode. Code runs on this device. Official practice results are checked after reconnecting.
+        </p>
+      )}
       {state === "loading" && <p>Loading exercises...</p>}
       {state === "unconfigured" && (
         <p className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">
@@ -146,7 +180,12 @@ export default function AcademyPractice() {
               >
                 {submitting === exercise.id ? "Scoring..." : "Submit answer"}
               </button>
-              {results[exercise.id]?.error && (
+               {results[exercise.id]?.pending && (
+                 <p role="status" className="text-sm text-amber-700">
+                   Answer saved on this device. Official checking is waiting for a connection.
+                 </p>
+               )}
+               {results[exercise.id]?.error && (
                 <p role="alert" className="text-sm text-red-600">
                   {results[exercise.id].error}
                 </p>

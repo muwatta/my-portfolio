@@ -7,11 +7,15 @@ import {
 } from "../lib/academy";
 import { useAcademyAuth } from "../hooks/useAcademyAuth";
 import { friendlyError } from "../lib/utils";
+import DownloadedCourseManager from "../components/academy/DownloadedCourseManager";
+import { fetchWithOfflineFallback } from "../lib/academyOffline";
+import { OFFLINE_STORES } from "../lib/offlineStore";
 
 export default function AcademyCourses() {
   const [courses, setCourses] = useState([]);
   const [activeCourse, setActiveCourse] = useState(null);
   const [state, setState] = useState("loading");
+  const [offline, setOffline] = useState(false);
   const [notice, setNotice] = useState("");
   const [selecting, setSelecting] = useState("");
   const { user } = useAcademyAuth();
@@ -19,13 +23,27 @@ export default function AcademyCourses() {
   useEffect(() => {
     let mounted = true;
     Promise.all([
-      getAcademyCourses(),
-      user?.id ? getActiveCourseForStudent(user.id) : Promise.resolve(null),
-    ]).then(([{ data, error }, active]) => {
+      fetchWithOfflineFallback({
+        userId: user?.id,
+        store: OFFLINE_STORES.courses,
+        id: "list:courses",
+        fetcher: () => getAcademyCourses(),
+      }),
+      user?.id && navigator.onLine
+        ? getActiveCourseForStudent(user.id)
+        : Promise.resolve({ data: null }),
+    ]).then(([courseResult, active]) => {
       if (!mounted) return;
-      setCourses(data ?? []);
-      setActiveCourse(active ?? null);
-      setState(error ? "error" : "ready");
+      setOffline(Boolean(courseResult.offline));
+      setCourses(courseResult.data ?? []);
+      setActiveCourse(active?.data ?? null);
+      setState(
+        courseResult.error
+          ? "error"
+          : courseResult.configured
+            ? "ready"
+            : "unconfigured",
+      );
     });
     return () => {
       mounted = false;
@@ -44,7 +62,7 @@ export default function AcademyCourses() {
     setSelecting("");
     if (!error) {
       const active = await getActiveCourseForStudent(user.id);
-      setActiveCourse(active);
+      setActiveCourse(active?.data ?? null);
     }
   }
 
@@ -61,6 +79,11 @@ export default function AcademyCourses() {
           or admin to change it if needed.
         </p>
       </header>
+      {offline && (
+        <p className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">
+          Offline learning mode. Your downloaded course choices are shown on this device.
+        </p>
+      )}
 
       {state === "loading" && (
         <p className="text-sm text-slate-500">Loading published courses...</p>
@@ -137,6 +160,7 @@ export default function AcademyCourses() {
                       ? "Selecting..."
                       : "Select this course"}
               </button>
+              {isActive && <DownloadedCourseManager course={course} />}
             </article>
           );
         })}

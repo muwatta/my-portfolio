@@ -1,6 +1,12 @@
 import { useEffect, useState } from "react";
 import { isSupabaseConfigured, supabase } from "../lib/supabase";
 import { AcademyAuthContext } from "./AcademyAuthContextValue";
+import {
+  clearOfflineUser,
+  getOfflineRecord,
+  putOfflineRecord,
+  OFFLINE_STORES,
+} from "../lib/offlineStore";
 
 export function AcademyAuthProvider({ children }) {
   const [session, setSession] = useState(null);
@@ -52,6 +58,19 @@ export function AcademyAuthProvider({ children }) {
     if (!supabase || !session?.user?.id) return undefined;
 
     let cancelled = false;
+    let cachedProfile = null;
+    setProfileLoading(true);
+    void getOfflineRecord(OFFLINE_STORES.profile, session.user.id, "profile")
+      .then((cached) => {
+        if (!cancelled && cached) {
+          cachedProfile = cached;
+          if (!navigator.onLine) {
+            setProfile(cached);
+            setProfileLoading(false);
+          }
+        }
+      })
+      .catch(() => undefined);
     Promise.all([
       supabase
         .from("academy_profiles")
@@ -64,7 +83,8 @@ export function AcademyAuthProvider({ children }) {
     ])
       .then(([{ data, error: profileError }, { data: isAdmin }]) => {
         if (cancelled) return;
-        setProfile(data ?? null);
+        setProfile(data ?? cachedProfile ?? null);
+        if (data) void putOfflineRecord(OFFLINE_STORES.profile, session.user.id, "profile", data);
         setAdminStatus(
           Boolean(isAdmin),
         );
@@ -77,8 +97,6 @@ export function AcademyAuthProvider({ children }) {
           setProfileLoading(false);
         }
       });
-
-    setProfileLoading(true);
 
     return () => {
       cancelled = true;
@@ -126,8 +144,17 @@ export function AcademyAuthProvider({ children }) {
           error: new Error("Academy authentication is not configured yet."),
         });
 
-  const signOut = () =>
-    supabase ? supabase.auth.signOut() : Promise.resolve();
+  const signOut = async () => {
+    const result = supabase ? await supabase.auth.signOut() : { error: null };
+    if (session?.user?.id) {
+      try {
+        await clearOfflineUser(session.user.id, { preserveQueue: true });
+      } catch {
+        setError(null);
+      }
+    }
+    return result;
+  };
 
   return (
     <AcademyAuthContext.Provider

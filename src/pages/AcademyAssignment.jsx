@@ -8,6 +8,14 @@ import {
   submitAssignment,
 } from "../lib/academy";
 import { validateAcademyFile } from "../lib/academyFiles";
+import { fetchWithOfflineFallback } from "../lib/academyOffline";
+import { enqueueAcademyOperation } from "../lib/academySync";
+import {
+  deleteOfflineRecord,
+  getOfflineRecord,
+  OFFLINE_STORES,
+  putOfflineRecord,
+} from "../lib/offlineStore";
 import { friendlyError } from "../lib/utils";
 import { supabase } from "../lib/supabase";
 import { useAcademyAuth } from "../hooks/useAcademyAuth";
@@ -26,13 +34,35 @@ export default function AcademyAssignment() {
   const [history, setHistory] = useState([]);
 
   useEffect(() => {
-    Promise.all([
-      getAcademyAssignment(id),
-      getSubmissionCount(id, user.id),
-      getAcademySubmissionHistory(id, user.id),
-    ]).then(([assignmentResult, countResult, historyResult]) => {
+    let mounted = true;
+    async function load() {
+      const [assignmentResult, draft] = await Promise.all([
+        fetchWithOfflineFallback({
+          userId: user.id,
+          store: OFFLINE_STORES.assignments,
+          id,
+          fetcher: () => getAcademyAssignment(id),
+        }),
+        getOfflineRecord(
+          OFFLINE_STORES.drafts,
+          user.id,
+          `assignment:${id}:source`,
+        ).catch(() => null),
+      ]);
+      if (!mounted) return;
       setAssignment(assignmentResult.data);
-      setSourceCode(assignmentResult.data?.starter_code || "");
+      setSourceCode(draft?.sourceCode || assignmentResult.data?.starter_code || "");
+      if (assignmentResult.offline || !navigator.onLine) {
+        setAttempts(0);
+        setHistory([]);
+        setState(assignmentResult.error ? "error" : "ready");
+        return;
+      }
+      const [countResult, historyResult] = await Promise.all([
+        getSubmissionCount(id, user.id),
+        getAcademySubmissionHistory(id, user.id),
+      ]);
+      if (!mounted) return;
       setAttempts(countResult.count);
       setHistory(historyResult.data ?? []);
       setState(
@@ -42,8 +72,24 @@ export default function AcademyAssignment() {
             ? "ready"
             : "unconfigured",
       );
-    });
+    }
+    void load();
+    return () => {
+      mounted = false;
+    };
   }, [id, user.id]);
+
+  useEffect(() => {
+    if (!assignment || !sourceCode) return undefined;
+    const timer = window.setTimeout(() => {
+      void putOfflineRecord(OFFLINE_STORES.drafts, user.id, `assignment:${id}:source`, {
+        assignmentId: id,
+        sourceCode,
+        savedAt: new Date().toISOString(),
+      });
+    }, 600);
+    return () => window.clearTimeout(timer);
+  }, [assignment, id, sourceCode, user.id]);
 
   async function handleFile(event) {
     const selected = event.target.files?.[0] || null;
@@ -60,6 +106,37 @@ export default function AcademyAssignment() {
     setSubmitting(true);
     setNotice("");
     try {
+      if (!navigator.onLine) {
+        const operationId =
+          crypto.randomUUID?.() ||
+          `assignment-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+        await enqueueAcademyOperation(user.id, {
+          operationId,
+          type: "assignment_submission",
+          payload: {
+            assignmentId: assignment.id,
+            studentId: user.id,
+            attemptNumber: attempts + 1,
+            sourceCode: source || null,
+            file: file || null,
+            originalFilename: file?.name || null,
+            mimeType: file?.type || null,
+            fileSizeBytes: file?.size || null,
+            clientOperationId: operationId,
+          },
+        });
+        await deleteOfflineRecord(
+          OFFLINE_STORES.drafts,
+          user.id,
+          `assignment:${assignment.id}:source`,
+        );
+        setAttempts((value) => value + 1);
+        setFile(null);
+        setNotice(
+          "Submission saved on this device. It will be submitted automatically when you reconnect.",
+        );
+        return;
+      }
       let filePath = null;
       if (file) {
         const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
@@ -69,6 +146,9 @@ export default function AcademyAssignment() {
           .upload(filePath, file, { upsert: false });
         if (uploadError) throw uploadError;
       }
+      const clientOperationId =
+        crypto.randomUUID?.() ||
+        `assignment-${Date.now()}-${Math.random().toString(36).slice(2)}`;
       const { error } = await submitAssignment({
         assignmentId: assignment.id,
         studentId: user.id,
@@ -78,6 +158,7 @@ export default function AcademyAssignment() {
         originalFilename: file?.name || null,
         mimeType: file?.type || null,
         fileSizeBytes: file?.size || null,
+        clientOperationId,
       });
       if (error) throw error;
       const submitted = await getAcademySubmissionHistory(id, user.id);
@@ -87,9 +168,38 @@ export default function AcademyAssignment() {
       const refreshed = await getAcademySubmissionHistory(id, user.id);
       setHistory(refreshed.data ?? []);
       setFile(null);
+      await deleteOfflineRecord(
+        OFFLINE_STORES.drafts,
+        user.id,
+        `assignment:${assignment.id}:source`,
+      );
       setNotice("Submitted. Deterministic grading has started.");
     } catch (error) {
-      setNotice(friendlyError(error, "Submission failed."));
+      if ((error?.message || "").toLowerCase().includes("network")) {
+        const operationId =
+          crypto.randomUUID?.() ||
+          `assignment-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+        await enqueueAcademyOperation(user.id, {
+          operationId,
+          type: "assignment_submission",
+          payload: {
+            assignmentId: assignment.id,
+            studentId: user.id,
+            attemptNumber: attempts + 1,
+            sourceCode: source || null,
+            file: file || null,
+            originalFilename: file?.name || null,
+            mimeType: file?.type || null,
+            fileSizeBytes: file?.size || null,
+            clientOperationId: operationId,
+          },
+        });
+        setNotice(
+          "Submission saved on this device. It will be submitted automatically when you reconnect.",
+        );
+      } else {
+        setNotice(friendlyError(error, "Submission failed."));
+      }
     } finally {
       setSubmitting(false);
     }
@@ -134,7 +244,7 @@ export default function AcademyAssignment() {
           Attempts remaining: {attemptsRemaining}
         </p>
         <p className="mt-1 text-sm text-slate-500">
-          Allowed: {assignment.allowed_submission_types.join(", ")}
+          Allowed:           {(assignment.allowed_submission_types || []).join(", ") || "Code or file"}
         </p>
       </div>
       <PythonEditor

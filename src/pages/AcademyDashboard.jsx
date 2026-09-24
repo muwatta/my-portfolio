@@ -8,6 +8,8 @@ import {
   getAcademyStudentOverview,
 } from "../lib/academy";
 import ProgressBar from "../components/academy/ProgressBar";
+import { fetchWithOfflineFallback } from "../lib/academyOffline";
+import { OFFLINE_STORES } from "../lib/offlineStore";
 
 export default function AcademyDashboard() {
   const { profile, user } = useAcademyAuth();
@@ -26,8 +28,13 @@ export default function AcademyDashboard() {
 
   useEffect(() => {
     let cancelled = false;
-    const loadSection = (key, request, onData) => {
-      request()
+    const loadSection = (key, request, onData, store, id) => {
+      fetchWithOfflineFallback({
+        userId: user.id,
+        store,
+        id,
+        fetcher: request,
+      })
         .then((result) => {
           if (cancelled) return;
           onData(result.data ?? null);
@@ -42,13 +49,35 @@ export default function AcademyDashboard() {
           }
         });
     };
-    loadSection("lessons", () => getAcademyLessons(user.id), (data) => setLessons(data ?? []));
-    loadSection("progress", () => getAcademyProgress(user.id), setProgress);
-    loadSection("assignments", () => getAcademyAssignments(user.id), (data) => {
-      setAssignments(data ?? []);
-      setAssignmentCount(data?.length ?? 0);
-    });
-    loadSection("overview", () => getAcademyStudentOverview(user.id), setOverview);
+    loadSection(
+      "lessons",
+      () => getAcademyLessons(user.id),
+      (data) => setLessons(data ?? []),
+      OFFLINE_STORES.lessons,
+    );
+    loadSection(
+      "progress",
+      () => getAcademyProgress(user.id),
+      setProgress,
+      OFFLINE_STORES.progress,
+      "summary",
+    );
+    loadSection(
+      "assignments",
+      () => getAcademyAssignments(user.id),
+      (data) => {
+        setAssignments(data ?? []);
+        setAssignmentCount(data?.length ?? 0);
+      },
+      OFFLINE_STORES.assignments,
+    );
+    loadSection(
+      "overview",
+      () => getAcademyStudentOverview(user.id),
+      setOverview,
+      OFFLINE_STORES.progress,
+      "overview",
+    );
     return () => {
       cancelled = true;
     };

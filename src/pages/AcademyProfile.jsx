@@ -3,6 +3,12 @@ import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { getAcademySchools, updateAcademyStudentProfile } from "../lib/academy";
 import { friendlyError } from "../lib/utils";
+import {
+  clearOfflineDownloads,
+  estimateOfflineStorage,
+  getOfflineRecords,
+  OFFLINE_STORES,
+} from "../lib/offlineStore";
 
 export default function AcademyProfile() {
   const { user, profile, isAdmin, isTeacher } = useAcademyAuth();
@@ -16,6 +22,9 @@ export default function AcademyProfile() {
   });
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [storage, setStorage] = useState(null);
+  const [downloads, setDownloads] = useState([]);
+  const [storageMessage, setStorageMessage] = useState("");
   useEffect(() => {
     setForm({
       displayName: profile?.display_name || "",
@@ -25,6 +34,32 @@ export default function AcademyProfile() {
     });
     getAcademySchools().then(({ data }) => setSchools(data ?? []));
   }, [profile]);
+  useEffect(() => {
+    void estimateOfflineStorage().then(setStorage);
+  }, []);
+
+  useEffect(() => {
+    if (!user?.id) return;
+    void getOfflineRecords(OFFLINE_STORES.metadata, user.id).then((records) => {
+      setDownloads(
+        records
+          .filter(
+            (record) =>
+              record.id.startsWith("download:") && record.data.status === "ready",
+          )
+          .map((record) => ({ id: record.id, ...record.data })),
+      );
+    });
+  }, [user?.id]);
+
+  async function clearDownloads() {
+    if (!user?.id) return;
+    await clearOfflineDownloads(user.id);
+    setStorageMessage("Downloaded learning content removed from this device.");
+    setStorage(await estimateOfflineStorage());
+    setDownloads([]);
+  }
+
   async function save(event) {
     event.preventDefault();
     setMessage("");
@@ -145,6 +180,29 @@ export default function AcademyProfile() {
             </dd>
           </div>
         </dl>
+      </section>
+      <section className="border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900">
+        <h2 className="text-xl font-bold">Offline Storage</h2>
+        <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
+          Downloaded course content is stored only on this device. Removing it does not remove server grades, submissions, or account data.
+        </p>
+        <p className="mt-3 text-sm text-slate-500">
+          Used space: {storage ? `${(storage.usage / (1024 * 1024)).toFixed(1)} MB` : "Calculating..."}
+        </p>
+        {downloads.length > 0 && (
+          <ul className="mt-3 space-y-2 text-sm text-slate-600 dark:text-slate-300">
+            {downloads.map((download) => (
+              <li key={download.id} className="flex justify-between gap-3">
+                <span>{download.scope === "week" ? "Downloaded week" : "Downloaded course"}</span>
+                <span>{(download.sizeBytes / (1024 * 1024)).toFixed(1)} MB</span>
+              </li>
+            ))}
+          </ul>
+        )}
+        {storageMessage && <p role="status" className="mt-3 text-sm text-cyan-700">{storageMessage}</p>}
+        <button type="button" className="button-secondary mt-4" onClick={clearDownloads}>
+          Manage Downloads
+        </button>
       </section>
       <Link className="button-secondary inline-flex" to="/academy/dashboard">
         Back to dashboard

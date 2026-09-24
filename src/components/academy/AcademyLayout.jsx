@@ -3,6 +3,7 @@ import { FiMenu, FiMoon, FiSun, FiX } from "react-icons/fi";
 import { NavLink, Outlet, Link, useLocation } from "react-router-dom";
 import { useAcademyAuth } from "../../hooks/useAcademyAuth";
 import { useTheme } from "../../context/useTheme";
+import OfflineStatus from "./OfflineStatus";
 import {
   heartbeatAcademyLearningSession,
   startAcademyLearningSession,
@@ -21,6 +22,14 @@ const links = [
   { label: "Materials", to: "/academy/materials" },
   { label: "Notifications", to: "/academy/notifications" },
   { label: "Live classroom", to: "/academy/live" },
+  { label: "Profile", to: "/academy/profile" },
+];
+
+const bottomLinks = [
+  { label: "Home", to: "/academy/dashboard" },
+  { label: "Learn", to: "/academy/lessons" },
+  { label: "Practice", to: "/academy/practice" },
+  { label: "Tasks", to: "/academy/assignments" },
   { label: "Profile", to: "/academy/profile" },
 ];
 
@@ -105,18 +114,22 @@ export default function AcademyLayout({ workspace = "student" }) {
           active,
         );
         if (!active) lastHiddenSession.current = sessionId;
+      } catch {
+        return;
       } finally {
         heartbeatInFlight.current = false;
       }
     };
 
-    startAcademyLearningSession(currentPath()).then(({ data }) => {
-      if (cancelled) {
-        if (data?.id) void sendHeartbeat(data.id, "hidden", false);
-        return;
-      }
-      learningSession.current = data;
-    });
+    void startAcademyLearningSession(currentPath())
+      .then(({ data }) => {
+        if (cancelled) {
+          if (data?.id) void sendHeartbeat(data.id, "hidden", false);
+          return;
+        }
+        learningSession.current = data;
+      })
+      .catch(() => undefined);
 
     const markActivity = () => {
       lastActivity.current = Date.now();
@@ -164,6 +177,20 @@ export default function AcademyLayout({ workspace = "student" }) {
     <div className="flex min-h-screen flex-col bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
       <header className="border-b border-slate-200 bg-white/95 dark:border-slate-800 dark:bg-slate-950/95">
         <div className="mx-auto flex min-h-20 max-w-7xl items-center gap-2 px-4 py-3 sm:gap-4 sm:px-6">
+          <button
+            type="button"
+            className="grid h-10 w-10 shrink-0 place-items-center rounded-lg border border-slate-200 text-slate-700 hover:border-blue-400 hover:text-blue-600 lg:hidden dark:border-slate-700 dark:text-slate-200"
+            onClick={() => setNavigationOpen((open) => !open)}
+            aria-label={
+              navigationOpen
+                ? "Close Academy navigation"
+                : "Open Academy navigation"
+            }
+            aria-expanded={navigationOpen}
+            aria-controls="academy-navigation"
+          >
+            {navigationOpen ? <FiX aria-hidden="true" /> : <FiMenu aria-hidden="true" />}
+          </button>
           <Link
             to={workspace === "admin" ? "/academy/admin" : "/academy/dashboard"}
             className="flex min-w-0 shrink-0 items-center gap-3 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-950"
@@ -174,14 +201,15 @@ export default function AcademyLayout({ workspace = "student" }) {
             </span>
             <span className="min-w-0">
               <span className="block truncate text-sm font-bold tracking-wide">
-                {workspace === "admin" ? "ATE Academy Admin" : "ATE Academy"}
+                {workspace === "admin" ? "ATE Academy Admin" : "Muwatta Academy"}
               </span>
-              <span className="block max-w-[13rem] truncate text-xs text-slate-500 dark:text-slate-400">
-                Software, embedded, and AI/ML
+              <span className="hidden max-w-[13rem] truncate text-xs text-slate-500 sm:block dark:text-slate-400">
+                Learn, practice, and keep moving
               </span>
             </span>
           </Link>
           <div className="ml-auto flex min-w-0 items-center gap-2">
+            <OfflineStatus />
             <span className="hidden min-w-0 max-w-[12rem] text-right sm:block sm:max-w-[14rem]">
               <span className="hidden truncate text-sm text-slate-600 dark:text-slate-300 sm:block">
                 {displayName}
@@ -212,24 +240,13 @@ export default function AcademyLayout({ workspace = "student" }) {
                 Sign out
               </button>
             </div>
-            <button
-              type="button"
+            <Link
+              to={workspace === "admin" ? "/academy/admin" : "/academy/notifications"}
               className="grid h-10 w-10 shrink-0 place-items-center rounded-lg border border-slate-200 text-slate-700 hover:border-blue-400 hover:text-blue-600 lg:hidden dark:border-slate-700 dark:text-slate-200"
-              onClick={() => setNavigationOpen((open) => !open)}
-              aria-label={
-                navigationOpen
-                  ? "Close Academy navigation"
-                  : "Open Academy navigation"
-              }
-              aria-expanded={navigationOpen}
-              aria-controls="academy-navigation"
+              aria-label="Open notifications"
             >
-              {navigationOpen ? (
-                <FiX aria-hidden="true" />
-              ) : (
-                <FiMenu aria-hidden="true" />
-              )}
-            </button>
+              <span aria-hidden="true" className="text-sm font-bold">N</span>
+            </Link>
           </div>
         </div>
       </header>
@@ -241,7 +258,7 @@ export default function AcademyLayout({ workspace = "student" }) {
           onClick={() => setNavigationOpen(false)}
         />
       )}
-      <div className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-6 px-4 py-6 sm:px-6 lg:flex-row">
+      <div className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-6 px-4 py-6 pb-24 sm:px-6 lg:flex-row lg:pb-6">
         <nav
           id="academy-navigation"
           aria-label="Academy navigation"
@@ -299,6 +316,28 @@ export default function AcademyLayout({ workspace = "student" }) {
           <Outlet />
         </main>
       </div>
+      {isStudent && (
+        <nav
+          aria-label="Quick navigation"
+          className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-5 border-t border-slate-200 bg-white/95 px-1 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-1 backdrop-blur lg:hidden dark:border-slate-800 dark:bg-slate-950/95"
+        >
+          {bottomLinks.map((link) => (
+            <NavLink
+              key={link.to}
+              to={link.to}
+              className={({ isActive }) =>
+                `flex min-h-12 flex-col items-center justify-center gap-0.5 rounded-lg text-[0.68rem] font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 ${
+                  isActive
+                    ? "text-blue-600 dark:text-cyan-300"
+                    : "text-slate-500 dark:text-slate-400"
+                }`
+              }
+            >
+              <span>{link.label}</span>
+            </NavLink>
+          ))}
+        </nav>
+      )}
       <footer className="mt-auto border-t border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950">
         <div className="mx-auto grid max-w-7xl gap-6 px-4 py-8 sm:grid-cols-[1fr_auto] sm:items-end sm:px-6">
           <div>

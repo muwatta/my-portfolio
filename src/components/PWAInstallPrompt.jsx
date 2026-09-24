@@ -70,8 +70,8 @@ export function PWAInstallPrompt() {
       <div className="flex items-center gap-3">
         <FaDownload className="text-lg" />
         <div>
-          <p className="text-sm font-bold">Install App</p>
-          <p className="text-xs opacity-90">Fast access offline</p>
+           <p className="text-sm font-bold">Install Muwatta Academy</p>
+           <p className="text-xs opacity-90">Learn offline after downloading content</p>
         </div>
       </div>
       <div className="flex gap-2 flex-shrink-0">

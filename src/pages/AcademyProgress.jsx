@@ -2,14 +2,23 @@ import { useEffect, useState } from "react";
 import { getAcademyProgress } from "../lib/academy";
 import { useAcademyAuth } from "../hooks/useAcademyAuth";
 import ProgressBar from "../components/academy/ProgressBar";
+import { fetchWithOfflineFallback } from "../lib/academyOffline";
+import { OFFLINE_STORES } from "../lib/offlineStore";
 
 export default function AcademyProgress() {
   const { user } = useAcademyAuth();
   const [progress, setProgress] = useState(null);
   const [state, setState] = useState("loading");
+  const [offline, setOffline] = useState(false);
 
   useEffect(() => {
-    getAcademyProgress(user.id).then(({ data, error, configured }) => {
+    fetchWithOfflineFallback({
+      userId: user.id,
+      store: OFFLINE_STORES.progress,
+      id: "summary",
+      fetcher: () => getAcademyProgress(user.id),
+    }).then(({ data, error, configured, offline: isOffline }) => {
+      setOffline(Boolean(isOffline));
       setProgress(data);
       setState(error ? "error" : configured ? "ready" : "unconfigured");
     });
@@ -39,6 +48,11 @@ export default function AcademyProgress() {
         </p>
         <h1 className="mt-2 text-3xl font-bold">Progress</h1>
       </header>
+      {offline && (
+        <p className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">
+          This is the last progress snapshot saved on this device. Pending work will sync when you reconnect.
+        </p>
+      )}
       <section className="rounded-xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900">
         <ProgressBar
           value={progress?.completionPercent}

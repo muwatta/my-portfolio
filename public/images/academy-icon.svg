@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Muwatta Academy">
+  <rect width="512" height="512" rx="96" fill="#0f172a"/>
+  <path d="M112 360V152h72l72 112 72-112h72v208h-64V246l-80 116-80-116v114z" fill="#67e8f9"/>
+  <circle cx="256" cy="392" r="18" fill="#ffffff"/>
+</svg>
