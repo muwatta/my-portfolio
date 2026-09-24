@@ -703,8 +703,9 @@ join (
 ) as curriculum(week_number, title, slug, objectives, content)
   on curriculum.week_number = weeks.week_number
 where course.slug = 'cpp-embedded-robotics'
-on conflict (week_id, slug) do update set
+on conflict (week_id, lesson_number) do update set
   title = excluded.title,
+  slug = excluded.slug,
   objectives = excluded.objectives,
   content = excluded.content,
   published = false,
