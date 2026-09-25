@@ -66,7 +66,11 @@ const adminLinks = [
 export default function AcademyLayout({ workspace = "student" }) {
   const { profile, user, signOut, isAdmin, isTeacher, isStudent } =
     useAcademyAuth();
-  const { theme, toggle } = useTheme();
+  const { theme, applyTheme } = useTheme();
+  const toggleTheme = () => {
+    const next = theme === "dark" ? "light" : "dark";
+    applyTheme(next, "academy-theme");
+  };
   const { pathname } = useLocation();
   const [navigationOpen, setNavigationOpen] = useState(false);
   const learningSession = useRef(null);
@@ -74,6 +78,7 @@ export default function AcademyLayout({ workspace = "student" }) {
   const lastHiddenSession = useRef(null);
   const lastActivity = useRef(Date.now());
   const routeRef = useRef(pathname);
+  const academyThemeApplied = useRef(false);
   routeRef.current = pathname;
   const displayName =
     profile?.display_name || user?.email?.split("@")[0] || "Student";
@@ -90,6 +95,14 @@ export default function AcademyLayout({ workspace = "student" }) {
   useEffect(() => {
     setNavigationOpen(false);
   }, [pathname]);
+
+  useEffect(() => {
+    if (academyThemeApplied.current) return;
+    academyThemeApplied.current = true;
+    const stored = localStorage.getItem("academy-theme");
+    const preferred = stored === "dark" || stored === "light" ? stored : "light";
+    if (preferred !== theme) applyTheme(preferred, "academy-theme");
+  }, [applyTheme, theme]);
 
   useEffect(() => {
     if (!isStudent) return undefined;
@@ -222,7 +235,7 @@ export default function AcademyLayout({ workspace = "student" }) {
               <button
                 type="button"
                 className="button-secondary grid min-h-9 min-w-9 place-items-center px-2 py-1.5"
-                onClick={toggle}
+                onClick={toggleTheme}
                 aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
                 title={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
               >
@@ -292,7 +305,7 @@ export default function AcademyLayout({ workspace = "student" }) {
               <button
                 type="button"
                 className="button-secondary grid min-h-9 min-w-9 place-items-center px-2 py-1.5"
-                onClick={toggle}
+                onClick={toggleTheme}
                 aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
                 title={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
               >

@@ -32,6 +32,7 @@ export default function AcademyAssignment() {
   const [sourceCode, setSourceCode] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [history, setHistory] = useState([]);
+  const [reloadToken, setReloadToken] = useState(0);
 
   useEffect(() => {
     let mounted = true;
@@ -77,7 +78,7 @@ export default function AcademyAssignment() {
     return () => {
       mounted = false;
     };
-  }, [id, user.id]);
+  }, [id, user.id, reloadToken]);
 
   useEffect(() => {
     if (!assignment || !sourceCode) return undefined;
@@ -214,12 +215,31 @@ export default function AcademyAssignment() {
     );
   if (state === "error" || !assignment)
     return (
-      <p
-        role="alert"
-        className="rounded-xl border border-red-300 bg-red-50 p-4 text-sm text-red-700"
-      >
-        This assignment is unavailable.
-      </p>
+      <div className="space-y-4">
+        <p
+          role="alert"
+          className="rounded-xl border border-red-300 bg-red-50 p-4 text-sm text-red-700"
+        >
+          This assignment is not available on your learning path yet. It may still
+          be a draft, or your course enrolment may not be active. Ask your
+          teacher to publish it, then try again.
+        </p>
+        <div className="flex flex-wrap gap-3">
+          <button
+            type="button"
+            className="button-primary"
+            onClick={() => {
+              setState("loading");
+              setReloadToken((value) => value + 1);
+            }}
+          >
+            Try again
+          </button>
+          <Link to="/academy/assignments" className="button-secondary inline-flex">
+            Back to assignments
+          </Link>
+        </div>
+      </div>
     );
   const attemptsRemaining = Math.max(0, assignment.retry_limit - attempts);
   return (

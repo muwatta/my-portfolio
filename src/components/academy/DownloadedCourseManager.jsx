@@ -39,39 +39,46 @@ export default function DownloadedCourseManager({ course, week }) {
     setStatus("downloading");
     setNotice("Preparing offline content...");
     try {
-      const [
-        lessonsResult,
-        exercisesResult,
-        assignmentsResult,
-        overviewResult,
-        materialsResult,
-      ] = await Promise.all([
+      const [lessonsOutcome, exercisesOutcome, assignmentsOutcome, overviewOutcome, materialsOutcome] =
+        await Promise.allSettled([
           getAcademyLessons(user.id),
           getAcademyExercises(user.id),
           getAcademyAssignments(user.id),
           getAcademyStudentOverview(user.id),
           getAcademyCourseMaterials(course.id),
         ]);
-      const resultError =
-        lessonsResult.error ||
-        exercisesResult.error ||
-        assignmentsResult.error ||
-        overviewResult.error ||
-        materialsResult.error;
-      if (resultError) throw resultError;
+      if (lessonsOutcome.status === "rejected" || lessonsOutcome.value?.error) {
+        throw (
+          lessonsOutcome.value?.error ??
+          new Error("Lessons could not be loaded. Check your connection and try again.")
+        );
+      }
+      const lessonsResult = lessonsOutcome.value;
+      const exercisesResult =
+        exercisesOutcome.status === "fulfilled" ? exercisesOutcome.value : { data: [] };
+      const assignmentsResult =
+        assignmentsOutcome.status === "fulfilled" ? assignmentsOutcome.value : { data: [] };
+      const overviewResult =
+        overviewOutcome.status === "fulfilled" ? overviewOutcome.value : { data: null };
+      const materialsResult =
+        materialsOutcome.status === "fulfilled" ? materialsOutcome.value : { data: [] };
       const lessons = week
         ? (lessonsResult.data ?? []).filter(
             (lesson) => lesson.academy_weeks?.week_number === week.week_number,
           )
         : lessonsResult.data ?? [];
-      const assignmentDetails = await Promise.all(
+      const assignmentDetails = await Promise.allSettled(
         (assignmentsResult.data ?? []).map((assignment) =>
           getAcademyAssignment(assignment.id),
         ),
       );
-      const assignmentError = assignmentDetails.find((result) => result.error);
-      if (assignmentError?.error) throw assignmentError.error;
-      const assignments = assignmentDetails.map((result) => result.data).filter(Boolean);
+      const assignments = assignmentDetails
+        .map((outcome, index) =>
+          outcome.status === "fulfilled" && outcome.value?.data
+            ? outcome.value.data
+            : assignmentsResult.data[index],
+        )
+        .filter(Boolean);
       const payload = {
         course,
         week: week ?? null,
@@ -96,7 +103,7 @@ export default function DownloadedCourseManager({ course, week }) {
         cacheAcademySnapshot(userIdForDownload, OFFLINE_STORES.progress, "overview", overviewResult.data ?? null),
         cacheAcademySnapshot(userIdForDownload, OFFLINE_STORES.lessons, "list:lessons", lessonsResult.data ?? []),
         cacheAcademySnapshot(userIdForDownload, OFFLINE_STORES.exercises, "list:exercises", exercisesResult.data ?? []),
-        cacheAcademySnapshot(userIdForDownload, OFFLINE_STORES.assignments, "list:assignments", assignmentsResult.data ?? []),
+        cacheAcademySnapshot(userIdForDownload, OFFLINE_STORES.assignments, "list:assignments", assignments),
         cacheAcademySnapshot(userIdForDownload, OFFLINE_STORES.materials, "list:materials", materialsResult.data ?? []),
         ...payload.lessons.map((lesson) =>
           cacheAcademySnapshot(userIdForDownload, OFFLINE_STORES.lessons, lesson.id, lesson),
@@ -118,7 +125,10 @@ export default function DownloadedCourseManager({ course, week }) {
       setNotice("Available offline on this device.");
     } catch (error) {
       setStatus("error");
-      setNotice(error?.message || "Download could not be completed.");
+      setNotice(
+        error?.message ||
+          "This course could not be downloaded. Check your connection and try again.",
+      );
     }
   }
 

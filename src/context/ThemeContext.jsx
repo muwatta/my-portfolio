@@ -3,8 +3,10 @@ import { ThemeContext } from "./ThemeContextValue";
 
 export const ThemeProvider = ({ children }) => {
   const [theme, setTheme] = useState(
-    () =>
-      localStorage.getItem("theme") || "dark",
+    () => {
+      const stored = localStorage.getItem("theme");
+      return stored === "dark" || stored === "light" ? stored : "dark";
+    },
   );
 
   useEffect(() => {
@@ -19,8 +21,14 @@ export const ThemeProvider = ({ children }) => {
     setTheme((current) => (current === "dark" ? "light" : "dark"));
   };
 
+  const applyTheme = (nextTheme, storageKey = "theme") => {
+    const value = nextTheme === "dark" ? "dark" : "light";
+    setTheme(value);
+    localStorage.setItem(storageKey, value);
+  };
+
   return (
-    <ThemeContext.Provider value={{ theme, toggle }}>
+    <ThemeContext.Provider value={{ theme, toggle, applyTheme }}>
       {children}
     </ThemeContext.Provider>
   );

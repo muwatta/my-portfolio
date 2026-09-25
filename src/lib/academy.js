@@ -65,6 +65,22 @@ export async function getActiveCourseForStudent(studentId) {
         .eq("id", profileData.current_course_id)
         .maybeSingle();
 
+      if (courseData) {
+        const { data: enrollment } = await supabase
+          .from("academy_enrollments")
+          .select("id")
+          .eq("student_id", studentId)
+          .eq("course_id", courseData.id)
+          .eq("status", "active")
+          .maybeSingle();
+        if (!enrollment) {
+          await supabase.rpc("academy_select_course", {
+            target_student_id: studentId,
+            target_course_id: courseData.id,
+          });
+        }
+      }
+
       return courseData ?? null;
     }
 
@@ -1278,7 +1294,7 @@ export async function getAcademyAssignments(studentId) {
       .select(
         "id, course_id, lesson_id, title, due_at, points, retry_limit, published, created_at",
       )
-      .eq("published", true)
+      .eq("is_draft", false)
       .eq("course_id", activeCourse.id)
       .order("due_at", { ascending: true, nullsFirst: false });
     return { data: data ?? [], error, configured: true };
@@ -1338,10 +1354,10 @@ export async function getAcademyAssignment(id) {
   const { data, error } = await supabase
     .from("academy_assignments")
     .select(
-      "id, course_id, lesson_id, title, instructions, due_at, points, allowed_submission_types, starter_code, hints, retry_limit, published, created_at",
+      "id, course_id, lesson_id, title, instructions, due_at, points, allowed_submission_types, starter_code, hints, retry_limit, published, is_draft, created_at",
     )
     .eq("id", id)
-    .eq("published", true)
+    .eq("is_draft", false)
     .maybeSingle();
   return { data, error, configured: true };
 }
