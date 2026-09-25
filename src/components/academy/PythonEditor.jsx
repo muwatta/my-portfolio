@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 
 const MAX_SOURCE_LENGTH = 100000;
-const EXECUTION_TIMEOUT = 5000;
+const EXECUTION_TIMEOUT = 15000;
+const RUNTIME_LOAD_TIMEOUT = 180000;
 let sharedWorker;
 let activeJob;
 let jobQueue = [];
@@ -33,8 +34,20 @@ function getWorker() {
   sharedWorker.onmessage = (event) => {
     const job = activeJob;
     if (!job || event.data?.id !== job.id) return;
-    if (event.data.type === "loading") job.onLoading?.(true);
-    if (event.data.type === "ready") job.onLoading?.(false);
+    if (event.data.type === "loading") {
+      job.loading = true;
+      job.onLoading?.(true);
+    }
+    if (event.data.type === "ready") {
+      job.loading = false;
+      window.clearTimeout(job.timeout);
+      job.timeout = window.setTimeout(() => {
+        rejectJobs(
+          "Execution stopped. Your program took too long to finish. Check for infinite loops or very large operations.",
+        );
+      }, EXECUTION_TIMEOUT);
+      job.onLoading?.(false);
+    }
     if (event.data.type === "result") {
       window.clearTimeout(job.timeout);
       activeJob = null;
@@ -57,11 +70,14 @@ function getWorker() {
 function dispatchJob() {
   if (!sharedWorker || activeJob || !jobQueue.length) return;
   activeJob = jobQueue.shift();
+  activeJob.loading = true;
   activeJob.timeout = window.setTimeout(() => {
     rejectJobs(
-      "Execution stopped. Your program took too long to finish. Check for infinite loops or very large operations.",
+      activeJob?.loading
+        ? "The Python runtime took too long to download. Check your connection and try again."
+        : "Execution stopped. Your program took too long to finish. Check for infinite loops or very large operations.",
     );
-  }, EXECUTION_TIMEOUT);
+  }, RUNTIME_LOAD_TIMEOUT);
   sharedWorker.postMessage({
     type: "run",
     id: activeJob.id,
