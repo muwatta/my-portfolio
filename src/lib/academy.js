@@ -696,15 +696,18 @@ export async function getAcademyAdminPractice() {
       .from("academy_lessons")
       .select("id, title, slug, lesson_number, academy_weeks!inner(course_id)")
       .order("lesson_number"),
-    supabase
-      .from("academy_exercises")
-      .select(
-        "id, lesson_id, title, instructions, starter_code, difficulty, expected_concepts, hints, explanation, tests, solution_code, published, academy_lessons!inner(id, title)",
-      )
-      .order("title"),
+    supabase.rpc("academy_staff_exercise_list"),
   ]);
   return {
-    data: { lessons: lessons  ??  [], exercises: exercises  ??  [] },
+    data: {
+      lessons: lessons ?? [],
+      exercises: (exercises ?? []).map((exercise) => ({
+        ...exercise,
+        academy_lessons: exercise.lesson_id
+          ? { id: exercise.lesson_id, title: exercise.lesson_title }
+          : null,
+      })),
+    },
     error: lessonError || exerciseError,
     configured: true,
   };

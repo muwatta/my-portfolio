@@ -178,7 +178,7 @@ export default function AcademyAdminLevels() {
             <div>
               <p className="font-bold">{level.name}</p>
               <p className="text-sm text-slate-500">
-                {level.slug} � Order {level.sort_order}
+                {level.slug} · Order {level.sort_order}
               </p>
             </div>
             <div className="flex flex-wrap items-center gap-3">

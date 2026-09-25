@@ -267,7 +267,7 @@ export default function AcademyAdminPractice() {
             <div>
               <p className="font-bold">{exercise.title}</p>
               <p className="text-sm text-slate-500">
-                {exercise.academy_lessons?.title || "Unassigned lesson"} � {exercise.difficulty}
+                {exercise.academy_lessons?.title || "Unassigned lesson"} · {exercise.difficulty}
               </p>
             </div>
             <span className="text-sm font-semibold uppercase tracking-wide text-cyan-700 dark:text-cyan-300">
