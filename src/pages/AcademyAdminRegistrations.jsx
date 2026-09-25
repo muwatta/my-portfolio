@@ -42,7 +42,10 @@ export default function AcademyAdminRegistrations() {
     setRows(registrationResult.data ?? []);
     setStudents(studentResult.data?.students ?? []);
     setError(
-      [registrationResult.error, studentResult.error].filter(Boolean)[0] ?? "",
+      friendlyError(
+        [registrationResult.error, studentResult.error].filter(Boolean)[0],
+        "Registration numbers could not be loaded.",
+      ),
     );
     setLoading(false);
   }, [search, status]);
