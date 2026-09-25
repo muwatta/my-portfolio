@@ -49,6 +49,7 @@ export default function AcademyAdminStudents() {
     if (!error) await load();
   }
   const students = data.students.filter((student) => {
+    if (!student) return false;
     const searchText = `${student.display_name || ""} ${student.academy_registration_codes?.registration_number || ""} ${student.academy_schools?.name || ""} ${student.academy_schools?.code || ""}`;
     return (
       searchText.toLowerCase().includes(search.toLowerCase()) &&
@@ -59,10 +60,11 @@ export default function AcademyAdminStudents() {
   });
   const states = ["Plateau", "Kwara", "Lagos", "Abuja", "Other"];
   const schools = data.students
-    .map((student) => student.academy_schools)
+    .map((student) => student?.academy_schools)
+    .filter(Boolean)
     .filter(
       (school, index, all) =>
-        school && all.findIndex((item) => item.id === school.id) === index,
+        all.findIndex((item) => item.id === school.id) === index,
     );
   const levels = data.levels;
   return (

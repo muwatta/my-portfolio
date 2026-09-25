@@ -71,6 +71,22 @@ export function AcademyAuthProvider({ children }) {
         }
       })
       .catch(() => undefined);
+    const hydrateProfile = async (profileData) => {
+      const base = profileData ?? {};
+      if (base.academy_registration_codes?.registration_number) return base;
+      try {
+        const { data: claimed } = await supabase.rpc(
+          "academy_claim_registration_from_metadata",
+        );
+        if (!claimed) return base;
+        return {
+          ...base,
+          academy_registration_codes: { registration_number: claimed, status: "claimed" },
+        };
+      } catch {
+        return base;
+      }
+    };
     Promise.all([
       supabase
         .from("academy_profiles")
@@ -81,10 +97,12 @@ export function AcademyAuthProvider({ children }) {
         .maybeSingle(),
       supabase.rpc("academy_is_admin"),
     ])
-      .then(([{ data, error: profileError }, { data: isAdmin }]) => {
+      .then(async ([{ data, error: profileError }, { data: isAdmin }]) => {
+        const resolved = await hydrateProfile(data);
         if (cancelled) return;
-        setProfile(data ?? cachedProfile ?? null);
-        if (data) void putOfflineRecord(OFFLINE_STORES.profile, session.user.id, "profile", data);
+        setProfile(resolved ?? cachedProfile ?? null);
+        if (resolved)
+          void putOfflineRecord(OFFLINE_STORES.profile, session.user.id, "profile", resolved);
         setAdminStatus(
           Boolean(isAdmin),
         );
