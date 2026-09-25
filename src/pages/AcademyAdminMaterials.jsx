@@ -212,7 +212,7 @@ export default function AcademyAdminMaterials() {
             <div>
               <p className="font-bold">{material.title}</p>
               <p className="text-sm text-slate-500">
-                {(material.academy_courses?.title || "No course")} � {(material.academy_lessons?.title || "No lesson")}
+                {(material.academy_courses?.title || "No course")} · {(material.academy_lessons?.title || "No lesson")}
               </p>
             </div>
             <div className="flex flex-wrap items-center gap-3">
