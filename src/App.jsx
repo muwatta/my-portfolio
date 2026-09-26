@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect } from "react";
-import { Routes, Route, useLocation } from "react-router-dom";
+import { Navigate, Routes, Route, useLocation } from "react-router-dom";
 import { HelmetProvider } from "react-helmet-async";
 import { MotionConfig } from "framer-motion";
 import { ThemeProvider } from "./context/ThemeContext";
@@ -269,7 +269,7 @@ function AppShell() {
                             />
                             <Route
                               path="/academy/achievements"
-                              element={<AcademyLeaderboard />}
+                              element={<Navigate to="/academy/progress" replace />}
                             />
                             <Route
                               path="/academy/materials"

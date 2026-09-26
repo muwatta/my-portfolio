@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { getAcademyProgress } from "../lib/academy";
+import { Link } from "react-router-dom";
+import { getAcademyProgress, getAcademyStudentOverview } from "../lib/academy";
 import { useAcademyAuth } from "../hooks/useAcademyAuth";
 import ProgressBar from "../components/academy/ProgressBar";
 import { fetchWithOfflineFallback } from "../lib/academyOffline";
@@ -10,6 +11,11 @@ export default function AcademyProgress() {
   const [progress, setProgress] = useState(null);
   const [state, setState] = useState("loading");
   const [offline, setOffline] = useState(false);
+  const [overview, setOverview] = useState(null);
+
+  useEffect(() => {
+    getAcademyStudentOverview(user.id).then(({ data }) => setOverview(data));
+  }, [user.id]);
 
   useEffect(() => {
     fetchWithOfflineFallback({
@@ -78,10 +84,51 @@ export default function AcademyProgress() {
         ))}
       </section>
       <section className="rounded-xl border border-slate-200 p-6 dark:border-slate-800">
-        <h2 className="font-bold">Project milestones</h2>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h2 className="font-bold">Project milestones</h2>
+          <Link
+            to="/academy/projects"
+            className="text-sm font-semibold text-blue-600 hover:text-blue-700"
+          >
+            Open projects
+          </Link>
+        </div>
         <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
-          No project milestones completed yet.
+          Track the milestones you have finished in your current project.
         </p>
+      </section>
+      <section className="rounded-xl border border-slate-200 p-6 dark:border-slate-800">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h2 className="font-bold">Achievements</h2>
+          <Link
+            to="/academy/leaderboard"
+            className="text-sm font-semibold text-blue-600 hover:text-blue-700"
+          >
+            See leaderboard
+          </Link>
+        </div>
+        {overview?.badges?.length ? (
+          <ul className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {overview.badges.map((badge, index) => (
+              <li
+                key={`${badge.awarded_at}-${index}`}
+                className="rounded-xl border border-cyan-200 bg-cyan-50 p-4 dark:border-cyan-900 dark:bg-cyan-950/30"
+              >
+                <p className="font-semibold">{badge.academy_badges?.name}</p>
+                {badge.academy_badges?.description && (
+                  <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
+                    {badge.academy_badges.description}
+                  </p>
+                )}
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
+            No achievements yet. Complete lessons and practice to earn your
+            first badge.
+          </p>
+        )}
       </section>
     </div>
   );

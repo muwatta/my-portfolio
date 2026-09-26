@@ -10,18 +10,11 @@ import {
 } from "../../lib/academy";
 
 const STUDENT_LINKS = [
-  { label: "Dashboard", to: "/academy/dashboard" },
-  { label: "Courses", to: "/academy/courses" },
-  { label: "Lessons", to: "/academy/lessons" },
+  { label: "Home", to: "/academy/dashboard" },
+  { label: "Learn", to: "/academy/lessons" },
   { label: "Practice", to: "/academy/practice" },
-  { label: "Assignments", to: "/academy/assignments" },
-  { label: "Projects", to: "/academy/projects" },
+  { label: "My work", to: "/academy/assignments" },
   { label: "Progress", to: "/academy/progress" },
-  { label: "Leaderboard", to: "/academy/leaderboard" },
-  { label: "Achievements", to: "/academy/achievements" },
-  { label: "Materials", to: "/academy/materials" },
-  { label: "Notifications", to: "/academy/notifications" },
-  { label: "Live classroom", to: "/academy/live" },
   { label: "Profile", to: "/academy/profile" },
 ];
 
