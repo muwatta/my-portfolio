@@ -1051,6 +1051,18 @@ export async function getAcademyRegistrationCodes(searchText = "", status = "") 
     search_text: searchText.trim() || null,
     status_filter: status || null,
   });
+  if (error) {
+    const message = String(error.message ?? "");
+    if (/administrator/i.test(message)) {
+      return {
+        data: [],
+        error: new Error(
+          "Your account is not registered as an Academy administrator, so registration numbers cannot be shown. Ask the Academy owner to add your user ID to the administrators list.",
+        ),
+        configured: true,
+      };
+    }
+  }
   return { data: data ?? [], error, configured: true };
 }
 
@@ -1394,10 +1406,23 @@ export async function getAcademyTeacherSubmissions() {
   const { data, error } = await supabase
     .from("academy_submissions")
     .select(
-      "id, assignment_id, student_id, attempt_number, status, grading_error, original_filename, submitted_at, source_code, academy_assignments(title, points), academy_profiles!student_id(display_name), academy_submission_results(objective_score, objective_status, final_score, passed_tests, failed_tests, tests_total, ai_feedback_status, ai_feedback, teacher_feedback)",
+      "id, assignment_id, student_id, attempt_number, status, grading_error, original_filename, submitted_at, source_code, academy_assignments(title, points), academy_submission_results(objective_score, objective_status, final_score, passed_tests, failed_tests, tests_total, ai_feedback_status, ai_feedback, rubric_feedback, teacher_feedback)",
     )
     .order("submitted_at", { ascending: false });
-  return { data: data  ??  [], error, configured: true };
+  const rows = data ?? [];
+  const names = await getAcademyProfileNames(
+    rows.map((row) => row.student_id),
+  );
+  return {
+    data: rows.map((row) => ({
+      ...row,
+      academy_profiles: names.has(row.student_id)
+        ? { display_name: names.get(row.student_id) }
+        : null,
+    })),
+    error,
+    configured: true,
+  };
 }
 
 export async function getAcademyTeacherAssignments() {
@@ -1405,10 +1430,20 @@ export async function getAcademyTeacherAssignments() {
   const { data, error } = await supabase
     .from("academy_assignments")
     .select(
-      "id, course_id, lesson_id, title, instructions, due_at, points, retry_limit, published, is_draft, ai_feedback_enabled, academy_courses(title)",
+      "id, course_id, lesson_id, title, instructions, due_at, points, retry_limit, published, is_draft, ai_feedback_enabled, academy_courses!academy_assignments_course_id_fkey(title)",
     )
     .order("created_at", { ascending: false });
   return { data: data  ??  [], error, configured: true };
+}
+
+async function getAcademyProfileNames(userIds) {
+  const ids = [...new Set((userIds ?? []).filter(Boolean))];
+  if (!ids.length || !supabase) return new Map();
+  const { data } = await supabase
+    .from("academy_profiles")
+    .select("id, display_name")
+    .in("id", ids);
+  return new Map((data ?? []).map((profile) => [profile.id, profile.display_name]));
 }
 
 export async function getAcademyTeacherClasses() {
@@ -1416,10 +1451,28 @@ export async function getAcademyTeacherClasses() {
   const { data, error } = await supabase
     .from("academy_classes")
     .select(
-      "id, name, description, course_id, academy_courses(title), academy_class_members(student_id, status, academy_profiles(display_name))",
+      "id, name, description, course_id, academy_courses(title), academy_class_members(student_id, status)",
     )
     .order("name");
-  return { data: data  ??  [], error, configured: true };
+  const rows = data ?? [];
+  const names = await getAcademyProfileNames(
+    rows.flatMap((row) =>
+      (row.academy_class_members ?? []).map((member) => member.student_id),
+    ),
+  );
+  return {
+    data: rows.map((row) => ({
+      ...row,
+      academy_class_members: (row.academy_class_members ?? []).map((member) => ({
+        ...member,
+        academy_profiles: names.has(member.student_id)
+          ? { display_name: names.get(member.student_id) }
+          : null,
+      })),
+    })),
+    error,
+    configured: true,
+  };
 }
 
 export async function saveAcademyClass(classroom) {
