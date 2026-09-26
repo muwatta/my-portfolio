@@ -62,6 +62,36 @@ describe("useAutoRefresh", () => {
     expect(load.mock.calls.length).toBe(initial + 1);
   });
 
+  it("skips a background poll while the user is typing in a field", () => {
+    const load = vi.fn();
+    render(<Harness load={load} />);
+    const initial = load.mock.calls.length;
+
+    const input = document.createElement("input");
+    document.body.appendChild(input);
+    input.focus();
+
+    act(() => {
+      vi.advanceTimersByTime(3000);
+    });
+    expect(load).toHaveBeenCalledTimes(initial);
+
+    input.remove();
+  });
+
+  it("still runs the initial load even while a field has focus", () => {
+    const load = vi.fn();
+    const input = document.createElement("input");
+    document.body.appendChild(input);
+    input.focus();
+
+    render(<Harness load={load} />);
+    expect(load).toHaveBeenCalledTimes(1);
+    expect(load).toHaveBeenCalledWith(false);
+
+    input.remove();
+  });
+
   it("does not poll while offline and resumes on reconnect", () => {
     const load = vi.fn();
     render(<Harness load={load} />);

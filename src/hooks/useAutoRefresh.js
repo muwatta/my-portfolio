@@ -2,6 +2,13 @@ import { useEffect, useRef } from "react";
 
 export const DEFAULT_REFRESH_INTERVAL = 60000;
 
+const EDITABLE = new Set(["INPUT", "TEXTAREA", "SELECT"]);
+
+function isUserEditing() {
+  const active = document.activeElement;
+  return Boolean(active && EDITABLE.has(active.tagName));
+}
+
 export function useAutoRefresh(load, interval = DEFAULT_REFRESH_INTERVAL) {
   const loadRef = useRef(load);
   loadRef.current = load;
@@ -14,6 +21,7 @@ export function useAutoRefresh(load, interval = DEFAULT_REFRESH_INTERVAL) {
       if (stopped) return;
       if (document.visibilityState === "hidden") return;
       if (typeof navigator !== "undefined" && !navigator.onLine) return;
+      if (background && isUserEditing()) return;
       void loadRef.current(background);
     };
 
