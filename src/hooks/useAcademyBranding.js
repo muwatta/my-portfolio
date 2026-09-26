@@ -1,13 +1,29 @@
 import { useEffect } from "react";
 
 const PORTFOLICO_ICON = "/images/favicon-32x32.png";
+const ACADEMY_TITLE = "Algorise Tech Explorers";
+
 const ACADEMY_ICONS = [
-  { rel: "icon", type: "image/png", sizes: "32x32", href: "/images/ate-favicon-32.png" },
-  { rel: "icon", type: "image/png", sizes: "192x192", href: "/images/ate-icon-192.png" },
+  {
+    rel: "icon",
+    type: "image/png",
+    sizes: "32x32",
+    href: "/images/ate-favicon-32.png",
+  },
+  {
+    rel: "icon",
+    type: "image/png",
+    sizes: "192x192",
+    href: "/images/ate-icon-192.png",
+  },
   { rel: "apple-touch-icon", href: "/images/ate-icon-192.png" },
 ];
 
 const DESKTOP_ICON = { rel: "icon", type: "image/png", href: PORTFOLICO_ICON };
+
+const PORTFOLICO_TITLE =
+  document.querySelector("title")?.textContent?.trim() ||
+  "Muwatta | Abdullahi Musliudeen — Software Developer";
 
 const applyIcons = (definitions) => {
   const head = document.head;
@@ -29,11 +45,13 @@ const applyIcons = (definitions) => {
     head.appendChild(link);
   });
 
-  if (apple) apple.setAttribute("href", definitions.at(-1)?.href ?? PORTFOLICO_ICON);
+  if (apple)
+    apple.setAttribute("href", definitions.at(-1)?.href ?? PORTFOLICO_ICON);
 };
 
-export function useAcademyFavicon(isAcademyRoute) {
+export function useAcademyBranding(isAcademyRoute) {
   useEffect(() => {
     applyIcons(isAcademyRoute ? ACADEMY_ICONS : [DESKTOP_ICON]);
+    document.title = isAcademyRoute ? ACADEMY_TITLE : PORTFOLICO_TITLE;
   }, [isAcademyRoute]);
 }
