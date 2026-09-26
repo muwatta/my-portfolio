@@ -207,7 +207,7 @@ export async function getAcademyNotifications(studentId) {
   return withAcademyCache(`notifications:${studentId}`, 15 * 1000, async () => {
     const { data, error } = await supabase
       .from("academy_notifications")
-      .select("id, type, title, body, read_at, created_at")
+      .select("id, type, title, message, read_at, created_at")
       .eq("user_id", studentId)
       .order("created_at", { ascending: false })
       .limit(20);

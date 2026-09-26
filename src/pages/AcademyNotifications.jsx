@@ -77,7 +77,7 @@ export default function AcademyNotifications() {
               <div>
                 <h2 className="font-bold">{item.title}</h2>
                 <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
-                  {item.body}
+                  {item.message}
                 </p>
               </div>
               {!item.read_at && (
