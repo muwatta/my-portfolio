@@ -76,14 +76,14 @@ export default function AcademyAdminDashboard() {
             ))}
           </div>
           <div className="flex flex-wrap gap-3">
-            <Link className="button-primary" to="/academy/admin/students">
+            <Link className="button-primary" to="/academy/admin/content">
+              Course content
+            </Link>
+            <Link className="button-secondary" to="/academy/admin/students">
               Manage students
             </Link>
-            <Link className="button-secondary" to="/academy/teacher/courses">
-              Manage courses
-            </Link>
-            <Link className="button-secondary" to="/academy/teacher/lessons">
-              Manage lessons
+            <Link className="button-secondary" to="/academy/admin/submissions">
+              Review submissions
             </Link>
             <Link className="button-secondary" to="/academy/admin/access">
               Manage access

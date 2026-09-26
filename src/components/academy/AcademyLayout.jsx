@@ -46,19 +46,11 @@ const TEACHER_LINKS = [
 
 const ADMIN_LINKS = [
   { label: "Dashboard", to: "/academy/admin" },
+  { label: "Content", to: "/academy/admin/content" },
   { label: "Students", to: "/academy/admin/students" },
   { label: "Registrations", to: "/academy/admin/registrations" },
-  { label: "Levels", to: "/academy/admin/levels" },
-  { label: "Courses", to: "/academy/admin/courses" },
-  { label: "Lessons", to: "/academy/admin/lessons" },
-  { label: "Practice", to: "/academy/admin/practice" },
-  { label: "Assignments", to: "/academy/admin/assignments" },
-  { label: "Projects", to: "/academy/admin/projects" },
-  { label: "Schedule", to: "/academy/admin/schedule" },
+  { label: "Classes", to: "/academy/admin/schedule" },
   { label: "Submissions", to: "/academy/admin/submissions" },
-  { label: "Materials", to: "/academy/admin/materials" },
-  { label: "Live classroom", to: "/academy/admin/live" },
-  { label: "Leaderboard", to: "/academy/admin/leaderboard" },
   { label: "Analytics", to: "/academy/admin/analytics" },
   { label: "Settings", to: "/academy/admin/settings" },
 ];
@@ -148,7 +140,7 @@ function useSessionHeartbeat(isStudent, userId) {
   }, [isStudent, userId]);
 }
 
-export default function AcademyLayout({ workspace = "student" }) {
+export default function AcademyLayout({ workspace = "student", aboveOutlet = null }) {
   const { profile, user, signOut, isAdmin, isTeacher, isStudent } =
     useAcademyAuth();
   const { theme, applyTheme } = useTheme();
@@ -332,6 +324,7 @@ export default function AcademyLayout({ workspace = "student" }) {
         </nav>
 
         <main className="min-w-0 flex-1">
+          {aboveOutlet}
           <Outlet />
         </main>
       </div>
