@@ -8,6 +8,22 @@ import DownloadedCourseManager from "../components/academy/DownloadedCourseManag
 import AcademyConnectionState from "../components/academy/AcademyConnectionState";
 import { useNetworkStatus } from "../hooks/useNetworkStatus";
 
+const LESSON_STATUS = {
+  completed: {
+    label: "Completed",
+    className: "text-emerald-600 dark:text-emerald-400",
+  },
+  "in-progress": {
+    label: "In progress",
+    className: "text-amber-600 dark:text-amber-400",
+  },
+  locked: { label: "Locked", className: "text-slate-400 dark:text-slate-500" },
+  default: {
+    label: "Available now",
+    className: "text-teal-600 dark:text-teal-400",
+  },
+};
+
 export default function AcademyLessons() {
   const [weeks, setWeeks] = useState([]);
   const [state, setState] = useState("loading");
@@ -56,37 +72,44 @@ export default function AcademyLessons() {
     });
   }, [user.id, reloadToken]);
 
-  const totalLessons = weeks.reduce((sum, week) => sum + week.lessons.length, 0);
+  const totalLessons = weeks.reduce(
+    (sum, week) => sum + week.lessons.length,
+    0,
+  );
 
   return (
     <div className="space-y-6">
       <header>
-        <p className="text-sm font-semibold uppercase tracking-[0.18em] text-blue-600">
-          Course map
-        </p>
-        <h1 className="mt-2 text-3xl font-bold">Lessons</h1>
+        <h1 className="text-3xl font-bold tracking-tight">Lessons</h1>
         <p className="mt-2 text-slate-600 dark:text-slate-300">
-           Work through your lessons week by week, from week 1 to the end of your
+          Work through your lessons week by week, from week 1 to the end of your
           course.
         </p>
       </header>
+
       {offline && (
-        <p className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">
+        <p className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-200">
           Offline learning mode. You are viewing lessons saved on this device.
         </p>
       )}
+
       {state === "loading" && (
-        <AcademyConnectionState loading title="" description="" showChallenge={false} />
+        <AcademyConnectionState
+          loading
+          title=""
+          description=""
+          showChallenge={false}
+        />
       )}
       {state === "unconfigured" && (
-        <div className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">
+        <div className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-200">
           Connect Supabase to load the seeded Academy lessons.
         </div>
       )}
       {state === "error" && (
         <div
           role="alert"
-          className="rounded-xl border border-red-300 bg-red-50 p-4 text-sm text-red-700"
+          className="rounded-xl border border-red-300 bg-red-50 p-4 text-sm text-red-700 dark:border-red-800 dark:bg-red-950/40 dark:text-red-300"
         >
           Lessons could not be loaded. Please try again.
         </div>
@@ -112,57 +135,50 @@ export default function AcademyLessons() {
           }
         />
       )}
+
       {state === "ready" &&
         weeks.map((week) => (
           <section
             key={week.week_number}
-            className="rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900"
+            className="rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900"
           >
             <header className="border-b border-slate-200 p-5 dark:border-slate-800">
-              <p className="text-xs font-semibold uppercase tracking-wider text-blue-600">
+              <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                 Week {week.week_number}
               </p>
               <h2 className="mt-1 text-xl font-bold">{week.week_title}</h2>
-             </header>
-             <div className="px-5 pt-4">
-               <DownloadedCourseManager
-                 course={week.lessons[0]?.academy_weeks?.academy_courses}
-                 week={week}
-               />
-             </div>
-             <div className="grid gap-4 p-5 sm:grid-cols-2">
-              {week.lessons.map((lesson) => (
-                <Link
-                  key={lesson.id}
-                  to={`/academy/lessons/${lesson.id}`}
-                  className="rounded-xl border border-slate-200 bg-slate-50 p-5 hover:border-blue-400 dark:border-slate-800 dark:bg-slate-950"
-                >
-                  <p className="text-xs font-semibold uppercase tracking-wider text-blue-600">
-                    Lesson {lesson.lesson_number}
-                  </p>
-                  <h3 className="mt-2 text-lg font-bold">{lesson.title}</h3>
-                  <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
-                    {lesson.objectives?.join(" · ")}
-                  </p>
-                  <p
-                    className={`mt-4 text-xs font-semibold ${
-                      lesson.status === "completed"
-                        ? "text-emerald-600"
-                        : lesson.status === "locked"
-                          ? "text-slate-400"
-                          : "text-blue-600"
-                    }`}
+            </header>
+            <div className="px-5 pt-4">
+              <DownloadedCourseManager
+                course={week.lessons[0]?.academy_weeks?.academy_courses}
+                week={week}
+              />
+            </div>
+            <div className="grid gap-4 p-5 sm:grid-cols-2">
+              {week.lessons.map((lesson) => {
+                const status =
+                  LESSON_STATUS[lesson.status] ?? LESSON_STATUS.default;
+                return (
+                  <Link
+                    key={lesson.id}
+                    to={`/academy/lessons/${lesson.id}`}
+                    className="rounded-xl border border-slate-200 bg-slate-50 p-5 transition-colors hover:border-amber-400 dark:border-slate-800 dark:bg-slate-950 dark:hover:border-amber-500"
                   >
-                    {lesson.status === "completed"
-                      ? "Completed"
-                      : lesson.status === "in-progress"
-                        ? "In progress"
-                        : lesson.status === "locked"
-                          ? "Locked"
-                          : "Available now"}
-                  </p>
-                </Link>
-              ))}
+                    <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                      Lesson {lesson.lesson_number}
+                    </p>
+                    <h3 className="mt-2 text-lg font-bold">{lesson.title}</h3>
+                    <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
+                      {lesson.objectives?.join(" · ")}
+                    </p>
+                    <p
+                      className={`mt-4 text-xs font-semibold ${status.className}`}
+                    >
+                      {status.label}
+                    </p>
+                  </Link>
+                );
+              })}
             </div>
           </section>
         ))}

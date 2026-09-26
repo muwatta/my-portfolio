@@ -30,10 +30,15 @@ export default function AcademyProgress() {
     });
   }, [user.id]);
 
-  if (state === "loading") return <p>Loading your progress...</p>;
+  if (state === "loading")
+    return (
+      <p className="text-sm text-slate-500 dark:text-slate-400">
+        Loading your progress...
+      </p>
+    );
   if (state === "unconfigured")
     return (
-      <p className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">
+      <p className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-200">
         Connect Supabase to load progress.
       </p>
     );
@@ -41,30 +46,32 @@ export default function AcademyProgress() {
     return (
       <p
         role="alert"
-        className="rounded-xl border border-red-300 bg-red-50 p-4 text-sm text-red-700"
+        className="rounded-xl border border-red-300 bg-red-50 p-4 text-sm text-red-700 dark:border-red-800 dark:bg-red-950/40 dark:text-red-300"
       >
         Progress could not be loaded.
       </p>
     );
+
   return (
     <div className="space-y-6">
       <header>
-        <p className="text-sm font-semibold uppercase tracking-[0.18em] text-blue-600">
-          Your learning record
-        </p>
-        <h1 className="mt-2 text-3xl font-bold">Progress</h1>
+        <h1 className="text-3xl font-bold tracking-tight">Progress</h1>
       </header>
+
       {offline && (
-        <p className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">
-          This is the last progress snapshot saved on this device. Pending work will sync when you reconnect.
+        <p className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-200">
+          This is the last progress snapshot saved on this device. Pending work
+          will sync when you reconnect.
         </p>
       )}
-      <section className="rounded-xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900">
+
+      <section className="rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900">
         <ProgressBar
           value={progress?.completionPercent}
           label="Course completion"
         />
       </section>
+
       <section className="grid gap-4 sm:grid-cols-3">
         {[
           {
@@ -76,19 +83,22 @@ export default function AcademyProgress() {
         ].map((item) => (
           <div
             key={item.label}
-            className="rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900"
+            className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900"
           >
-            <p className="text-sm text-slate-500">{item.label}</p>
+            <p className="text-sm text-slate-500 dark:text-slate-400">
+              {item.label}
+            </p>
             <p className="mt-2 text-2xl font-bold">{item.value}</p>
           </div>
         ))}
       </section>
-      <section className="rounded-xl border border-slate-200 p-6 dark:border-slate-800">
+
+      <section className="rounded-2xl border border-slate-200 p-6 dark:border-slate-800">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h2 className="font-bold">Project milestones</h2>
           <Link
             to="/academy/projects"
-            className="text-sm font-semibold text-blue-600 hover:text-blue-700"
+            className="text-sm font-semibold text-amber-600 hover:text-amber-700 dark:text-amber-400 dark:hover:text-amber-300"
           >
             Open projects
           </Link>
@@ -97,12 +107,13 @@ export default function AcademyProgress() {
           Track the milestones you have finished in your current project.
         </p>
       </section>
-      <section className="rounded-xl border border-slate-200 p-6 dark:border-slate-800">
+
+      <section className="rounded-2xl border border-slate-200 p-6 dark:border-slate-800">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h2 className="font-bold">Achievements</h2>
           <Link
             to="/academy/leaderboard"
-            className="text-sm font-semibold text-blue-600 hover:text-blue-700"
+            className="text-sm font-semibold text-amber-600 hover:text-amber-700 dark:text-amber-400 dark:hover:text-amber-300"
           >
             See leaderboard
           </Link>
@@ -112,7 +123,7 @@ export default function AcademyProgress() {
             {overview.badges.map((badge, index) => (
               <li
                 key={`${badge.awarded_at}-${index}`}
-                className="rounded-xl border border-cyan-200 bg-cyan-50 p-4 dark:border-cyan-900 dark:bg-cyan-950/30"
+                className="rounded-xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-900 dark:bg-amber-950/30"
               >
                 <p className="font-semibold">{badge.academy_badges?.name}</p>
                 {badge.academy_badges?.description && (

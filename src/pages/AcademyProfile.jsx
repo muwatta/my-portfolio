@@ -97,17 +97,17 @@ export default function AcademyProfile() {
       </header>
 
       <section className="rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900">
-        <div className="flex items-center gap-4">
+        <div className="flex items-start gap-4">
           <div className="grid h-16 w-16 shrink-0 place-items-center rounded-full bg-amber-500 text-2xl font-bold text-slate-950">
             {(profile?.display_name || user?.email || "S")
               .charAt(0)
               .toUpperCase()}
           </div>
-          <div>
-            <h2 className="text-xl font-bold">
+          <div className="min-w-0 flex-1">
+            <h2 className="truncate text-xl font-bold">
               {profile?.display_name || "Student"}
             </h2>
-            <p className="text-sm text-slate-500 dark:text-slate-400">
+            <p className="break-all text-sm text-slate-500 dark:text-slate-400">
               {user?.email}
             </p>
           </div>

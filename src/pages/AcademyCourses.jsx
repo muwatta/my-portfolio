@@ -69,38 +69,40 @@ export default function AcademyCourses() {
   return (
     <div className="space-y-8">
       <header>
-        <p className="text-sm font-semibold uppercase tracking-[0.18em] text-cyan-600 dark:text-cyan-300">
-          Your curriculum
-        </p>
-        <h1 className="mt-2 text-3xl font-bold tracking-tight">Courses</h1>
+        <h1 className="text-3xl font-bold tracking-tight">Courses</h1>
         <p className="mt-2 max-w-2xl text-slate-600 dark:text-slate-300">
           Choose one learning path to focus on. Once you pick a course, it
           becomes your current path and the others are locked. Ask your teacher
           or admin to change it if needed.
         </p>
       </header>
+
       {offline && (
-        <p className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">
-          Offline learning mode. Your downloaded course choices are shown on this device.
+        <p className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-200">
+          Offline learning mode. Your downloaded course choices are shown on
+          this device.
         </p>
       )}
 
       {state === "loading" && (
-        <p className="text-sm text-slate-500">Loading published courses...</p>
+        <p className="text-sm text-slate-500 dark:text-slate-400">
+          Loading published courses...
+        </p>
       )}
       {state === "error" && (
-        <div className="rounded-xl border border-red-300 bg-red-50 p-4 text-sm text-red-700">
+        <div className="rounded-xl border border-red-300 bg-red-50 p-4 text-sm text-red-700 dark:border-red-800 dark:bg-red-950/40 dark:text-red-300">
           Courses could not be loaded. Please try again later.
         </div>
       )}
       {state === "ready" && courses.length === 0 && (
-        <div className="rounded-xl border border-dashed border-slate-300 p-8 text-center dark:border-slate-700">
+        <div className="rounded-2xl border border-dashed border-slate-300 p-8 text-center dark:border-slate-700">
           <h2 className="font-bold">Learning paths are on the way</h2>
           <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
             Your teacher is preparing learning paths. Check back soon.
           </p>
         </div>
       )}
+
       <div className="grid gap-4 md:grid-cols-2">
         {courses.map((course) => {
           const isActive = activeCourse?.id === course.id;
@@ -108,12 +110,12 @@ export default function AcademyCourses() {
           return (
             <article
               key={course.id}
-              className={`border-l-4 bg-white p-6 shadow-sm dark:bg-slate-900 ${
+              className={`rounded-2xl border border-l-4 bg-white p-6 shadow-sm dark:bg-slate-900 ${
                 isActive
-                  ? "border-emerald-400"
+                  ? "border-slate-200 border-l-emerald-400 dark:border-slate-800 dark:border-l-emerald-500"
                   : isLocked
-                    ? "border-slate-300 opacity-60 dark:border-slate-700"
-                    : "border-cyan-400"
+                    ? "border-slate-200 border-l-slate-300 opacity-60 dark:border-slate-800 dark:border-l-slate-700"
+                    : "border-slate-200 border-l-teal-400 dark:border-slate-800 dark:border-l-teal-500"
               }`}
             >
               <div className="flex flex-wrap gap-2 text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
@@ -140,7 +142,7 @@ export default function AcademyCourses() {
                   {course.duration_weeks} weeks
                 </span>
                 <Link
-                  className="font-semibold text-blue-600 hover:text-blue-700"
+                  className="font-semibold text-amber-600 hover:text-amber-700 dark:text-amber-400 dark:hover:text-amber-300"
                   to="/academy/lessons"
                 >
                   View lessons
@@ -148,14 +150,14 @@ export default function AcademyCourses() {
               </div>
               <button
                 type="button"
-                className="mt-4 w-full rounded-lg bg-cyan-400 px-4 py-2 text-sm font-bold text-slate-950 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-500 dark:disabled:bg-slate-800 dark:disabled:text-slate-500"
+                className="mt-4 w-full rounded-lg bg-amber-500 px-4 py-2 text-sm font-bold text-slate-950 transition-colors hover:bg-amber-400 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-500 disabled:hover:bg-slate-200 dark:disabled:bg-slate-800 dark:disabled:text-slate-500 dark:disabled:hover:bg-slate-800"
                 disabled={selecting === course.id || isActive || isLocked}
                 onClick={() => selectCourse(course.id)}
               >
                 {isActive
                   ? "This is your current path"
                   : isLocked
-                     ? "Locked. Contact your teacher"
+                    ? "Locked. Contact your teacher"
                     : selecting === course.id
                       ? "Selecting..."
                       : "Select this course"}
@@ -165,6 +167,7 @@ export default function AcademyCourses() {
           );
         })}
       </div>
+
       {notice && (
         <p role="status" className="text-sm text-slate-600 dark:text-slate-300">
           {notice}
