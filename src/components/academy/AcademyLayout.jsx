@@ -212,9 +212,11 @@ export default function AcademyLayout({
             className="flex min-w-0 shrink-0 items-center gap-3 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-950"
             aria-label="Academy"
           >
-            <div className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-amber-500 text-sm font-bold text-slate-950">
-              A
-            </div>
+            <img
+              src="/images/ate-logo.jpg"
+              alt=""
+              className="h-9 w-9 shrink-0 rounded-lg object-cover"
+            />
             <span className="min-w-0">
               <span className="block truncate text-sm font-bold tracking-wide">
                 {workspace === "admin" ? "ATE Academy Admin" : "ATE Academy"}

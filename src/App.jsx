@@ -1,5 +1,6 @@
 import { lazy, Suspense, useEffect } from "react";
 import { Navigate, Routes, Route, useLocation } from "react-router-dom";
+import { useAcademyFavicon } from "./hooks/useAcademyFavicon";
 import { HelmetProvider } from "react-helmet-async";
 import { MotionConfig } from "framer-motion";
 import { ThemeProvider } from "./context/ThemeContext";
@@ -431,6 +432,7 @@ function AppShell() {
 function App() {
   const { pathname } = useLocation();
   const isAcademyRoute = pathname.startsWith("/academy");
+  useAcademyFavicon(isAcademyRoute);
   const needsFirebaseAuth =
     pathname.startsWith("/admin") || pathname.startsWith("/courses");
   const app = <AppShell />;
