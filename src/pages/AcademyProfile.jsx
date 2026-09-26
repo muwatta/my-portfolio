@@ -25,6 +25,8 @@ export default function AcademyProfile() {
   const [storage, setStorage] = useState(null);
   const [downloads, setDownloads] = useState([]);
   const [storageMessage, setStorageMessage] = useState("");
+  const [clearing, setClearing] = useState(false);
+
   useEffect(() => {
     setForm({
       displayName: profile?.display_name || "",
@@ -45,7 +47,8 @@ export default function AcademyProfile() {
         records
           .filter(
             (record) =>
-              record.id.startsWith("download:") && record.data.status === "ready",
+              record.id.startsWith("download:") &&
+              record.data.status === "ready",
           )
           .map((record) => ({ id: record.id, ...record.data })),
       );
@@ -53,11 +56,23 @@ export default function AcademyProfile() {
   }, [user?.id]);
 
   async function clearDownloads() {
-    if (!user?.id) return;
-    await clearOfflineDownloads(user.id);
-    setStorageMessage("Downloaded learning content removed from this device.");
-    setStorage(await estimateOfflineStorage());
-    setDownloads([]);
+    if (!user?.id || downloads.length === 0) return;
+    const confirmed = window.confirm(
+      "Remove all downloaded course content from this device? You can download it again anytime.",
+    );
+    if (!confirmed) return;
+    setClearing(true);
+    setStorageMessage("");
+    try {
+      await clearOfflineDownloads(user.id);
+      setStorage(await estimateOfflineStorage());
+      setDownloads([]);
+      setStorageMessage(
+        "Downloaded learning content removed from this device.",
+      );
+    } finally {
+      setClearing(false);
+    }
   }
 
   async function save(event) {
@@ -74,17 +89,16 @@ export default function AcademyProfile() {
       setError(friendlyError(saveError, "Profile could not be updated."));
     else setMessage("Profile updated.");
   }
+
   return (
-    <div className="max-w-2xl space-y-8">
+    <div className="max-w-2xl space-y-6">
       <header>
-        <p className="text-sm font-semibold uppercase tracking-[0.18em] text-cyan-600 dark:text-cyan-300">
-          Your account
-        </p>
-        <h1 className="mt-2 text-3xl font-bold">Profile</h1>
+        <h1 className="text-3xl font-bold tracking-tight">Profile</h1>
       </header>
-      <section className="border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900">
+
+      <section className="rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900">
         <div className="flex items-center gap-4">
-          <div className="grid h-16 w-16 place-items-center rounded-full bg-cyan-500 text-2xl font-bold text-slate-950">
+          <div className="grid h-16 w-16 shrink-0 place-items-center rounded-full bg-amber-500 text-2xl font-bold text-slate-950">
             {(profile?.display_name || user?.email || "S")
               .charAt(0)
               .toUpperCase()}
@@ -93,9 +107,12 @@ export default function AcademyProfile() {
             <h2 className="text-xl font-bold">
               {profile?.display_name || "Student"}
             </h2>
-            <p className="text-sm text-slate-500">{user?.email}</p>
+            <p className="text-sm text-slate-500 dark:text-slate-400">
+              {user?.email}
+            </p>
           </div>
         </div>
+
         <form className="mt-8 space-y-4" onSubmit={save}>
           <label className="label">
             Full name
@@ -155,12 +172,15 @@ export default function AcademyProfile() {
             />
           </label>
           {error && (
-            <p role="alert" className="text-sm text-red-600">
+            <p role="alert" className="text-sm text-red-600 dark:text-red-400">
               {error}
             </p>
           )}
           {message && (
-            <p role="status" className="text-sm text-green-600">
+            <p
+              role="status"
+              className="text-sm text-emerald-600 dark:text-emerald-400"
+            >
               {message}
             </p>
           )}
@@ -168,42 +188,77 @@ export default function AcademyProfile() {
             Save profile
           </button>
         </form>
-        <dl className="mt-8 grid gap-5 sm:grid-cols-2">
+
+        <dl className="mt-8 grid gap-5 border-t border-slate-200 pt-6 sm:grid-cols-2 dark:border-slate-800">
           <div>
-            <dt className="text-sm text-slate-500">Role</dt>
+            <dt className="text-sm text-slate-500 dark:text-slate-400">Role</dt>
             <dd className="mt-1 font-semibold">{accessLabel}</dd>
           </div>
           <div>
-            <dt className="text-sm text-slate-500">Academy Registration No.</dt>
+            <dt className="text-sm text-slate-500 dark:text-slate-400">
+              Academy Registration No.
+            </dt>
             <dd className="mt-1 font-semibold tracking-[0.12em]">
-              {profile?.academy_registration_codes?.registration_number || "Not assigned"}
+              {profile?.academy_registration_codes?.registration_number ||
+                "Not assigned"}
             </dd>
           </div>
         </dl>
       </section>
-      <section className="border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900">
-        <h2 className="text-xl font-bold">Offline Storage</h2>
+
+      <section className="rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900">
+        <h2 className="text-xl font-bold">Offline storage</h2>
         <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
-          Downloaded course content is stored only on this device. Removing it does not remove server grades, submissions, or account data.
+          Downloaded course content is stored only on this device. Removing it
+          does not remove server grades, submissions, or account data.
         </p>
-        <p className="mt-3 text-sm text-slate-500">
-          Used space: {storage ? `${(storage.usage / (1024 * 1024)).toFixed(1)} MB` : "Calculating..."}
+        <p className="mt-3 text-sm text-slate-500 dark:text-slate-400">
+          Used space:{" "}
+          {storage
+            ? `${(storage.usage / (1024 * 1024)).toFixed(1)} MB`
+            : "Calculating..."}
         </p>
-        {downloads.length > 0 && (
-          <ul className="mt-3 space-y-2 text-sm text-slate-600 dark:text-slate-300">
+
+        {downloads.length > 0 ? (
+          <ul className="mt-3 divide-y divide-slate-200 text-sm text-slate-600 dark:divide-slate-800 dark:text-slate-300">
             {downloads.map((download) => (
-              <li key={download.id} className="flex justify-between gap-3">
-                <span>{download.scope === "week" ? "Downloaded week" : "Downloaded course"}</span>
-                <span>{(download.sizeBytes / (1024 * 1024)).toFixed(1)} MB</span>
+              <li key={download.id} className="flex justify-between gap-3 py-2">
+                <span>
+                  {download.scope === "week"
+                    ? "Downloaded week"
+                    : "Downloaded course"}
+                </span>
+                <span>
+                  {(download.sizeBytes / (1024 * 1024)).toFixed(1)} MB
+                </span>
               </li>
             ))}
           </ul>
+        ) : (
+          <p className="mt-3 text-sm text-slate-400 dark:text-slate-500">
+            No course content downloaded to this device yet.
+          </p>
         )}
-        {storageMessage && <p role="status" className="mt-3 text-sm text-cyan-700">{storageMessage}</p>}
-        <button type="button" className="button-secondary mt-4" onClick={clearDownloads}>
-          Manage Downloads
+
+        {storageMessage && (
+          <p
+            role="status"
+            className="mt-3 text-sm text-teal-700 dark:text-teal-300"
+          >
+            {storageMessage}
+          </p>
+        )}
+
+        <button
+          type="button"
+          className="button-secondary mt-4 disabled:cursor-not-allowed disabled:opacity-50"
+          onClick={clearDownloads}
+          disabled={downloads.length === 0 || clearing}
+        >
+          {clearing ? "Removing..." : "Clear downloaded content"}
         </button>
       </section>
+
       <Link className="button-secondary inline-flex" to="/academy/dashboard">
         Back to dashboard
       </Link>

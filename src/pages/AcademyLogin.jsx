@@ -4,6 +4,18 @@ import { useAcademyAuth } from "../hooks/useAcademyAuth";
 import { useTheme } from "../context/useTheme";
 import { friendlyError } from "../lib/utils";
 
+const sidePanelHighlights = [
+  { text: "Build useful programming habits", accent: "amber" },
+  { text: "Practice with real code", accent: "teal" },
+  { text: "Explore backend, C++, embedded, or AI/ML paths", accent: "violet" },
+];
+
+const accentDot = {
+  teal: "bg-teal-400",
+  violet: "bg-violet-400",
+  amber: "bg-amber-400",
+};
+
 export default function AcademyLogin() {
   const { user, loading, signIn, isConfigured } = useAcademyAuth();
   const { theme, toggle } = useTheme();
@@ -17,7 +29,7 @@ export default function AcademyLogin() {
 
   if (loading)
     return (
-      <div className="grid min-h-screen place-items-center">
+      <div className="grid min-h-screen place-items-center text-slate-500 dark:text-slate-400">
         Loading Academy...
       </div>
     );
@@ -42,7 +54,7 @@ export default function AcademyLogin() {
   }
 
   return (
-    <div className="relative grid min-h-screen place-items-center bg-slate-50 px-4 py-10 dark:bg-slate-950">
+    <div className="relative grid min-h-screen place-items-center bg-[#F2F4F8] px-4 py-10 dark:bg-[#0B0F1A]">
       <button
         type="button"
         className="button-secondary absolute right-4 top-4 px-3 py-1.5"
@@ -51,49 +63,48 @@ export default function AcademyLogin() {
       >
         {theme === "dark" ? "Light" : "Dark"}
       </button>
+
       <div className="grid w-full max-w-4xl overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl dark:border-slate-800 dark:bg-slate-900 lg:grid-cols-[0.85fr_1.15fr]">
-        <div className="hidden bg-slate-900 p-8 text-white dark:bg-slate-800 lg:block">
-          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-cyan-300">
-            Muwatta Academy
-          </p>
-          <h2 className="mt-8 text-3xl font-bold tracking-tight">
+        {/* Side panel */}
+        <div className="hidden bg-[#0D1321] p-8 text-white lg:block">
+          <p className="text-sm font-semibold text-slate-400">ATE Academy</p>
+          <h2 className="mt-8 text-3xl font-bold leading-tight tracking-tight">
             Small lessons. Strong foundations across software and hardware.
           </h2>
           <div className="mt-10 grid gap-3 text-sm text-slate-300">
-            {[
-              "Build useful programming habits",
-              "Practice with real code",
-              "Explore backend, C++, embedded, or AI/ML paths",
-            ].map((item) => (
+            {sidePanelHighlights.map((item) => (
               <div
-                key={item}
-                className="rounded-xl border border-slate-700 bg-slate-800/70 p-4"
+                key={item.text}
+                className="flex items-center gap-3 rounded-xl border border-slate-700/80 bg-white/5 p-4"
               >
-                {item}
+                <span
+                  className={`h-2 w-2 shrink-0 rounded-full ${accentDot[item.accent]}`}
+                  aria-hidden="true"
+                />
+                {item.text}
               </div>
             ))}
           </div>
         </div>
+
+        {/* Form panel */}
         <div className="p-6 sm:p-8">
           <Link
             to="/"
-            className="text-sm font-semibold text-blue-600 hover:text-blue-700"
+            className="text-sm font-semibold text-amber-600 hover:text-amber-700 dark:text-amber-400 dark:hover:text-amber-300"
           >
-            ← Back to Muwatta
+            ← Back to portfolio
           </Link>
-          <div className="mt-8">
-            <p className="text-sm font-semibold uppercase tracking-[0.18em] text-blue-600">
-              Academy
-            </p>
-            <h1 className="mt-2 text-3xl font-bold tracking-tight">
-              Welcome back
-            </h1>
+
+          <div className="mt-6">
+            <h1 className="text-3xl font-bold tracking-tight">Welcome back</h1>
             <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
               Sign in to continue your ATE Academy learning journey.
             </p>
           </div>
+
           {!isConfigured ? (
-            <div className="mt-6 rounded-lg border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">
+            <div className="mt-6 rounded-lg border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-200">
               Academy sign-in is not configured in this environment. Add the
               Supabase variables from `.env.example` to enable it.
             </div>
@@ -123,7 +134,7 @@ export default function AcademyLogin() {
                   />
                   <button
                     type="button"
-                    className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md px-2 py-1 text-xs font-semibold text-slate-500 hover:text-blue-600"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md px-2 py-1 text-xs font-semibold text-slate-500 hover:text-amber-600 dark:hover:text-amber-400"
                     onClick={() => setShowPassword((value) => !value)}
                     aria-label={
                       showPassword ? "Hide password" : "Show password"
@@ -150,7 +161,7 @@ export default function AcademyLogin() {
               </button>
               <Link
                 to="/academy/forgot-password"
-                className="block text-center text-sm font-semibold text-blue-600 hover:text-blue-700"
+                className="block text-center text-sm font-semibold text-amber-600 hover:text-amber-700 dark:text-amber-400 dark:hover:text-amber-300"
               >
                 Forgot password?
               </Link>
@@ -161,7 +172,7 @@ export default function AcademyLogin() {
               New to Academy?{" "}
               <Link
                 to="/academy/signup"
-                className="font-semibold text-blue-600 hover:text-blue-700"
+                className="font-semibold text-amber-600 hover:text-amber-700 dark:text-amber-400 dark:hover:text-amber-300"
               >
                 Create a student account
               </Link>
