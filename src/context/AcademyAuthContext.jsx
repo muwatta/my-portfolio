@@ -14,6 +14,7 @@ export function AcademyAuthProvider({ children }) {
   const [adminStatus, setAdminStatus] = useState(false);
   const [loading, setLoading] = useState(true);
   const [profileLoading, setProfileLoading] = useState(false);
+  const [profileSettled, setProfileSettled] = useState(false);
   const [error, setError] = useState(null);
 
   useEffect(() => {
@@ -29,12 +30,14 @@ export function AcademyAuthProvider({ children }) {
       .then(({ data, error: sessionError }) => {
         if (!mounted) return;
         setSession(data.session);
+        setProfileSettled(!data.session);
         setError(sessionError ?? null);
         setLoading(false);
       })
       .catch((sessionError) => {
         if (mounted) {
           setError(sessionError);
+          setProfileSettled(true);
           setLoading(false);
         }
       });
@@ -43,6 +46,7 @@ export function AcademyAuthProvider({ children }) {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, nextSession) => {
       setSession(nextSession);
+      setProfileSettled(!nextSession);
       if (!nextSession) setAdminStatus(false);
       if (!nextSession) setProfile(null);
       setLoading(false);
@@ -55,11 +59,15 @@ export function AcademyAuthProvider({ children }) {
   }, []);
 
   useEffect(() => {
-    if (!supabase || !session?.user?.id) return undefined;
+    if (!supabase || !session?.user?.id) {
+      setProfileSettled(true);
+      return undefined;
+    }
 
     let cancelled = false;
     let cachedProfile = null;
     setProfileLoading(true);
+    setProfileSettled(false);
     void getOfflineRecord(OFFLINE_STORES.profile, session.user.id, "profile")
       .then((cached) => {
         if (!cancelled && cached) {
@@ -108,11 +116,13 @@ export function AcademyAuthProvider({ children }) {
         );
         setError(profileError ?? null);
         setProfileLoading(false);
+        setProfileSettled(true);
       })
       .catch((profileError) => {
         if (!cancelled) {
           setError(profileError);
           setProfileLoading(false);
+          setProfileSettled(true);
         }
       });
 
@@ -182,6 +192,7 @@ export function AcademyAuthProvider({ children }) {
         profile,
         loading,
         profileLoading,
+        initializing: loading || (Boolean(session?.user?.id) && !profileSettled),
         error,
         role: profile?.role ?? null,
         isAdmin: adminStatus,

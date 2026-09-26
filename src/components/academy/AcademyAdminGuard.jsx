@@ -2,8 +2,8 @@ import { Navigate, Outlet } from "react-router-dom";
 import { useAcademyAuth } from "../../hooks/useAcademyAuth";
 
 export default function AcademyAdminGuard() {
-  const { loading, profileLoading, isAdmin } = useAcademyAuth();
-  if (loading || profileLoading) {
+  const { initializing, isAdmin } = useAcademyAuth();
+  if (initializing) {
     return (
       <div className="grid min-h-screen place-items-center">
         Checking administrator access...
