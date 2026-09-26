@@ -1,20 +1,22 @@
 import { useCallback, useState } from "react";
+import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { getAcademyAdminOverview } from "../lib/academy";
 import { useAutoRefresh } from "../hooks/useAutoRefresh";
+import {
+  Skeleton,
+  SkeletonPanel,
+  SkeletonStatCards,
+} from "../components/ui/Skeleton";
 
 export default function AcademyAdminDashboard() {
   const [overview, setOverview] = useState(null);
   const [state, setState] = useState("loading");
-  const [refreshing, setRefreshing] = useState(false);
-  const [lastUpdated, setLastUpdated] = useState(null);
   const load = useCallback(async (background = false) => {
-    if (background) setRefreshing(true);
     const { data, error } = await getAcademyAdminOverview();
+    if (background && error) return;
     setOverview(data);
     setState(error ? "error" : "ready");
-    setLastUpdated(new Date());
-    setRefreshing(false);
   }, []);
   useAutoRefresh(load);
   const learningHours = Math.round((overview?.learningSeconds ?? 0) / 3600);
@@ -36,14 +38,16 @@ export default function AcademyAdminDashboard() {
         <p className="mt-2 text-slate-600 dark:text-slate-300">
           Manage people, curriculum, and activity from one protected workspace.
         </p>
-        <div className="mt-4 flex flex-wrap items-center gap-3 text-xs text-slate-500 dark:text-slate-400">
-          <span>{lastUpdated ? `Updated ${lastUpdated.toLocaleTimeString()}` : "Loading latest data..."}</span>
-          <button type="button" className="button-secondary px-3 py-1.5" onClick={() => load(true)} disabled={refreshing}>
-            {refreshing ? "Refreshing..." : "Refresh now"}
-          </button>
-        </div>
       </header>
-      {state === "loading" && <p>Loading overview...</p>}
+      {state === "loading" && (
+        <div className="space-y-6">
+          <SkeletonStatCards count={6} />
+          <div className="grid gap-4 lg:grid-cols-2">
+            <SkeletonPanel />
+            <SkeletonPanel />
+          </div>
+        </div>
+      )}
       {state === "error" && (
         <p
           role="alert"
@@ -54,7 +58,12 @@ export default function AcademyAdminDashboard() {
         </p>
       )}
       {state === "ready" && (
-        <>
+        <motion.div
+          initial={{ opacity: 0, y: 6 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, ease: "easeOut" }}
+          className="space-y-8"
+        >
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {cards.map(([label, value]) => (
               <div
@@ -109,7 +118,7 @@ export default function AcademyAdminDashboard() {
               </p>
             </div>
           </section>
-        </>
+        </motion.div>
       )}
     </div>
   );

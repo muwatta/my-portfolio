@@ -1,4 +1,5 @@
 import { useCallback, useState } from "react";
+import { motion } from "framer-motion";
 import {
   getAcademyAdminAccess,
   setAcademyAdmin,
@@ -6,21 +7,18 @@ import {
 } from "../lib/academy";
 import { friendlyError } from "../lib/utils";
 import { useAutoRefresh } from "../hooks/useAutoRefresh";
+import { Skeleton } from "../components/ui/Skeleton";
 
 export default function AcademyAdminAccess() {
   const [data, setData] = useState({ profiles: [], admins: [] });
   const [state, setState] = useState("loading");
   const [message, setMessage] = useState("");
-  const [refreshing, setRefreshing] = useState(false);
-  const [lastUpdated, setLastUpdated] = useState(null);
 
   const load = useCallback(async (background = false) => {
-    if (background) setRefreshing(true);
     const result = await getAcademyAdminAccess();
+    if (background && result.error) return;
     setData(result.data ?? { profiles: [], admins: [] });
     setState(result.error ? "error" : "ready");
-    setLastUpdated(new Date());
-    setRefreshing(false);
   }, []);
 
   useAutoRefresh(load);
@@ -55,21 +53,6 @@ export default function AcademyAdminAccess() {
           Appoint trusted administrators and set teaching roles. Current-course
           assignment remains a staff-only action.
         </p>
-        <div className="mt-4 flex flex-wrap items-center gap-3 text-xs text-slate-500 dark:text-slate-400">
-          <span>
-            {lastUpdated
-              ? `Updated ${lastUpdated.toLocaleTimeString()}`
-              : "Loading latest access records..."}
-          </span>
-          <button
-            type="button"
-            className="button-secondary px-3 py-1.5"
-            onClick={() => load(true)}
-            disabled={refreshing}
-          >
-            {refreshing ? "Refreshing..." : "Refresh now"}
-          </button>
-        </div>
       </header>
       {message && (
         <p
@@ -79,7 +62,28 @@ export default function AcademyAdminAccess() {
           {message}
         </p>
       )}
-      {state === "loading" && <p>Loading academy access...</p>}
+      {state === "loading" && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="space-y-3"
+          aria-hidden="true"
+        >
+          {Array.from({ length: 5 }).map((_, index) => (
+            <div
+              key={index}
+              className="flex items-center gap-4 rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900"
+            >
+              <Skeleton className="h-10 w-10 shrink-0" rounded="rounded-full" />
+              <div className="min-w-0 flex-1 space-y-2">
+                <Skeleton className="h-3 w-1/3" rounded="rounded-full" />
+                <Skeleton className="h-3 w-1/4" rounded="rounded-full" />
+              </div>
+              <Skeleton className="h-8 w-24 shrink-0" />
+            </div>
+          ))}
+        </motion.div>
+      )}
       {state === "error" && (
         <p
           role="alert"
