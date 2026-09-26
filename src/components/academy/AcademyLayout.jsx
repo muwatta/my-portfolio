@@ -1,5 +1,16 @@
 import { useEffect, useRef, useState } from "react";
-import { FiMenu, FiMoon, FiSun, FiX, FiBell } from "react-icons/fi";
+import {
+  FiMenu,
+  FiMoon,
+  FiSun,
+  FiX,
+  FiBell,
+  FiHome,
+  FiBookOpen,
+  FiEdit3,
+  FiCheckSquare,
+  FiUser,
+} from "react-icons/fi";
 import { NavLink, Outlet, Link, useLocation } from "react-router-dom";
 import { useAcademyAuth } from "../../hooks/useAcademyAuth";
 import { useTheme } from "../../context/useTheme";
@@ -19,11 +30,11 @@ const STUDENT_LINKS = [
 ];
 
 const QUICK_LINKS = [
-  { label: "Home", to: "/academy/dashboard" },
-  { label: "Learn", to: "/academy/lessons" },
-  { label: "Practice", to: "/academy/practice" },
-  { label: "Tasks", to: "/academy/assignments" },
-  { label: "Profile", to: "/academy/profile" },
+  { label: "Home", to: "/academy/dashboard", Icon: FiHome },
+  { label: "Learn", to: "/academy/lessons", Icon: FiBookOpen },
+  { label: "Practice", to: "/academy/practice", Icon: FiEdit3 },
+  { label: "Tasks", to: "/academy/assignments", Icon: FiCheckSquare },
+  { label: "Profile", to: "/academy/profile", Icon: FiUser },
 ];
 
 const TEACHER_LINKS = [
@@ -133,7 +144,10 @@ function useSessionHeartbeat(isStudent, userId) {
   }, [isStudent, userId]);
 }
 
-export default function AcademyLayout({ workspace = "student", aboveOutlet = null }) {
+export default function AcademyLayout({
+  workspace = "student",
+  aboveOutlet = null,
+}) {
   const { profile, user, signOut, isAdmin, isTeacher, isStudent } =
     useAcademyAuth();
   const { theme, applyTheme } = useTheme();
@@ -179,12 +193,12 @@ export default function AcademyLayout({ workspace = "student", aboveOutlet = nul
   };
 
   return (
-    <div className="flex min-h-screen flex-col bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
+    <div className="flex min-h-screen flex-col bg-[#F2F4F8] text-[#101425] dark:bg-[#0B0F1A] dark:text-slate-100">
       <header className="border-b border-slate-200 bg-white/95 dark:border-slate-800 dark:bg-slate-950/95">
         <div className="mx-auto flex min-h-20 max-w-7xl items-center gap-2 px-4 py-3 sm:gap-4 sm:px-6">
           <button
             type="button"
-            className="grid h-10 w-10 shrink-0 place-items-center rounded-lg border border-slate-200 text-slate-700 hover:border-blue-400 hover:text-blue-600 lg:hidden dark:border-slate-700 dark:text-slate-200"
+            className="grid h-10 w-10 shrink-0 place-items-center rounded-lg border border-slate-200 text-slate-700 hover:border-amber-400 hover:text-amber-600 lg:hidden dark:border-slate-700 dark:text-slate-200"
             onClick={() => setNavigationOpen((open) => !open)}
             aria-label={navigationOpen ? "Close navigation" : "Open navigation"}
             aria-expanded={navigationOpen}
@@ -195,17 +209,15 @@ export default function AcademyLayout({ workspace = "student", aboveOutlet = nul
 
           <Link
             to={dashboardPath}
-            className="flex min-w-0 shrink-0 items-center gap-3 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-950"
+            className="flex min-w-0 shrink-0 items-center gap-3 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-950"
             aria-label="Academy"
           >
-            <div className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-blue-600 text-sm font-bold text-white">
+            <div className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-amber-500 text-sm font-bold text-slate-950">
               A
             </div>
             <span className="min-w-0">
               <span className="block truncate text-sm font-bold tracking-wide">
-                {workspace === "admin"
-                  ? "ATE Academy Admin"
-                  : "Muwatta Academy"}
+                {workspace === "admin" ? "ATE Academy Admin" : "ATE Academy"}
               </span>
               <span className="hidden max-w-[13rem] truncate text-xs text-slate-500 sm:block dark:text-slate-400">
                 Learn, practice, and keep moving
@@ -219,7 +231,7 @@ export default function AcademyLayout({ workspace = "student", aboveOutlet = nul
               <span className="hidden truncate text-sm text-slate-600 dark:text-slate-300 sm:block">
                 {displayName}
               </span>
-              <span className="block truncate rounded-full bg-cyan-50 px-2.5 py-1 text-[0.68rem] font-semibold uppercase tracking-wide text-cyan-700 dark:bg-cyan-950/50 dark:text-cyan-300">
+              <span className="block truncate rounded-full bg-teal-50 px-2.5 py-1 text-[0.68rem] font-semibold uppercase tracking-wide text-teal-700 dark:bg-teal-950/50 dark:text-teal-300">
                 {accessLabel}
               </span>
             </span>
@@ -246,7 +258,7 @@ export default function AcademyLayout({ workspace = "student", aboveOutlet = nul
                   ? "/academy/admin"
                   : "/academy/notifications"
               }
-              className="grid h-10 w-10 shrink-0 place-items-center rounded-lg border border-slate-200 text-slate-700 hover:border-blue-400 hover:text-blue-600 lg:hidden dark:border-slate-700 dark:text-slate-200"
+              className="grid h-10 w-10 shrink-0 place-items-center rounded-lg border border-slate-200 text-slate-700 hover:border-amber-400 hover:text-amber-600 lg:hidden dark:border-slate-700 dark:text-slate-200"
               aria-label="Notifications"
             >
               <FiBell />
@@ -281,9 +293,9 @@ export default function AcademyLayout({ workspace = "student", aboveOutlet = nul
                 key={link.to}
                 to={link.to}
                 className={({ isActive }) =>
-                  `snap-start rounded-lg px-2.5 py-2 text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-950 sm:px-3 sm:text-sm ${
+                  `snap-start rounded-lg px-2.5 py-2 text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-950 sm:px-3 sm:text-sm ${
                     isActive
-                      ? "bg-blue-600 text-white"
+                      ? "bg-amber-500 text-slate-950"
                       : "text-slate-600 hover:bg-slate-200 dark:text-slate-300 dark:hover:bg-slate-800"
                   }`
                 }
@@ -327,19 +339,20 @@ export default function AcademyLayout({ workspace = "student", aboveOutlet = nul
           aria-label="Quick navigation"
           className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-5 border-t border-slate-200 bg-white/95 px-1 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-1 backdrop-blur lg:hidden dark:border-slate-800 dark:bg-slate-950/95"
         >
-          {QUICK_LINKS.map((link) => (
+          {QUICK_LINKS.map(({ label, to, Icon }) => (
             <NavLink
-              key={link.to}
-              to={link.to}
+              key={to}
+              to={to}
               className={({ isActive }) =>
-                `flex min-h-12 flex-col items-center justify-center gap-0.5 rounded-lg text-[0.68rem] font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 ${
+                `flex min-h-12 flex-col items-center justify-center gap-0.5 rounded-lg text-[0.68rem] font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 ${
                   isActive
-                    ? "text-blue-600 dark:text-cyan-300"
+                    ? "text-amber-600 dark:text-amber-400"
                     : "text-slate-500 dark:text-slate-400"
                 }`
               }
             >
-              <span>{link.label}</span>
+              <Icon className="text-base" aria-hidden="true" />
+              <span>{label}</span>
             </NavLink>
           ))}
         </nav>
@@ -360,7 +373,10 @@ export default function AcademyLayout({ workspace = "student", aboveOutlet = nul
             </p>
           </div>
           <div className="flex flex-wrap gap-x-5 gap-y-2 text-sm font-semibold text-slate-600 dark:text-slate-300">
-            <Link to={dashboardPath} className="hover:text-blue-600">
+            <Link
+              to={dashboardPath}
+              className="hover:text-amber-600 dark:hover:text-amber-400"
+            >
               Dashboard
             </Link>
             <Link
@@ -371,11 +387,14 @@ export default function AcademyLayout({ workspace = "student", aboveOutlet = nul
                     ? "/academy/teacher/submissions"
                     : "/academy/assignments"
               }
-              className="hover:text-blue-600"
+              className="hover:text-amber-600 dark:hover:text-amber-400"
             >
               {workspace === "student" ? "Assignments" : "Submissions"}
             </Link>
-            <Link to="/" className="hover:text-blue-600">
+            <Link
+              to="/"
+              className="hover:text-amber-600 dark:hover:text-amber-400"
+            >
               Portfolio
             </Link>
           </div>

@@ -8,6 +8,18 @@ import {
   normalizeAcademyRegistrationNumber,
 } from "../lib/registration";
 
+const sidePanelHighlights = [
+  { text: "Paths across software, embedded, and AI/ML", accent: "teal" },
+  { text: "Practical exercises and projects", accent: "violet" },
+  { text: "A student account built for progress", accent: "amber" },
+];
+
+const accentDot = {
+  teal: "bg-teal-400",
+  violet: "bg-violet-400",
+  amber: "bg-amber-400",
+};
+
 export default function AcademySignup() {
   const { user, loading, signUp, isConfigured } = useAcademyAuth();
   const { theme, toggle } = useTheme();
@@ -22,18 +34,20 @@ export default function AcademySignup() {
   const [submitting, setSubmitting] = useState(false);
   const [signupStarted, setSignupStarted] = useState(false);
   const [created, setCreated] = useState(false);
-  const [createdRegistrationNumber, setCreatedRegistrationNumber] = useState("");
+  const [createdRegistrationNumber, setCreatedRegistrationNumber] =
+    useState("");
   const signupRequestStarted = useRef(false);
 
   if (loading) {
     return (
-      <div className="grid min-h-screen place-items-center">
+      <div className="grid min-h-screen place-items-center text-slate-500 dark:text-slate-400">
         Loading Academy...
       </div>
     );
   }
 
-  if (user && !signupStarted) return <Navigate to="/academy/dashboard" replace />;
+  if (user && !signupStarted)
+    return <Navigate to="/academy/dashboard" replace />;
 
   async function handleSubmit(event) {
     event.preventDefault();
@@ -42,12 +56,13 @@ export default function AcademySignup() {
 
     const name = displayName.trim();
     const normalizedEmail = email.trim().toLowerCase();
-    const normalizedRegistrationNumber = normalizeAcademyRegistrationNumber(
-      registrationNumber,
-    );
+    const normalizedRegistrationNumber =
+      normalizeAcademyRegistrationNumber(registrationNumber);
     if (!name) return setError("Please enter your full name.");
     if (!isValidAcademyRegistrationNumber(normalizedRegistrationNumber)) {
-      return setError("Enter your Academy registration number in the format ATE-26-001.");
+      return setError(
+        "Enter your Academy registration number in the format ATE-26-001.",
+      );
     }
     if (password.length < 8) {
       return setError("Your password must be at least 8 characters.");
@@ -83,7 +98,7 @@ export default function AcademySignup() {
   }
 
   return (
-    <div className="relative grid min-h-screen place-items-center bg-slate-50 px-4 py-10 dark:bg-slate-950">
+    <div className="relative grid min-h-screen place-items-center bg-[#F2F4F8] px-4 py-10 dark:bg-[#0B0F1A]">
       <button
         type="button"
         className="button-secondary absolute right-4 top-4 px-3 py-1.5"
@@ -92,49 +107,50 @@ export default function AcademySignup() {
       >
         {theme === "dark" ? "Light" : "Dark"}
       </button>
+
       <div className="grid w-full max-w-4xl overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl dark:border-slate-800 dark:bg-slate-900 lg:grid-cols-[0.85fr_1.15fr]">
-        <div className="hidden bg-slate-900 p-8 text-white dark:bg-slate-800 lg:block">
-          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-cyan-300">
-            Muwatta Academy
-          </p>
-          <h1 className="mt-8 text-3xl font-bold tracking-tight">
+        {/* Side panel */}
+        <div className="hidden bg-[#0D1321] p-8 text-white lg:block">
+          <p className="text-sm font-semibold text-slate-400">ATE Academy</p>
+          <h1 className="mt-8 text-3xl font-bold leading-tight tracking-tight">
             Your next chapter starts with one small step.
           </h1>
           <div className="mt-10 grid gap-3 text-sm text-slate-300">
-            {[
-              "Paths across software, embedded, and AI/ML",
-              "Practical exercises and projects",
-              "A student account built for progress",
-            ].map((item) => (
+            {sidePanelHighlights.map((item) => (
               <div
-                key={item}
-                className="rounded-xl border border-slate-700 bg-slate-800/70 p-4"
+                key={item.text}
+                className="flex items-center gap-3 rounded-xl border border-slate-700/80 bg-white/5 p-4"
               >
-                {item}
+                <span
+                  className={`h-2 w-2 shrink-0 rounded-full ${accentDot[item.accent]}`}
+                  aria-hidden="true"
+                />
+                {item.text}
               </div>
             ))}
           </div>
         </div>
+
+        {/* Form panel */}
         <div className="p-6 sm:p-8">
           <Link
             to="/academy/login"
-            className="text-sm font-semibold text-blue-600 hover:text-blue-700"
+            className="text-sm font-semibold text-amber-600 hover:text-amber-700 dark:text-amber-400 dark:hover:text-amber-300"
           >
             ← Back to sign in
           </Link>
-          <div className="mt-8">
-            <p className="text-sm font-semibold uppercase tracking-[0.18em] text-blue-600">
-              ATE Academy
-            </p>
-            <h2 className="mt-2 text-3xl font-bold tracking-tight">
+
+          <div className="mt-6">
+            <h2 className="text-3xl font-bold tracking-tight">
               Create your account
             </h2>
             <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
-              Create your student account with Algorise Tech Explorers.
+              Set up your student account with Algorise Tech Explorers.
             </p>
           </div>
+
           {!isConfigured ? (
-            <div className="mt-6 rounded-lg border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">
+            <div className="mt-6 rounded-lg border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-200">
               Academy sign-up is not configured in this environment.
             </div>
           ) : created ? (
@@ -147,16 +163,13 @@ export default function AcademySignup() {
               <div className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-emerald-100 text-2xl dark:bg-emerald-900">
                 ✓
               </div>
-              <h3
-                id="signup-success-title"
-                className="mt-5 text-2xl font-bold"
-              >
-                Welcome to Muwatta Academy!
+              <h3 id="signup-success-title" className="mt-5 text-2xl font-bold">
+                Welcome to ATE Academy!
               </h3>
               <p className="mt-3 text-sm leading-6 text-slate-600 dark:text-slate-300">
                 Your Academy Registration Number is:
               </p>
-              <p className="mt-2 text-2xl font-bold tracking-[0.18em] text-cyan-700 dark:text-cyan-300">
+              <p className="mt-2 text-2xl font-bold tracking-[0.18em] text-amber-600 dark:text-amber-400">
                 {createdRegistrationNumber}
               </p>
               <p className="mt-4 text-sm leading-6 text-slate-600 dark:text-slate-300">
@@ -164,8 +177,8 @@ export default function AcademySignup() {
                 <span className="font-semibold text-slate-800 dark:text-slate-100">
                   {email.trim().toLowerCase()}
                 </span>
-                . If this email already has an Academy account, sign in
-                instead; we will not create a duplicate account.
+                . If this email already has an Academy account, sign in instead;
+                we will not create a duplicate account.
               </p>
               <div className="mt-6 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
                 <button
@@ -189,7 +202,7 @@ export default function AcademySignup() {
               </div>
             </div>
           ) : (
-            <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
+            <form className="mt-6 space-y-4" onSubmit={handleSubmit} noValidate>
               <label className="label">
                 Academy Registration Number
                 <input
@@ -240,10 +253,11 @@ export default function AcademySignup() {
                     onChange={(event) => setPassword(event.target.value)}
                     required
                     minLength={8}
+                    aria-describedby="password-hint"
                   />
                   <button
                     type="button"
-                    className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md px-2 py-1 text-xs font-semibold text-slate-500 hover:text-blue-600"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md px-2 py-1 text-xs font-semibold text-slate-500 hover:text-amber-600 dark:hover:text-amber-400"
                     onClick={() => setShowPassword((value) => !value)}
                     aria-label={
                       showPassword ? "Hide password" : "Show password"
@@ -251,6 +265,12 @@ export default function AcademySignup() {
                   >
                     {showPassword ? "Hide" : "Show"}
                   </button>
+                </span>
+                <span
+                  id="password-hint"
+                  className="mt-1 block text-xs font-normal text-slate-500 dark:text-slate-400"
+                >
+                  At least 8 characters.
                 </span>
               </label>
               <label className="label">
@@ -278,9 +298,9 @@ export default function AcademySignup() {
                 type="submit"
                 disabled={submitting}
               >
-                 {submitting
-                   ? "Creating your Academy account..."
-                   : "Create student account"}
+                {submitting
+                  ? "Creating your Academy account..."
+                  : "Create student account"}
               </button>
             </form>
           )}
