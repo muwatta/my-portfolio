@@ -23,6 +23,12 @@
       "purpose": "any"
     },
     {
+      "src": "/images/ate-icon-1024.png",
+      "sizes": "1024x1024",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
       "src": "/images/ate-maskable-192.png",
       "sizes": "192x192",
       "type": "image/png",
@@ -33,12 +39,6 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
-    },
-    {
-      "src": "/images/ate-logo.jpg",
-      "sizes": "875x875",
-      "type": "image/jpeg",
-      "purpose": "any"
     }
   ],
   "categories": ["education", "productivity"],

@@ -374,32 +374,6 @@ export default function AcademyLayout({
               Algorise Tech Explorers (ATE) · RC No. RC-8665201
             </p>
           </div>
-          <div className="flex flex-wrap gap-x-5 gap-y-2 text-sm font-semibold text-slate-600 dark:text-slate-300">
-            <Link
-              to={dashboardPath}
-              className="hover:text-amber-600 dark:hover:text-amber-400"
-            >
-              Dashboard
-            </Link>
-            <Link
-              to={
-                workspace === "admin"
-                  ? "/academy/admin/submissions"
-                  : workspace === "teacher"
-                    ? "/academy/teacher/submissions"
-                    : "/academy/assignments"
-              }
-              className="hover:text-amber-600 dark:hover:text-amber-400"
-            >
-              {workspace === "student" ? "Assignments" : "Submissions"}
-            </Link>
-            <Link
-              to="/"
-              className="hover:text-amber-600 dark:hover:text-amber-400"
-            >
-              Portfolio
-            </Link>
-          </div>
         </div>
       </footer>
     </div>

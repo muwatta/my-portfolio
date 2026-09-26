@@ -28,12 +28,12 @@ export default function AcademyLoadingScreen({
             initial={{ scale: 0.85, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ type: "spring", stiffness: 220, damping: 18 }}
-            className="grid h-11 w-11 shrink-0 place-items-center overflow-hidden rounded-xl bg-white shadow-lg shadow-blue-600/20"
+            className="grid h-11 w-11 shrink-0 place-items-center"
           >
             <motion.img
-              src="/images/ate-logo.jpg"
+              src="/images/ate-icon-192.png"
               alt=""
-              className="h-11 w-11 object-cover"
+              className="h-11 w-11"
               animate={{ scale: [1, 1.06, 1] }}
               transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut" }}
             />
