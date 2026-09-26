@@ -1,7 +1,7 @@
 {
-  "name": "Muwatta Academy",
-  "short_name": "Muwatta Academy",
-  "description": "An offline-ready learning space for Muwatta Academy students.",
+  "name": "Algorise Tech Explorers",
+  "short_name": "Algorise Tech Explorers",
+  "description": "An offline-ready learning space for Algorise Tech Explorers students.",
   "start_url": "/academy",
   "scope": "/",
   "display": "standalone",
