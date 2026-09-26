@@ -10,9 +10,12 @@ const APP_SHELL_URLS = [
   "/academy",
   "/manifest.json",
   "/offline.html",
-  "/images/academy-icon.svg",
-  "/images/academy-icon-192.png",
-  "/images/academy-icon-512.png",
+  "/images/ate-logo.jpg",
+  "/images/ate-icon-192.png",
+  "/images/ate-icon-512.png",
+  "/images/ate-maskable-192.png",
+  "/images/ate-maskable-512.png",
+  "/images/ate-favicon-32.png",
 ];
 
 const isSameOrigin = (url) => url.origin === self.location.origin;
