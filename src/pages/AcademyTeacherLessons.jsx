@@ -144,7 +144,7 @@ export default function AcademyTeacherLessons() {
         </p>
         <h1 className="mt-2 text-3xl font-bold">Lessons and schedule</h1>
         <p className="mt-2 max-w-2xl text-slate-600 dark:text-slate-300">
-          Build the course → week → lesson path and publish only when content is
+          Build lesson path and publish only when content is
           ready.
         </p>
       </header>
