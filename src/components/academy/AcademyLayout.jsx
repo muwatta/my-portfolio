@@ -15,6 +15,7 @@ import { NavLink, Outlet, Link, useLocation } from "react-router-dom";
 import { useAcademyAuth } from "../../hooks/useAcademyAuth";
 import { useTheme } from "../../context/useTheme";
 import OfflineStatus from "./OfflineStatus";
+import AcademyFooter from "./AcademyFooter";
 import {
   heartbeatAcademyLearningSession,
   startAcademyLearningSession,
@@ -360,19 +361,7 @@ export default function AcademyLayout({
         </nav>
       )}
 
-      <footer className="border-t border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950">
-        <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
-          <p className="text-sm font-bold text-slate-800 dark:text-slate-100">
-            ATE Academy
-          </p>
-          <p className="mt-1 max-w-md text-sm leading-6 text-slate-500 dark:text-slate-400">
-            Practical learning in Python for AI/ML and C++ for embedded systems.
-          </p>
-          <p className="mt-3 text-xs text-slate-400 dark:text-slate-500">
-            Algorise Tech Explorers (ATE) · RC No. RC-8665201
-          </p>
-        </div>
-      </footer>
+      <AcademyFooter />
     </div>
   );
 }

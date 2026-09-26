@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { useTheme } from "../context/useTheme";
+import AcademyFooter from "../components/academy/AcademyFooter";
 
 const tracks = [
   {
@@ -83,9 +84,6 @@ export default function AcademyHome() {
       <header className="mx-auto flex w-full max-w-6xl items-center justify-between px-4 py-6 sm:px-8">
         <Link to="/" className="flex items-baseline gap-2">
           <span className="text-lg font-bold tracking-tight">ATE Academy</span>
-          <span className="hidden text-sm text-slate-500 dark:text-slate-400 sm:inline">
-            by Algorise Tech Explorers
-          </span>
         </Link>
         <button
           type="button"
@@ -198,35 +196,7 @@ export default function AcademyHome() {
       </section>
 
       {/* Footer */}
-      <footer className="mx-auto mt-14 w-full max-w-6xl border-t border-slate-200 px-4 py-8 text-sm sm:px-8 dark:border-slate-800">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <p className="font-bold text-slate-800 dark:text-slate-200">
-              ATE Academy
-            </p>
-            <p className="mt-1 max-w-md leading-6 text-slate-500 dark:text-slate-400">
-              Algorise Tech Explorers. Practical learning for young builders.
-            </p>
-            <p className="mt-2 text-xs text-slate-400 dark:text-slate-500">
-              RC No. RC-8665201
-            </p>
-          </div>
-          <div className="flex flex-wrap gap-4 font-semibold text-slate-600 dark:text-slate-300">
-            <Link
-              to="/academy/login"
-              className="hover:text-amber-600 dark:hover:text-amber-400"
-            >
-              Academy login
-            </Link>
-            <Link
-              to="/"
-              className="hover:text-amber-600 dark:hover:text-amber-400"
-            >
-              Portfolio
-            </Link>
-          </div>
-        </div>
-      </footer>
+      <AcademyFooter isPublic />
     </div>
   );
 }
