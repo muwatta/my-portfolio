@@ -1045,25 +1045,92 @@ export async function scheduleAcademyLesson(schedule) {
   return { data, error };
 }
 
+async function getAcademyRegistrationCodesDirect(searchText, status) {
+  const { data: codes, error } = await supabase
+    .from("academy_registration_codes")
+    .select(
+      "id, registration_number, status, claimed_by, registration_year, serial_number, created_at",
+    )
+    .order("registration_year", { ascending: false })
+    .order("serial_number", { ascending: true });
+  if (error) return { data: null, error };
+
+  const claimedIds = [
+    ...new Set((codes ?? []).map((code) => code.claimed_by).filter(Boolean)),
+  ];
+  const profiles = new Map();
+  if (claimedIds.length) {
+    const { data: profileRows } = await supabase
+      .from("academy_profiles")
+      .select("id, display_name, current_course_id")
+      .in("id", claimedIds);
+    (profileRows ?? []).forEach((row) => profiles.set(row.id, row));
+  }
+  const courseIds = [
+    ...new Set(
+      [...profiles.values()]
+        .map((profile) => profile.current_course_id)
+        .filter(Boolean),
+    ),
+  ];
+  const courses = new Map();
+  if (courseIds.length) {
+    const { data: courseRows } = await supabase
+      .from("academy_courses")
+      .select("id, title")
+      .in("id", courseIds);
+    (courseRows ?? []).forEach((row) => courses.set(row.id, row));
+  }
+
+  const query = searchText.trim().toLowerCase();
+  const rows = (codes ?? [])
+    .map((code) => {
+      const profile = code.claimed_by ? profiles.get(code.claimed_by) : null;
+      return {
+        registration_number: code.registration_number,
+        status: code.status,
+        student_id: code.claimed_by ?? null,
+        student_name: profile?.display_name ?? null,
+        student_email: null,
+        course_title: profile?.current_course_id
+          ? (courses.get(profile.current_course_id)?.title ?? null)
+          : null,
+        created_at: code.created_at,
+      };
+    })
+    .filter((row) => !status || row.status === status)
+    .filter(
+      (row) =>
+        !query ||
+        `${row.registration_number} ${row.student_name ?? ""}`
+          .toLowerCase()
+          .includes(query),
+    );
+  return { data: rows, error: null };
+}
+
 export async function getAcademyRegistrationCodes(searchText = "", status = "") {
   if (!supabase) return unavailable([]);
   const { data, error } = await supabase.rpc("academy_admin_registration_list", {
     search_text: searchText.trim() || null,
     status_filter: status || null,
   });
-  if (error) {
-    const message = String(error.message ?? "");
-    if (/administrator/i.test(message)) {
-      return {
-        data: [],
-        error: new Error(
-          "Your account is not registered as an Academy administrator, so registration numbers cannot be shown. Ask the Academy owner to add your user ID to the administrators list.",
-        ),
-        configured: true,
-      };
-    }
+  if (!error) return { data: data ?? [], error: null, configured: true };
+
+  const message = String(error.message ?? "");
+  if (/administrator/i.test(message)) {
+    return {
+      data: [],
+      error: new Error(
+        "Your account is not registered as an Academy administrator, so registration numbers cannot be shown. Ask the Academy owner to add your user ID to the administrators list.",
+      ),
+      configured: true,
+    };
   }
-  return { data: data ?? [], error, configured: true };
+
+  const fallback = await getAcademyRegistrationCodesDirect(searchText, status);
+  if (fallback.data) return { ...fallback, configured: true };
+  return { data: [], error, configured: true };
 }
 
 export async function generateAcademyRegistrationCodes(year, count) {
