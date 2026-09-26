@@ -1,15 +1,17 @@
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { useAcademyAuth } from "../../hooks/useAcademyAuth";
+import AcademyLoadingScreen from "./AcademyLoadingScreen";
 
 export default function AcademyGuard() {
-  const { user, loading } = useAcademyAuth();
+  const { user, initializing } = useAcademyAuth();
   const location = useLocation();
 
-  if (loading)
+  if (initializing)
     return (
-      <div className="grid min-h-screen place-items-center">
-        Loading Academy...
-      </div>
+      <AcademyLoadingScreen
+        title="Loading Academy"
+        subtitle="Restoring your session"
+      />
     );
   if (!user)
     return (

@@ -1,10 +1,11 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import {
   getAcademyAdminAccess,
   setAcademyAdmin,
   setAcademyUserRole,
 } from "../lib/academy";
 import { friendlyError } from "../lib/utils";
+import { useAutoRefresh } from "../hooks/useAutoRefresh";
 
 export default function AcademyAdminAccess() {
   const [data, setData] = useState({ profiles: [], admins: [] });
@@ -22,16 +23,7 @@ export default function AcademyAdminAccess() {
     setRefreshing(false);
   }, []);
 
-  useEffect(() => {
-    load();
-    const refresh = () => load(true);
-    const interval = window.setInterval(refresh, 30000);
-    window.addEventListener("focus", refresh);
-    return () => {
-      window.clearInterval(interval);
-      window.removeEventListener("focus", refresh);
-    };
-  }, [load]);
+  useAutoRefresh(load);
 
   async function changeAdmin(userId, enabled) {
     const { error } = await setAcademyAdmin(userId, enabled);
@@ -77,7 +69,6 @@ export default function AcademyAdminAccess() {
           >
             {refreshing ? "Refreshing..." : "Refresh now"}
           </button>
-          <span>Auto-refreshes every 30 seconds</span>
         </div>
       </header>
       {message && (

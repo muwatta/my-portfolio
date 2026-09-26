@@ -1,6 +1,7 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { Link } from "react-router-dom";
 import { getAcademyAdminOverview } from "../lib/academy";
+import { useAutoRefresh } from "../hooks/useAutoRefresh";
 
 export default function AcademyAdminDashboard() {
   const [overview, setOverview] = useState(null);
@@ -15,16 +16,7 @@ export default function AcademyAdminDashboard() {
     setLastUpdated(new Date());
     setRefreshing(false);
   }, []);
-  useEffect(() => {
-    load();
-    const refresh = () => load(true);
-    const interval = window.setInterval(refresh, 30000);
-    window.addEventListener("focus", refresh);
-    return () => {
-      window.clearInterval(interval);
-      window.removeEventListener("focus", refresh);
-    };
-  }, [load]);
+  useAutoRefresh(load);
   const learningHours = Math.round((overview?.learningSeconds ?? 0) / 3600);
   const cards = [
     ["Students", overview?.students ?? 0],
@@ -49,7 +41,6 @@ export default function AcademyAdminDashboard() {
           <button type="button" className="button-secondary px-3 py-1.5" onClick={() => load(true)} disabled={refreshing}>
             {refreshing ? "Refreshing..." : "Refresh now"}
           </button>
-          <span>Auto-refreshes every 30 seconds</span>
         </div>
       </header>
       {state === "loading" && <p>Loading overview...</p>}
