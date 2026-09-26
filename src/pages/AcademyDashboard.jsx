@@ -237,6 +237,12 @@ export default function AcademyDashboard() {
               No scheduled activities yet.
             </p>
           )}
+          <Link
+            to="/academy/live"
+            className="mt-4 inline-flex text-sm font-semibold text-cyan-700 hover:text-cyan-600 dark:text-cyan-300"
+          >
+            Open live classroom
+          </Link>
         </div>
       </section>
       {hasCourse && (
