@@ -135,48 +135,11 @@ export default function AcademyFooter({ isPublic = false }) {
             ))}
           </div>
         </div>
-
-        <div className="mt-10 grid gap-4 border-t border-slate-200 pt-6 text-sm sm:grid-cols-2 lg:grid-cols-3 dark:border-slate-800">
-          <div>
-            <h3 className="text-xs font-bold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">
-              Student support
-            </h3>
-            <a
-              href={`https://wa.me/${WHATSAPP_NUMBER}?text=${WHATSAPP_MESSAGE}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="mt-2 inline-flex min-h-11 items-center text-slate-700 hover:text-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 dark:text-slate-300 dark:hover:text-cyan-300"
-            >
-              WhatsApp {WHATSAPP_DISPLAY}
-            </a>
-          </div>
-          <div>
-            <h3 className="text-xs font-bold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">
-              Email
-            </h3>
-            <a
-              href={`mailto:${EMAIL}`}
-              className="mt-2 inline-flex min-h-11 items-center break-all text-slate-700 hover:text-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 dark:text-slate-300 dark:hover:text-cyan-300"
-            >
-              {EMAIL}
-            </a>
-          </div>
-          <div>
-            <h3 className="text-xs font-bold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">
-              Registered in Nigeria
-            </h3>
-            <p className="mt-2 text-slate-600 dark:text-slate-400">
-              Algorise Tech Explorers &middot; RC No. RC-8665201
-            </p>
-          </div>
-        </div>
       </div>
 
       <div className="border-t border-slate-200 dark:border-slate-800">
         <div className="mx-auto flex max-w-7xl flex-col gap-2 px-4 py-5 text-xs text-slate-500 sm:flex-row sm:items-center sm:justify-between sm:px-6 dark:text-slate-400">
-          <p>
-            &copy; {year} Algorise Tech Explorers. All rights reserved.
-          </p>
+          <p>&copy; {year} Algorise Tech Explorers. All rights reserved.</p>
           <p>
             Learn anywhere. Progress syncs automatically when you reconnect.
           </p>
