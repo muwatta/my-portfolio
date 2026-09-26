@@ -8,13 +8,60 @@ import {
   OFFLINE_STORES,
 } from "../lib/offlineStore";
 
+const SESSION_HINT_KEY = "academy-session-hint";
+const SESSION_HINT_MAX_AGE = 1000 * 60 * 60 * 12;
+
+function readCachedProfileHint() {
+  try {
+    const raw = localStorage.getItem(SESSION_HINT_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (!parsed?.userId || !parsed?.savedAt) return null;
+    if (Date.now() - parsed.savedAt > SESSION_HINT_MAX_AGE) {
+      localStorage.removeItem(SESSION_HINT_KEY);
+      return null;
+    }
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+function writeSessionCache(userId, value) {
+  if (!userId) return;
+  try {
+    localStorage.setItem(
+      SESSION_HINT_KEY,
+      JSON.stringify({ ...value, userId, savedAt: Date.now() }),
+    );
+  } catch {
+    return;
+  }
+}
+
+function clearSessionCache() {
+  try {
+    localStorage.removeItem(SESSION_HINT_KEY);
+  } catch {
+    return;
+  }
+}
+
 export function AcademyAuthProvider({ children }) {
   const [session, setSession] = useState(null);
-  const [profile, setProfile] = useState(null);
-  const [adminStatus, setAdminStatus] = useState(false);
+  const [profile, setProfile] = useState(() => {
+    const cached = readCachedProfileHint();
+    return cached?.profile ?? null;
+  });
+  const [adminStatus, setAdminStatus] = useState(() => {
+    const cached = readCachedProfileHint();
+    return Boolean(cached?.isAdmin);
+  });
   const [loading, setLoading] = useState(true);
   const [profileLoading, setProfileLoading] = useState(false);
-  const [profileSettled, setProfileSettled] = useState(false);
+  const [profileSettled, setProfileSettled] = useState(() =>
+    Boolean(readCachedProfileHint()),
+  );
   const [error, setError] = useState(null);
 
   useEffect(() => {
@@ -29,8 +76,20 @@ export function AcademyAuthProvider({ children }) {
       .getSession()
       .then(({ data, error: sessionError }) => {
         if (!mounted) return;
+        const userId = data.session?.user?.id ?? null;
+        const hint = readCachedProfileHint();
+        if (!userId) {
+          clearSessionCache();
+          setProfile(null);
+          setAdminStatus(false);
+        } else if (hint && hint.userId !== userId) {
+          clearSessionCache();
+          setProfile(null);
+          setAdminStatus(false);
+          setProfileSettled(false);
+        }
         setSession(data.session);
-        setProfileSettled(!data.session);
+        setProfileSettled((current) => current && Boolean(hint && hint.userId === userId) ? true : !userId);
         setError(sessionError ?? null);
         setLoading(false);
       })
@@ -108,12 +167,17 @@ export function AcademyAuthProvider({ children }) {
       .then(async ([{ data, error: profileError }, { data: isAdmin }]) => {
         const resolved = await hydrateProfile(data);
         if (cancelled) return;
-        setProfile(resolved ?? cachedProfile ?? null);
+        const nextProfile = resolved ?? cachedProfile ?? null;
+        setProfile(nextProfile);
         if (resolved)
           void putOfflineRecord(OFFLINE_STORES.profile, session.user.id, "profile", resolved);
-        setAdminStatus(
-          Boolean(isAdmin),
-        );
+        setAdminStatus(Boolean(isAdmin));
+        if (nextProfile) {
+          writeSessionCache(session.user.id, {
+            profile: nextProfile,
+            isAdmin: Boolean(isAdmin),
+          });
+        }
         setError(profileError ?? null);
         setProfileLoading(false);
         setProfileSettled(true);
@@ -174,6 +238,10 @@ export function AcademyAuthProvider({ children }) {
 
   const signOut = async () => {
     const result = supabase ? await supabase.auth.signOut() : { error: null };
+    clearSessionCache();
+    setProfile(null);
+    setAdminStatus(false);
+    setProfileSettled(true);
     if (session?.user?.id) {
       try {
         await clearOfflineUser(session.user.id, { preserveQueue: true });
