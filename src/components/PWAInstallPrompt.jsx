@@ -1,14 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { FaDownload } from "react-icons/fa";
 
-/**
- * PWA Install Prompt Component
- * Shows install prompt on Android and some desktop browsers
- * Automatically dismisses after 8 seconds or when closed
- */
-export function PWAInstallPrompt() {
+const STORAGE_KEY = "muwatta_pwa_dismiss";
+const DISMISS_DURATION = 30 * 24 * 60 * 60 * 1000; // 30 days
+
+function useBeforeInstallPrompt() {
   const [deferredPrompt, setDeferredPrompt] = useState(null);
-  const [showPrompt, setShowPrompt] = useState(false);
   const [isInstalled, setIsInstalled] = useState(false);
 
   useEffect(() => {
@@ -21,17 +18,14 @@ export function PWAInstallPrompt() {
     const handleBeforeInstallPrompt = (e) => {
       e.preventDefault();
       setDeferredPrompt(e);
-      setShowPrompt(true);
-
-      // Auto-dismiss after 8 seconds
-      setTimeout(() => setShowPrompt(false), 8000);
     };
 
     const handleAppInstalled = () => {
       setIsInstalled(true);
-      setShowPrompt(false);
       setDeferredPrompt(null);
-      console.log("✓ App installed as PWA");
+      // Clear dismiss storage on successful install
+      localStorage.removeItem(STORAGE_KEY);
+      trackEvent("pwa_installed");
     };
 
     window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
@@ -46,47 +40,139 @@ export function PWAInstallPrompt() {
     };
   }, []);
 
+  return { deferredPrompt, isInstalled };
+}
+
+function isDismissed() {
+  const dismissed = localStorage.getItem(STORAGE_KEY);
+  if (!dismissed) return false;
+
+  const dismissedTime = parseInt(dismissed, 10);
+  const now = Date.now();
+
+  // Dismiss window expired, allow showing again
+  if (now - dismissedTime > DISMISS_DURATION) {
+    localStorage.removeItem(STORAGE_KEY);
+    return false;
+  }
+
+  return true;
+}
+
+function setDismissed() {
+  localStorage.setItem(STORAGE_KEY, String(Date.now()));
+}
+
+function trackEvent(eventName, data = {}) {
+  if (typeof window !== "undefined" && window.gtag) {
+    window.gtag("event", eventName, data);
+  }
+}
+
+export function PWAInstallPrompt({
+  title = "Install Muwatta Academy",
+  subtitle = "Learn offline with downloaded content",
+  installText = "Install",
+  dismissText = "Dismiss",
+  onInstallStart = null,
+  onInstallSuccess = null,
+  onInstallError = null,
+}) {
+  const { deferredPrompt, isInstalled } = useBeforeInstallPrompt();
+  const [showPrompt, setShowPrompt] = useState(false);
+  const [isInstalling, setIsInstalling] = useState(false);
+  const promptShownRef = useRef(false);
+
+  // Only show prompt once per session if not dismissed
+  useEffect(() => {
+    if (
+      isInstalled ||
+      !deferredPrompt ||
+      isDismissed() ||
+      promptShownRef.current
+    ) {
+      return;
+    }
+
+    promptShownRef.current = true;
+    setShowPrompt(true);
+    trackEvent("pwa_prompt_shown");
+  }, [deferredPrompt, isInstalled]);
+
+  const handleInstall = useCallback(async () => {
+    if (!deferredPrompt) return;
+
+    try {
+      setIsInstalling(true);
+      onInstallStart?.();
+      trackEvent("pwa_install_clicked");
+
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+
+      if (outcome === "accepted") {
+        trackEvent("pwa_install_accepted");
+        onInstallSuccess?.();
+      } else {
+        trackEvent("pwa_install_dismissed");
+      }
+
+      setShowPrompt(false);
+    } catch (error) {
+      console.error("PWA install failed:", error);
+      trackEvent("pwa_install_error", { error: error.message });
+      onInstallError?.(error);
+    } finally {
+      setIsInstalling(false);
+    }
+  }, [deferredPrompt, onInstallStart, onInstallSuccess, onInstallError]);
+
+  const handleDismiss = useCallback(() => {
+    setDismissed();
+    setShowPrompt(false);
+    trackEvent("pwa_prompt_dismissed");
+  }, []);
+
   if (isInstalled || !showPrompt || !deferredPrompt) {
     return null;
   }
 
-  const handleInstall = async () => {
-    if (!deferredPrompt) return;
-
-    deferredPrompt.prompt();
-    const { outcome } = await deferredPrompt.userChoice;
-    console.log(`User response: ${outcome}`);
-
-    setDeferredPrompt(null);
-    setShowPrompt(false);
-  };
-
-  const handleDismiss = () => {
-    setShowPrompt(false);
-  };
-
   return (
-    <div className="fixed bottom-4 left-4 right-4 max-w-sm bg-gradient-to-r from-blue-600 to-blue-500 text-white rounded-lg shadow-xl p-4 flex items-center justify-between gap-4 z-40 animate-slideUp">
-      <div className="flex items-center gap-3">
-        <FaDownload className="text-lg" />
-        <div>
-           <p className="text-sm font-bold">Install Muwatta Academy</p>
-           <p className="text-xs opacity-90">Learn offline after downloading content</p>
+    <div className="fixed inset-x-4 bottom-4 z-40 max-w-sm animate-slideUp md:bottom-6 md:left-6 md:right-auto">
+      <div className="rounded-lg bg-gradient-to-r from-blue-600 to-blue-500 p-4 shadow-xl">
+        <div className="flex gap-4">
+          {/* Icon and Content */}
+          <div className="flex min-w-0 flex-1 gap-3">
+            <div className="mt-1 shrink-0 text-lg text-white">
+              <FaDownload aria-hidden="true" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-sm font-bold text-white">{title}</p>
+              <p className="text-xs text-blue-100">{subtitle}</p>
+            </div>
+          </div>
+
+          {/* Buttons */}
+          <div className="flex shrink-0 gap-2">
+            <button
+              onClick={handleDismiss}
+              disabled={isInstalling}
+              className="rounded px-3 py-1.5 text-xs font-medium text-blue-600 transition-colors hover:bg-blue-100 disabled:opacity-50 active:bg-blue-200"
+              aria-label={dismissText}
+            >
+              {dismissText}
+            </button>
+            <button
+              onClick={handleInstall}
+              disabled={isInstalling}
+              className="rounded bg-white px-3 py-1.5 text-xs font-bold text-blue-600 transition-colors hover:bg-gray-100 disabled:opacity-50 active:bg-gray-200"
+              aria-label={installText}
+              aria-busy={isInstalling}
+            >
+              {isInstalling ? "Installing..." : installText}
+            </button>
+          </div>
         </div>
-      </div>
-      <div className="flex gap-2 flex-shrink-0">
-        <button
-          onClick={handleDismiss}
-          className="text-xs px-3 py-1 rounded hover:bg-blue-700 transition-colors"
-        >
-          Dismiss
-        </button>
-        <button
-          onClick={handleInstall}
-          className="text-xs px-3 py-1 bg-white text-blue-600 rounded font-bold hover:bg-gray-100 transition-colors"
-        >
-          Install
-        </button>
       </div>
     </div>
   );

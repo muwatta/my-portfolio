@@ -9,46 +9,91 @@ import { useTheme } from "../../context/useTheme";
 const MotionLink = motion.create(Link);
 const MotionNavLink = motion.create(NavLink);
 
-const Navbar = () => {
+function ThemeToggle({ className = "" }) {
+  const { theme, toggle } = useTheme();
+
+  return (
+    <motion.button
+      onClick={toggle}
+      whileTap={{ scale: 0.9 }}
+      whileHover={{ scale: 1.1 }}
+      className={`flex items-center justify-center rounded-full border border-slate-200 bg-slate-100 text-slate-600 transition-colors dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 hover:border-blue-500/50 ${className}`}
+      aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} theme`}
+      aria-pressed={theme === "dark"}
+    >
+      <AnimatePresence mode="wait">
+        {theme === "dark" ? (
+          <motion.div
+            key="sun"
+            initial={{ rotate: -90, opacity: 0 }}
+            animate={{ rotate: 0, opacity: 1 }}
+            exit={{ rotate: 90, opacity: 0 }}
+            transition={{ duration: 0.2 }}
+          >
+            <HiSun size={16} />
+          </motion.div>
+        ) : (
+          <motion.div
+            key="moon"
+            initial={{ rotate: 90, opacity: 0 }}
+            animate={{ rotate: 0, opacity: 1 }}
+            exit={{ rotate: -90, opacity: 0 }}
+            transition={{ duration: 0.2 }}
+          >
+            <HiMoon size={16} />
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.button>
+  );
+}
+
+function NavBar() {
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const { theme, toggle } = useTheme();
   const menuRef = useRef(null);
   const toggleRef = useRef(null);
 
   const closeMenu = useCallback(() => setIsOpen(false), []);
 
+  // Handle scroll events
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 50);
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  // Handle mobile menu state and keyboard
   useEffect(() => {
     if (!isOpen) return;
 
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
-    const onKeyDown = (e) => {
+
+    const handleKeyDown = (e) => {
       if (e.key === "Escape") {
         setIsOpen(false);
         toggleRef.current?.focus();
       }
     };
-    document.addEventListener("keydown", onKeyDown);
+
+    document.addEventListener("keydown", handleKeyDown);
     return () => {
-      document.removeEventListener("keydown", onKeyDown);
+      document.removeEventListener("keydown", handleKeyDown);
       document.body.style.overflow = previousOverflow;
     };
   }, [isOpen]);
 
+  // Close menu on resize to desktop
   useEffect(() => {
-    const onResize = () => {
-      if (window.innerWidth >= 768) setIsOpen(false);
+    const handleResize = () => {
+      if (window.innerWidth >= 768 && isOpen) {
+        setIsOpen(false);
+      }
     };
-    window.addEventListener("resize", onResize);
-    return () => window.removeEventListener("resize", onResize);
-  }, []);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, [isOpen]);
 
   const menuVariants = {
     closed: {
@@ -72,41 +117,42 @@ const Navbar = () => {
     <motion.nav
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
         scrolled
-          ? "bg-white/90 dark:bg-slate-950/90 backdrop-blur-md border-b border-slate-200/50 dark:border-slate-800/50 shadow-sm"
+          ? "border-b border-slate-200/50 bg-white/90 shadow-sm backdrop-blur-md dark:border-slate-800/50 dark:bg-slate-950/90"
           : "bg-transparent"
       }`}
       initial={{ y: -100 }}
       animate={{ y: 0 }}
       transition={{ duration: 0.6 }}
     >
-      <div className="container mx-auto w-full px-4 sm:px-6">
-        <div className="flex justify-between items-center h-20">
+      {/* Navbar container */}
+      <div className="mx-auto w-full px-4 sm:px-6 lg:px-8">
+        <div className="flex h-20 items-center justify-between">
           {/* Logo */}
           <MotionLink
             to="/"
-            className="flex-shrink-0"
+            className="shrink-0"
             aria-label="Muwatta home"
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
           >
-            <span className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-500 to-cyan-400">
+            <span className="bg-gradient-to-r from-blue-500 to-cyan-400 bg-clip-text text-2xl font-bold text-transparent">
               Muwatta
             </span>
           </MotionLink>
 
-          {/* Desktop Menu */}
-          <div className="hidden md:flex items-center gap-8">
+          {/* Desktop Navigation - hidden on mobile, shown from md breakpoint */}
+          <div className="hidden gap-8 md:flex md:items-center">
             {navItems.map((item, i) => (
               <MotionNavLink
                 key={item.name}
                 to={item.path}
                 className={({ isActive }) =>
-                  `relative text-sm font-medium transition-colors duration-300 py-2 ${
+                  `relative py-2 text-sm font-medium transition-colors duration-300 ${
                     item.name === "Let's Talk"
                       ? "rounded-full bg-blue-600/10 px-4 text-blue-700 shadow-sm shadow-blue-500/10 dark:text-blue-300"
                       : isActive
                         ? "text-slate-900 dark:text-white"
-                        : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                        : "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
                   }`
                 }
               >
@@ -123,93 +169,31 @@ const Navbar = () => {
                     transition={{ delay: i * 0.1 }}
                   >
                     {item.name}
-                    <motion.span
-                      className={`absolute -bottom-1 left-0 h-0.5 rounded-full ${item.name === "Let's Talk" ? "bg-cyan-400" : "bg-blue-500"}`}
-                      initial={{ width: 0 }}
-                      animate={{ width: isActive ? "100%" : 0 }}
-                      whileHover={{ width: "100%" }}
-                      transition={{ duration: 0.3 }}
-                    />
+                    {item.name !== "Let's Talk" && (
+                      <motion.span
+                        className="absolute -bottom-1 left-0 h-0.5 rounded-full bg-blue-500"
+                        initial={{ width: 0 }}
+                        animate={{ width: isActive ? "100%" : 0 }}
+                        whileHover={{ width: "100%" }}
+                        transition={{ duration: 0.3 }}
+                      />
+                    )}
                   </motion.span>
                 )}
               </MotionNavLink>
             ))}
 
-            {/* Theme toggle */}
-            <motion.button
-              onClick={toggle}
-              whileTap={{ scale: 0.9 }}
-              whileHover={{ scale: 1.1 }}
-              className="w-9 h-9 rounded-full flex items-center justify-center border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:border-blue-500/50 transition-colors"
-              aria-label="Toggle theme"
-              title={theme === "dark" ? "Switch to light theme" : "Switch to dark theme"}
-              aria-pressed={theme === "dark"}
-            >
-              <AnimatePresence mode="wait">
-                {theme === "dark" ? (
-                  <motion.div
-                    key="sun"
-                    initial={{ rotate: -90, opacity: 0 }}
-                    animate={{ rotate: 0, opacity: 1 }}
-                    exit={{ rotate: 90, opacity: 0 }}
-                    transition={{ duration: 0.2 }}
-                  >
-                    <HiSun size={16} />
-                  </motion.div>
-                ) : (
-                  <motion.div
-                    key="moon"
-                    initial={{ rotate: 90, opacity: 0 }}
-                    animate={{ rotate: 0, opacity: 1 }}
-                    exit={{ rotate: -90, opacity: 0 }}
-                    transition={{ duration: 0.2 }}
-                  >
-                    <HiMoon size={16} />
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </motion.button>
+            <ThemeToggle className="h-9 w-9" />
           </div>
 
-          {/* Mobile: theme toggle + hamburger */}
-          <div className="md:hidden flex items-center gap-2">
-            <motion.button
-              onClick={toggle}
-              whileTap={{ scale: 0.9 }}
-              className="w-9 h-9 rounded-full flex items-center justify-center border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 transition-colors"
-              aria-label="Toggle theme"
-              title={theme === "dark" ? "Switch to light theme" : "Switch to dark theme"}
-              aria-pressed={theme === "dark"}
-            >
-              <AnimatePresence mode="wait">
-                {theme === "dark" ? (
-                  <motion.div
-                    key="sun"
-                    initial={{ rotate: -90, opacity: 0 }}
-                    animate={{ rotate: 0, opacity: 1 }}
-                    exit={{ rotate: 90, opacity: 0 }}
-                    transition={{ duration: 0.2 }}
-                  >
-                    <HiSun size={15} />
-                  </motion.div>
-                ) : (
-                  <motion.div
-                    key="moon"
-                    initial={{ rotate: 90, opacity: 0 }}
-                    animate={{ rotate: 0, opacity: 1 }}
-                    exit={{ rotate: -90, opacity: 0 }}
-                    transition={{ duration: 0.2 }}
-                  >
-                    <HiMoon size={15} />
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </motion.button>
+          {/* Mobile Controls - shown on mobile, hidden from md breakpoint */}
+          <div className="flex items-center gap-2 md:hidden">
+            <ThemeToggle className="h-9 w-9" />
 
             <motion.button
               ref={toggleRef}
               onClick={() => setIsOpen(!isOpen)}
-              className="w-10 h-10 flex items-center justify-center text-slate-700 dark:text-white rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800/50 transition-colors"
+              className="flex h-10 w-10 items-center justify-center rounded-lg text-slate-700 transition-colors hover:bg-slate-100 dark:text-white dark:hover:bg-slate-800/50"
               whileTap={{ scale: 0.9 }}
               aria-label={isOpen ? "Close menu" : "Open menu"}
               aria-expanded={isOpen}
@@ -241,39 +225,51 @@ const Navbar = () => {
         </div>
       </div>
 
+      {/* Mobile Menu Overlay */}
+      <AnimatePresence>
+        {isOpen && (
+          <button
+            type="button"
+            className="fixed inset-0 z-40 bg-slate-950/40 md:hidden"
+            aria-label="Close menu"
+            onClick={closeMenu}
+          />
+        )}
+      </AnimatePresence>
+
       {/* Mobile Menu */}
       <AnimatePresence>
         {isOpen && (
           <motion.div
             id="mobile-menu"
             ref={menuRef}
-            className="md:hidden absolute top-full left-0 right-0 bg-white/95 dark:bg-slate-950/95 backdrop-blur-xl border-b border-slate-200/50 dark:border-slate-800/50 overflow-hidden"
+            className="absolute left-0 right-0 top-full border-b border-slate-200/50 bg-white/95 backdrop-blur-xl dark:border-slate-800/50 dark:bg-slate-950/95 md:hidden"
             initial="closed"
             animate="open"
             exit="closed"
             variants={menuVariants}
           >
-            <div className="container mx-auto max-h-[calc(100dvh-5rem)] w-full overflow-y-auto px-4 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-4 sm:px-6">
+            <div className="mx-auto w-full px-4 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-4 sm:px-6">
               <div className="space-y-1">
-              {navItems.map((item) => (
-                <motion.div key={item.name} variants={itemVariants}>
-                  <NavLink
-                    to={item.path}
-                    onClick={closeMenu}
-                    className={({ isActive }) =>
-                      `block py-3 px-4 rounded-xl text-base font-medium transition-all ${
-                        item.name === "Let's Talk"
-                          ? "bg-blue-600/10 text-blue-700 dark:text-blue-300 border border-blue-500/30"
-                          : isActive
-                            ? "bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20"
-                            : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/50"
-                      }`
-                    }
-                  >
-                    {item.name}
-                  </NavLink>
-                </motion.div>
-              ))}
+                {navItems.map((item) => (
+                  <motion.div key={item.name} variants={itemVariants}>
+                    <NavLink
+                      to={item.path}
+                      onClick={closeMenu}
+                      className={({ isActive }) =>
+                        `block rounded-xl px-4 py-3 text-base font-medium transition-all ${
+                          item.name === "Let's Talk"
+                            ? "border border-blue-500/30 bg-blue-600/10 text-blue-700 dark:text-blue-300"
+                            : isActive
+                              ? "border border-blue-500/20 bg-blue-500/10 text-blue-600 dark:text-blue-400"
+                              : "text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800/50 dark:hover:text-white"
+                        }`
+                      }
+                    >
+                      {item.name}
+                    </NavLink>
+                  </motion.div>
+                ))}
               </div>
             </div>
           </motion.div>
@@ -281,6 +277,6 @@ const Navbar = () => {
       </AnimatePresence>
     </motion.nav>
   );
-};
+}
 
-export default Navbar;
+export default NavBar;
