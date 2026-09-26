@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "../hooks/useAuth";
 import { useArticles } from "../hooks/useArticles";
 import { useArticleForm, slugify } from "../hooks/useArticleForm";
-import { FiX, FiCheck, FiAlertCircle, FiLoader } from "react-icons/fi";
+import { FiCheck, FiAlertCircle, FiLoader } from "react-icons/fi";
 
 function Login({ onLogin }) {
   const [email, setEmail] = useState("");
@@ -27,13 +27,11 @@ function Login({ onLogin }) {
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
       <form onSubmit={handleSubmit} className="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
         <h1 className="text-2xl font-bold mb-6 text-gray-900">Admin Login</h1>
-        
         {error && (
           <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
             {error}
           </div>
         )}
-
         <div className="mb-4">
           <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
           <input
@@ -44,7 +42,6 @@ function Login({ onLogin }) {
             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
-
         <div className="mb-6">
           <label className="block text-sm font-medium text-gray-700 mb-2">Password</label>
           <input
@@ -55,7 +52,6 @@ function Login({ onLogin }) {
             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
-
         <button
           type="submit"
           disabled={loading}
@@ -120,7 +116,7 @@ function ArticlePreview({ article, onEdit, onDelete }) {
   );
 }
 
-function ArticlesList({ articles, loading, onEdit, onDelete, onSelectStatus }) {
+function ArticlesList({ articles, loading, onEdit, onDelete }) {
   if (loading) return <div className="text-center py-8 text-gray-500">Loading articles...</div>;
   if (articles.length === 0) return <div className="text-center py-8 text-gray-500">No articles yet.</div>;
 
@@ -133,9 +129,9 @@ function ArticlesList({ articles, loading, onEdit, onDelete, onSelectStatus }) {
   );
 }
 
-function Panel({ title, children, className = "" }) {
+function Panel({ title, children }) {
   return (
-    <div className={`bg-white rounded-lg shadow-sm border border-gray-200 p-6 ${className}`}>
+    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
       <h2 className="text-lg font-semibold text-gray-900 mb-4">{title}</h2>
       {children}
     </div>
@@ -148,7 +144,7 @@ function Shell({ children }) {
 
 export default function Admin() {
   const { user, logout } = useAuth();
-  const { posts, loading: articlesLoading, error: articlesError, setError, load, save, remove } = useArticles();
+  const { posts, loading: articlesLoading, error: articlesError, load, save, remove } = useArticles();
   const { form, tagsText, errors, update, setTagsText, reset, validate, getPayload } = useArticleForm();
   const [selected, setSelected] = useState(null);
   const [saving, setSaving] = useState(false);
@@ -202,7 +198,7 @@ export default function Admin() {
     }
   };
 
-  if (!user) return <Login onLogin={(email, password) => Promise.reject(new Error("Demo mode"))} />;
+  if (!user) return <Login onLogin={() => Promise.reject(new Error("Demo mode"))} />;
 
   return (
     <Shell>
@@ -218,14 +214,14 @@ export default function Admin() {
         </div>
 
         <div className="grid grid-cols-3 gap-4 mb-8">
-          <Panel title="Published" className="text-center">
-            <div className="text-3xl font-bold text-green-600">{stats.published}</div>
+          <Panel title="Published">
+            <div className="text-3xl font-bold text-green-600 text-center">{stats.published}</div>
           </Panel>
-          <Panel title="Drafts" className="text-center">
-            <div className="text-3xl font-bold text-yellow-600">{stats.drafts}</div>
+          <Panel title="Drafts">
+            <div className="text-3xl font-bold text-yellow-600 text-center">{stats.drafts}</div>
           </Panel>
-          <Panel title="Archived" className="text-center">
-            <div className="text-3xl font-bold text-gray-600">{stats.archived}</div>
+          <Panel title="Archived">
+            <div className="text-3xl font-bold text-gray-600 text-center">{stats.archived}</div>
           </Panel>
         </div>
 
