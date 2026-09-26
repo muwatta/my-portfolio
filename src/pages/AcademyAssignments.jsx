@@ -4,12 +4,16 @@ import { getAcademyAssignments } from "../lib/academy";
 import { fetchWithOfflineFallback } from "../lib/academyOffline";
 import { OFFLINE_STORES } from "../lib/offlineStore";
 import { useAcademyAuth } from "../hooks/useAcademyAuth";
+import AcademyConnectionState from "../components/academy/AcademyConnectionState";
+import { useNetworkStatus } from "../hooks/useNetworkStatus";
 
 export default function AcademyAssignments() {
   const [assignments, setAssignments] = useState([]);
   const [state, setState] = useState("loading");
   const [offline, setOffline] = useState(false);
   const { user } = useAcademyAuth();
+  const network = useNetworkStatus();
+  const [reloadToken, setReloadToken] = useState(0);
 
   useEffect(() => {
     if (!user?.id) return;
@@ -22,7 +26,7 @@ export default function AcademyAssignments() {
       setAssignments(data ?? []);
       setState(error ? "error" : configured ? "ready" : "unconfigured");
     });
-  }, [user?.id]);
+  }, [user?.id, reloadToken]);
 
   return (
     <div className="space-y-6">
@@ -40,7 +44,9 @@ export default function AcademyAssignments() {
           Offline learning mode. Downloaded assignment briefs are available on this device.
         </p>
       )}
-      {state === "loading" && <p>Loading assignments...</p>}
+      {state === "loading" && (
+        <AcademyConnectionState loading title="" description="" showChallenge={false} />
+      )}
       {state === "unconfigured" && (
         <p className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">
           Connect Supabase to load assignments.
@@ -55,9 +61,25 @@ export default function AcademyAssignments() {
         </p>
       )}
       {state === "ready" && assignments.length === 0 && (
-        <p className="rounded-xl border border-slate-200 p-5 text-sm dark:border-slate-800">
-          No assignments yet.
-        </p>
+        <AcademyConnectionState
+          online={network.online}
+          slow={network.slow}
+          title={
+            network.online
+              ? "No assignments yet"
+              : "Assignments are not downloaded"
+          }
+          description={
+            network.online
+              ? "Nothing is due right now. Your teacher will publish new assignments here."
+              : "Reconnect once to download your assignments, then you can keep working offline."
+          }
+          onRetry={
+            network.online
+              ? undefined
+              : () => setReloadToken((value) => value + 1)
+          }
+        />
       )}
       <div className="grid gap-4 sm:grid-cols-2">
         {assignments.map((assignment) => (

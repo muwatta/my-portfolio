@@ -5,12 +5,16 @@ import { getAcademyLessons } from "../lib/academy";
 import { fetchWithOfflineFallback } from "../lib/academyOffline";
 import { OFFLINE_STORES } from "../lib/offlineStore";
 import DownloadedCourseManager from "../components/academy/DownloadedCourseManager";
+import AcademyConnectionState from "../components/academy/AcademyConnectionState";
+import { useNetworkStatus } from "../hooks/useNetworkStatus";
 
 export default function AcademyLessons() {
   const [weeks, setWeeks] = useState([]);
   const [state, setState] = useState("loading");
   const [offline, setOffline] = useState(false);
   const { user } = useAcademyAuth();
+  const network = useNetworkStatus();
+  const [reloadToken, setReloadToken] = useState(0);
 
   useEffect(() => {
     fetchWithOfflineFallback({
@@ -50,7 +54,7 @@ export default function AcademyLessons() {
         setState("ready");
       }
     });
-  }, [user.id]);
+  }, [user.id, reloadToken]);
 
   const totalLessons = weeks.reduce((sum, week) => sum + week.lessons.length, 0);
 
@@ -72,7 +76,7 @@ export default function AcademyLessons() {
         </p>
       )}
       {state === "loading" && (
-        <p className="text-sm text-slate-500">Loading lessons...</p>
+        <AcademyConnectionState loading title="" description="" showChallenge={false} />
       )}
       {state === "unconfigured" && (
         <div className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">
@@ -88,9 +92,25 @@ export default function AcademyLessons() {
         </div>
       )}
       {state === "ready" && totalLessons === 0 && (
-        <p className="rounded-xl border border-slate-200 p-5 text-sm dark:border-slate-800">
-          No published lessons yet.
-        </p>
+        <AcademyConnectionState
+          online={network.online}
+          slow={network.slow}
+          title={
+            network.online
+              ? "No lessons published yet"
+              : "This course is not downloaded"
+          }
+          description={
+            network.online
+              ? "Your teacher is still preparing this course. Check back soon, or open a lesson you already downloaded."
+              : "Reconnect once to download these lessons, then they will stay available on this device without a connection."
+          }
+          onRetry={
+            network.online
+              ? undefined
+              : () => setReloadToken((value) => value + 1)
+          }
+        />
       )}
       {state === "ready" &&
         weeks.map((week) => (
