@@ -16,7 +16,6 @@ export default function AcademyAdminStudents() {
   const [courseFilter, setCourseFilter] = useState("");
   const [refreshing, setRefreshing] = useState(false);
   const loadingRef = useRef(false);
-  const [lastUpdated, setLastUpdated] = useState(null);
   const load = useCallback(async (background = false) => {
     if (loadingRef.current) return;
     loadingRef.current = true;
@@ -27,7 +26,6 @@ export default function AcademyAdminStudents() {
       if (!background || !result.error) {
         setState(result.error ? "error" : "ready");
       }
-      setLastUpdated(new Date());
     } finally {
       loadingRef.current = false;
       setRefreshing(false);
@@ -91,11 +89,6 @@ export default function AcademyAdminStudents() {
             {refreshing ? "Refreshing..." : "Refresh students"}
           </button>
         </div>
-        <p className="text-xs text-slate-500 dark:text-slate-400">
-          {lastUpdated
-            ? `Updated ${lastUpdated.toLocaleTimeString()} · Auto-refreshes every 30 seconds`
-            : "Loading latest students..."}
-        </p>
       </header>
       {message && (
         <p
