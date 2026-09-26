@@ -7,6 +7,8 @@ import { friendlyError } from "../lib/utils";
 import { fetchWithOfflineFallback } from "../lib/academyOffline";
 import { OFFLINE_STORES } from "../lib/offlineStore";
 import { enqueueAcademyOperation } from "../lib/academySync";
+import AcademyConnectionState from "../components/academy/AcademyConnectionState";
+import { useNetworkStatus } from "../hooks/useNetworkStatus";
 
 export default function AcademyPractice() {
   const { user } = useAcademyAuth();
@@ -16,6 +18,8 @@ export default function AcademyPractice() {
   const [answers, setAnswers] = useState({});
   const [results, setResults] = useState({});
   const [submitting, setSubmitting] = useState(null);
+  const [reloadToken, setReloadToken] = useState(0);
+  const network = useNetworkStatus();
   const practiceLanguage = exercises[0]?.language || "python";
 
   useEffect(() => {
@@ -28,7 +32,7 @@ export default function AcademyPractice() {
       setExercises(data ?? []);
       setState(error ? "error" : configured ? "ready" : "unconfigured");
     });
-  }, [user.id]);
+  }, [user.id, reloadToken]);
 
   async function submitAnswer(exerciseId) {
     setSubmitting(exerciseId);
@@ -85,7 +89,9 @@ export default function AcademyPractice() {
           Offline practice mode. Code runs on this device. Official practice results are checked after reconnecting.
         </p>
       )}
-      {state === "loading" && <p>Loading exercises...</p>}
+      {state === "loading" && (
+        <AcademyConnectionState loading title="" description="" showChallenge={false} />
+      )}
       {state === "unconfigured" && (
         <p className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">
           Connect Supabase to load practice exercises.
@@ -100,9 +106,25 @@ export default function AcademyPractice() {
         </p>
       )}
       {state === "ready" && exercises.length === 0 && (
-        <p className="rounded-xl border border-slate-200 p-5 text-sm dark:border-slate-800">
-          No practice exercises yet.
-        </p>
+        <AcademyConnectionState
+          online={network.online}
+          slow={network.slow}
+          title={
+            network.online
+              ? "No practice exercises yet"
+              : "Practice is not downloaded"
+          }
+          description={
+            network.online
+              ? "Your teacher has not added practice for this course yet. Reconnect later or review the lessons you already have."
+              : "Reconnect once to download practice exercises, then you can practise without a connection."
+          }
+          onRetry={
+            network.online
+              ? undefined
+              : () => setReloadToken((value) => value + 1)
+          }
+        />
       )}
       {exercises.map((exercise) => (
         <article

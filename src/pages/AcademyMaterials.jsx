@@ -7,6 +7,8 @@ import {
 } from "../lib/academy";
 import { cacheOfflineAsset, removeOfflineAsset, OFFLINE_STORES } from "../lib/offlineStore";
 import { fetchWithOfflineFallback } from "../lib/academyOffline";
+import AcademyConnectionState from "../components/academy/AcademyConnectionState";
+import { useNetworkStatus } from "../hooks/useNetworkStatus";
 
 function assetUrl(storagePath) {
   const path = String(storagePath  ??  "");
@@ -30,6 +32,8 @@ export default function AcademyMaterials() {
   const [state, setState] = useState("loading");
   const [downloaded, setDownloaded] = useState({});
   const [downloading, setDownloading] = useState("");
+  const network = useNetworkStatus();
+  const [reloadToken, setReloadToken] = useState(0);
   useEffect(() => {
     let cancelled = false;
     async function load() {
@@ -48,7 +52,7 @@ export default function AcademyMaterials() {
     return () => {
       cancelled = true;
     };
-  }, [user.id]);
+  }, [user.id, reloadToken]);
 
   useEffect(() => {
     if (!materials.length || !("caches" in window)) return;
@@ -77,7 +81,9 @@ export default function AcademyMaterials() {
           Offline learning mode. Downloaded materials remain available from this device.
         </p>
       )}
-      {state === "loading" && <p>Loading materials...</p>}
+      {state === "loading" && (
+        <AcademyConnectionState loading title="" description="" showChallenge={false} />
+      )}
       {state === "error" && (
         <p
           role="alert"
@@ -87,9 +93,25 @@ export default function AcademyMaterials() {
         </p>
       )}
       {state === "ready" && materials.length === 0 && (
-        <p className="rounded-xl border border-dashed border-slate-300 p-8 text-sm dark:border-slate-700">
-          No materials have been published for your learning path yet.
-        </p>
+        <AcademyConnectionState
+          online={network.online}
+          slow={network.slow}
+          title={
+            network.online
+              ? "No materials published yet"
+              : "Materials are not downloaded"
+          }
+          description={
+            network.online
+              ? "Your teacher has not published course books for this path yet."
+              : "Reconnect once to see and download your course materials, then open them without a connection."
+          }
+          onRetry={
+            network.online
+              ? undefined
+              : () => setReloadToken((value) => value + 1)
+          }
+        />
       )}
       {materials.length > 0 && (
         <ul className="grid gap-4 md:grid-cols-2">

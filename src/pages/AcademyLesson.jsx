@@ -8,6 +8,8 @@ import {
 import { fetchWithOfflineFallback } from "../lib/academyOffline";
 import { OFFLINE_STORES } from "../lib/offlineStore";
 import { enqueueAcademyOperation } from "../lib/academySync";
+import AcademyConnectionState from "../components/academy/AcademyConnectionState";
+import { useNetworkStatus } from "../hooks/useNetworkStatus";
 import { useAcademyAuth } from "../hooks/useAcademyAuth";
 import LessonContent from "../components/academy/LessonContent";
 import CppEditor from "../components/academy/CppEditor";
@@ -20,6 +22,8 @@ export default function AcademyLesson() {
   const [state, setState] = useState("loading");
   const [completed, setCompleted] = useState(false);
   const [notice, setNotice] = useState("");
+  const [reloadToken, setReloadToken] = useState(0);
+  const network = useNetworkStatus();
 
   useEffect(() => {
     if (navigator.onLine) void markLessonStarted(id, user.id).catch(() => undefined);
@@ -34,7 +38,7 @@ export default function AcademyLesson() {
       setState(error ? "error" : configured ? "ready" : "unconfigured");
       if (offline) setCompleted(Boolean(data?.progress?.completed_at));
     });
-  }, [id, user.id]);
+  }, [id, user.id, reloadToken]);
 
   async function completeLesson() {
     if (!navigator.onLine) {
@@ -64,7 +68,8 @@ export default function AcademyLesson() {
     setCompleted(true);
   }
 
-  if (state === "loading") return <p>Loading lesson...</p>;
+  if (state === "loading")
+    return <AcademyConnectionState loading title="" description="" showChallenge={false} />;
   if (state === "unconfigured")
     return (
       <p className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">
@@ -73,12 +78,25 @@ export default function AcademyLesson() {
     );
   if (state === "error" || !lesson)
     return (
-      <p
-        role="alert"
-        className="rounded-xl border border-red-300 bg-red-50 p-4 text-sm text-red-700"
+      <AcademyConnectionState
+        online={network.online}
+        slow={network.slow}
+        title={network.online ? "This lesson is not available" : "This lesson is not downloaded"}
+        description={
+          network.online
+            ? "It may still be a draft, or it may have moved. Open the lesson list to see what is published."
+            : "Reconnect once to open this lesson, then download the course to keep it available offline."
+        }
+        onRetry={
+          network.online
+            ? undefined
+            : () => setReloadToken((value) => value + 1)
+        }
       >
-        This lesson could not be found.
-      </p>
+        <Link to="/academy/lessons" className="button-secondary mt-4 inline-flex">
+          Back to lessons
+        </Link>
+      </AcademyConnectionState>
     );
 
   const content = lesson.content || {};
