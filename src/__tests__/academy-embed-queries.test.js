@@ -10,6 +10,13 @@ const mocks = vi.hoisted(() => ({
 
 const { from, rpc, select, order, inFn } = mocks;
 
+const orderResult = { data: [], error: null };
+const orderChain = {
+  order,
+  in: inFn,
+  then: (resolve, reject) => Promise.resolve(orderResult).then(resolve, reject),
+};
+
 vi.mock("../lib/supabase", () => ({
   supabase: { from: mocks.from, rpc: mocks.rpc },
   isSupabaseConfigured: true,
@@ -28,26 +35,29 @@ describe("Academy data-layer embeds", () => {
     select.mockReset();
     order.mockReset();
     inFn.mockReset();
-    order.mockResolvedValue({ data: [], error: null });
-    select.mockReturnValue({ order, in: inFn });
+    order.mockImplementation(() => orderChain);
     inFn.mockResolvedValue({ data: [], error: null });
+    select.mockReturnValue(orderChain);
     from.mockReturnValue({ select });
   });
 
   it("class list no longer embeds academy_profiles through class members", async () => {
-    select.mockReturnValue({
+    const rowResult = {
+      data: [
+        {
+          id: "class-1",
+          name: "Group A",
+          academy_class_members: [{ student_id: "s1", status: "active" }],
+        },
+      ],
+      error: null,
+    };
+    const chain = {
       in: inFn,
-      order: vi.fn().mockResolvedValue({
-        data: [
-          {
-            id: "class-1",
-            name: "Group A",
-            academy_class_members: [{ student_id: "s1", status: "active" }],
-          },
-        ],
-        error: null,
-      }),
-    });
+      order: vi.fn(() => chain),
+      then: (res, rej) => Promise.resolve(rowResult).then(res, rej),
+    };
+    select.mockReturnValue(chain);
     inFn.mockResolvedValue({ data: [{ id: "s1", display_name: "Ada" }], error: null });
 
     const result = await getAcademyTeacherClasses();
@@ -59,13 +69,13 @@ describe("Academy data-layer embeds", () => {
   });
 
   it("submissions resolve the student name with an explicit FK hint", async () => {
-    select.mockReturnValue({
+    const rowResult = { data: [{ id: "sub-1", student_id: "s1" }], error: null };
+    const chain = {
       in: inFn,
-      order: vi.fn().mockResolvedValue({
-        data: [{ id: "sub-1", student_id: "s1" }],
-        error: null,
-      }),
-    });
+      order: vi.fn(() => chain),
+      then: (res, rej) => Promise.resolve(rowResult).then(res, rej),
+    };
+    select.mockReturnValue(chain);
     inFn.mockResolvedValue({ data: [{ id: "s1", display_name: "Ada" }], error: null });
 
     const result = await getAcademyTeacherSubmissions();

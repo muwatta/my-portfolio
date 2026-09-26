@@ -106,6 +106,9 @@ const AcademyAdminGuard = lazy(
 const AcademyAdminDashboard = lazy(
   () => import("./pages/AcademyAdminDashboard"),
 );
+const AcademyAdminContent = lazy(
+  () => import("./pages/AcademyAdminContent"),
+);
 const AcademyAdminStudents = lazy(() => import("./pages/AcademyAdminStudents"));
 const AcademyAdminRegistrations = lazy(
   () => import("./pages/AcademyAdminRegistrations"),
@@ -320,6 +323,10 @@ function AppShell() {
                             <Route
                               path="/academy/admin/dashboard"
                               element={<AcademyAdminDashboard />}
+                            />
+                            <Route
+                              path="/academy/admin/content"
+                              element={<AcademyAdminContent />}
                             />
                             <Route
                               path="/academy/admin/students"

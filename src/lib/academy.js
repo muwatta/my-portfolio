@@ -288,15 +288,19 @@ export async function getAcademyProjects(studentId) {
       .order("created_at");
     const projects = (data ?? []).map((project) => ({
       ...project,
-      academy_project_milestones: (project.academy_project_milestones ?? []).map(
-        (milestone) => ({
+      academy_project_milestones: (project.academy_project_milestones ?? [])
+        .slice()
+        .sort(
+          (left, right) =>
+            (left.milestone_number ?? 0) - (right.milestone_number ?? 0),
+        )
+        .map((milestone) => ({
           ...milestone,
           progress:
             milestone.academy_project_progress?.find(
               (item) => item.student_id === studentId,
             ) ?? null,
-        }),
-      ),
+        })),
     }));
     return { data: projects, error, configured: true };
   });
@@ -694,14 +698,39 @@ export async function getAcademyAdminPractice() {
   ] = await Promise.all([
     supabase
       .from("academy_lessons")
-      .select("id, title, slug, lesson_number, academy_weeks!inner(course_id)")
+      .select(
+        "id, title, slug, lesson_number, sort_order, academy_weeks!inner(id, week_number, course_id)",
+      )
+      .order("academy_weeks(week_number)")
+      .order("sort_order")
       .order("lesson_number"),
     supabase.rpc("academy_staff_exercise_list"),
   ]);
+  const orderedLessons = (lessons ?? []).slice().sort(
+    (left, right) =>
+      (left.academy_weeks?.week_number ?? 0) -
+        (right.academy_weeks?.week_number ?? 0) ||
+      (left.sort_order ?? 0) - (right.sort_order ?? 0) ||
+      (left.lesson_number ?? 0) - (right.lesson_number ?? 0) ||
+      left.title.localeCompare(right.title),
+  );
+  const lessonOrder = new Map(
+    orderedLessons.map((lesson, index) => [lesson.id, index]),
+  );
+  const unplaced = orderedLessons.length;
+  const exercisesInOrder = (exercises ?? []).slice().sort((left, right) => {
+    const leftOrder = lessonOrder.get(left.lesson_id) ?? unplaced;
+    const rightOrder = lessonOrder.get(right.lesson_id) ?? unplaced;
+    return (
+      leftOrder - rightOrder ||
+      (left.sort_order ?? 0) - (right.sort_order ?? 0) ||
+      left.title.localeCompare(right.title)
+    );
+  });
   return {
     data: {
-      lessons: lessons ?? [],
-      exercises: (exercises ?? []).map((exercise) => ({
+      lessons: orderedLessons,
+      exercises: exercisesInOrder.map((exercise) => ({
         ...exercise,
         academy_lessons: exercise.lesson_id
           ? { id: exercise.lesson_id, title: exercise.lesson_title }
@@ -1497,10 +1526,13 @@ export async function getAcademyTeacherAssignments() {
   const { data, error } = await supabase
     .from("academy_assignments")
     .select(
-      "id, course_id, lesson_id, title, instructions, due_at, points, retry_limit, published, is_draft, ai_feedback_enabled, academy_courses!academy_assignments_course_id_fkey(title)",
+      "id, course_id, week_id, lesson_id, title, instructions, due_at, points, retry_limit, published, is_draft, ai_feedback_enabled, academy_courses!academy_assignments_course_id_fkey(title)",
     )
-    .order("created_at", { ascending: false });
-  return { data: data  ??  [], error, configured: true };
+    .order("course_id")
+    .order("week_id", { ascending: true, nullsFirst: true })
+    .order("due_at", { ascending: true, nullsFirst: true })
+    .order("title");
+  return { data: data ?? [], error, configured: true };
 }
 
 async function getAcademyProfileNames(userIds) {
