@@ -1253,6 +1253,15 @@ export async function heartbeatAcademyLearningSession(
   active = true,
 ) {
   if (!supabase) return { error: new Error("Academy is not configured.") };
+
+  // A learning session outlives the access token, so the token can be expired by
+  // the time a heartbeat fires. getSession refreshes it when it is close to
+  // expiry, and lets us skip the call entirely once the user is signed out.
+  // Without this the request goes out with a stale token and Supabase answers
+  // 401, which the browser logs as a failed resource on every 30 second tick.
+  const { data: authData } = await supabase.auth.getSession();
+  if (!authData.session) return { data: null, error: null };
+
   const { data, error } = await supabase.rpc(
     "academy_heartbeat_learning_session",
     {

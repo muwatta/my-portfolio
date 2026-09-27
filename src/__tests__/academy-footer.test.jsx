@@ -42,13 +42,18 @@ describe("AcademyFooter", () => {
     );
   });
 
-  it("exposes labelled navigation landmarks", () => {
-    renderFooter();
-    ["Learn", "My record"].forEach((name) => {
+  it("gives the logged out landing page labelled navigation landmarks", () => {
+    renderFooter({ isPublic: true });
+    ["Start learning", "Algorise Tech Explorers"].forEach((name) => {
       expect(
         screen.getByRole("navigation", { name: `${name} links` }),
       ).toBeInTheDocument();
     });
+  });
+
+  it("leaves signed in students on the app navigation", () => {
+    renderFooter();
+    expect(screen.queryByRole("navigation")).not.toBeInTheDocument();
   });
 
   it("only links to routes that exist in the Academy", () => {
