@@ -32,7 +32,7 @@ export default function AcademyResetPassword() {
         onSubmit={submit}
       >
         <p className="text-sm font-semibold uppercase tracking-[0.18em] text-cyan-600">
-          ATE Academy
+          Algorise Tech Explorers
         </p>
         <h1 className="mt-3 text-3xl font-bold">Choose a new password</h1>
         <div className="mt-6 space-y-4">

@@ -1,5 +1,5 @@
 const CACHE_PREFIX = "muwatta-academy";
-const CACHE_VERSION = "v5";
+const CACHE_VERSION = "v6";
 const APP_SHELL_CACHE = `${CACHE_PREFIX}-shell-${CACHE_VERSION}`;
 const ASSET_CACHE = `${CACHE_PREFIX}-assets-${CACHE_VERSION}`;
 const CONTENT_CACHE = `${CACHE_PREFIX}-content-${CACHE_VERSION}`;

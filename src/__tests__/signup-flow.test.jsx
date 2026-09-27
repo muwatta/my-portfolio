@@ -70,7 +70,7 @@ describe("Academy signup submission", () => {
 
     resolveSignup({ data: { user: { id: "user-id" } }, error: null });
     await waitFor(() =>
-      expect(screen.getByText("Welcome to Muwatta Academy!")).toBeInTheDocument(),
+      expect(screen.getByText("Welcome to Algorise Tech Explorers!")).toBeInTheDocument(),
     );
   });
 });

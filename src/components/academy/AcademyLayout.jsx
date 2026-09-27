@@ -220,7 +220,9 @@ export default function AcademyLayout({
             />
             <span className="min-w-0">
               <span className="block truncate text-sm font-bold tracking-wide">
-                {workspace === "admin" ? "ATE Academy Admin" : "ATE Academy"}
+                {workspace === "admin"
+                    ? "Algorise Tech Explorers Admin"
+                    : "Algorise Tech Explorers"}
               </span>
               <span className="hidden max-w-[13rem] truncate text-xs text-slate-500 sm:block dark:text-slate-400">
                 Learn, practice, and keep moving

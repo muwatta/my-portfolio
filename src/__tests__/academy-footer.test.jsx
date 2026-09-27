@@ -21,8 +21,24 @@ describe("AcademyFooter", () => {
         /^https:\/\/wa\.me\/2348142797233\?text=/,
       );
     });
-    expect(links.some((l) => l.textContent.includes("+234 814 279 7233"))).toBe(
-      true,
+    expect(links[0].textContent).toContain("Chat on WhatsApp");
+  });
+
+  it("names the WhatsApp number for screen reader and hover users", () => {
+    renderFooter();
+    const link = screen.getAllByRole("link", { name: /whatsapp/i })[0];
+    expect(link).toHaveAttribute(
+      "aria-label",
+      "Chat with us on WhatsApp at +234 814 279 7233",
+    );
+    expect(link).toHaveAttribute("title", "+234 814 279 7233");
+  });
+
+  it("offers a labelled email contact", () => {
+    renderFooter();
+    const link = screen.getByRole("link", { name: /email us at/i });
+    expect(link.getAttribute("href")).toBe(
+      "mailto:abdullahimusliudeen@gmail.com",
     );
   });
 
@@ -59,24 +75,33 @@ describe("AcademyFooter", () => {
     expect(new Set(hrefs).size).toBe(hrefs.length);
   });
 
-  it("is a single contentinfo landmark and credits the organisation", () => {
+  it("is a single contentinfo landmark branded for the organisation", () => {
     const { container } = renderFooter();
     expect(container.querySelectorAll("footer")).toHaveLength(1);
     expect(
-      screen.getByText(/Algorise Tech Explorers · RC No\. RC-8665201/i),
+      screen.getByText("Algorise Tech Explorers", { selector: "p" }),
     ).toBeInTheDocument();
     expect(
       screen.getByText(new RegExp(`© ${new Date().getFullYear()}`)),
     ).toBeInTheDocument();
   });
 
+  it("never presents the Academy under the old Muwatta Academy name", () => {
+    const { container } = renderFooter();
+    expect(container.textContent).not.toMatch(/Muwatta Academy/i);
+    expect(container.textContent).not.toMatch(/ATE Academy/i);
+  });
+
   it("keeps the WhatsApp contact on the logged out landing page", () => {
     renderFooter({ isPublic: true });
-    const whatsapp = screen.getByRole("link", { name: /chat on whatsapp/i });
+    const whatsapp = screen.getAllByRole("link", { name: /whatsapp/i })[0];
     expect(whatsapp.getAttribute("href")).toMatch(
       /^https:\/\/wa\.me\/2348142797233\?text=/,
     );
-    expect(screen.getByText(/\+234 814 279 7233/)).toBeInTheDocument();
+    expect(whatsapp).toHaveAttribute(
+      "aria-label",
+      "Chat with us on WhatsApp at +234 814 279 7233",
+    );
   });
 
   it("shows sign in links, not student links, before logging in", () => {

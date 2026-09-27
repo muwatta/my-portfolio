@@ -83,7 +83,7 @@ export default function AcademyHome() {
 
       <header className="mx-auto flex w-full max-w-6xl items-center justify-between px-4 py-6 sm:px-8">
         <Link to="/" className="flex items-baseline gap-2">
-          <span className="text-lg font-bold tracking-tight">ATE Academy</span>
+          <span className="text-lg font-bold tracking-tight">Algorise Tech Explorers</span>
         </Link>
         <button
           type="button"

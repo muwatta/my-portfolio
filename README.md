@@ -112,11 +112,11 @@ I am particularly interested in backend systems that have real users, real data,
 
 # Selected Projects
 
-## Muwatta Academy
+## Algorise Tech Explorers Academy
 
 **Integrated Learning Management System**
 
-Muwatta Academy is a learning platform being developed inside this portfolio for programming and technology education.
+Algorise Tech Explorers Academy is a learning platform being developed inside this portfolio for programming and technology education.
 
 It is designed for secondary-school learners and supports the complete learning workflow:
 
@@ -677,7 +677,7 @@ The portfolio demonstrates the engineering side.
 
 **Algorise Tech Explorers** provides the practical education environment.
 
-**Muwatta Academy** connects the two by turning that educational experience into a real software platform.
+**Algorise Tech Explorers Academy** connects the two by turning that educational experience into a real software platform.
 
 ---
 

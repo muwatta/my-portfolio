@@ -70,7 +70,7 @@ function trackEvent(eventName, data = {}) {
 }
 
 export function PWAInstallPrompt({
-  title = "Install Muwatta Academy",
+  title = "Install Algorise Tech Explorers",
   subtitle = "Learn offline with downloaded content",
   installText = "Install",
   dismissText = "Dismiss",
