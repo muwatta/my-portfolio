@@ -10,32 +10,6 @@ const WHATSAPP_MESSAGE = encodeURIComponent(
 const WHATSAPP_HREF = `https://wa.me/${WHATSAPP_NUMBER}?text=${WHATSAPP_MESSAGE}`;
 const EMAIL_HREF = `mailto:${EMAIL}`;
 
-const LINK_GROUPS = [
-  {
-    id: "learn",
-    title: "Learn",
-    links: [
-      { label: "Dashboard", to: "/academy/dashboard" },
-      { label: "Lessons", to: "/academy/lessons" },
-      { label: "Practice", to: "/academy/practice" },
-      { label: "Assignments", to: "/academy/assignments" },
-      { label: "Projects", to: "/academy/projects" },
-      { label: "Materials", to: "/academy/materials" },
-    ],
-  },
-  {
-    id: "record",
-    title: "My record",
-    links: [
-      { label: "Live classroom", to: "/academy/live" },
-      { label: "Progress", to: "/academy/progress" },
-      { label: "Leaderboard", to: "/academy/leaderboard" },
-      { label: "Notifications", to: "/academy/notifications" },
-      { label: "Profile", to: "/academy/profile" },
-    ],
-  },
-];
-
 const PUBLIC_LINK_GROUPS = [
   {
     id: "start",
@@ -52,8 +26,6 @@ const PUBLIC_LINK_GROUPS = [
   },
 ];
 
-// Shared focus-ring treatment so every interactive element in the footer
-// gets the same, single definition of its focus style.
 const FOCUS_RING =
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-950";
 
@@ -96,7 +68,7 @@ function MailIcon() {
 
 export default function AcademyFooter({ isPublic = false }) {
   const year = new Date().getFullYear();
-  const groups = isPublic ? PUBLIC_LINK_GROUPS : LINK_GROUPS;
+  const groups = isPublic ? PUBLIC_LINK_GROUPS : [];
   const bodyPadding = isPublic ? "" : "pb-24 lg:pb-10";
 
   return (
@@ -111,8 +83,12 @@ export default function AcademyFooter({ isPublic = false }) {
       </h2>
 
       <div className={`mx-auto max-w-7xl px-4 py-10 sm:px-6 ${bodyPadding}`}>
-        <div className="grid gap-10 lg:grid-cols-[1.3fr_2fr]">
-          <div>
+        <div
+          className={`grid gap-10 ${
+            groups.length > 0 ? "lg:grid-cols-[1.3fr_2fr]" : ""
+          }`}
+        >
+          <div className={groups.length > 0 ? "" : "max-w-xl"}>
             <div className="flex items-center gap-3">
               <img
                 src="/images/ate-icon-192.png"
@@ -162,24 +138,26 @@ export default function AcademyFooter({ isPublic = false }) {
             </div>
           </div>
 
-          <div className="grid gap-8 sm:grid-cols-2">
-            {groups.map((group) => (
-              <nav key={group.id} aria-label={`${group.title} links`}>
-                <h3 className="text-xs font-bold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">
-                  {group.title}
-                </h3>
-                <ul className="mt-3 space-y-1">
-                  {group.links.map((link) => (
-                    <li key={`${group.id}-${link.to}-${link.label}`}>
-                      <Link to={link.to} className={linkClass}>
-                        {link.label}
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </nav>
-            ))}
-          </div>
+          {groups.length > 0 && (
+            <div className="grid gap-8 sm:grid-cols-2">
+              {groups.map((group) => (
+                <nav key={group.id} aria-label={`${group.title} links`}>
+                  <h3 className="text-xs font-bold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">
+                    {group.title}
+                  </h3>
+                  <ul className="mt-3 space-y-1">
+                    {group.links.map((link) => (
+                      <li key={`${group.id}-${link.to}-${link.label}`}>
+                        <Link to={link.to} className={linkClass}>
+                          {link.label}
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                </nav>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
@@ -194,3 +172,4 @@ export default function AcademyFooter({ isPublic = false }) {
     </footer>
   );
 }
+
