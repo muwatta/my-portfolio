@@ -67,7 +67,7 @@ export default function AcademyLogin() {
       <div className="grid w-full max-w-4xl overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl dark:border-slate-800 dark:bg-slate-900 lg:grid-cols-[0.85fr_1.15fr]">
         {/* Side panel */}
         <div className="hidden bg-[#0D1321] p-8 text-white lg:block">
-          <p className="text-sm font-semibold text-slate-400">ATE Academy</p>
+          <p className="text-sm font-semibold text-slate-400">Algorise Tech Explorers</p>
           <h2 className="mt-8 text-3xl font-bold leading-tight tracking-tight">
             Small lessons. Strong foundations across software and hardware.
           </h2>
@@ -99,7 +99,7 @@ export default function AcademyLogin() {
           <div className="mt-6">
             <h1 className="text-3xl font-bold tracking-tight">Welcome back</h1>
             <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
-              Sign in to continue your ATE Academy learning journey.
+              Sign in to continue your learning journey.
             </p>
           </div>
 

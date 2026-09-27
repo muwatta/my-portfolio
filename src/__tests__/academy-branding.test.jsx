@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { render } from "@testing-library/react";
 import { afterEach, beforeAll, describe, expect, it } from "vitest";
 
@@ -57,5 +58,26 @@ describe("useAcademyBranding", () => {
 
     rerender(<Harness isAcademyRoute />);
     expect(document.title).toBe("Algorise Tech Explorers");
+  });
+
+  it("ships the organisation name in the install metadata", () => {
+    const manifest = JSON.parse(
+      readFileSync("public/manifest.json", "utf8"),
+    );
+    expect(manifest.name).toBe("Algorise Tech Explorers");
+    expect(manifest.short_name).toBe("Algorise Tech Explorers");
+
+    const html = readFileSync("index.html", "utf8");
+    expect(html).toContain(
+      'name="apple-mobile-web-app-title" content="Algorise Tech Explorers"',
+    );
+  });
+
+  it("keeps the retired Academy names out of shipped metadata", () => {
+    for (const file of ["index.html", "public/offline.html"]) {
+      const contents = readFileSync(file, "utf8");
+      expect(contents).not.toMatch(/Muwatta Academy/i);
+      expect(contents).not.toMatch(/ATE Academy/i);
+    }
   });
 });

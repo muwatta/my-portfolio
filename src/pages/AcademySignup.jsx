@@ -111,7 +111,7 @@ export default function AcademySignup() {
       <div className="grid w-full max-w-4xl overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl dark:border-slate-800 dark:bg-slate-900 lg:grid-cols-[0.85fr_1.15fr]">
         {/* Side panel */}
         <div className="hidden bg-[#0D1321] p-8 text-white lg:block">
-          <p className="text-sm font-semibold text-slate-400">ATE Academy</p>
+          <p className="text-sm font-semibold text-slate-400">Algorise Tech Explorers</p>
           <h1 className="mt-8 text-3xl font-bold leading-tight tracking-tight">
             Your next chapter starts with one small step.
           </h1>
@@ -164,7 +164,7 @@ export default function AcademySignup() {
                 ✓
               </div>
               <h3 id="signup-success-title" className="mt-5 text-2xl font-bold">
-                Welcome to ATE Academy!
+                Welcome to Algorise Tech Explorers!
               </h3>
               <p className="mt-3 text-sm leading-6 text-slate-600 dark:text-slate-300">
                 Your Academy Registration Number is:
