@@ -1,0 +1,9 @@
+-- Reconciliation entry.
+--
+-- Version 20261035000000 and 20261036000000 were consumed on the remote while
+-- investigating whether pg_cron was installed. Between them they applied
+-- exactly one statement, `create extension if not exists pg_cron`, plus some
+-- read only diagnostics that were rolled back. They are recorded here as
+-- comments so the local and remote migration lists stay aligned.
+--
+-- The real work that followed is 20261037000000_academy_housekeeping_retention.sql.

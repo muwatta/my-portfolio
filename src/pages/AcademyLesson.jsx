@@ -100,6 +100,10 @@ export default function AcademyLesson() {
     );
 
   const content = lesson.content || {};
+  // Driven by academy_courses.language so a new course in a new language needs
+  // no change here.
+  const courseLanguage = lesson.academy_weeks?.academy_courses?.language ?? "python";
+  const isCppCourse = courseLanguage === "cpp";
   return (
     <article className="max-w-3xl space-y-7">
       <Link
@@ -125,8 +129,7 @@ export default function AcademyLesson() {
         </ul>
       </section>
       <LessonContent content={content} />
-      {lesson.academy_weeks.academy_courses.slug ===
-        "cpp-embedded-robotics" && content.starter_code && (
+      {isCppCourse && content.starter_code && (
         <section className="space-y-3">
           <div>
             <p className="text-sm font-semibold uppercase tracking-[0.18em] text-blue-600">

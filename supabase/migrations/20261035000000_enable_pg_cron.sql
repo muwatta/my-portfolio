@@ -1,0 +1,9 @@
+-- Reconciliation entry.
+--
+-- This version was applied to the remote database while investigating the
+-- retention jobs and holds only:
+--
+--   create extension if not exists pg_cron;
+--
+-- It is recorded here as a comment so the local migration list matches the
+-- remote list. The file has no statements and nothing in it needs re-running.
