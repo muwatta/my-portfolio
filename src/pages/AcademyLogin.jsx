@@ -121,10 +121,11 @@ export default function AcademyLogin() {
                   required
                 />
               </label>
-              <label className="label">
-                Password
-                <span className="relative block">
+              <span className="label">
+                <label htmlFor="academy-login-password">Password</label>
+                <span className="relative mt-1 block">
                   <input
+                    id="academy-login-password"
                     className="field pr-16"
                     type={showPassword ? "text" : "password"}
                     autoComplete="current-password"
@@ -143,7 +144,7 @@ export default function AcademyLogin() {
                     {showPassword ? "Hide" : "Show"}
                   </button>
                 </span>
-              </label>
+              </span>
               {error && (
                 <p
                   role="alert"

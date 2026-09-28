@@ -55,7 +55,7 @@ describe("Portfolio UI (browser rendering)", () => {
   it("toggles the theme from dark to light and back", async () => {
     renderApp(["/"]);
     const toggles = await screen.findAllByRole("button", {
-      name: "Toggle theme",
+      name: /^Switch to (light|dark) (theme|mode)$/,
     });
     expect(toggles.length).toBeGreaterThan(0);
     expect(document.documentElement.className).toContain("dark");

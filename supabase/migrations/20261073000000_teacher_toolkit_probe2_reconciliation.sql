@@ -1,0 +1,6 @@
+-- Reconciliation entry.
+--
+-- Consumed on the remote by a throwaway probe that read the teacher dashboard
+-- and the gradebook, sent one announcement, counted the notification it
+-- produced, then deleted both the notification and the activity feed row. No
+-- rows remain and nothing needs re-running.

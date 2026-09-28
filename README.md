@@ -689,8 +689,6 @@ MIT — free to use as a template. Attribution appreciated.
 
 # Author
 
-## Abdullahi Musliudeen Oladipupo
-
 **Software Developer · Backend & Full-Stack**
 
 Software engineering • Education Technology • AI/ML • IoT
@@ -706,3 +704,45 @@ Software engineering • Education Technology • AI/ML • IoT
 ---
 
 > Building practical software and creating pathways into technology education.
+
+## Roles and authorization
+
+There is no single `role` value that means administrator. Authority is resolved
+from three separate places, and the combination matters:
+
+1. **`academy_profiles.role`**, an `academy_role` enum with only two values,
+   `student` and `teacher`. There is deliberately no `admin` in the enum.
+2. **`academy_admins`**, an allow list keyed by user id. Membership here grants
+   administrator access and can be changed with `academy_set_user_admin`.
+3. **A hard coded address** in `academy_is_admin()`. The comparison against
+   `abdullahimusliudeen@gmail.com` cannot be removed. Note that this address
+   currently matches no row in `auth.users` on this project, so the branch never
+   fires and administrator access comes entirely from the allow list.
+
+The two helpers everything else is built on:
+
+```
+academy_is_teacher() = academy_is_admin() OR academy_profiles.role = 'teacher'
+academy_is_admin()   = the hard coded address OR a row in academy_admins
+```
+
+So **administrator implies teacher**, and the teacher workspace accepts either.
+Because `role` has no `admin` value, an administrator whose profile says
+`student` is `isAdmin` and `isStudent` at the same time; the route guards
+resolve that by testing `isAdmin` first in `AcademyStudentGuard`.
+
+Server side enforcement does not rely on the client. Every read and write is
+guarded four ways: `SECURITY DEFINER` predicate helpers, permissive RLS
+policies, column level `GRANT` and `REVOKE`, and triggers that re-check. Client
+guards are presentation only. Students cannot write progress, grades or points
+directly at all, because those table privileges are revoked and every write goes
+through a `SECURITY DEFINER` function that re-validates.
+
+Answer keys are hidden with a column level grant on `academy_exercises`:
+`tests`, `solution_code` and `correct_answer` are not granted to `authenticated`.
+Be aware that **a table level `REVOKE` does not remove a privilege granted on an
+individual column**, so removing a column needs its own
+`revoke select (column) on ... from ...`. That mistake shipped once and left the
+hidden tests readable by every signed in student; see the header comment in
+`supabase/migrations/20261033000000_academy_exercise_column_grants.sql`.
+

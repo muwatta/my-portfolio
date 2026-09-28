@@ -12,9 +12,9 @@ describe("Academy course entry", () => {
     );
 
     expect(
-      await screen.findByText(/Learn\. Build\. Practice\. Grow\./i),
+      await screen.findByText(/Build things that actually run\./i),
     ).toBeInTheDocument();
-    expect(screen.getByText(/The learning path/i)).toBeInTheDocument();
+    expect(screen.getByText(/How the cohort runs/i)).toBeInTheDocument();
     expect(
       screen.getByRole("link", { name: /Apply to Academy/i }),
     ).toHaveAttribute("href", "/academy/signup");

@@ -66,7 +66,14 @@ Your portfolio is now a fully functional Progressive Web App that works on Andro
 
 - **HTML Pages**: Network-first (always try live, fallback to cached)
 - **Assets**: Cache-first (use cache, fetch updates in background)
-- **API Calls**: Network-first with cache fallback
+- **Supabase API calls are not cached.** The fetch handler returns early for
+  every cross origin request except the Pyodide CDN, so Supabase reads and
+  writes always go to the network. The Academy queues writes in IndexedDB
+  instead and replays them from `OfflineStatus`, so nothing is lost, but do not
+  expect a cached API response.
+- **Pyodide**: `cdn.jsdelivr.net` paths containing `/pyodide/v0.27.2/` are the
+  one cross origin exception, served cache first so Python keeps working offline.
+- **`/course_material_assets/`** is network first into the content cache.
 - **Images**: Offline placeholder when image unavailable
 
 ### Auto-Update
@@ -138,7 +145,7 @@ For production deployment:
    - `screenshot-540x720.png` (narrow mobile screenshot)
    - `screenshot-1280x720.png` (wide desktop screenshot)
 
-3. **Cache Management**: Service worker caches are versioned. Update `CACHE_VERSIONS` in `public/sw.js` to bust cache when deploying breaking changes.
+3. **Cache Management**: Service worker caches are versioned. Update `CACHE_VERSION` in `public/sw.js` to bust the cache when deploying breaking changes.
 
 4. **Manifest Updates**: Edit `public/manifest.json` to customize:
    - App name and short name

@@ -1,4 +1,6 @@
 import { supabase } from "./supabase";
+import { fetchWithOfflineFallback } from "./academyOffline";
+import { OFFLINE_STORES } from "./offlineStore";
 
 const lessonSelect =
   "id, title, slug, lesson_number, sort_order, objectives, content, prerequisite_lesson_id, completion_requirement, completion_mode, preview_allowed, academy_weeks!inner(id, week_number, title, academy_courses!inner(id, slug, title, duration_weeks, language))";
@@ -121,23 +123,33 @@ export async function selectAcademyCourse(studentId, courseId) {
 // One round trip for everything the home screen needs to say "what now". The
 // rules live in the database so the answer matches what the student is actually
 // allowed to see.
-export async function getAcademyStudentHome() {
+export async function getAcademyStudentHome(userId) {
   if (!supabase) return unavailable(null);
-  return withAcademyCache("home", 60 * 1000, async () => {
-    const { data, error } = await supabase.rpc("academy_student_home");
-    if (error || !data) return { data: null, error, configured: true };
-    return {
-      data: {
-        course: data.course ?? null,
-        continueLesson: data.continue_lesson ?? null,
-        nextLesson: data.next_lesson ?? null,
-        dueSoon: Array.isArray(data.due_soon) ? data.due_soon : [],
-        completedCount: Number(data.completed_count ?? 0),
-        totalCount: Number(data.total_count ?? 0),
-      },
-      error: null,
-      configured: true,
-    };
+  // Cached to IndexedDB as well as memory, so a student on a bad connection
+  // still sees what to do next instead of an empty home screen. The cached copy
+  // is a snapshot, so the page already treats it as something to read rather
+  // than something to act on.
+  return fetchWithOfflineFallback({
+    userId,
+    store: OFFLINE_STORES.metadata,
+    id: "student-home",
+    fetcher: () =>
+      withAcademyCache("home", 60 * 1000, async () => {
+        const { data, error } = await supabase.rpc("academy_student_home");
+        if (error || !data) return { data: null, error, configured: true };
+        return {
+          data: {
+            course: data.course ?? null,
+            continueLesson: data.continue_lesson ?? null,
+            nextLesson: data.next_lesson ?? null,
+            dueSoon: Array.isArray(data.due_soon) ? data.due_soon : [],
+            completedCount: Number(data.completed_count ?? 0),
+            totalCount: Number(data.total_count ?? 0),
+          },
+          error: null,
+          configured: true,
+        };
+      }),
   });
 }
 
