@@ -48,7 +48,7 @@ const SectionHeader = ({ icon, title }) => (
       {icon}
     </span>
     <div>
-      <p className="text-[10px] font-mono uppercase tracking-[0.2em] text-blue-400 mb-1">
+      <p className="text-[11px] font-mono uppercase tracking-[0.2em] text-blue-400 mb-1">
         Case Study
       </p>
       <h2 className="text-2xl font-bold text-white">{title}</h2>
@@ -202,7 +202,7 @@ const ProjectDetail = () => {
               {project.category}
             </span>
             {project.impact && (
-              <span className="text-[10px] font-mono uppercase tracking-widest text-slate-600">
+              <span className="text-[11px] font-mono uppercase tracking-widest text-slate-600">
                 {project.impact}
               </span>
             )}

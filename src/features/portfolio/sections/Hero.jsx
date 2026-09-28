@@ -140,7 +140,7 @@ export const Hero = () => {
                 <p className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white">
                   {s.value}
                 </p>
-                <p className="text-[10px] sm:text-[11px] font-mono text-slate-500 mt-0.5 uppercase tracking-wider">
+                <p className="text-[11px] sm:text-[11px] font-mono text-slate-500 mt-0.5 uppercase tracking-wider">
                   {s.label}
                 </p>
               </div>

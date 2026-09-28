@@ -155,10 +155,9 @@ export default function AcademySignup() {
             </div>
           ) : created ? (
             <div
-              role="dialog"
-              aria-modal="true"
-              aria-labelledby="signup-success-title"
-              className="mt-6 rounded-2xl border border-emerald-300 bg-emerald-50 p-8 text-center dark:border-emerald-800 dark:bg-emerald-950/40"
+              role="status"
+              aria-live="polite"
+              className="mt-6 rounded-2xl border border-emerald-300 bg-emerald-50 p-6 text-center sm:p-8 dark:border-emerald-800 dark:bg-emerald-950/40"
             >
               <div className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-emerald-100 text-2xl dark:bg-emerald-900">
                 ✓
@@ -174,7 +173,7 @@ export default function AcademySignup() {
               </p>
               <p className="mt-4 text-sm leading-6 text-slate-600 dark:text-slate-300">
                 We sent a confirmation link to{" "}
-                <span className="font-semibold text-slate-800 dark:text-slate-100">
+                <span className="break-all font-semibold text-slate-800 dark:text-slate-100">
                   {email.trim().toLowerCase()}
                 </span>
                 . If this email already has an Academy account, sign in instead;
@@ -257,7 +256,7 @@ export default function AcademySignup() {
                   />
                   <button
                     type="button"
-                    className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md px-2 py-1 text-xs font-semibold text-slate-500 hover:text-amber-600 dark:hover:text-amber-400"
+                    className="absolute right-1 top-1/2 flex min-h-11 -translate-y-1/2 items-center rounded-md px-3 text-xs font-semibold text-slate-500 hover:text-amber-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 dark:hover:text-amber-400"
                     onClick={() => setShowPassword((value) => !value)}
                     aria-label={
                       showPassword ? "Hide password" : "Show password"

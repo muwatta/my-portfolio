@@ -243,7 +243,7 @@ export default function AcademyLayout({
             <div className="hidden items-center gap-2 lg:flex">
               <button
                 type="button"
-                className="button-secondary grid min-h-9 min-w-9 place-items-center px-2 py-1.5"
+                className="button-secondary grid min-h-11 min-w-11 place-items-center px-2 py-1.5"
                 onClick={toggleTheme}
                 aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
               >
@@ -251,7 +251,7 @@ export default function AcademyLayout({
               </button>
               <button
                 type="button"
-                className="button-secondary min-h-9 px-3 py-1.5 text-sm"
+                className="button-secondary min-h-11 px-3 py-1.5 text-sm"
                 onClick={signOut}
               >
                 Sign out
@@ -316,7 +316,7 @@ export default function AcademyLayout({
               </span>
               <button
                 type="button"
-                className="button-secondary grid min-h-9 min-w-9 place-items-center px-2 py-1.5"
+                className="button-secondary grid min-h-11 min-w-11 place-items-center px-2 py-1.5"
                 onClick={toggleTheme}
                 aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
               >

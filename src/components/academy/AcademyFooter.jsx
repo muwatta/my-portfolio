@@ -4,41 +4,73 @@ const WHATSAPP_NUMBER = "2348142797233";
 const WHATSAPP_DISPLAY = "+234 814 279 7233";
 const EMAIL = "abdullahimusliudeen@gmail.com";
 
-const WHATSAPP_MESSAGE = encodeURIComponent(
+const WHATSAPP_HREF = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(
   "Hello Algorise Tech Explorers, I need help with my learning account.",
-);
-const WHATSAPP_HREF = `https://wa.me/${WHATSAPP_NUMBER}?text=${WHATSAPP_MESSAGE}`;
+)}`;
 const EMAIL_HREF = `mailto:${EMAIL}`;
 
-const PUBLIC_LINK_GROUPS = [
+// Short answers to what students ask most. The full list lives at /academy/faq,
+// so this stays deliberately small rather than repeating the whole page.
+const QUICK_QUESTIONS = [
   {
-    id: "start",
-    title: "Start learning",
-    links: [
-      { label: "Academy login", to: "/academy/login" },
-      { label: "Create an account", to: "/academy/signup" },
-    ],
+    q: "How do I sign in?",
+    a: "Use the email and password from your instructor. Forgotten it? Request a reset link from the sign-in page, then choose a new password.",
   },
   {
-    id: "elsewhere",
-    title: "Algorise Tech Explorers",
-    links: [{ label: "Back to the portfolio", to: "/" }],
+    q: "Can I learn without internet?",
+    a: "Yes. Download a week from its overview page and its lessons, exercises and materials are stored on your device. Work is queued and synced when you reconnect.",
+  },
+  {
+    q: "How is my code checked?",
+    a: "You submit your code and the Academy runs it against hidden test cases on the server, then shows which tests passed and which failed.",
+  },
+  {
+    q: "Where do I see my marks?",
+    a: "Open Progress for your completion and scores, and Leaderboard for your standing. Both read from the server, so they match on every device.",
   },
 ];
 
-// Help is one tap away on every footer without duplicating the app navigation.
-// The classroom and notification links need a session, so they only appear
-// once a student is signed in.
-const ALWAYS_HELP_LINKS = [{ label: "Help and FAQ", to: "/academy/faq" }];
-const SIGNED_IN_HELP_LINKS = [
-  { label: "Live classroom", to: "/academy/live" },
-  { label: "Notifications", to: "/academy/notifications" },
-];
+// Only links that the app's own navigation does not already cover, so the
+// footer adds something rather than repeating the tab bar.
+const QUICK_LINKS = {
+  id: "quick",
+  title: "Quick links",
+  links: [
+    { label: "Lessons", to: "/academy/lessons" },
+    { label: "Assignments", to: "/academy/assignments" },
+    { label: "Projects", to: "/academy/projects" },
+    { label: "Materials", to: "/academy/materials" },
+    { label: "Leaderboard", to: "/academy/leaderboard" },
+  ],
+};
+
+const PUBLIC_QUICK_LINKS = {
+  id: "public-quick",
+  title: "Quick links",
+  links: [
+    { label: "Academy login", to: "/academy/login" },
+    { label: "Create an account", to: "/academy/signup" },
+    { label: "Help and FAQ", to: "/academy/faq" },
+  ],
+};
+
+const SUPPORT_LINKS = {
+  id: "support",
+  title: "Support",
+  links: [
+    { label: "Live classroom", to: "/academy/live" },
+    { label: "Notifications", to: "/academy/notifications" },
+  ],
+};
+
+const PUBLIC_SUPPORT_LINKS = {
+  id: "public-support",
+  title: "Support",
+  links: [{ label: "Back to the portfolio", to: "/" }],
+};
 
 const FOCUS_RING =
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-950";
-
-const linkClass = `inline-flex min-h-11 items-center rounded-lg px-2 text-sm font-medium text-slate-600 transition-colors hover:text-cyan-700 dark:text-slate-400 dark:hover:text-cyan-300 focus-visible:ring-cyan-500 ${FOCUS_RING}`;
 
 const contactLinkClass =
   "inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border px-4 py-2 text-sm font-semibold transition-colors";
@@ -75,12 +107,29 @@ function MailIcon() {
   );
 }
 
+function Chevron() {
+  return (
+    <svg
+      viewBox="0 0 20 20"
+      aria-hidden="true"
+      className="h-4 w-4 shrink-0 fill-none stroke-current text-slate-400 transition-transform duration-200 group-open:rotate-180 dark:text-slate-500"
+    >
+      <path
+        d="m5 7.5 5 5 5-5"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
 export default function AcademyFooter({ isPublic = false }) {
   const year = new Date().getFullYear();
-  const groups = isPublic ? PUBLIC_LINK_GROUPS : [];
-  const helpLinks = isPublic
-    ? ALWAYS_HELP_LINKS
-    : [...ALWAYS_HELP_LINKS, ...SIGNED_IN_HELP_LINKS];
+  const groups = [
+    isPublic ? PUBLIC_QUICK_LINKS : QUICK_LINKS,
+    isPublic ? PUBLIC_SUPPORT_LINKS : SUPPORT_LINKS,
+  ];
   const bodyPadding = isPublic ? "" : "pb-24 lg:pb-10";
 
   return (
@@ -95,95 +144,126 @@ export default function AcademyFooter({ isPublic = false }) {
       </h2>
 
       <div
-        className={`mx-auto max-w-4xl px-4 py-12 text-center sm:px-6 ${bodyPadding}`}
+        className={`mx-auto max-w-5xl px-4 py-12 sm:px-6 ${bodyPadding}`}
       >
-        <img
-          src="/images/ate-icon-192.png"
-          alt=""
-          width="56"
-          height="56"
-          className="mx-auto h-14 w-14"
-        />
-        <p className="mt-4 text-base font-bold tracking-wide text-slate-900 dark:text-slate-50">
-          Algorise Tech Explorers
-        </p>
-        <p className="text-xs text-slate-500 dark:text-slate-400">
-          Learning platform
-        </p>
-
-        <p className="mx-auto mt-4 max-w-xl text-sm leading-6 text-slate-600 dark:text-slate-400">
-          Practical, project based learning in Python for AI and machine
-          learning, and C++ for embedded systems and robotics. Download a course
-          to keep learning without a connection.
-        </p>
-
-        <div className="mt-6 flex flex-wrap justify-center gap-3">
-          <a
-            href={WHATSAPP_HREF}
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label={`Chat with us on WhatsApp at ${WHATSAPP_DISPLAY}`}
-            title={WHATSAPP_DISPLAY}
-            className={`${contactLinkClass} border-emerald-600 text-emerald-700 hover:bg-emerald-50 dark:text-emerald-400 dark:hover:bg-emerald-950/40 focus-visible:ring-emerald-600 ${FOCUS_RING}`}
-          >
-            <WhatsAppIcon />
-            <span>Chat on WhatsApp</span>
-          </a>
-
-          <a
-            href={EMAIL_HREF}
-            aria-label={`Email us at ${EMAIL}`}
-            title={EMAIL}
-            className={`${contactLinkClass} border-slate-300 text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-900 focus-visible:ring-slate-500 ${FOCUS_RING}`}
-          >
-            <MailIcon />
-            <span>Email us</span>
-          </a>
+        {/* Identity */}
+        <div className="text-center">
+          <img
+            src="/images/ate-icon-192.png"
+            alt=""
+            width="56"
+            height="56"
+            className="mx-auto h-14 w-14"
+          />
+          <p className="mt-4 text-base font-bold tracking-wide text-slate-900 dark:text-slate-50">
+            Algorise Tech Explorers
+          </p>
+          <p className="text-xs text-slate-500 dark:text-slate-400">
+            Learning platform
+          </p>
+          <p className="mx-auto mt-4 max-w-xl text-sm leading-6 text-slate-600 dark:text-slate-400">
+            Practical, project based learning in Python for AI and machine
+            learning, and C++ for embedded systems and robotics. Download a course
+            to keep learning without a connection.
+          </p>
+          <div className="mt-6 flex flex-wrap justify-center gap-3">
+            <a
+              href={WHATSAPP_HREF}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label={`Chat with us on WhatsApp at ${WHATSAPP_DISPLAY}`}
+              title={WHATSAPP_DISPLAY}
+              className={`${contactLinkClass} border-emerald-600 text-emerald-700 hover:bg-emerald-50 dark:text-emerald-400 dark:hover:bg-emerald-950/40 focus-visible:ring-emerald-600 ${FOCUS_RING}`}
+            >
+              <WhatsAppIcon />
+              <span>Chat on WhatsApp</span>
+            </a>
+            <a
+              href={EMAIL_HREF}
+              aria-label={`Email us at ${EMAIL}`}
+              title={EMAIL}
+              className={`${contactLinkClass} border-slate-300 text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-900 focus-visible:ring-slate-500 ${FOCUS_RING}`}
+            >
+              <MailIcon />
+              <span>Email us</span>
+            </a>
+          </div>
         </div>
 
-        <nav
-          aria-label="Help and feedback"
-          className="mt-6 flex flex-wrap items-center justify-center gap-x-1 gap-y-1"
-        >
-          {helpLinks.map((link) => (
-            <Link key={link.to} to={link.to} className={linkClass}>
-              {link.label}
-            </Link>
+        {/* Grouped navigation */}
+        <div className="mt-10 grid gap-8 border-t border-slate-200 pt-8 sm:grid-cols-2 dark:border-slate-800">
+          {groups.map((group) => (
+            <nav key={group.id} aria-label={group.title}>
+              <h3 className="text-center text-xs font-bold uppercase tracking-[0.16em] text-slate-500 sm:text-left dark:text-slate-400">
+                {group.title}
+              </h3>
+              <ul className="mt-3 flex flex-wrap justify-center gap-x-1 sm:justify-start">
+                {group.links.map((link) => (
+                  <li key={`${group.id}-${link.to}-${link.label}`}>
+                    <Link
+                      to={link.to}
+                      className={`inline-flex min-h-11 items-center rounded-lg px-3 text-sm font-medium text-slate-600 transition-colors hover:text-cyan-700 focus-visible:ring-cyan-500 dark:text-slate-400 dark:hover:text-cyan-300 ${FOCUS_RING}`}
+                    >
+                      {link.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </nav>
           ))}
-        </nav>
+        </div>
 
-        {groups.length > 0 && (
-          <div className="mt-8 flex flex-wrap items-center justify-center gap-x-8 gap-y-2 border-t border-slate-200 pt-6 dark:border-slate-800">
-            {groups.map((group) => (
-              <nav key={group.id} aria-label={`${group.title} links`}>
-                <h3 className="text-xs font-bold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">
-                  {group.title}
-                </h3>
-                <ul className="mt-1 flex flex-wrap justify-center">
-                  {group.links.map((link) => (
-                    <li key={`${group.id}-${link.to}-${link.label}`}>
-                      <Link to={link.to} className={linkClass}>
-                        {link.label}
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </nav>
+        {/* Short answers, expandable so they do not take over the page */}
+        <section
+          className="mt-10 border-t border-slate-200 pt-8 dark:border-slate-800"
+          aria-labelledby="academy-footer-faq-heading"
+        >
+          <h3
+            id="academy-footer-faq-heading"
+            className="text-center text-xs font-bold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400"
+          >
+            Common questions
+          </h3>
+          <div className="mx-auto mt-4 max-w-2xl space-y-2">
+            {QUICK_QUESTIONS.map((item) => (
+              <details
+                key={item.q}
+                className="group rounded-lg border border-slate-200 bg-slate-50/60 transition-colors open:border-cyan-400 open:bg-cyan-50/50 dark:border-slate-800 dark:bg-slate-900/60 dark:open:border-cyan-600 dark:open:bg-cyan-950/20"
+              >
+                <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 rounded-lg px-4 py-2.5 text-left text-sm font-semibold text-slate-800 marker:content-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 focus-visible:ring-offset-2 dark:text-slate-100 dark:focus-visible:ring-offset-slate-950">
+                  <span>{item.q}</span>
+                  <Chevron />
+                </summary>
+                <p className="px-4 pb-3 text-sm leading-6 text-slate-600 dark:text-slate-400">
+                  {item.a}
+                </p>
+              </details>
             ))}
           </div>
-        )}
-
-        <p className="mt-8 text-xs text-slate-500 dark:text-slate-400">
-          Algorise Tech Explorers &middot; RC No. RC-8665201
-        </p>
-        <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-          Learn anywhere. Progress syncs automatically when you reconnect.
-        </p>
+          <p className="mt-4 text-center">
+            <Link
+              to="/academy/faq"
+              className={`inline-flex min-h-11 items-center rounded-lg px-2 text-sm font-semibold text-cyan-700 hover:underline focus-visible:ring-cyan-500 dark:text-cyan-300 ${FOCUS_RING}`}
+            >
+              See all questions and answers
+            </Link>
+          </p>
+        </section>
       </div>
 
+      {/* Legal and status */}
       <div className="border-t border-slate-200 dark:border-slate-800">
-        <div className="mx-auto max-w-4xl px-4 py-5 text-center text-xs text-slate-500 sm:px-6 dark:text-slate-400">
-          &copy; {year} Algorise Tech Explorers. All rights reserved.
+        <div className="mx-auto max-w-5xl px-4 py-6 text-center sm:px-6">
+          <p className="text-xs text-slate-500 dark:text-slate-400">
+            Algorise Tech Explorers &middot; RC No. RC-8665201 &middot; Registered
+            in Nigeria
+          </p>
+          <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+            Learn anywhere. Progress syncs automatically when you reconnect.
+          </p>
+          <p className="mt-3 text-xs text-slate-500 dark:text-slate-400">
+            &copy; {year} Algorise Tech Explorers. All rights reserved.
+          </p>
         </div>
       </div>
     </footer>

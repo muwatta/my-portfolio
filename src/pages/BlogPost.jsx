@@ -26,7 +26,7 @@ const CategoryBadge = ({ category }) => {
   const c = TAG_COLORS[category] || TAG_COLORS.default;
   return (
     <span
-      className="text-[10px] font-black uppercase tracking-[0.18em] px-2.5 py-[3px] rounded-full"
+      className="text-[11px] font-black uppercase tracking-[0.18em] px-2.5 py-[3px] rounded-full"
       style={{
         background: c.bg,
         color: c.text,
@@ -178,11 +178,11 @@ const BlogPost = () => {
           <div className="flex items-center gap-3 flex-wrap mb-5">
             <CategoryBadge category={post.category} />
             {post.readTime && (
-              <span className="flex items-center gap-1 text-[10px] font-mono text-slate-600">
-                <FaClock className="text-[8px]" /> {post.readTime}
+              <span className="flex items-center gap-1 text-[11px] font-mono text-slate-600">
+                <FaClock className="text-[11px]" /> {post.readTime}
               </span>
             )}
-            <span className="text-[10px] font-mono text-slate-600">
+            <span className="text-[11px] font-mono text-slate-600">
               {post.date}
             </span>
           </div>
@@ -204,7 +204,7 @@ const BlogPost = () => {
               {post.tags.map((t) => (
                 <span
                   key={t}
-                  className="text-[10px] px-2.5 py-1 rounded-full bg-slate-800 text-slate-500 border border-slate-300 dark:border-slate-700"
+                  className="text-[11px] px-2.5 py-1 rounded-full bg-slate-800 text-slate-500 border border-slate-300 dark:border-slate-700"
                 >
                   {t}
                 </span>
@@ -226,7 +226,7 @@ const BlogPost = () => {
                 <p className="text-xs font-bold text-slate-700 dark:text-slate-300">
                   Abdullahi Musliudeen
                 </p>
-                <p className="text-[10px] text-slate-600">
+                <p className="text-[11px] text-slate-600">
                   Software Developer · Backend & Full-Stack
                 </p>
               </div>
@@ -236,7 +236,7 @@ const BlogPost = () => {
                 onClick={share}
                 className="flex items-center gap-1.5 text-slate-500 hover:text-blue-400 text-xs transition-colors"
               >
-                <FaShareAlt className="text-[10px]" />{" "}
+                <FaShareAlt className="text-[11px]" />{" "}
                 {copied ? "Copied!" : "Share"}
               </button>
               {post.medium_link && (
@@ -315,7 +315,7 @@ const BlogPost = () => {
                 to={`/blog/${prev.id}`}
                 className="group flex flex-col gap-1.5 p-4 rounded-xl border border-slate-200 dark:border-slate-800 hover:border-blue-500/30 bg-slate-100/40 dark:bg-slate-900/40 transition-colors"
               >
-                <span className="text-[10px] font-mono uppercase tracking-widest text-slate-600 flex items-center gap-1">
+                <span className="text-[11px] font-mono uppercase tracking-widest text-slate-600 flex items-center gap-1">
                   <HiArrowLeft className="transition-transform group-hover:-translate-x-1" />{" "}
                   Previous
                 </span>
@@ -331,7 +331,7 @@ const BlogPost = () => {
                 to={`/blog/${next.id}`}
                 className="group flex flex-col gap-1.5 p-4 rounded-xl border border-slate-200 dark:border-slate-800 hover:border-blue-500/30 bg-slate-100/40 dark:bg-slate-900/40 transition-colors text-right"
               >
-                <span className="text-[10px] font-mono uppercase tracking-widest text-slate-600 flex items-center gap-1 justify-end">
+                <span className="text-[11px] font-mono uppercase tracking-widest text-slate-600 flex items-center gap-1 justify-end">
                   Next{" "}
                   <HiArrowRight className="transition-transform group-hover:translate-x-1" />
                 </span>
