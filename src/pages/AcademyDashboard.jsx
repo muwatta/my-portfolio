@@ -5,6 +5,7 @@ import {
   getAcademyAssignments,
   getAcademyLessons,
   getAcademyProgress,
+  getAcademyStudentHome,
   getAcademyStudentOverview,
 } from "../lib/academy";
 import ProgressBar from "../components/academy/ProgressBar";
@@ -14,16 +15,18 @@ import { OFFLINE_STORES } from "../lib/offlineStore";
 export default function AcademyDashboard() {
   const { profile, user } = useAcademyAuth();
   const name = profile?.display_name || user?.email?.split("@")[0] || "Student";
-  const [lessons, setLessons] = useState([]);
+  const [, setLessons] = useState([]);
   const [progress, setProgress] = useState(null);
   const [assignmentCount, setAssignmentCount] = useState(0);
   const [assignments, setAssignments] = useState([]);
   const [overview, setOverview] = useState(null);
+  const [home, setHome] = useState(null);
   const [sectionState, setSectionState] = useState({
     lessons: "loading",
     progress: "loading",
     assignments: "loading",
     overview: "loading",
+    home: "loading",
   });
 
   useEffect(() => {
@@ -78,15 +81,17 @@ export default function AcademyDashboard() {
       OFFLINE_STORES.progress,
       "overview",
     );
+    loadSection("home", () => getAcademyStudentHome(), setHome);
     return () => {
       cancelled = true;
     };
   }, [user.id]);
 
-  const nextLesson =
-    lessons.find((lesson) => !lesson.progress?.completed_at) ||
-    lessons[lessons.length - 1];
-  const course = overview?.enrollment?.academy_courses;
+  // The database decides what comes next, because only it knows the unlock chain
+  // and which topics have actually been released.
+  const resumeLesson = home?.continueLesson ?? home?.nextLesson ?? null;
+  const dueSoon = home?.dueSoon ?? [];
+  const course = home?.course ?? overview?.enrollment?.academy_courses;
   const learningMinutes = Math.floor((overview?.learningSeconds ?? 0) / 60);
   const hasCourse = Boolean(course);
 
@@ -114,7 +119,7 @@ export default function AcademyDashboard() {
           className="mt-6 inline-flex min-h-11 items-center rounded-lg bg-cyan-400 px-4 py-2 text-sm font-bold text-slate-950 hover:bg-cyan-300"
         >
           {hasCourse
-            ? nextLesson
+            ? resumeLesson
               ? "Continue learning"
               : "Explore lessons"
             : "Choose a learning path"}
@@ -248,35 +253,94 @@ export default function AcademyDashboard() {
       {hasCourse && (
         <section className="rounded-xl border border-cyan-200 bg-cyan-50 p-6 dark:border-cyan-900 dark:bg-cyan-950/30">
           <p className="text-sm font-semibold uppercase tracking-[0.18em] text-cyan-700 dark:text-cyan-300">
-            Today's task
+            {resumeLesson ? "Continue where you left off" : "Your next topic"}
           </p>
-          <h2 className="mt-2 text-xl font-bold">
-            {overview?.schedules?.[0]?.title ||
-              nextLesson?.title ||
-              "Continue your current lesson"}
-          </h2>
-          <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
-            Open your current lesson or pending assignment to keep your learning
-            moving.
-          </p>
-          <div className="mt-4 flex flex-wrap gap-3">
+
+          {resumeLesson ? (
+            <>
+              <h2 className="mt-2 text-xl font-bold">{resumeLesson.title}</h2>
+              <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
+                Week {resumeLesson.week_number}
+                {home?.totalCount
+                  ? ` · ${home.completedCount} of ${home.totalCount} topics complete`
+                  : ""}
+              </p>
+              <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
+                {home?.continueLesson
+                  ? "You had already started this one. Pick it up where you left off."
+                  : "This is the next topic unlocked for you."}
+              </p>
+              <div className="mt-4 flex flex-wrap gap-3">
+                <Link
+                  className="button-primary inline-flex"
+                  to={`/academy/lessons/${resumeLesson.lesson_id}`}
+                >
+                  {home?.continueLesson ? "Continue" : "Start topic"}
+                </Link>
+                <Link
+                  className="button-secondary inline-flex"
+                  to="/academy/lessons"
+                >
+                  All topics
+                </Link>
+              </div>
+            </>
+          ) : (
+            <>
+              <h2 className="mt-2 text-xl font-bold">
+                {home?.totalCount
+                  ? "You have completed every released topic"
+                  : "Nothing is unlocked yet"}
+              </h2>
+              <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
+                {home?.totalCount
+                  ? `All ${home.totalCount} topics are done. New topics appear here as soon as your teacher publishes them.`
+                  : "Your teacher has not released any topics for this course yet."}
+              </p>
+              <div className="mt-4 flex flex-wrap gap-3">
+                <Link
+                  className="button-secondary inline-flex"
+                  to="/academy/notifications"
+                >
+                  Check notifications
+                </Link>
+              </div>
+            </>
+          )}
+        </section>
+      )}
+
+      {hasCourse && dueSoon.length > 0 && (
+        <section className="rounded-xl border border-amber-200 bg-amber-50 p-6 dark:border-amber-900 dark:bg-amber-950/30">
+          <div className="flex items-center justify-between gap-4">
+            <h2 className="text-xl font-bold">Due soon</h2>
             <Link
-              className="button-primary inline-flex"
-              to={
-                nextLesson
-                  ? `/academy/lessons/${nextLesson.id}`
-                  : "/academy/lessons"
-              }
-            >
-              Open lesson
-            </Link>
-            <Link
-              className="button-secondary inline-flex"
+              className="text-sm font-semibold text-amber-800 hover:underline dark:text-amber-300"
               to="/academy/assignments"
             >
-              View assignments
+              View all
             </Link>
           </div>
+          <ul className="mt-3 space-y-2">
+            {dueSoon.slice(0, 4).map((task) => (
+              <li key={task.assignment_id}>
+                <Link
+                  to={`/academy/assignments/${task.assignment_id}`}
+                  className="flex min-h-11 flex-wrap items-center justify-between gap-2 rounded-lg px-2 text-sm hover:underline"
+                >
+                  <span className="font-medium">{task.title}</span>
+                  <span className="text-xs text-slate-600 dark:text-slate-300">
+                    {task.due_at
+                      ? `due ${new Date(task.due_at).toLocaleString()}`
+                      : "no due date"}
+                    {task.attempts_used
+                      ? ` · ${task.attempts_used} attempt${task.attempts_used === 1 ? "" : "s"} used`
+                      : ""}
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
         </section>
       )}
       <section className="rounded-xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900">
@@ -358,13 +422,13 @@ export default function AcademyDashboard() {
                 Continue learning
               </p>
               <p className="mt-1 font-bold">
-                {nextLesson?.title || "No lessons published yet."}
+                {resumeLesson?.title || "No topics released yet."}
               </p>
             </div>
-            {nextLesson && (
+            {resumeLesson && (
               <Link
                 className="button-primary inline-flex"
-                to={`/academy/lessons/${nextLesson.id}`}
+                to={`/academy/lessons/${resumeLesson.lesson_id}`}
               >
                 Open lesson
               </Link>

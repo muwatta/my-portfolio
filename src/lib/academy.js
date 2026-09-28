@@ -118,6 +118,29 @@ export async function selectAcademyCourse(studentId, courseId) {
   return { data, error };
 }
 
+// One round trip for everything the home screen needs to say "what now". The
+// rules live in the database so the answer matches what the student is actually
+// allowed to see.
+export async function getAcademyStudentHome() {
+  if (!supabase) return unavailable(null);
+  return withAcademyCache("home", 60 * 1000, async () => {
+    const { data, error } = await supabase.rpc("academy_student_home");
+    if (error || !data) return { data: null, error, configured: true };
+    return {
+      data: {
+        course: data.course ?? null,
+        continueLesson: data.continue_lesson ?? null,
+        nextLesson: data.next_lesson ?? null,
+        dueSoon: Array.isArray(data.due_soon) ? data.due_soon : [],
+        completedCount: Number(data.completed_count ?? 0),
+        totalCount: Number(data.total_count ?? 0),
+      },
+      error: null,
+      configured: true,
+    };
+  });
+}
+
 export async function getAcademyStudentOverview(studentId) {
   if (!supabase) return unavailable(null);
   return withAcademyCache(`overview:${studentId}`, 60 * 1000, async () => {
@@ -1347,8 +1370,13 @@ export async function getAcademyLesson(id, studentId) {
       .maybeSingle();
     if (error || !data) return { data, error, configured: true };
 
-    const [{ data: exercises }, { data: subtopics }, { data: progress }] =
-      await Promise.all([
+    const [
+      { data: exercises },
+      { data: subtopics },
+      { data: progress },
+      { data: activities },
+      { data: submissions },
+    ] = await Promise.all([
         supabase
           .from("academy_exercises")
           .select(
@@ -1370,11 +1398,63 @@ export async function getAcademyLesson(id, studentId) {
               .eq("student_id", studentId)
               .maybeSingle()
           : Promise.resolve({ data: null }),
+        // The task step of the topic, so the page can show what to submit
+        // alongside the practice, and the student's own attempt at it.
+        supabase
+          .from("academy_lesson_activities")
+          .select(
+            "id, kind, ref_id, title, points, status, release_at, due_at, sort_order, academy_assignments!inner(id, title, instructions, points, due_at, late_policy, retry_limit, allowed_submission_types, allowed_file_types, max_file_size_bytes, status, release_at)",
+          )
+          .eq("lesson_id", id)
+          .eq("status", "published")
+          .order("sort_order"),
+        studentId
+          ? supabase
+              .from("academy_submissions")
+              .select("id, assignment_id, attempt_number, status, submitted_at, academy_submission_results(final_score, max_score, objective_score, teacher_feedback, ai_feedback, reviewed_at)")
+              .eq("student_id", studentId)
+              .order("submitted_at", { ascending: false })
+          : Promise.resolve({ data: [] }),
       ]);
+
+    // Latest attempt per assignment, which is the one the student cares about.
+    const latestByAssignment = new Map();
+    for (const submission of submissions ?? []) {
+      if (
+        submission.assignment_id &&
+        !latestByAssignment.has(submission.assignment_id)
+      ) {
+        latestByAssignment.set(submission.assignment_id, submission);
+      }
+    }
+
+    const tasks = (activities ?? [])
+      .map((activity) => {
+        const assignment = Array.isArray(activity.academy_assignments)
+          ? activity.academy_assignments[0]
+          : activity.academy_assignments;
+        if (!assignment) return null;
+        return {
+          activityId: activity.id,
+          assignmentId: assignment.id,
+          title: assignment.title,
+          instructions: assignment.instructions,
+          points: assignment.points,
+          dueAt: assignment.due_at,
+          latePolicy: assignment.late_policy,
+          retryLimit: assignment.retry_limit,
+          allowedSubmissionTypes: assignment.allowed_submission_types,
+          allowedFileTypes: assignment.allowed_file_types,
+          maxFileSizeBytes: assignment.max_file_size_bytes,
+          submission: latestByAssignment.get(assignment.id) ?? null,
+        };
+      })
+      .filter(Boolean);
 
     return {
       data: {
         ...data,
+        tasks,
         exercises: exercises ?? [],
         subtopics: subtopics ?? [],
         progress: progress ?? null,
