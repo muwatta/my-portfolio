@@ -786,8 +786,37 @@ npx supabase secrets set GRADING_EXECUTOR_URL=... GRADING_EXECUTOR_KEY=...
 npx supabase functions deploy academy-grade-submission
 ```
 
-The executor must be an isolated, no network Python sandbox. The edge function
+The executor must be an isolated, no network sandbox. The edge function
 deliberately does not execute student code itself.
+
+**An executor alone would still grade nothing.** Audited against the live
+database, because this is not obvious from the schema:
+
+| Exercices | Count | `correct_answer` | Auto gradable today |
+| --- | --- | --- | --- |
+| `multiple_choice` | 70 | 70 | yes, no executor needed |
+| `true_false` | 35 | 35 | yes, no executor needed |
+| `programming` | 15 | 0 | no |
+
+- **Zero of 120 exercises have a `tests` array**, and **zero assignments have
+  `automated_tests`**. The edge function rejects an empty test list, so it would
+  return `grading_failed` for every submission even if perfectly deployed.
+- Only **15 of 120** exercises have a `solution_code`, and those 15 are exactly
+  the `programming` ones.
+- **All 15 `programming` exercises are C++.** There are no Python programming
+  exercises at all.
+
+So the ordering matters. Test cases and reference solutions have to be authored
+before an executor is worth deploying. Deploying the executor first buys a
+running service that has nothing to run.
+
+**Cloudflare Workers plus Pyodide cannot grade the C++ exercises.** Pyodide is
+CPython compiled to WebAssembly and ships no C++ toolchain, so it cannot grade a
+single one of the 15. Workers' free tier also caps CPU time at roughly 10ms per
+request, which is far below what loading the Pyodide runtime needs. A C++
+executor means a real host with `g++`: a small VPS running a hardened container,
+with networking disabled and resource caps.
+
 
 **Neither edge function is deployed and no secrets are set.** As of the last
 check, `supabase secrets list` and `supabase functions list` were both empty, so
