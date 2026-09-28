@@ -12,6 +12,7 @@ import AcademyConnectionState from "../components/academy/AcademyConnectionState
 import { useNetworkStatus } from "../hooks/useNetworkStatus";
 import { useAcademyAuth } from "../hooks/useAcademyAuth";
 import LessonContent from "../components/academy/LessonContent";
+import TopicStepper from "../components/academy/TopicStepper";
 import CppEditor from "../components/academy/CppEditor";
 import PythonEditor from "../components/academy/PythonEditor";
 
@@ -21,6 +22,7 @@ export default function AcademyLesson() {
   const [lesson, setLesson] = useState(null);
   const [state, setState] = useState("loading");
   const [completed, setCompleted] = useState(false);
+  const [step, setStep] = useState("learn");
   const [notice, setNotice] = useState("");
   const [reloadToken, setReloadToken] = useState(0);
   const network = useNetworkStatus();
@@ -104,6 +106,15 @@ export default function AcademyLesson() {
   // no change here.
   const courseLanguage = lesson.academy_weeks?.academy_courses?.language ?? "python";
   const isCppCourse = courseLanguage === "cpp";
+  const practice = lesson.exercises ?? [];
+  const tasks = lesson.tasks ?? [];
+  const jumpTo = (target) => {
+    setStep(target);
+    document
+      .getElementById(`topic-step-${target}`)
+      ?.scrollIntoView({ block: "start" });
+  };
+
   return (
     <article className="max-w-3xl space-y-7">
       <Link
@@ -120,7 +131,17 @@ export default function AcademyLesson() {
           {lesson.title}
         </h1>
       </header>
-      <section>
+
+      <TopicStepper
+        current={step}
+        learnDone={completed}
+        practiceCount={practice.length}
+        taskCount={tasks.length}
+        practiceDone={false}
+        taskDone={tasks.every((task) => task.submission)}
+        onJump={jumpTo}
+      />
+      <section id="topic-step-learn">
         <h2 className="text-xl font-bold">What you will learn</h2>
         <ul className="mt-3 list-disc space-y-2 pl-5 text-slate-600 dark:text-slate-300">
           {lesson.objectives.map((objective) => (
@@ -160,30 +181,134 @@ export default function AcademyLesson() {
           <PythonEditor starterCode={content.starter_code || "print('Hello, engineer!')"} />
         </section>
       )}
-      {lesson.exercises?.length > 0 && (
-        <section className="rounded-xl border border-slate-200 p-5 dark:border-slate-800">
-          <h2 className="text-xl font-bold">Practice for this lesson</h2>
+      {practice.length > 0 && (
+        <section
+          id="topic-step-practice"
+          className="rounded-xl border border-slate-200 p-5 dark:border-slate-800"
+        >
+          <h2 className="text-xl font-bold">Practice</h2>
           <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
-            {lesson.exercises.length} exercise
-            {lesson.exercises.length === 1 ? "" : "s"} available.
+            {practice.length} low stakes question
+            {practice.length === 1 ? "" : "s"}. Unlimited attempts, with
+            feedback as soon as you answer.
           </p>
+          <ul className="mt-3 space-y-1 text-sm text-slate-700 dark:text-slate-300">
+            {practice.slice(0, 6).map((exercise) => (
+              <li key={exercise.id} className="flex items-start gap-2">
+                <span aria-hidden="true" className="text-slate-400">
+                  ·
+                </span>
+                <span>{exercise.title}</span>
+              </li>
+            ))}
+            {practice.length > 6 ? (
+              <li className="text-slate-500">
+                and {practice.length - 6} more
+              </li>
+            ) : null}
+          </ul>
           <Link
             className="button-primary mt-4 inline-flex"
             to="/academy/practice"
           >
-            Open practice
+            Start practice
           </Link>
         </section>
       )}
+
+      {tasks.length > 0 && (
+        <section
+          id="topic-step-task"
+          className="rounded-xl border border-slate-200 p-5 dark:border-slate-800"
+        >
+          <h2 className="text-xl font-bold">Task</h2>
+          <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
+            The work you hand in for this topic.
+          </p>
+          <ul className="mt-3 space-y-3">
+            {tasks.map((task) => {
+              const submission = task.submission;
+              const result = submission?.academy_submission_results?.[0] ??
+                submission?.academy_submission_results;
+              const score = result?.final_score ?? result?.objective_score;
+              const max = result?.max_score ?? task.points;
+              return (
+                <li
+                  key={task.assignmentId}
+                  className="rounded-lg border border-slate-200 p-4 dark:border-slate-800"
+                >
+                  <div className="flex flex-wrap items-start justify-between gap-2">
+                    <p className="font-semibold">{task.title}</p>
+                    <span className="text-xs text-slate-500 dark:text-slate-400">
+                      {task.points ? `${task.points} points` : null}
+                      {task.dueAt ? ` · due ${new Date(task.dueAt).toLocaleString()}` : ""}
+                    </span>
+                  </div>
+
+                  {submission ? (
+                    <div className="mt-2 space-y-1 text-sm">
+                      <p className="text-slate-600 dark:text-slate-300">
+                        Attempt {submission.attempt_number} submitted
+                        {submission.submitted_at
+                          ? ` on ${new Date(submission.submitted_at).toLocaleDateString()}`
+                          : ""}
+                        {" · "}
+                        <span className="font-semibold">
+                          {submission.status.replace(/_/g, " ")}
+                        </span>
+                      </p>
+                      {score != null ? (
+                        <p className="font-semibold">
+                          {score}
+                          {max ? ` out of ${max}` : ""}
+                        </p>
+                      ) : null}
+                      {result?.teacher_feedback ? (
+                        <p className="text-slate-600 dark:text-slate-300">
+                          Teacher feedback: {result.teacher_feedback}
+                        </p>
+                      ) : null}
+                    </div>
+                  ) : (
+                    <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
+                      Not submitted yet.
+                      {task.retryLimit
+                        ? ` Up to ${task.retryLimit} attempt${task.retryLimit === 1 ? "" : "s"}.`
+                        : ""}
+                    </p>
+                  )}
+
+                  <Link
+                    className="button-secondary mt-3 inline-flex"
+                    to={`/academy/assignments/${task.assignmentId}`}
+                  >
+                    {submission ? "View or resubmit" : "Open task"}
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+      )}
       {notice && <p role="status" className="rounded-lg bg-amber-50 p-3 text-sm text-amber-900">{notice}</p>}
-      <button
-        type="button"
-        className="button-primary"
-        onClick={completeLesson}
-        disabled={completed}
-      >
-        {completed ? "Lesson completed" : "Mark lesson complete"}
-      </button>
+      <div className="rounded-xl border border-slate-200 p-5 dark:border-slate-800">
+        <h2 className="text-xl font-bold">
+          {completed ? "Topic complete" : "Finished this topic?"}
+        </h2>
+        <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
+          {completed
+            ? "Nice work. The next topic is now unlocked."
+            : "Mark it complete to unlock the next topic and add it to your progress."}
+        </p>
+        <button
+          type="button"
+          className="button-primary mt-4"
+          onClick={completeLesson}
+          disabled={completed}
+        >
+          {completed ? "Topic completed" : "Mark topic complete"}
+        </button>
+      </div>
     </article>
   );
 }
