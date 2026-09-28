@@ -1,11 +1,13 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   getAcademyLiveMessages,
   getAcademyLiveRooms,
   joinAcademyLiveRoom,
   leaveAcademyLiveRoom,
-  sendAcademyLiveMessage,
+  formatDuration,
+  getVoiceNoteUrl,
 } from "../lib/academy";
+import VoiceNoteRecorder from "../components/academy/VoiceNoteRecorder";
 import { supabase } from "../lib/supabase";
 import { useAcademyAuth } from "../hooks/useAcademyAuth";
 import { friendlyError } from "../lib/utils";
@@ -15,7 +17,6 @@ export default function AcademyLiveRoom() {
   const [rooms, setRooms] = useState([]);
   const [roomId, setRoomId] = useState("");
   const [messages, setMessages] = useState([]);
-  const [body, setBody] = useState("");
   const [state, setState] = useState("loading");
   const [participants, setParticipants] = useState([]);
   const [connectedPeers, setConnectedPeers] = useState([]);
@@ -42,9 +43,16 @@ export default function AcademyLiveRoom() {
       setState(error ? "error" : configured ? "ready" : "unconfigured");
     });
   }, []);
+  const loadMessages = useCallback(() => {
+    if (!roomId) return Promise.resolve();
+    return getAcademyLiveMessages(roomId).then(({ data }) =>
+      setMessages(data ?? []),
+    );
+  }, [roomId]);
+
   useEffect(() => {
     if (!roomId) return undefined;
-    getAcademyLiveMessages(roomId).then(({ data }) => setMessages(data ?? []));
+    loadMessages();
     joinAcademyLiveRoom(roomId, user.id);
     if (!supabase) return undefined;
     const channel = supabase
@@ -232,18 +240,6 @@ export default function AcademyLiveRoom() {
     });
     setMuted(nextMuted);
   }
-  async function send(event) {
-    event.preventDefault();
-    if (offline || !body.trim() || !roomId) return;
-    const { data } = await sendAcademyLiveMessage(roomId, user.id, body);
-    if (data)
-      setMessages((current) =>
-        current.some((item) => item.id === data.id)
-          ? current
-          : [...current, data],
-      );
-    setBody("");
-  }
   return (
     <div className="space-y-8">
       <header>
@@ -329,39 +325,81 @@ export default function AcademyLiveRoom() {
               {!roomId && (
                 <p className="text-sm text-slate-500">Choose a room to join.</p>
               )}
-              {messages.map((message) => (
-                <p
-                  key={message.id}
-                  className="rounded-lg bg-slate-100 p-3 text-sm dark:bg-slate-800"
-                >
-                  <span className="font-semibold">
-                    {message.sender_id === user.id ? "You" : "Participant"}
-                    :{" "}
-                  </span>
-                  {message.body}
+              {messages.length === 0 ? (
+                <p className="text-sm text-slate-500 dark:text-slate-400">
+                  No voice notes yet. The first one is yours.
                 </p>
+              ) : null}
+              {messages.map((message) => (
+                <VoiceNote
+                  key={message.id}
+                  message={message}
+                  isMine={message.sender_id === user.id}
+                />
               ))}
             </div>
             {roomId && (
-              <form
-                className="flex gap-2 border-t border-slate-200 p-4 dark:border-slate-800"
-                onSubmit={send}
-              >
-                <input
-                  className="field"
-                  value={body}
-                  maxLength={2000}
-                  onChange={(event) => setBody(event.target.value)}
-                  placeholder="Send a message"
-                  aria-label="Message"
+              <div className="border-t border-slate-200 p-4 dark:border-slate-800">
+                <p className="mb-3 text-xs text-slate-500 dark:text-slate-400">
+                  Voice notes only. Everything here disappears after two weeks.
+                </p>
+                <VoiceNoteRecorder
+                  roomId={roomId}
+                  disabled={offline}
+                  onPosted={loadMessages}
                 />
-                <button className="button-primary" type="submit">
-                  Send
-                </button>
-              </form>
+                {offline ? (
+                  <p className="mt-2 text-sm text-amber-700 dark:text-amber-300">
+                    Reconnect to record. The room is not available offline.
+                  </p>
+                ) : null}
+              </div>
             )}
           </section>
         </div>
+      )}
+    </div>
+  );
+}
+
+function VoiceNote({ message, isMine }) {
+  const [url, setUrl] = useState(null);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    let cancelled = false;
+    if (!message.audio_path) return undefined;
+    getVoiceNoteUrl(message.id, message.audio_path).then((result) => {
+      if (cancelled) return;
+      if (result.error) setError("This recording could not be loaded.");
+      else setUrl(result.data);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [message.id, message.audio_path]);
+
+  return (
+    <div className="rounded-lg bg-slate-100 p-3 dark:bg-slate-800">
+      <p className="text-sm font-semibold">
+        {isMine ? "You" : "Participant"}
+        <span className="ml-2 font-normal text-slate-500 dark:text-slate-400">
+          {formatDuration(message.duration_seconds)} ·{" "}
+          {new Date(message.created_at).toLocaleTimeString()}
+        </span>
+      </p>
+      {error ? (
+        <p className="mt-1 text-sm text-red-600 dark:text-red-400">{error}</p>
+      ) : url ? (
+        <audio
+          controls
+          preload="none"
+          src={url}
+          className="mt-2 w-full"
+          aria-label="Voice note"
+        />
+      ) : (
+        <p className="mt-1 text-sm text-slate-500">Loading the recording</p>
       )}
     </div>
   );

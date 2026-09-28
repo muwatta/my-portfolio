@@ -262,25 +262,76 @@ export async function getAcademyLiveRooms() {
   return { data: data  ??  [], error, configured: true };
 }
 
+export const VOICE_NOTE_BUCKET = "live-voice-notes";
+export const MAX_VOICE_NOTE_SECONDS = 300;
+export const MAX_VOICE_NOTE_BYTES = 2 * 1024 * 1024;
+
+export function formatDuration(totalSeconds) {
+  const value = Math.max(0, Math.floor(totalSeconds || 0));
+  const minutes = String(Math.floor(value / 60)).padStart(2, "0");
+  const seconds = String(value % 60).padStart(2, "0");
+  return `${minutes}:${seconds}`;
+}
+
 export async function getAcademyLiveMessages(roomId) {
   if (!supabase) return unavailable([]);
   const { data, error } = await supabase
     .from("academy_live_messages")
-    .select("id, sender_id, body, created_at")
+    .select(
+      "id, sender_id, body, audio_path, audio_mime, duration_seconds, created_at",
+    )
     .eq("room_id", roomId)
     .order("created_at");
-  return { data: data  ??  [], error, configured: true };
+  return { data: data ?? [], error, configured: true };
 }
 
-export async function sendAcademyLiveMessage(roomId, senderId, body) {
+// A short lived signed URL, so a private recording can be played without ever
+// making the bucket public. Five minutes is all an audio element needs.
+export async function getVoiceNoteUrl(messageId, storedPath) {
+  if (!supabase) return { data: null, error: new Error("Academy is not configured.") };
+  const path = storedPath || `messages/${messageId}.webm`;
+  const { data, error } = await supabase.storage
+    .from(VOICE_NOTE_BUCKET)
+    .createSignedUrl(path, 300);
+  return { data: data?.signedUrl ?? null, error };
+}
+
+export async function sendAcademyVoiceNote({
+  roomId,
+  blob,
+  durationSeconds,
+  extension = "webm",
+}) {
   if (!supabase)
     return { data: null, error: new Error("Academy is not configured.") };
-  const { data, error } = await supabase
-    .from("academy_live_messages")
-    .insert({ room_id: roomId, sender_id: senderId, body: body.trim() })
-    .select("id, sender_id, body, created_at")
-    .single();
-  return { data, error };
+  const { data: userData, error: userError } = await supabase.auth.getUser();
+  if (userError || !userData.user) {
+    return { data: null, error: new Error("Sign in to post a voice note.") };
+  }
+
+  const mime = blob.type || "audio/webm";
+  const path = `${userData.user.id}/messages/${globalThis.crypto.randomUUID()}.${extension}`;
+
+  const { error: uploadError } = await supabase.storage
+    .from(VOICE_NOTE_BUCKET)
+    .upload(path, blob, { contentType: mime, upsert: false });
+  if (uploadError) return { data: null, error: uploadError };
+
+  const { data, error } = await supabase.rpc("academy_post_voice_note", {
+    p_room_id: roomId,
+    p_audio_path: path,
+    p_audio_mime: mime,
+    p_duration_seconds: Math.round(durationSeconds),
+    p_size_bytes: blob.size,
+  });
+
+  // The upload landed but the message did not, so remove the orphan rather than
+  // leaving audio in the bucket that nothing can reach.
+  if (error) {
+    await supabase.storage.from(VOICE_NOTE_BUCKET).remove([path]);
+    return { data: null, error };
+  }
+  return { data, error: null };
 }
 
 export async function joinAcademyLiveRoom(roomId, studentId) {
