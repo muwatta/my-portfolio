@@ -62,7 +62,7 @@ function StatusPill({ status }) {
   };
   return (
     <span
-      className={`rounded-full px-2 py-1 text-[10px] font-bold uppercase tracking-wider ${colors[status] || colors.draft}`}
+      className={`rounded-full px-2 py-1 text-[11px] font-bold uppercase tracking-wider ${colors[status] || colors.draft}`}
     >
       {status}
     </span>

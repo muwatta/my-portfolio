@@ -315,7 +315,7 @@ const Contact = () => {
                       {link.icon}
                     </div>
                     <div className="min-w-0">
-                      <p className="text-[10px] font-mono text-slate-600 uppercase tracking-wider">
+                      <p className="text-[11px] font-mono text-slate-600 uppercase tracking-wider">
                         {link.label}
                       </p>
                       <p className="text-sm text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white transition-colors break-words">

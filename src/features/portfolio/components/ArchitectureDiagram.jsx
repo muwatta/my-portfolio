@@ -42,7 +42,7 @@ export const ArchitectureDiagram = ({
                 {node.extras.map((extra) => (
                   <span
                     key={extra}
-                    className="text-[10px] font-mono px-2 py-1 rounded-md bg-slate-800 text-slate-400 border border-slate-700"
+                    className="text-[11px] font-mono px-2 py-1 rounded-md bg-slate-800 text-slate-400 border border-slate-700"
                   >
                     {extra}
                   </span>

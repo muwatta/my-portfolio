@@ -107,7 +107,7 @@ function ArticlePreview({ article, onEdit, onDelete }) {
         <button
           onClick={handleDelete}
           disabled={deleting}
-          className="px-3 py-1 bg-red-600 text-white rounded text-sm hover:bg-red-700 disabled:opacity-50"
+          className="inline-flex min-h-11 items-center rounded-lg bg-red-600 px-4 text-sm text-white hover:bg-red-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 disabled:opacity-50"
         >
           {deleting ? <FiLoader className="inline animate-spin" /> : "Delete"}
         </button>
@@ -213,7 +213,7 @@ export default function Admin() {
           </button>
         </div>
 
-        <div className="grid grid-cols-3 gap-4 mb-8">
+        <div className="mb-8 grid grid-cols-3 gap-2 sm:gap-4">
           <Panel title="Published">
             <div className="text-3xl font-bold text-green-600 text-center">{stats.published}</div>
           </Panel>

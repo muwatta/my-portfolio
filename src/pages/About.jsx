@@ -299,7 +299,7 @@ const About = () => {
                       openId === s.id ? "#3b82f610" : "transparent",
                   }}
                 >
-                  <span className="block text-[10px] font-mono text-slate-600 mb-1">
+                  <span className="block text-[11px] font-mono text-slate-600 mb-1">
                     {s.label}
                   </span>
                   <span
@@ -323,7 +323,7 @@ const About = () => {
                     transition={{ duration: 0.3 }}
                     className="min-w-0 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-100/40 dark:bg-slate-900/40 p-5 sm:p-8 h-full"
                   >
-                    <p className="text-[10px] font-mono text-blue-400 mb-2">
+                    <p className="text-[11px] font-mono text-blue-400 mb-2">
                       {s.label}
                     </p>
                     <h3 className="text-2xl font-extrabold text-slate-900 dark:text-white mb-6">
@@ -371,14 +371,14 @@ const About = () => {
                     style={{ backgroundColor: tc.dot }}
                   />
                   <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4">
-                    <span className="text-[10px] font-mono text-slate-600 flex-shrink-0 w-20">
+                    <span className="text-[11px] font-mono text-slate-600 flex-shrink-0 w-20">
                       {m.year}
                     </span>
                     <p className="text-slate-300 text-sm leading-relaxed">
                       {m.event}
                     </p>
                     <span
-                      className="text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full flex-shrink-0"
+                      className="text-[11px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full flex-shrink-0"
                       style={{
                         color: tc.dot,
                         backgroundColor: tc.dot + "18",
@@ -401,7 +401,7 @@ const About = () => {
                   className="w-2 h-2 rounded-full"
                   style={{ backgroundColor: v.dot }}
                 />
-                <span className="text-[10px] text-slate-600 font-mono">
+                <span className="text-[11px] text-slate-600 font-mono">
                   {v.label}
                 </span>
               </div>

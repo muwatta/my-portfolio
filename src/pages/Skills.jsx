@@ -377,13 +377,13 @@ export default function Skills() {
                   {cat.skills.map((s) => (
                     <span
                       key={s}
-                      className="text-[10px] px-2 py-0.5 rounded bg-slate-800 text-slate-500 dark:text-slate-400"
+                      className="text-[11px] px-2 py-0.5 rounded bg-slate-800 text-slate-500 dark:text-slate-400"
                     >
                       {s}
                     </span>
                   ))}
                 </div>
-                <p className="text-[10px] font-mono text-blue-400/80">
+                <p className="text-[11px] font-mono text-blue-400/80">
                   {cat.evidence}
                 </p>
               </div>
@@ -424,7 +424,7 @@ export default function Skills() {
                   {p.stack.map((s) => (
                     <span
                       key={s}
-                      className="text-[10px] px-2 py-0.5 rounded bg-slate-800 text-slate-500 dark:text-slate-400"
+                      className="text-[11px] px-2 py-0.5 rounded bg-slate-800 text-slate-500 dark:text-slate-400"
                     >
                       {s}
                     </span>

@@ -157,7 +157,7 @@ export function PWAInstallPrompt({
             <button
               onClick={handleDismiss}
               disabled={isInstalling}
-              className="rounded px-3 py-1.5 text-xs font-medium text-blue-600 transition-colors hover:bg-blue-100 disabled:opacity-50 active:bg-blue-200"
+              className="inline-flex min-h-11 items-center rounded-lg px-4 text-sm font-medium text-blue-600 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 hover:bg-blue-100 disabled:opacity-50 active:bg-blue-200"
               aria-label={dismissText}
             >
               {dismissText}
@@ -165,7 +165,7 @@ export function PWAInstallPrompt({
             <button
               onClick={handleInstall}
               disabled={isInstalling}
-              className="rounded bg-white px-3 py-1.5 text-xs font-bold text-blue-600 transition-colors hover:bg-gray-100 disabled:opacity-50 active:bg-gray-200"
+              className="inline-flex min-h-11 items-center rounded-lg bg-white px-4 text-sm font-bold text-blue-600 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 hover:bg-gray-100 disabled:opacity-50 active:bg-gray-200"
               aria-label={installText}
               aria-busy={isInstalling}
             >

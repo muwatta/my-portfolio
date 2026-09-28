@@ -100,7 +100,7 @@ export default function OfflineStatus() {
 
   return (
     <div
-      className="flex min-h-9 items-center gap-2 rounded-full border border-slate-200 bg-white px-2 text-xs font-semibold text-slate-600 sm:px-3 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300"
+      className="flex min-h-11 items-center gap-2 rounded-full border border-slate-200 bg-white px-2 text-xs font-semibold text-slate-600 sm:px-3 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300"
       role="status"
       aria-live="polite"
     >

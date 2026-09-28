@@ -44,10 +44,12 @@ html {
 body {
   min-width: 320px;
   overflow-x: hidden;
+  overflow-wrap: break-word;
   background: var(--bg-primary);
   color: var(--text-primary);
   font-family: Inter, ui-sans-serif, system-ui, sans-serif;
   text-rendering: optimizeLegibility;
+  -webkit-text-size-adjust: 100%;
 }
 
 .home-page {
@@ -209,7 +211,7 @@ pre {
 }
 
 .button-ghost {
-  @apply min-h-9 rounded-lg px-3 py-1.5 text-sm font-semibold text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white;
+  @apply min-h-11 rounded-lg px-3 py-2 text-sm font-semibold text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white;
 }
 
 /* Keep light-mode surfaces soft and muted text readable. */

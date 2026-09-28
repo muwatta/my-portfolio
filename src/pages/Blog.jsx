@@ -20,7 +20,7 @@ const CategoryBadge = ({ category }) => {
   const c = TAG_COLORS[category] || TAG_COLORS.default;
   return (
     <span
-      className="text-[10px] font-black uppercase tracking-[0.18em] px-2.5 py-[3px] rounded-full"
+      className="text-[11px] font-black uppercase tracking-[0.18em] px-2.5 py-[3px] rounded-full"
       style={{
         background: c.bg,
         color: c.text,
@@ -34,8 +34,8 @@ const CategoryBadge = ({ category }) => {
 
 const ReadTime = ({ time }) =>
   time ? (
-    <span className="flex items-center gap-1 text-[10px] font-mono text-slate-600">
-      <FaClock className="text-[8px]" /> {time}
+    <span className="flex items-center gap-1 text-[11px] font-mono text-slate-600">
+      <FaClock className="text-[11px]" /> {time}
     </span>
   ) : null;
 
@@ -240,7 +240,7 @@ const Blog = () => {
                   <div>
                     <div className="flex items-center gap-2 flex-wrap mb-4">
                       <ReadTime time={featured.readTime} />
-                      <span className="text-[10px] font-mono text-slate-600">
+                      <span className="text-[11px] font-mono text-slate-600">
                         {featured.date}
                       </span>
                     </div>
@@ -258,7 +258,7 @@ const Blog = () => {
                         {featured.tags.map((t) => (
                           <span
                             key={t}
-                            className="text-[10px] px-2 py-0.5 rounded bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-500"
+                            className="text-[11px] px-2 py-0.5 rounded bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-500"
                           >
                             {t}
                           </span>
@@ -288,7 +288,7 @@ const Blog = () => {
                       onClick={() => share(featured)}
                       className="flex items-center gap-1.5 text-slate-700 dark:text-slate-600 hover:text-blue-600 dark:hover:text-blue-400 text-xs transition-colors ml-0 sm:ml-auto"
                     >
-                      <FaShareAlt className="text-[10px]" />{" "}
+                      <FaShareAlt className="text-[11px]" />{" "}
                       {copiedId === featured.id ? "Copied!" : "Share"}
                     </button>
                   </div>
@@ -336,7 +336,7 @@ const Blog = () => {
                   </div>
                   <div className="min-w-0 p-5 flex flex-col flex-1">
                     <div className="flex items-center gap-2 mb-2">
-                      <span className="text-[10px] font-mono text-slate-600">
+                      <span className="text-[11px] font-mono text-slate-600">
                         {blog.date}
                       </span>
                       <ReadTime time={blog.readTime} />
@@ -355,7 +355,7 @@ const Blog = () => {
                         {blog.tags.slice(0, 3).map((t) => (
                           <span
                             key={t}
-                            className="text-[10px] px-1.5 py-0.5 rounded bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-600"
+                            className="text-[11px] px-1.5 py-0.5 rounded bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-600"
                           >
                             {t}
                           </span>
@@ -368,13 +368,13 @@ const Blog = () => {
                         className="flex items-center gap-1 text-xs font-bold text-blue-700 dark:text-blue-400 hover:text-blue-600 dark:hover:text-blue-300 transition-colors group/link"
                       >
                         Read{" "}
-                        <HiArrowRight className="text-[10px] transition-transform group-hover/link:translate-x-0.5" />
+                        <HiArrowRight className="text-[11px] transition-transform group-hover/link:translate-x-0.5" />
                       </Link>
                       <button
                         onClick={() => share(blog)}
                         className="flex items-center gap-1 text-slate-700 dark:text-slate-600 hover:text-blue-600 dark:hover:text-blue-400 text-[11px] transition-colors ml-0 sm:ml-auto"
                       >
-                        <FaShareAlt className="text-[9px]" />{" "}
+                        <FaShareAlt className="text-[11px]" />{" "}
                         {copiedId === blog.id ? "Copied!" : "Share"}
                       </button>
                     </div>
