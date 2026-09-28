@@ -1,0 +1,2 @@
+-- Reconciliation entry. Promoted and demoted a non owner account, then removed
+-- it again, so the table is unchanged. Nothing to re-run.

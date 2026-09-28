@@ -714,10 +714,16 @@ from three separate places, and the combination matters:
    `student` and `teacher`. There is deliberately no `admin` in the enum.
 2. **`academy_admins`**, an allow list keyed by user id. Membership here grants
    administrator access and can be changed with `academy_set_user_admin`.
-3. **A hard coded address** in `academy_is_admin()`. The comparison against
-   `abdullahimusliudeen@gmail.com` cannot be removed. Note that this address
-   currently matches no row in `auth.users` on this project, so the branch never
-   fires and administrator access comes entirely from the allow list.
+3. **A hard coded address** in `academy_is_admin()`, read from the JWT rather
+   than from `auth.users`. Treat it as unverified: probing an equivalent
+   comparison against `auth.users` twice on this database gave contradictory
+   answers, so whether the branch fires cannot be reasoned about from database
+   state alone. Administrator access is in practice granted by the allow list.
+
+There is now **exactly one** row in `academy_admins`, the account owner's. The
+owner is protected from removal by `academy_primary_admin_id()`, which pins the
+user id rather than comparing an address, because an address comparison could
+not be trusted to match consistently.
 
 The two helpers everything else is built on:
 
@@ -773,8 +779,10 @@ narrative feedback only; its prompt explicitly forbids inventing a score, so the
 "AI grades it" path does not exist. That is a deliberate boundary rather than an
 oversight, and a bulk AI grading button would ship dead until the key exists.
 
-**The primary administrator address matches no account.** See Roles and
-authorization above. Consolidate on a single `academy_admins` entry.
+**The hard coded administrator address is unverified.** See Roles and
+authorization above. It reads the JWT, so whether it matches depends on the token
+Supabase issues. The allow list is what actually grants access, and it now holds a
+single row.
 
 **One student is not one account per role system.** Being a portfolio admin and an
 Academy admin are unrelated: Firebase `admin_users/{uid}` governs the former and

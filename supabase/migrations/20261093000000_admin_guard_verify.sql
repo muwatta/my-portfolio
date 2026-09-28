@@ -1,0 +1,2 @@
+-- Reconciliation entry. Attempted the guard checks as authenticated, which
+-- could not read auth.users and so made no change. Nothing to re-run.
