@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it } from "vitest";
 import AcademyFooter from "../components/academy/AcademyFooter";
@@ -51,9 +51,41 @@ describe("AcademyFooter", () => {
     });
   });
 
-  it("leaves signed in students on the app navigation", () => {
+  it("keeps help one tap away for signed in students", () => {
     renderFooter();
-    expect(screen.queryByRole("navigation")).not.toBeInTheDocument();
+    const help = screen.getByRole("navigation", { name: "Help and feedback" });
+    expect(help).toBeInTheDocument();
+    expect(within(help).getByRole("link", { name: "Help and FAQ" })).toHaveAttribute(
+      "href",
+      "/academy/faq",
+    );
+    expect(within(help).getByRole("link", { name: "Live classroom" })).toBeInTheDocument();
+    expect(screen.queryByRole("navigation", { name: "Learn links" })).not.toBeInTheDocument();
+  });
+
+  it("does not send a logged out visitor to pages that need a session", () => {
+    renderFooter({ isPublic: true });
+    const help = screen.getByRole("navigation", { name: "Help and feedback" });
+    expect(within(help).getByRole("link", { name: "Help and FAQ" })).toBeInTheDocument();
+    expect(within(help).queryByRole("link", { name: "Live classroom" })).not.toBeInTheDocument();
+    expect(within(help).queryByRole("link", { name: "Notifications" })).not.toBeInTheDocument();
+  });
+
+  it("centres the footer content", () => {
+    const { container } = renderFooter();
+    const panel = container.querySelector("footer > div");
+    expect(panel.className).toContain("text-center");
+    expect(panel.className).toContain("mx-auto");
+  });
+
+  it("keeps the WhatsApp button and the registration number", () => {
+    renderFooter();
+    expect(
+      screen.getByRole("link", { name: /chat with us on whatsapp/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/Algorise Tech Explorers · RC No\. RC-8665201/i),
+    ).toBeInTheDocument();
   });
 
   it("only links to routes that exist in the Academy", () => {
@@ -75,6 +107,7 @@ describe("AcademyFooter", () => {
       "/academy/notifications",
       "/academy/profile",
       "/academy/live",
+      "/academy/faq",
     ]);
     hrefs.forEach((href) => expect(valid.has(href)).toBe(true));
     expect(new Set(hrefs).size).toBe(hrefs.length);

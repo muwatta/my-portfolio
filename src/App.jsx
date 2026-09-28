@@ -49,6 +49,7 @@ const AcademyResetPassword = lazy(() => import("./pages/AcademyResetPassword"));
 const AcademyForgotPassword = lazy(
   () => import("./pages/AcademyForgotPassword"),
 );
+const AcademyFaq = lazy(() => import("./pages/AcademyFaq"));
 const AcademyDashboard = lazy(() => import("./pages/AcademyDashboard"));
 const AcademyCourses = lazy(() => import("./pages/AcademyCourses"));
 const AcademyLessons = lazy(() => import("./pages/AcademyLessons"));
@@ -213,6 +214,7 @@ function AppShell() {
                           path="/academy/forgot-password"
                           element={<AcademyForgotPassword />}
                         />
+                        <Route path="/academy/faq" element={<AcademyFaq />} />
                         <Route element={<AcademyGuard />}>
                           <Route element={<AcademyStudentGuard />}>
                             <Route element={<AcademyStudentLayout />}>
