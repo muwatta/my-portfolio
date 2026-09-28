@@ -1,0 +1,3 @@
+-- Reconciliation entry. Attempted to demote the primary administrator, which
+-- the guard refused, and promoted then demoted another account, which left the
+-- table as it was. Nothing to re-run.
