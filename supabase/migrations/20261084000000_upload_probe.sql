@@ -1,0 +1,8 @@
+-- Reconciliation entry.
+--
+-- Consumed on the remote by a throwaway probe that temporarily published one
+-- seeded draft assignment, submitted against it as a real enrolled student, and
+-- deleted the probe submissions before putting the assignment back to draft. A
+-- plain code submission was accepted; a file in another member's folder, an exe
+-- and a 100 GB file were all refused; a repeated client operation id returned
+-- the same row. No rows and no state remain.

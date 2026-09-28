@@ -153,7 +153,6 @@ export default function AcademyAssignment() {
       const { error } = await submitAssignment({
         assignmentId: assignment.id,
         studentId: user.id,
-        attemptNumber: attempts + 1,
         sourceCode: source || null,
         filePath,
         originalFilename: file?.name || null,
