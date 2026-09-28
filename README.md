@@ -720,10 +720,12 @@ from three separate places, and the combination matters:
    answers, so whether the branch fires cannot be reasoned about from database
    state alone. Administrator access is in practice granted by the allow list.
 
-There is now **exactly one** row in `academy_admins`, the account owner's. The
-owner is protected from removal by `academy_primary_admin_id()`, which pins the
-user id rather than comparing an address, because an address comparison could
-not be trusted to match consistently.
+`academy_admins` currently holds two rows: the account owner, and a colleague
+who publishes content and grades work. The owner is protected from removal by
+`academy_primary_admin_id()`, which pins the user id rather than comparing an
+address, because an address comparison could not be trusted to match
+consistently on this database. Everyone else is granted or revoked explicitly,
+and there is no automatic rule that adds or strips colleagues.
 
 The two helpers everything else is built on:
 
@@ -781,8 +783,8 @@ oversight, and a bulk AI grading button would ship dead until the key exists.
 
 **The hard coded administrator address is unverified.** See Roles and
 authorization above. It reads the JWT, so whether it matches depends on the token
-Supabase issues. The allow list is what actually grants access, and it now holds a
-single row.
+Supabase issues. The `academy_admins` allow list is what actually grants access,
+and it holds two rows: the owner and a colleague.
 
 **One student is not one account per role system.** Being a portfolio admin and an
 Academy admin are unrelated: Firebase `admin_users/{uid}` governs the former and
