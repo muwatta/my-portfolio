@@ -6,6 +6,7 @@ import ProgressBar from "../components/academy/ProgressBar";
 import AnnouncementComposer from "../components/academy/AnnouncementComposer";
 import Gradebook from "../components/academy/Gradebook";
 import { useAutoRefresh } from "../hooks/useAutoRefresh";
+import RefreshControl from "../components/academy/RefreshControl";
 
 const TABS = [
   { id: "today", label: "Today" },
@@ -17,14 +18,22 @@ export default function AcademyTeacherDashboard() {
   const [data, setData] = useState(null);
   const [error, setError] = useState("");
   const [tab, setTab] = useState("today");
+  const [updatedAt, setUpdatedAt] = useState(null);
+  const [busy, setBusy] = useState(false);
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (background = false) => {
+    if (background) setBusy(true);
     const { data: result, error: failure } = await getTeacherDashboard();
+    setBusy(false);
     if (failure) {
-      setError(friendlyError(failure, "Could not load the dashboard."));
+      // A failed background poll should not replace what the teacher is reading.
+      if (!background) {
+        setError(friendlyError(failure, "Could not load the dashboard."));
+      }
       return;
     }
     setData(result);
+    setUpdatedAt(Date.now());
     setError("");
   }, []);
 
@@ -32,10 +41,11 @@ export default function AcademyTeacherDashboard() {
     load();
   }, [load]);
 
-  // Grading moves fast, so a background refresh keeps the queue honest. The hook
-  // already skips a background run while a form field has focus, so this never
-  // interrupts a teacher mid sentence.
-  useAutoRefresh(load);
+  // Polls slowly, and deliberately does not refresh when the teacher comes back
+  // to the tab. Grading moves fast, but so does getting distracted, and
+  // replacing the page the moment they alt-tab is worse than being a minute
+  // behind. RefreshControl gives them the choice.
+  useAutoRefresh(load, { interval: 120000 });
 
   const totals = data?.totals ?? {};
   const grading = data?.needsGrading ?? [];
@@ -46,9 +56,12 @@ export default function AcademyTeacherDashboard() {
   return (
     <div className="space-y-6">
       <header>
-        <p className="text-sm font-semibold uppercase tracking-[0.18em] text-cyan-600 dark:text-cyan-300">
-          Teacher workspace
-        </p>
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-cyan-600 dark:text-cyan-300">
+            Teacher workspace
+          </p>
+          <RefreshControl onRefresh={() => load(false)} busy={busy} updatedAt={updatedAt} />
+        </div>
         <h1 className="mt-2 text-3xl font-bold">What needs you today</h1>
         <p className="mt-2 max-w-2xl text-slate-600 dark:text-slate-300">
           Grading, deadlines, and who has gone quiet, resolved in one call so

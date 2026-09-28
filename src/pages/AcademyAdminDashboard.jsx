@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { getAcademyAdminOverview } from "../lib/academy";
 import { useAutoRefresh } from "../hooks/useAutoRefresh";
+import RefreshControl from "../components/academy/RefreshControl";
 import {
   Skeleton,
   SkeletonPanel,
@@ -12,13 +13,20 @@ import {
 export default function AcademyAdminDashboard() {
   const [overview, setOverview] = useState(null);
   const [state, setState] = useState("loading");
+  const [updatedAt, setUpdatedAt] = useState(null);
+  const [busy, setBusy] = useState(false);
   const load = useCallback(async (background = false) => {
+    if (background) setBusy(true);
     const { data, error } = await getAcademyAdminOverview();
+    setBusy(false);
     if (background && error) return;
     setOverview(data);
+    setUpdatedAt(Date.now());
     setState(error ? "error" : "ready");
   }, []);
-  useAutoRefresh(load);
+  // Slow poll, and no refresh when the tab regains focus. Refreshing the moment
+  // someone comes back is what used to throw away their place on the page.
+  useAutoRefresh(load, { interval: 120000 });
   const learningHours = Math.round((overview?.learningSeconds ?? 0) / 3600);
   const cards = [
     ["Students", overview?.students ?? 0],
@@ -31,9 +39,12 @@ export default function AcademyAdminDashboard() {
   return (
     <div className="space-y-8">
       <header>
-        <p className="text-sm font-semibold uppercase tracking-[0.18em] text-cyan-600 dark:text-cyan-300">
-          Academy administration
-        </p>
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-cyan-600 dark:text-cyan-300">
+            Academy administration
+          </p>
+          <RefreshControl onRefresh={() => load(false)} busy={busy} updatedAt={updatedAt} />
+        </div>
         <h1 className="mt-2 text-3xl font-bold">Admin overview</h1>
         <p className="mt-2 text-slate-600 dark:text-slate-300">
           Manage people, curriculum, and activity from one protected workspace.

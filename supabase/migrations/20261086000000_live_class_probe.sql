@@ -1,0 +1,7 @@
+-- Reconciliation entry.
+--
+-- Consumed on the remote by a throwaway probe that verified the live class
+-- scheduler: a student was refused, a blank title was refused, an end time
+-- before the start was refused, a valid class produced a live_class schedule
+-- and a room, and an enrolled student could reach the room. The rooms it
+-- created are removed by 20261087000000, which then seeds the real classes.
