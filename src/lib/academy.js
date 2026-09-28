@@ -1,7 +1,7 @@
 import { supabase } from "./supabase";
 
 const lessonSelect =
-  "id, title, slug, lesson_number, sort_order, objectives, content, prerequisite_lesson_id, completion_requirement, completion_mode, preview_allowed, academy_weeks!inner(id, week_number, title, academy_courses!inner(id, slug, title, duration_weeks))";
+  "id, title, slug, lesson_number, sort_order, objectives, content, prerequisite_lesson_id, completion_requirement, completion_mode, preview_allowed, academy_weeks!inner(id, week_number, title, academy_courses!inner(id, slug, title, duration_weeks, language))";
 
 const unavailable = (data = null) => ({ data, error: null, configured: false });
 const createClientOperationId = () =>
@@ -1429,20 +1429,20 @@ export async function getAcademyExercises(studentId) {
   const { data, error } = await supabase
     .from("academy_exercises")
     .select(
-      "id, lesson_id, title, instructions, starter_code, difficulty, expected_concepts, hints, explanation, question_type, choices, attempt_limit, academy_lessons!inner(title, published, academy_weeks!inner(academy_courses!inner(id, slug, title)))",
+      "id, lesson_id, title, instructions, starter_code, difficulty, expected_concepts, hints, explanation, question_type, choices, attempt_limit, academy_lessons!inner(title, published, academy_weeks!inner(academy_courses!inner(id, slug, title, language)))",
     )
     .eq("published", true)
     .eq("academy_lessons.published", true)
     .eq("academy_lessons.academy_weeks.course_id", activeCourse.id)
     .order("title");
   return {
+    // The runtime comes from academy_courses.language, not from comparing a
+    // course slug, so adding a course in a new language needs no code change.
     data: (data ?? []).map((exercise) => ({
       ...exercise,
       language:
-        exercise.academy_lessons?.academy_weeks?.academy_courses?.slug ===
-        "cpp-embedded-robotics"
-          ? "cpp"
-          : "python",
+        exercise.academy_lessons?.academy_weeks?.academy_courses?.language ??
+        "python",
     })),
     error,
     configured: true,
