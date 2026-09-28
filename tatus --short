@@ -1,1232 +1,0 @@
-api/auth.js:1: trailing whitespace.
-[32m+[m[32mimport crypto from "node:crypto";[m[41m[m
-api/auth.js:2: trailing whitespace.
-[32m+[m[41m[m
-api/auth.js:3: trailing whitespace.
-[32m+[m[32mexport default function handler(req, res) {[m[41m[m
-api/auth.js:4: trailing whitespace.
-[32m+[m[32m  if (req.method !== "GET") {[m[41m[m
-api/auth.js:5: trailing whitespace.
-[32m+[m[32m    res.status(405).json({ error: "Method not allowed" });[m[41m[m
-api/auth.js:6: trailing whitespace.
-[32m+[m[32m    return;[m[41m[m
-api/auth.js:7: trailing whitespace.
-[32m+[m[32m  }[m[41m[m
-api/auth.js:8: trailing whitespace.
-[32m+[m[41m[m
-api/auth.js:9: trailing whitespace.
-[32m+[m[32m  const clientId = process.env.GITHUB_CLIENT_ID;[m[41m[m
-api/auth.js:10: trailing whitespace.
-[32m+[m[32m  if (!clientId) {[m[41m[m
-api/auth.js:11: trailing whitespace.
-[32m+[m[32m    res.status(500).json({ error: "GITHUB_CLIENT_ID is not configured" });[m[41m[m
-api/auth.js:12: trailing whitespace.
-[32m+[m[32m    return;[m[41m[m
-api/auth.js:13: trailing whitespace.
-[32m+[m[32m  }[m[41m[m
-api/auth.js:14: trailing whitespace.
-[32m+[m[41m[m
-api/auth.js:15: trailing whitespace.
-[32m+[m[32m  const state = crypto.randomBytes(24).toString("hex");[m[41m[m
-api/auth.js:16: trailing whitespace.
-[32m+[m[32m  const origin = process.env.SITE_URL || `https://${req.headers.host}`;[m[41m[m
-api/auth.js:17: trailing whitespace.
-[32m+[m[32m  const callback = `${origin}/api/callback`;[m[41m[m
-api/auth.js:18: trailing whitespace.
-[32m+[m[32m  const authorizeUrl = new URL("https://github.com/login/oauth/authorize");[m[41m[m
-api/auth.js:19: trailing whitespace.
-[32m+[m[32m  authorizeUrl.searchParams.set("client_id", clientId);[m[41m[m
-api/auth.js:20: trailing whitespace.
-[32m+[m[32m  authorizeUrl.searchParams.set("redirect_uri", callback);[m[41m[m
-api/auth.js:21: trailing whitespace.
-[32m+[m[32m  authorizeUrl.searchParams.set("scope", "repo");[m[41m[m
-api/auth.js:22: trailing whitespace.
-[32m+[m[32m  authorizeUrl.searchParams.set("state", state);[m[41m[m
-api/auth.js:23: trailing whitespace.
-[32m+[m[41m[m
-api/auth.js:24: trailing whitespace.
-[32m+[m[32m  res.setHeader([m[41m[m
-api/auth.js:25: trailing whitespace.
-[32m+[m[32m    "Set-Cookie",[m[41m[m
-api/auth.js:26: trailing whitespace.
-[32m+[m[32m    `decap_oauth_state=${state}; HttpOnly; Secure; SameSite=Lax; Path=/api; Max-Age=600`,[m[41m[m
-api/auth.js:27: trailing whitespace.
-[32m+[m[32m  );[m[41m[m
-api/auth.js:28: trailing whitespace.
-[32m+[m[32m  res.redirect(authorizeUrl.toString());[m[41m[m
-api/auth.js:29: trailing whitespace.
-[32m+[m[32m}[m[41m[m
-api/callback.js:1: trailing whitespace.
-[32m+[m[32mfunction readCookie(cookieHeader, name) {[m[41m[m
-api/callback.js:2: trailing whitespace.
-[32m+[m[32m  return cookieHeader[m[41m[m
-api/callback.js:3: trailing whitespace.
-[32m+[m[32m    ?.split(";")[m[41m[m
-api/callback.js:4: trailing whitespace.
-[32m+[m[32m    .map((part) => part.trim())[m[41m[m
-api/callback.js:5: trailing whitespace.
-[32m+[m[32m    .find((part) => part.startsWith(`${name}=`))[m[41m[m
-api/callback.js:6: trailing whitespace.
-[32m+[m[32m    ?.slice(name.length + 1);[m[41m[m
-api/callback.js:7: trailing whitespace.
-[32m+[m[32m}[m[41m[m
-api/callback.js:8: trailing whitespace.
-[32m+[m[41m[m
-api/callback.js:9: trailing whitespace.
-[32m+[m[32mexport default async function handler(req, res) {[m[41m[m
-api/callback.js:10: trailing whitespace.
-[32m+[m[32m  if (req.method !== "GET") {[m[41m[m
-api/callback.js:11: trailing whitespace.
-[32m+[m[32m    res.status(405).send("Method not allowed");[m[41m[m
-api/callback.js:12: trailing whitespace.
-[32m+[m[32m    return;[m[41m[m
-api/callback.js:13: trailing whitespace.
-[32m+[m[32m  }[m[41m[m
-api/callback.js:14: trailing whitespace.
-[32m+[m[41m[m
-api/callback.js:15: trailing whitespace.
-[32m+[m[32m  const { code, state, error } = req.query;[m[41m[m
-api/callback.js:16: trailing whitespace.
-[32m+[m[32m  const expectedState = readCookie(req.headers.cookie, "decap_oauth_state");[m[41m[m
-api/callback.js:17: trailing whitespace.
-[32m+[m[32m  if (error || !code || !state || state !== expectedState) {[m[41m[m
-api/callback.js:18: trailing whitespace.
-[32m+[m[32m    res.status(400).send("Invalid OAuth request.");[m[41m[m
-api/callback.js:19: trailing whitespace.
-[32m+[m[32m    return;[m[41m[m
-api/callback.js:20: trailing whitespace.
-[32m+[m[32m  }[m[41m[m
-api/callback.js:21: trailing whitespace.
-[32m+[m[41m[m
-api/callback.js:22: trailing whitespace.
-[32m+[m[32m  const response = await fetch("https://github.com/login/oauth/access_token", {[m[41m[m
-api/callback.js:23: trailing whitespace.
-[32m+[m[32m    method: "POST",[m[41m[m
-api/callback.js:24: trailing whitespace.
-[32m+[m[32m    headers: { Accept: "application/json", "Content-Type": "application/json" },[m[41m[m
-api/callback.js:25: trailing whitespace.
-[32m+[m[32m    body: JSON.stringify({[m[41m[m
-api/callback.js:26: trailing whitespace.
-[32m+[m[32m      client_id: process.env.GITHUB_CLIENT_ID,[m[41m[m
-api/callback.js:27: trailing whitespace.
-[32m+[m[32m      client_secret: process.env.GITHUB_CLIENT_SECRET,[m[41m[m
-api/callback.js:28: trailing whitespace.
-[32m+[m[32m      code,[m[41m[m
-api/callback.js:29: trailing whitespace.
-[32m+[m[32m      redirect_uri: `${process.env.SITE_URL || `https://${req.headers.host}`}/api/callback`,[m[41m[m
-api/callback.js:30: trailing whitespace.
-[32m+[m[32m    }),[m[41m[m
-api/callback.js:31: trailing whitespace.
-[32m+[m[32m  });[m[41m[m
-api/callback.js:32: trailing whitespace.
-[32m+[m[32m  const token = await response.json();[m[41m[m
-api/callback.js:33: trailing whitespace.
-[32m+[m[41m[m
-api/callback.js:34: trailing whitespace.
-[32m+[m[32m  if (!response.ok || !token.access_token) {[m[41m[m
-api/callback.js:35: trailing whitespace.
-[32m+[m[32m    res.status(502).send("GitHub authentication failed.");[m[41m[m
-api/callback.js:36: trailing whitespace.
-[32m+[m[32m    return;[m[41m[m
-api/callback.js:37: trailing whitespace.
-[32m+[m[32m  }[m[41m[m
-api/callback.js:38: trailing whitespace.
-[32m+[m[41m[m
-api/callback.js:39: trailing whitespace.
-[32m+[m[32m  const payload = JSON.stringify({[m[41m[m
-api/callback.js:40: trailing whitespace.
-[32m+[m[32m    token: token.access_token,[m[41m[m
-api/callback.js:41: trailing whitespace.
-[32m+[m[32m    provider: "github",[m[41m[m
-api/callback.js:42: trailing whitespace.
-[32m+[m[32m  });[m[41m[m
-api/callback.js:43: trailing whitespace.
-[32m+[m[32m  res.setHeader("Content-Type", "text/html; charset=utf-8");[m[41m[m
-api/callback.js:44: trailing whitespace.
-[32m+[m[32m  res.send(`<!doctype html><script>[m[41m[m
-api/callback.js:45: trailing whitespace.
-[32m+[m[32m    window.opener.postMessage("authorization:github:success:${payload}", "*");[m[41m[m
-api/callback.js:46: trailing whitespace.
-[32m+[m[32m    window.close();[m[41m[m
-api/callback.js:47: trailing whitespace.
-[32m+[m[32m  </script>`);[m[41m[m
-api/callback.js:48: trailing whitespace.
-[32m+[m[32m}[m[41m[m
-package.json:8: trailing whitespace.
-[32m+[m[32m    "gen:sitemap": "node scripts/build-sitemap.js",[m[41m[m
-package.json:10: trailing whitespace.
-[32m+[m[32m    "build": "npm run gen:blog && npm run gen:sitemap && vite build",[m[41m[m
-src/pages/About.jsx:143: trailing whitespace.
-[32m+[m[32m        title="About Abdullahi Musliudeen | Software Engineer & Educator"[m[41m[m
-src/pages/About.jsx:144: trailing whitespace.
-[32m+[m[32m        description="Learn about Abdullahi Musliudeen, a Nigerian Backend Engineer and Full-Stack Developer working with Python, Django, React, TypeScript, APIs, and EdTech while mentoring new developers."[m[41m[m
-src/pages/About.jsx:195: trailing whitespace.
-[32m+[m[32m              About Abdullahi Musliudeen:[m[41m[m
-src/pages/About.jsx:198: trailing whitespace.
-[32m+[m[32m                Building Systems That Solve Problems[m[41m[m
-src/pages/Admin.jsx:2: trailing whitespace.
-[32m+[m[32mimport { Helmet } from "react-helmet-async";[m[41m[m
-src/pages/Admin.jsx:6: trailing whitespace.
-[32m+[m[32m    <>[m[41m[m
-src/pages/Admin.jsx:7: trailing whitespace.
-[32m+[m[32m      <Helmet>[m[41m[m
-src/pages/Admin.jsx:8: trailing whitespace.
-[32m+[m[32m        <title>Content Manager | Abdullahi Musliudeen</title>[m[41m[m
-src/pages/Admin.jsx:9: trailing whitespace.
-[32m+[m[32m        <meta name="robots" content="noindex, nofollow" />[m[41m[m
-src/pages/Admin.jsx:10: trailing whitespace.
-[32m+[m[32m      </Helmet>[m[41m[m
-src/pages/Admin.jsx:11: trailing whitespace.
-[32m+[m[32m      <main className="min-h-screen flex items-center justify-center px-4">[m[41m[m
-src/pages/Admin.jsx:12: trailing whitespace.
-[32m+[m[32m        <div className="max-w-md text-center">[m[41m[m
-src/pages/Admin.jsx:13: trailing whitespace.
-[32m+[m[32m          <h1 className="text-2xl font-extrabold mb-3">Content Manager</h1>[m[41m[m
-src/pages/Admin.jsx:14: trailing whitespace.
-[32m+[m[32m          <p className="text-slate-500 mb-6">[m[41m[m
-src/pages/Admin.jsx:15: trailing whitespace.
-[32m+[m[32m            Open the GitHub-backed content manager to create and edit blog[m[41m[m
-src/pages/Admin.jsx:16: trailing whitespace.
-[32m+[m[32m            posts.[m[41m[m
-src/pages/Admin.jsx:17: trailing whitespace.
-[32m+[m[32m          </p>[m[41m[m
-src/pages/Admin.jsx:18: trailing whitespace.
-[32m+[m[32m          <a[m[41m[m
-src/pages/Admin.jsx:19: trailing whitespace.
-[32m+[m[32m            href="/admin/"[m[41m[m
-src/pages/Admin.jsx:20: trailing whitespace.
-[32m+[m[32m            className="inline-flex rounded-lg bg-blue-600 px-4 py-2 text-sm font-bold text-white"[m[41m[m
-src/pages/Admin.jsx:21: trailing whitespace.
-[32m+[m[32m          >[m[41m[m
-src/pages/Admin.jsx:22: trailing whitespace.
-[32m+[m[32m            Open Content Manager[m[41m[m
-src/pages/Admin.jsx:23: trailing whitespace.
-[32m+[m[32m          </a>[m[41m[m
-src/pages/Admin.jsx:24: trailing whitespace.
-[32m+[m[32m          <Link to="/blog" className="block mt-4 text-sm text-blue-500">[m[41m[m
-src/pages/Admin.jsx:25: trailing whitespace.
-[32m+[m[32m            Back to blog[m[41m[m
-src/pages/Admin.jsx:26: trailing whitespace.
-[32m+[m[32m          </Link>[m[41m[m
-src/pages/Admin.jsx:27: trailing whitespace.
-[32m+[m[32m        </div>[m[41m[m
-src/pages/Admin.jsx:28: trailing whitespace.
-[32m+[m[32m      </main>[m[41m[m
-src/pages/Admin.jsx:29: trailing whitespace.
-[32m+[m[32m    </>[m[41m[m
-src/pages/BlogPost.jsx:8: trailing whitespace.
-[32m+[m[32mimport { absoluteUrl, breadcrumbSchema, PERSON_ID, SITE } from "../lib/seo";[m[41m[m
-src/pages/BlogPost.jsx:102: trailing whitespace.
-[32m+[m[32m        jsonLd={[[m[41m[m
-src/pages/BlogPost.jsx:103: trailing whitespace.
-[32m+[m[32m          {[m[41m[m
-src/pages/BlogPost.jsx:104: trailing whitespace.
-[32m+[m[32m            "@context": "https://schema.org",[m[41m[m
-src/pages/BlogPost.jsx:105: trailing whitespace.
-[32m+[m[32m            "@type": "BlogPosting",[m[41m[m
-src/pages/BlogPost.jsx:106: trailing whitespace.
-[32m+[m[32m            "@id": `${SITE.url}/blog/${post.id}/#article`,[m[41m[m
-src/pages/BlogPost.jsx:107: trailing whitespace.
-[32m+[m[32m            headline: post.title,[m[41m[m
-src/pages/BlogPost.jsx:108: trailing whitespace.
-[32m+[m[32m            description: post.excerpt,[m[41m[m
-src/pages/BlogPost.jsx:109: trailing whitespace.
-[32m+[m[32m            url: `${SITE.url}/blog/${post.id}/`,[m[41m[m
-src/pages/BlogPost.jsx:110: trailing whitespace.
-[32m+[m[32m            mainEntityOfPage: `${SITE.url}/blog/${post.id}/`,[m[41m[m
-src/pages/BlogPost.jsx:111: trailing whitespace.
-[32m+[m[32m            image: absoluteUrl(post.image),[m[41m[m
-src/pages/BlogPost.jsx:112: trailing whitespace.
-[32m+[m[32m            author: {[m[41m[m
-src/pages/BlogPost.jsx:113: trailing whitespace.
-[32m+[m[32m              "@type": "Person",[m[41m[m
-src/pages/BlogPost.jsx:114: trailing whitespace.
-[32m+[m[32m              "@id": PERSON_ID,[m[41m[m
-src/pages/BlogPost.jsx:115: trailing whitespace.
-[32m+[m[32m              name: "Abdullahi Oladipupo Musliudeen",[m[41m[m
-src/pages/BlogPost.jsx:116: trailing whitespace.
-[32m+[m[32m              url: `${SITE.url}/about/`,[m[41m[m
-src/pages/BlogPost.jsx:117: trailing whitespace.
-[32m+[m[32m            },[m[41m[m
-src/pages/BlogPost.jsx:118: trailing whitespace.
-[32m+[m[32m            datePublished: post.date,[m[41m[m
-src/pages/BlogPost.jsx:119: trailing whitespace.
-[32m+[m[32m            dateModified: post.date,[m[41m[m
-src/pages/BlogPost.jsx:120: trailing whitespace.
-[32m+[m[32m            publisher: { "@id": PERSON_ID },[m[41m[m
-src/pages/BlogPost.jsx:121: trailing whitespace.
-[32m+[m[32m          },[m[41m[m
-src/pages/BlogPost.jsx:122: trailing whitespace.
-[32m+[m[32m          breadcrumbSchema([[m[41m[m
-src/pages/BlogPost.jsx:123: trailing whitespace.
-[32m+[m[32m            { name: "Home", path: "/" },[m[41m[m
-src/pages/BlogPost.jsx:124: trailing whitespace.
-[32m+[m[32m            { name: "Writing", path: "/blog" },[m[41m[m
-src/pages/BlogPost.jsx:125: trailing whitespace.
-[32m+[m[32m            { name: post.title, path: `/blog/${post.id}` },[m[41m[m
-src/pages/BlogPost.jsx:126: trailing whitespace.
-[32m+[m[32m          ]),[m[41m[m
-src/pages/BlogPost.jsx:127: trailing whitespace.
-[32m+[m[32m        ]}[m[41m[m
-src/pages/Home.jsx:3: trailing whitespace.
-[32m+[m[32mimport { homeSchema, SITE } from "../lib/seo";[m[41m[m
-src/pages/Home.jsx:20: trailing whitespace.
-[32m+[m[32m        description={SITE.description}[m[41m[m
-src/pages/Home.jsx:22: trailing whitespace.
-[32m+[m[32m        jsonLd={homeSchema}[m[41m[m
-
-                   SSUUMMMMAARRYY OOFF LLEESSSS CCOOMMMMAANNDDSS
-
-      Commands marked with * may be preceded by a number, _N.
-      Notes in parentheses indicate the behavior if _N is given.
-      A key preceded by a caret indicates the Ctrl key; thus ^K is ctrl-K.
-
-  h  H                 Display this help.
-  q  :q  Q  :Q  ZZ     Exit.
- ---------------------------------------------------------------------------
-
-                           MMOOVVIINNGG
-
-  e  ^E  j  ^N  CR  *  Forward  one line   (or _N lines).
-  y  ^Y  k  ^K  ^P  *  Backward one line   (or _N lines).
-  f  ^F  ^V  SPACE  *  Forward  one window (or _N lines).
-  b  ^B  ESC-v      *  Backward one window (or _N lines).
-  z                 *  Forward  one window (and set window to _N).
-  w                 *  Backward one window (and set window to _N).
-  ESC-SPACE         *  Forward  one window, but don't stop at end-of-file.
-  d  ^D             *  Forward  one half-window (and set half-window to _N).
-  u  ^U             *  Backward one half-window (and set half-window to _N).
-  ESC-)  RightArrow *  Right one half screen width (or _N positions).
-  ESC-(  LeftArrow  *  Left  one half screen width (or _N positions).
-  ESC-}  ^RightArrow   Right to last column displayed.
-  ESC-{  ^LeftArrow    Left  to first column.
-  F                    Forward forever; like "tail -f".
-  ESC-F                Like F but stop when search pattern is found.
-  r  ^R  ^L            Repaint screen.
-  R                    Repaint screen, discarding buffered input.
-        ---------------------------------------------------
-        Default "window" is the screen height.
-        Default "half-window" is half of the screen height.
- ---------------------------------------------------------------------------
-
-                          SSEEAARRCCHHIINNGG
-
-  /_p_a_t_t_e_r_n          *  Search forward for (_N-th) matching line.
-  ?_p_a_t_t_e_r_n          *  Search backward for (_N-th) matching line.
-  n                 *  Repeat previous search (for _N-th occurrence).
-  N                 *  Repeat previous search in reverse direction.
-  ESC-n             *  Repeat previous search, spanning files.
-  ESC-N             *  Repeat previous search, reverse dir. & spanning files.
-  ^O^N  ^On         *  Search forward for (_N-th) OSC8 hyperlink.
-  ^O^P  ^Op         *  Search backward for (_N-th) OSC8 hyperlink.
-  ^O^L  ^Ol            Jump to the currently selected OSC8 hyperlink.
-  ESC-u                Undo (toggle) search highlighting.
-  ESC-U                Clear search highlighting.
-  &_p_a_t_t_e_r_n          *  Display only matching lines.
-        ---------------------------------------------------
-        A search pattern may begin with one or more of:
-        ^N or !  Search for NON-matching lines.
-        ^E or *  Search multiple files (pass thru END OF FILE).
-        ^F or @  Start search at FIRST file (for /) or last file (for ?).
-        ^K       Highlight matches, but don't move (KEEP position).
-        ^R       Don't use REGULAR EXPRESSIONS.
-        ^S _n     Search for match in _n-th parenthesized subpattern.
-        ^W       WRAP search if no match found.
-        ^L       Enter next character literally into pattern.
- ---------------------------------------------------------------------------
-
-                           JJUUMMPPIINNGG
-
-  g  <  ESC-<       *  Go to first line in file (or line _N).
-  G  >  ESC->       *  Go to last line in file (or line _N).
-  p  %              *  Go to beginning of file (or _N percent into file).
-  t                 *  Go to the (_N-th) next tag.
-  T                 *  Go to the (_N-th) previous tag.
-  {  (  [           *  Find close bracket } ) ].
-  }  )  ]           *  Find open bracket { ( [.
-  ESC-^F _<_c_1_> _<_c_2_>  *  Find close bracket _<_c_2_>.
-  ESC-^B _<_c_1_> _<_c_2_>  *  Find open bracket _<_c_1_>.
-        ---------------------------------------------------
-        Each "find close bracket" command goes forward to the close bracket 
-          matching the (_N-th) open bracket in the top line.
-        Each "find open bracket" command goes backward to the open bracket 
-          matching the (_N-th) close bracket in the bottom line.
-
-  m_<_l_e_t_t_e_r_>            Mark the current top line with <letter>.
-  M_<_l_e_t_t_e_r_>            Mark the current bottom line with <letter>.
-  '_<_l_e_t_t_e_r_>            Go to a previously marked position.
-  ''                   Go to the previous position.
-  ^X^X                 Same as '.
-  ESC-m_<_l_e_t_t_e_r_>        Clear a mark.
-        ---------------------------------------------------
-        A mark is any upper-case or lower-case letter.
-        Certain marks are predefined:
-             ^  means  beginning of the file
-             $  means  end of the file
- ---------------------------------------------------------------------------
-
-                        CCHHAANNGGIINNGG FFIILLEESS
-
-  :e [_f_i_l_e]            Examine a new file.
-  ^X^V                 Same as :e.
-  :n                *  Examine the (_N-th) next file from the command line.
-  :p                *  Examine the (_N-th) previous file from the command line.
-  :x                *  Examine the first (or _N-th) file from the command line.
-  ^O^O                 Open the currently selected OSC8 hyperlink.
-  :d                   Delete the current file from the command line list.
-  =  ^G  :f            Print current file name.
- ---------------------------------------------------------------------------
-
-                    MMIISSCCEELLLLAANNEEOOUUSS CCOOMMMMAANNDDSS
-
-  -_<_f_l_a_g_>              Toggle a command line option [see OPTIONS below].
-  --_<_n_a_m_e_>             Toggle a command line option, by name.
-  __<_f_l_a_g_>              Display the setting of a command line option.
-  ___<_n_a_m_e_>             Display the setting of an option, by name.
-  +_c_m_d                 Execute the less cmd each time a new file is examined.
-
-  !_c_o_m_m_a_n_d             Execute the shell command with $SHELL.
-  #_c_o_m_m_a_n_d             Execute the shell command, expanded like a prompt.
-  |XX_c_o_m_m_a_n_d            Pipe file between current pos & mark XX to shell command.
-  s _f_i_l_e               Save input to a file.
-  v                    Edit the current file with $VISUAL or $EDITOR.
-  V                    Print version number of "less".
- ---------------------------------------------------------------------------
-
-                           OOPPTTIIOONNSS
-
-        Most options may be changed either on the command line,
-        or from within less by using the - or -- command.
-        Options may be given in one of two forms: either a single
-        character preceded by a -, or a name preceded by --.
-
-  -?  ........  --help
-                  Display help (from command line).
-  -a  ........  --search-skip-screen
-                  Search skips current screen.
-  -A  ........  --SEARCH-SKIP-SCREEN
-                  Search starts just after target line.
-  -b [_N]  ....  --buffers=[_N]
-                  Number of buffers.
-  -B  ........  --auto-buffers
-                  Don't automatically allocate buffers for pipes.
-  -c  ........  --clear-screen
-                  Repaint by clearing rather than scrolling.
-  -d  ........  --dumb
-                  Dumb terminal.
-  -D xx_c_o_l_o_r  .  --color=xx_c_o_l_o_r
-                  Set screen colors.
-  -e  -E  ....  --quit-at-eof  --QUIT-AT-EOF
-                  Quit at end of file.
-  -f  ........  --force
-                  Force open non-regular files.
-  -F  ........  --quit-if-one-screen
-                  Quit if entire file fits on first screen.
-  -g  ........  --hilite-search
-                  Highlight only last match for searches.
-  -G  ........  --HILITE-SEARCH
-                  Don't highlight any matches for searches.
-  -h [_N]  ....  --max-back-scroll=[_N]
-                  Backward scroll limit.
-  -i  ........  --ignore-case
-                  Ignore case in searches that do not contain uppercase.
-  -I  ........  --IGNORE-CASE
-                  Ignore case in all searches.
-  -j [_N]  ....  --jump-target=[_N]
-                  Screen position of target lines.
-  -J  ........  --status-column
-                  Display a status column at left edge of screen.
-  -k _f_i_l_e  ...  --lesskey-file=_f_i_l_e
-                  Use a compiled lesskey file.
-  -K  ........  --quit-on-intr
-                  Exit less in response to ctrl-C.
-  -L  ........  --no-lessopen
-                  Ignore the LESSOPEN environment variable.
-  -m  -M  ....  --long-prompt  --LONG-PROMPT
-                  Set prompt style.
-  -n .........  --line-numbers
-                  Suppress line numbers in prompts and messages.
-  -N .........  --LINE-NUMBERS
-                  Display line number at start of each line.
-  -o [_f_i_l_e] ..  --log-file=[_f_i_l_e]
-                  Copy to log file (standard input only).
-  -O [_f_i_l_e] ..  --LOG-FILE=[_f_i_l_e]
-                  Copy to log file (unconditionally overwrite).
-  -p _p_a_t_t_e_r_n .  --pattern=[_p_a_t_t_e_r_n]
-                  Start at pattern (from command line).
-  -P [_p_r_o_m_p_t]   --prompt=[_p_r_o_m_p_t]
-                  Define new prompt.
-  -q  -Q  ....  --quiet  --QUIET  --silent --SILENT
-                  Quiet the terminal bell.
-  -r  -R  ....  --raw-control-chars  --RAW-CONTROL-CHARS
-                  Output "raw" control characters.
-  -s  ........  --squeeze-blank-lines
-                  Squeeze multiple blank lines.
-  -S  ........  --chop-long-lines
-                  Chop (truncate) long lines rather than wrapping.
-  -t _t_a_g  ....  --tag=[_t_a_g]
-                  Find a tag.
-  -T [_t_a_g_s_f_i_l_e] --tag-file=[_t_a_g_s_f_i_l_e]
-                  Use an alternate tags file.
-  -u  -U  ....  --underline-special  --UNDERLINE-SPECIAL
-                  Change handling of backspaces, tabs and carriage returns.
-  -V  ........  --version
-                  Display the version number of "less".
-  -w  ........  --hilite-unread
-                  Highlight first new line after forward-screen.
-  -W  ........  --HILITE-UNREAD
-                  Highlight first new line after any forward movement.
-  -x [_N[,...]]  --tabs=[_N[,...]]
-                  Set tab stops.
-  -X  ........  --no-init
-                  Don't use termcap init/deinit strings.
-  -y [_N]  ....  --max-forw-scroll=[_N]
-                  Forward scroll limit.
-  -z [_N]  ....  --window=[_N]
-                  Set size of window.
-  -" [_c[_c]]  .  --quotes=[_c[_c]]
-                  Set shell quote characters.
-  -~  ........  --tilde
-                  Don't display tildes after end of file.
-  -# [_N]  ....  --shift=[_N]
-                  Set horizontal scroll amount (0 = one half screen width).
-
-                --exit-follow-on-close
-                  Exit F command on a pipe when writer closes pipe.
-                --file-size
-                  Automatically determine the size of the input file.
-                --follow-name
-                  The F command changes files if the input file is renamed.
-                --header=[_L[,_C[,_N]]]
-                  Use _L lines (starting at line _N) and _C columns as headers.
-                --incsearch
-                  Search file as each pattern character is typed in.
-                --intr=[_C]
-                  Use _C instead of ^X to interrupt a read.
-                --lesskey-context=_t_e_x_t
-                  Use lesskey source file contents.
-                --lesskey-src=_f_i_l_e
-                  Use a lesskey source file.
-                --line-num-width=[_N]
-                  Set the width of the -N line number field to _N characters.
-                --match-shift=[_N]
-                  Show at least _N characters to the left of a search match.
-                --modelines=[_N]
-                  Read _N lines from the input file and look for vim modelines.
-                --mouse
-                  Enable mouse input.
-                --no-keypad
-                  Don't send termcap keypad init/deinit strings.
-                --no-histdups
-                  Remove duplicates from command history.
-                --no-number-headers
-                  Don't give line numbers to header lines.
-                --no-search-header-lines
-                  Searches do not include header lines.
-                --no-search-header-columns
-                  Searches do not include header columns.
-                --no-search-headers
-                  Searches do not include header lines or columns.
-                --no-vbell
-                  Disable the terminal's visual bell.
-                --redraw-on-quit
-                  Redraw final screen when quitting.
-                --rscroll=[_C]
-                  Set the character used to mark truncated lines.
-                --save-marks
-                  Retain marks across invocations of less.
-                --search-options=[EFKNRW-]
-                  Set default options for every search.
-                --show-preproc-errors
-                  Display a message if preprocessor exits with an error status.
-                --proc-backspace
-                  Process backspaces for bold/underline.
-                --PROC-BACKSPACE
-                  Treat backspaces as control characters.
-                --proc-return
-                  Delete carriage returns before newline.
-                --PROC-RETURN
-                  Treat carriage returns as control characters.
-                --proc-tab
-                  Expand tabs to spaces.
-                --PROC-TAB
-                  Treat tabs as control characters.
-                --status-col-width=[_N]
-                  Set the width of the -J status column to _N characters.
-                --status-line
-                  Highlight or color the entire line containing a mark.
-                --use-backslash
-                  Subsequent options use backslash as escape char.
-                --use-color
-                  Enables colored text.
-                --wheel-lines=[_N]
-                  Each click of the mouse wheel moves _N lines.
-                --wordwrap
-                  Wrap lines at spaces.
-
-
- ---------------------------------------------------------------------------
-
-                          LLIINNEE EEDDIITTIINNGG
-
-        These keys can be used to edit text being entered 
-        on the "command line" at the bottom of the screen.
-
- RightArrow ..................... ESC-l ... Move cursor right one character.
- LeftArrow ...................... ESC-h ... Move cursor left one character.
- ctrl-RightArrow  ESC-RightArrow  ESC-w ... Move cursor right one word.
- ctrl-LeftArrow   ESC-LeftArrow   ESC-b ... Move cursor left one word.
- HOME ........................... ESC-0 ... Move cursor to start of line.
- END ............................ ESC-$ ... Move cursor to end of line.
- BACKSPACE ................................ Delete char to left of cursor.
- DELETE ......................... ESC-x ... Delete char under cursor.
- ctrl-BACKSPACE   ESC-BACKSPACE ........... Delete word to left of cursor.
- ctrl-DELETE .... ESC-DELETE .... ESC-X ... Delete word under cursor.
- ctrl-U ......... ESC (MS-DOS only) ....... Delete entire line.
- UpArrow ........................ ESC-k ... Retrieve previous command line.
- DownArrow ...................... ESC-j ... Retrieve next command line.
- TAB ...................................... Complete filename & cycle.
- SHIFT-TAB ...................... ESC-TAB   Complete filename & reverse cycle.
- ctrl-L ................................... Complete filename, list all.
-[1mdiff --git a/src/pages/Admin.jsx b/src/pages/Admin.jsx[m
-[1mindex 7660e57..320493f 100644[m
-[1m--- a/src/pages/Admin.jsx[m
-[1m+++ b/src/pages/Admin.jsx[m
-[36m@@ -18,6 +18,637 @@[m [mimport { useAuth } from "../context/AuthContext";[m
- import { db } from "../lib/firebase";[m
- import { createPost, deletePost, fetchPosts, updatePost } from "../lib/blog";[m
- [m
-[32m+[m[32mconst EMPTY = {[m[41m[m
-[32m+[m[32m  title: "",[m[41m[m
-[32m+[m[32m  slug: "",[m[41m[m
-[32m+[m[32m  excerpt: "",[m[41m[m
-[32m+[m[32m  body: "",[m[41m[m
-[32m+[m[32m  category: "Tech",[m[41m[m
-[32m+[m[32m  date: new Date().toISOString().slice(0, 10),[m[41m[m
-[32m+[m[32m  image: "",[m[41m[m
-[32m+[m[32m  medium_link: "",[m[41m[m
-[32m+[m[32m  tags: [],[m[41m[m
-[32m+[m[32m  readTime: "5 min read",[m[41m[m
-[32m+[m[32m  featured: false,[m[41m[m
-[32m+[m[32m  status: "draft",[m[41m[m
-[32m+[m[32m};[m[41m[m
-[32m+[m[32mconst slugify = (value) =>[m[41m[m
-[32m+[m[32m  value[m[41m[m
-[32m+[m[32m    .toLowerCase()[m[41m[m
-[32m+[m[32m    .trim()[m[41m[m
-[32m+[m[32m    .replace(/[^a-z0-9]+/g, "-")[m[41m[m
-[32m+[m[32m    .replace(/^-|-$/g, "");[m[41m[m
-[32m+[m[41m[m
-[32m+[m[32mfunction Shell({ title, children }) {[m[41m[m
-[32m+[m[32m  return ([m[41m[m
-[32m+[m[32m    <>[m[41m[m
-[32m+[m[32m      <Helmet>[m[41m[m
-[32m+[m[32m        <title>{title} | Abdullahi Musliudeen</title>[m[41m[m
-[32m+[m[32m        <meta name="robots" content="noindex, nofollow" />[m[41m[m
-[32m+[m[32m      </Helmet>[m[41m[m
-[32m+[m[32m      <main className="min-h-screen overflow-x-hidden bg-[#f6f8fb] px-3 py-4 text-slate-900 dark:bg-[#080c14] dark:text-slate-100 sm:px-6 sm:py-8">[m[41m[m
-[32m+[m[32m        <div className="mx-auto min-w-0 max-w-7xl">[m[41m[m
-[32m+[m[32m          <header className="mb-6 flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-4 dark:border-slate-800 sm:mb-8 sm:gap-4 sm:pb-5">[m[41m[m
-[32m+[m[32m            <Link to="/admin" className="flex items-center gap-3">[m[41m[m
-[32m+[m[32m              <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-600 text-sm font-black text-white shadow-lg shadow-blue-600/20">[m[41m[m
-[32m+[m[32m                A[m[41m[m
-[32m+[m[32m              </span>[m[41m[m
-[32m+[m[32m              <span>[m[41m[m
-[32m+[m[32m                <span className="block text-sm font-bold tracking-tight">[m[41m[m
-[32m+[m[32m                  Muwatta CMS[m[41m[m
-[32m+[m[32m                </span>[m[41m[m
-[32m+[m[32m                <span className="block text-[11px] text-slate-500">[m[41m[m
-[32m+[m[32m                  Private workspace[m[41m[m
-[32m+[m[32m                </span>[m[41m[m
-[32m+[m[32m              </span>[m[41m[m
-[32m+[m[32m            </Link>[m[41m[m
-[32m+[m[32m            <div className="flex min-w-0 w-full flex-wrap items-center justify-between gap-x-3 gap-y-2 text-sm sm:w-auto sm:gap-4">[m[41m[m
-[32m+[m[32m              <span className="hidden text-slate-500 sm:inline">{title}</span>[m[41m[m
-[32m+[m[32m              <Link[m[41m[m
-[32m+[m[32m                className="font-semibold text-blue-600 hover:text-blue-700 dark:text-blue-400"[m[41m[m
-[32m+[m[32m                to="/blog"[m[41m[m
-[32m+[m[32m              >[m[41m[m
-[32m+[m[32m                View site[m[41m[m
-[32m+[m[32m              </Link>[m[41m[m
-[32m+[m[32m              <Link[m[41m[m
-[32m+[m[32m                className="text-slate-500 hover:text-blue-600"[m[41m[m
-[32m+[m[32m                to="/admin/projects"[m[41m[m
-[32m+[m[32m              >[m[41m[m
-[32m+[m[32m                Projects[m[41m[m
-[32m+[m[32m              </Link>[m[41m[m
-[32m+[m[32m              <Link[m[41m[m
-[32m+[m[32m                className="text-slate-500 hover:text-blue-600"[m[41m[m
-[32m+[m[32m                to="/admin/courses"[m[41m[m
-[32m+[m[32m              >[m[41m[m
-[32m+[m[32m                Courses[m[41m[m
-[32m+[m[32m              </Link>[m[41m[m
-[32m+[m[32m              <Link[m[41m[m
-[32m+[m[32m                to="/admin/achievements"[m[41m[m
-[32m+[m[32m                className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold dark:border-slate-700"[m[41m[m
-[32m+[m[32m              >[m[41m[m
-[32m+[m[32m                Achievements[m[41m[m
-[32m+[m[32m              </Link>[m[41m[m
-[32m+[m[32m            </div>[m[41m[m
-[32m+[m[32m          </header>[m[41m[m
-[32m+[m[32m          {children}[m[41m[m
-[32m+[m[32m        </div>[m[41m[m
-[32m+[m[32m      </main>[m[41m[m
-[32m+[m[32m    </>[m[41m[m
-[32m+[m[32m  );[m[41m[m
-[32m+[m[32m}[m[41m[m
-[32m+[m[41m[m
-[32m+[m[32mfunction Panel({ title, children }) {[m[41m[m
-[32m+[m[32m  return ([m[41m[m
-[32m+[m[32m    <Shell title={title}>[m[41m[m
-[32m+[m[32m      <div className="mx-auto max-w-md rounded-2xl border border-slate-200 bg-white p-8 text-center text-sm text-slate-600 shadow-sm dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300">[m[41m[m
-[32m+[m[32m        {children}[m[41m[m
-[32m+[m[32m      </div>[m[41m[m
-[32m+[m[32m    </Shell>[m[41m[m
-[32m+[m[32m  );[m[41m[m
-[32m+[m[32m}[m[41m[m
-[32m+[m[41m[m
-[32m+[m[32mfunction Login({ signIn, isConfigured }) {[m[41m[m
-[32m+[m[32m  const [email, setEmail] = useState("");[m[41m[m
-[32m+[m[32m  const [password, setPassword] = useState("");[m[41m[m
-[32m+[m[32m  const [showPassword, setShowPassword] = useState(false);[m[41m[m
-[32m+[m[32m  const [error, setError] = useState("");[m[41m[m
-[32m+[m[32m  if (!isConfigured)[m[41m[m
-[32m+[m[32m    return ([m[41m[m
-[32m+[m[32m      <Panel title="Firebase is not configured">[m[41m[m
-[32m+[m[32m        Add the VITE_FIREBASE_* values from `.env.example` before signing in.[m[41m[m
-[32m+[m[32m      </Panel>[m[41m[m
-[32m+[m[32m    );[m[41m[m
-[32m+[m[32m  const submit = async (event) => {[m[41m[m
-[32m+[m[32m    event.preventDefault();[m[41m[m
-[32m+[m[32m    setError("");[m[41m[m
-[32m+[m[32m    try {[m[41m[m
-[32m+[m[32m      await signIn(email, password);[m[41m[m
-[32m+[m[32m    } catch (nextError) {[m[41m[m
-[32m+[m[32m      setError(nextError.message || "Unable to sign in.");[m[41m[m
-[32m+[m[32m    }[m[41m[m
-[32m+[m[32m  };[m[41m[m
-[32m+[m[32m  return ([m[41m[m
-[32m+[m[32m    <Shell title="Admin Login">[m[41m[m
-[32m+[m[32m      <div className="flex min-h-[calc(100vh-9rem)] items-center justify-center py-6 sm:min-h-[calc(100vh-10rem)] sm:py-12">[m[41m[m
-[32m+[m[32m        <div className="w-full max-w-md">[m[41m[m
-[32m+[m[32m          <div className="mb-8 text-center">[m[41m[m
-[32m+[m[32m            <p className="mb-2 text-xs font-bold uppercase tracking-[0.2em] text-blue-600 dark:text-blue-400">[m[41m[m
-[32m+[m[32m              Editorial workspace[m[41m[m
-[32m+[m[32m            </p>[m[41m[m
-[32m+[m[32m            <h1 className="text-3xl font-black tracking-tight sm:text-4xl">[m[41m[m
-[32m+[m[32m              Welcome back.[m[41m[m
-[32m+[m[32m            </h1>[m[41m[m
-[32m+[m[32m            <p className="mx-auto mt-3 max-w-sm text-sm leading-6 text-slate-500">[m[41m[m
-[32m+[m[32m              Sign in to manage your writing and publish directly to the site.[m[41m[m
-[32m+[m[32m            </p>[m[41m[m
-[32m+[m[32m          </div>[m[41m[m
-[32m+[m[32m          <form[m[41m[m
-[32m+[m[32m            onSubmit={submit}[m[41m[m
-[32m+[m[32m            autoComplete="on"[m[41m[m
-[32m+[m[32m            className="space-y-5 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-7"[m[41m[m
-[32m+[m[32m          >[m[41m[m
-[32m+[m[32m            <label className="block text-sm font-semibold">[m[41m[m
-[32m+[m[32m              Email[m[41m[m
-[32m+[m[32m              <input[m[41m[m
-[32m+[m[32m                className="field"[m[41m[m
-[32m+[m[32m                type="email"[m[41m[m
-[32m+[m[32m                name="email"[m[41m[m
-[32m+[m[32m                autoComplete="username"[m[41m[m
-[32m+[m[32m                required[m[41m[m
-[32m+[m[32m                value={email}[m[41m[m
-[32m+[m[32m                onChange={(event) => setEmail(event.target.value)}[m[41m[m
-[32m+[m[32m              />[m[41m[m
-[32m+[m[32m            </label>[m[41m[m
-[32m+[m[32m            <label className="block text-sm font-semibold">[m[41m[m
-[32m+[m[32m              Password[m[41m[m
-[32m+[m[32m              <span className="relative block">[m[41m[m
-[32m+[m[32m                <input[m[41m[m
-[32m+[m[32m                  className="field pr-11"[m[41m[m
-[32m+[m[32m                  type={showPassword ? "text" : "password"}[m[41m[m
-[32m+[m[32m                  name="password"[m[41m[m
-[32m+[m[32m                  autoComplete="current-password"[m[41m[m
-[32m+[m[32m                  required[m[41m[m
-[32m+[m[32m                  value={password}[m[41m[m
-[32m+[m[32m                  onChange={(event) => setPassword(event.target.value)}[m[41m[m
-[32m+[m[32m                />[m[41m[m
-[32m+[m[32m                <button[m[41m[m
-[32m+[m[32m                  type="button"[m[41m[m
-[32m+[m[32m                  aria-label={showPassword ? "Hide password" : "Show password"}[m[41m[m
-[32m+[m[32m                  title={showPassword ? "Hide password" : "Show password"}[m[41m[m
-[32m+[m[32m                  onClick={() => setShowPassword((visible) => !visible)}[m[41m[m
-[32m+[m[32m                  className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md p-2 text-slate-500 hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-400"[m[41m[m
-[32m+[m[32m                >[m[41m[m
-[32m+[m[32m                  {showPassword ? ([m[41m[m
-[32m+[m[32m                    <FiEyeOff aria-hidden="true" />[m[41m[m
-[32m+[m[32m                  ) : ([m[41m[m
-[32m+[m[32m                    <FiEye aria-hidden="true" />[m[41m[m
-[32m+[m[32m                  )}[m[41m[m
-[32m+[m[32m                </button>[m[41m[m
-[32m+[m[32m              </span>[m[41m[m
-[32m+[m[32m            </label>[m[41m[m
-[32m+[m[32m            {error && <p className="text-sm text-red-600">{error}</p>}[m[41m[m
-[32m+[m[32m            <button className="button-primary w-full" type="submit">[m[41m[m
-[32m+[m[32m              Sign in[m[41m[m
-[32m+[m[32m            </button>[m[41m[m
-[32m+[m[32m            <Link[m[41m[m
-[32m+[m[32m              className="block text-center text-sm text-blue-600"[m[41m[m
-[32m+[m[32m              to="/blog"[m[41m[m
-[32m+[m[32m            >[m[41m[m
-[32m+[m[32m              Back to blog[m[41m[m
-[32m+[m[32m            </Link>[m[41m[m
-[32m+[m[32m          </form>[m[41m[m
-[32m+[m[32m        </div>[m[41m[m
-[32m+[m[32m      </div>[m[41m[m
-[32m+[m[32m    </Shell>[m[41m[m
-[32m+[m[32m  );[m[41m[m
-[32m+[m[32m}[m[41m[m
-[32m+[m[41m[m
-[32m+[m[32mfunction StatusPill({ status }) {[m[41m[m
-[32m+[m[32m  const styles = {[m[41m[m
-[32m+[m[32m    published:[m[41m[m
-[32m+[m[32m      "bg-emerald-50 text-emerald-700 dark:bg-emerald-400/10 dark:text-emerald-300",[m[41m[m
-[32m+[m[32m    archived:[m[41m[m
-[32m+[m[32m      "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300",[m[41m[m
-[32m+[m[32m    draft:[m[41m[m
-[32m+[m[32m      "bg-amber-50 text-amber-700 dark:bg-amber-400/10 dark:text-amber-300",[m[41m[m
-[32m+[m[32m  };[m[41m[m
-[32m+[m[32m  return ([m[41m[m
-[32m+[m[32m    <span[m[41m[m
-[32m+[m[32m      className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${styles[status] || styles.draft}`}[m[41m[m
-[32m+[m[32m    >[m[41m[m
-[32m+[m[32m      {status || "draft"}[m[41m[m
-[32m+[m[32m    </span>[m[41m[m
-[32m+[m[32m  );[m[41m[m
-[32m+[m[32m}[m[41m[m
-[32m+[m[41m[m
-[32m+[m[32mexport default function AdminPage() {[m[41m[m
-[32m+[m[32m  const { user, loading, signIn, signOut, isConfigured } = useAuth();[m[41m[m
-[32m+[m[32m  const [authorized, setAuthorized] = useState(null);[m[41m[m
-[32m+[m[32m  const [posts, setPosts] = useState([]);[m[41m[m
-[32m+[m[32m  const [selected, setSelected] = useState(null);[m[41m[m
-[32m+[m[32m  const [form, setForm] = useState(EMPTY);[m[41m[m
-[32m+[m[32m  const [tagsText, setTagsText] = useState("");[m[41m[m
-[32m+[m[32m  const [notice, setNotice] = useState("");[m[41m[m
-[32m+[m[32m  const [saving, setSaving] = useState(false);[m[41m[m
-[32m+[m[32m  const [preview, setPreview] = useState(false);[m[41m[m
-[32m+[m[41m[m
-[32m+[m[32m  useEffect(() => {[m[41m[m
-[32m+[m[32m    if (!user || !db) {[m[41m[m
-[32m+[m[32m      setAuthorized(user ? false : null);[m[41m[m
-[32m+[m[32m      return;[m[41m[m
-[32m+[m[32m    }[m[41m[m
-[32m+[m[32m    getDoc(doc(db, "admin_users", user.uid))[m[41m[m
-[32m+[m[32m      .then((snapshot) =>[m[41m[m
-[32m+[m[32m        setAuthorized([m[41m[m
-[32m+[m[32m          snapshot.exists() &&[m[41m[m
-[32m+[m[32m            snapshot.data().role === "admin" &&[m[41m[m
-[32m+[m[32m            snapshot.data().active === true,[m[41m[m
-[32m+[m[32m        ),[m[41m[m
-[32m+[m[32m      )[m[41m[m
-[32m+[m[32m      .catch(() => setAuthorized(false));[m[41m[m
-[32m+[m[32m  }, [user]);[m[41m[m
-[32m+[m[32m  useEffect(() => {[m[41m[m
-[32m+[m[32m    if (!user || !authorized) return;[m[41m[m
-[32m+[m[32m    fetchPosts({ includeDrafts: true })[m[41m[m
-[32m+[m[32m      .then(setPosts)[m[41m[m
-[32m+[m[32m      .catch(() =>[m[41m[m
-[32m+[m[32m        setNotice([m[41m[m
-[32m+[m[32m          "Could not load articles. Check the Firestore deployment and indexes.",[m[41m[m
-[32m+[m[32m        ),[m[41m[m
-[32m+[m[32m      );[m[41m[m
-[32m+[m[32m  }, [user, authorized]);[m[41m[m
-[32m+[m[41m[m
-[32m+[m[32m  if (loading) return <Panel title="Loading" />;[m[41m[m
-[32m+[m[32m  if (!user) return <Login signIn={signIn} isConfigured={isConfigured} />;[m[41m[m
-[32m+[m[32m  if (authorized === null) return <Panel title="Checking access" />;[m[41m[m
-[32m+[m[32m  if (!authorized)[m[41m[m
-[32m+[m[32m    return ([m[41m[m
-[32m+[m[32m      <Panel title="Access denied">[m[41m[m
-[32m+[m[32m        This Firebase account is not listed as an admin.[m[41m[m
-[32m+[m[32m        <button className="mt-4 block mx-auto text-blue-600" onClick={signOut}>[m[41m[m
-[32m+[m[32m          Sign out[m[41m[m
-[32m+[m[32m        </button>[m[41m[m
-[32m+[m[32m      </Panel>[m[41m[m
-[32m+[m[32m    );[m[41m[m
-[32m+[m[32m  if (window.location.pathname === "/admin/login")[m[41m[m
-[32m+[m[32m    return <Navigate to="/admin" replace />;[m[41m[m
-[32m+[m[41m[m
-[32m+[m[32m  const openNew = () => {[m[41m[m
-[32m+[m[32m    setSelected(null);[m[41m[m
-[32m+[m[32m    setForm({ ...EMPTY, date: new Date().toISOString().slice(0, 10) });[m[41m[m
-[32m+[m[32m    setTagsText("");[m[41m[m
-[32m+[m[32m    setNotice("");[m[41m[m
-[32m+[m[32m  };[m[41m[m
-[32m+[m[32m  const openEdit = (post) => {[m[41m[m
-[32m+[m[32m    setSelected(post);[m[41m[m
-[32m+[m[32m    setForm({ ...EMPTY, ...post, date: String(post.date || "").slice(0, 10) });[m[41m[m
-[32m+[m[32m    setTagsText((post.tags || []).join(", "));[m[41m[m
-[32m+[m[32m    setNotice("");[m[41m[m
-[32m+[m[32m  };[m[41m[m
-[32m+[m[32m  const change = (field, value) =>[m[41m[m
-[32m+[m[32m    setForm((current) => ({ ...current, [field]: value }));[m[41m[m
-[32m+[m[32m  const save = async (event) => {[m[41m[m
-[32m+[m[32m    event.preventDefault();[m[41m[m
-[32m+[m[32m    setSaving(true);[m[41m[m
-[32m+[m[32m    setNotice("");[m[41m[m
-[32m+[m[32m    try {[m[41m[m
-[32m+[m[32m      const payload = {[m[41m[m
-[32m+[m[32m        ...form,[m[41m[m
-[32m+[m[32m        slug: form.slug || slugify(form.title),[m[41m[m
-[32m+[m[32m        tags: tagsText[m[41m[m
-[32m+[m[32m          .split(",")[m[41m[m
-[32m+[m[32m          .map((tag) => tag.trim())[m[41m[m
-[32m+[m[32m          .filter(Boolean),[m[41m[m
-[32m+[m[32m      };[m[41m[m
-[32m+[m[32m      const result = selected[m[41m[m
-[32m+[m[32m        ? await updatePost(selected.id, payload)[m[41m[m
-[32m+[m[32m        : await createPost(payload);[m[41m[m
-[32m+[m[32m      setPosts((current) =>[m[41m[m
-[32m+[m[32m        selected[m[41m[m
-[32m+[m[32m          ? current.map((post) => (post.id === result.id ? result : post))[m[41m[m
-[32m+[m[32m          : [result, ...current],[m[41m[m
-[32m+[m[32m      );[m[41m[m
-[32m+[m[32m      setSelected(result);[m[41m[m
-[32m+[m[32m      setForm({ ...payload, id: result.id });[m[41m[m
-[32m+[m[32m      setNotice("Article saved.");[m[41m[m
-[32m+[m[32m    } catch (error) {[m[41m[m
-[32m+[m[32m      setNotice(error.message || "Unable to save article.");[m[41m[m
-[32m+[m[32m    } finally {[m[41m[m
-[32m+[m[32m      setSaving(false);[m[41m[m
-[32m+[m[32m    }[m[41m[m
-[32m+[m[32m  };[m[41m[m
-[32m+[m[32m  const remove = async (post) => {[m[41m[m
-[32m+[m[32m    if (!window.confirm(`Delete "${post.title}"?`)) return;[m[41m[m
-[32m+[m[32m    await deletePost(post.id);[m[41m[m
-[32m+[m[32m    setPosts((current) => current.filter((item) => item.id !== post.id));[m[41m[m
-[32m+[m[32m    if (selected?.id === post.id) openNew();[m[41m[m
-[32m+[m[32m  };[m[41m[m
-[32m+[m[32m  const publishedCount = posts.filter([m[41m[m
-[32m+[m[32m    (post) => post.status === "published" || post.published,[m[41m[m
-[32m+[m[32m  ).length;[m[41m[m
-[32m+[m[32m  const draftCount = posts.filter([m[41m[m
-[32m+[m[32m    (post) => (post.status || "draft") === "draft",[m[41m[m
-[32m+[m[32m  ).length;[m[41m[m
-[32m+[m[32m  const archivedCount = posts.filter([m[41m[m
-[32m+[m[32m    (post) => post.status === "archived",[m[41m[m
-[32m+[m[32m  ).length;[m[41m[m
-[32m+[m[32m  return ([m[41m[m
-[32m+[m[32m    <Shell title="Content Manager">[m[41m[m
-[32m+[m[32m      <div className="mb-7 flex flex-col justify-between gap-5 sm:flex-row sm:items-end">[m[41m[m
-[32m+[m[32m        <div>[m[41m[m
-[32m+[m[32m          <p className="mb-2 text-xs font-bold uppercase tracking-[0.2em] text-blue-600 dark:text-blue-400">[m[41m[m
-[32m+[m[32m            Content overview[m[41m[m
-[32m+[m[32m          </p>[m[41m[m
-[32m+[m[32m          <h1 className="text-3xl font-black tracking-tight sm:text-4xl">[m[41m[m
-[32m+[m[32m            Your articles[m[41m[m
-[32m+[m[32m          </h1>[m[41m[m
-[32m+[m[32m          <p className="mt-2 max-w-xl text-sm leading-6 text-slate-500">[m[41m[m
-[32m+[m[32m            Write, refine, and publish from one quiet workspace.[m[41m[m
-[32m+[m[32m          </p>[m[41m[m
-[32m+[m[32m        </div>[m[41m[m
-[32m+[m[32m        <button[m[41m[m
-[32m+[m[32m          className="button-primary inline-flex items-center justify-center gap-2"[m[41m[m
-[32m+[m[32m          onClick={openNew}[m[41m[m
-[32m+[m[32m        >[m[41m[m
-[32m+[m[32m          <FiPlus aria-hidden="true" /> New article[m[41m[m
-[32m+[m[32m        </button>[m[41m[m
-[32m+[m[32m      </div>[m[41m[m
-[32m+[m[32m      <div className="mb-7 grid grid-cols-1 gap-3 sm:grid-cols-3">[m[41m[m
-[32m+[m[32m        {[[m[41m[m
-[32m+[m[32m          {[m[41m[m
-[32m+[m[32m            label: "All articles",[m[41m[m
-[32m+[m[32m            value: posts.length,[m[41m[m
-[32m+[m[32m            icon: FiFileText,[m[41m[m
-[32m+[m[32m            tone: "text-blue-600 dark:text-blue-400",[m[41m[m
-[32m+[m[32m          },[m[41m[m
-[32m+[m[32m          {[m[41m[m
-[32m+[m[32m            label: "Published",[m[41m[m
-[32m+[m[32m            value: publishedCount,[m[41m[m
-[32m+[m[32m            icon: FiCheckCircle,[m[41m[m
-[32m+[m[32m            tone: "text-emerald-600 dark:text-emerald-400",[m[41m[m
-[32m+[m[32m          },[m[41m[m
-[32m+[m[32m          {[m[41m[m
-[32m+[m[32m            label: "Drafts",[m[41m[m
-[32m+[m[32m            value: draftCount + archivedCount,[m[41m[m
-[32m+[m[32m            icon: FiClock,[m[41m[m
-[32m+[m[32m            tone: "text-amber-600 dark:text-amber-400",[m[41m[m
-[32m+[m[32m          },[m[41m[m
-[32m+[m[32m        ].map(({ label, value, icon: Icon, tone }) => ([m[41m[m
-[32m+[m[32m          <div[m[41m[m
-[32m+[m[32m            key={label}[m[41m[m
-[32m+[m[32m            className="flex items-center gap-4 rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm dark:border-slate-800 dark:bg-slate-900"[m[41m[m
-[32m+[m[32m          >[m[41m[m
-[32m+[m[32m            <Icon className={`text-lg ${tone}`} aria-hidden="true" />[m[41m[m
-[32m+[m[32m            <span>[m[41m[m
-[32m+[m[32m              <strong className="block text-xl font-black">{value}</strong>[m[41m[m
-[32m+[m[32m              <span className="text-xs text-slate-500">{label}</span>[m[41m[m
-[32m+[m[32m            </span>[m[41m[m
-[32m+[m[32m          </div>[m[41m[m
-[32m+[m[32m        ))}[m[41m[m
-[32m+[m[32m      </div>[m[41m[m
-[32m+[m[32m      <div className="grid gap-6 lg:grid-cols-[290px_minmax(0,1fr)]">[m[41m[m
-[32m+[m[32m        <aside className="h-fit rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900 lg:sticky lg:top-6">[m[41m[m
-[32m+[m[32m          <div className="mb-4 flex items-center justify-between border-b border-slate-100 pb-4 dark:border-slate-800">[m[41m[m
-[32m+[m[32m            <div>[m[41m[m
-[32m+[m[32m              <h2 className="font-bold">Articles</h2>[m[41m[m
-[32m+[m[32m              <p className="mt-0.5 text-xs text-slate-500">[m[41m[m
-[32m+[m[32m                {posts.length} total[m[41m[m
-[32m+[m[32m              </p>[m[41m[m
-[32m+[m[32m            </div>[m[41m[m
-[32m+[m[32m            <button[m[41m[m
-[32m+[m[32m              className="rounded-lg p-2 text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-400/10"[m[41m[m
-[32m+[m[32m              onClick={openNew}[m[41m[m
-[32m+[m[32m              aria-label="Create new article"[m[41m[m
-[32m+[m[32m              title="Create new article"[m[41m[m
-[32m+[m[32m            >[m[41m[m
-[32m+[m[32m              <FiPlus aria-hidden="true" />[m[41m[m
-[32m+[m[32m            </button>[m[41m[m
-[32m+[m[32m          </div>[m[41m[m
-[32m+[m[32m          <div className="max-h-[32rem] space-y-2 overflow-y-auto pr-1">[m[41m[m
-[32m+[m[32m            {posts.map((post) => ([m[41m[m
-[32m+[m[32m              <div[m[41m[m
-[32m+[m[32m                key={post.id}[m[41m[m
-[32m+[m[32m                className={`group flex items-center gap-2 rounded-xl border p-2 transition-colors ${selected?.id === post.id ? "border-blue-200 bg-blue-50/70 dark:border-blue-500/40 dark:bg-blue-400/10" : "border-transparent hover:border-slate-200 hover:bg-slate-50 dark:hover:border-slate-700 dark:hover:bg-slate-800/60"}`}[m[41m[m
-[32m+[m[32m              >[m[41m[m
-[32m+[m[32m                <button[m[41m[m
-[32m+[m[32m                  className="min-w-0 flex-1 text-left text-sm"[m[41m[m
-[32m+[m[32m                  onClick={() => openEdit(post)}[m[41m[m
-[32m+[m[32m                >[m[41m[m
-[32m+[m[32m                  <span className="block truncate font-semibold">[m[41m[m
-[32m+[m[32m                    {post.title || "Untitled"}[m[41m[m
-[32m+[m[32m                  </span>[m[41m[m
-[32m+[m[32m                  <StatusPill[m[41m[m
-[32m+[m[32m                    status={[m[41m[m
-[32m+[m[32m                      post.status || (post.published ? "published" : "draft")[m[41m[m
-[32m+[m[32m                    }[m[41m[m
-[32m+[m[32m                  />[m[41m[m
-[32m+[m[32m                </button>[m[41m[m
-[32m+[m[32m                <button[m[41m[m
-[32m+[m[32m                  className="rounded-md p-2 text-slate-400 opacity-0 transition-opacity hover:text-red-600 group-hover:opacity-100"[m[41m[m
-[32m+[m[32m                  aria-label={`Delete ${post.title || "article"}`}[m[41m[m
-[32m+[m[32m                  title="Delete article"[m[41m[m
-[32m+[m[32m                  onClick={() => remove(post)}[m[41m[m
-[32m+[m[32m                >[m[41m[m
-[32m+[m[32m                  <FiTrash2 aria-hidden="true" />[m[41m[m
-[32m+[m[32m                </button>[m[41m[m
-[32m+[m[32m              </div>[m[41m[m
-[32m+[m[32m            ))}[m[41m[m
-[32m+[m[32m          </div>[m[41m[m
-[32m+[m[32m        </aside>[m[41m[m
-[32m+[m[32m        <form[m[41m[m
-[32m+[m[32m          onSubmit={save}[m[41m[m
-[32m+[m[32m          className="min-w-0 space-y-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-7"[m[41m[m
-[32m+[m[32m        >[m[41m[m
-[32m+[m[32m          <div className="flex flex-wrap items-start justify-between gap-3 border-b border-slate-100 pb-5 dark:border-slate-800">[m[41m[m
-[32m+[m[32m            <div>[m[41m[m
-[32m+[m[32m              <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-500">[m[41m[m
-[32m+[m[32m                {selected ? "Editing article" : "New article"}[m[41m[m
-[32m+[m[32m              </p>[m[41m[m
-[32m+[m[32m              <h2 className="mt-1 text-xl font-black">[m[41m[m
-[32m+[m[32m                {form.title || "Untitled draft"}[m[41m[m
-[32m+[m[32m              </h2>[m[41m[m
-[32m+[m[32m            </div>[m[41m[m
-[32m+[m[32m            {selected && <StatusPill status={form.status} />}[m[41m[m
-[32m+[m[32m          </div>[m[41m[m
-[32m+[m[32m          <div className="space-y-4">[m[41m[m
-[32m+[m[32m            <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.16em] text-slate-400">[m[41m[m
-[32m+[m[32m              <FiEdit3 aria-hidden="true" /> Details[m[41m[m
-[32m+[m[32m            </div>[m[41m[m
-[32m+[m[32m            <div className="grid gap-4 md:grid-cols-2">[m[41m[m
-[32m+[m[32m              <label className="block text-sm font-semibold">[m[41m[m
-[32m+[m[32m                Title[m[41m[m
-[32m+[m[32m                <input[m[41m[m
-[32m+[m[32m                  className="field"[m[41m[m
-[32m+[m[32m                  required[m[41m[m
-[32m+[m[32m                  value={form.title}[m[41m[m
-[32m+[m[32m                  onChange={(event) => change("title", event.target.value)}[m[41m[m
-[32m+[m[32m                />[m[41m[m
-[32m+[m[32m              </label>[m[41m[m
-[32m+[m[32m              <label className="block text-sm font-semibold">[m[41m[m
-[32m+[m[32m                Slug[m[41m[m
-[32m+[m[32m                <input[m[41m[m
-[32m+[m[32m                  className="field"[m[41m[m
-[32m+[m[32m                  required[m[41m[m
-[32m+[m[32m                  value={form.slug}[m[41m[m
-[32m+[m[32m                  onChange={(event) => change("slug", event.target.value)}[m[41m[m
-[32m+[m[32m                />[m[41m[m
-[32m+[m[32m              </label>[m[41m[m
-[32m+[m[32m              <label className="block text-sm font-semibold">[m[41m[m
-[32m+[m[32m                Status[m[41m[m
-[32m+[m[32m                <select[m[41m[m
-[32m+[m[32m                  className="field"[m[41m[m
-[32m+[m[32m                  value={form.status}[m[41m[m
-[32m+[m[32m                  onChange={(event) => change("status", event.target.value)}[m[41m[m
-[32m+[m[32m                >[m[41m[m
-[32m+[m[32m                  <option value="draft">Draft</option>[m[41m[m
-[32m+[m[32m                  <option value="published">Published</option>[m[41m[m
-[32m+[m[32m                  <option value="archived">Archived</option>[m[41m[m
-[32m+[m[32m                </select>[m[41m[m
-[32m+[m[32m              </label>[m[41m[m
-[32m+[m[32m              <label className="block text-sm font-semibold">[m[41m[m
-[32m+[m[32m                Date[m[41m[m
-[32m+[m[32m                <input[m[41m[m
-[32m+[m[32m                  className="field"[m[41m[m
-[32m+[m[32m                  type="date"[m[41m[m
-[32m+[m[32m                  value={form.date}[m[41m[m
-[32m+[m[32m                  onChange={(event) => change("date", event.target.value)}[m[41m[m
-[32m+[m[32m                />[m[41m[m
-[32m+[m[32m              </label>[m[41m[m
-[32m+[m[32m              <label className="block text-sm font-semibold">[m[41m[m
-[32m+[m[32m                Category[m[41m[m
-[32m+[m[32m                <input[m[41m[m
-[32m+[m[32m                  className="field"[m[41m[m
-[32m+[m[32m                  value={form.category}[m[41m[m
-[32m+[m[32m                  onChange={(event) => change("category", event.target.value)}[m[41m[m
-[32m+[m[32m                />[m[41m[m
-[32m+[m[32m              </label>[m[41m[m
-[32m+[m[32m              <label className="block text-sm font-semibold">[m[41m[m
-[32m+[m[32m                Read time[m[41m[m
-[32m+[m[32m                <input[m[41m[m
-[32m+[m[32m                  className="field"[m[41m[m
-[32m+[m[32m                  value={form.readTime}[m[41m[m
-[32m+[m[32m                  onChange={(event) => change("readTime", event.target.value)}[m[41m[m
-[32m+[m[32m                />[m[41m[m
-[32m+[m[32m              </label>[m[41m[m
-[32m+[m[32m            </div>[m[41m[m
-[32m+[m[32m          </div>[m[41m[m
-[32m+[m[32m          <div className="space-y-4 border-t border-slate-100 pt-5 dark:border-slate-800">[m[41m[m
-[32m+[m[32m            <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.16em] text-slate-400">[m[41m[m
-[32m+[m[32m              <FiFileText aria-hidden="true" /> Story[m[41m[m
-[32m+[m[32m            </div>[m[41m[m
-[32m+[m[32m            <label className="block text-sm font-semibold">[m[41m[m
-[32m+[m[32m              Excerpt[m[41m[m
-[32m+[m[32m              <textarea[m[41m[m
-[32m+[m[32m                className="field"[m[41m[m
-[32m+[m[32m                rows="3"[m[41m[m
-[32m+[m[32m                value={form.excerpt}[m[41m[m
-[32m+[m[32m                onChange={(event) => change("excerpt", event.target.value)}[m[41m[m
-[32m+[m[32m              />[m[41m[m
-[32m+[m[32m            </label>[m[41m[m
-[32m+[m[32m          </div>[m[41m[m
-[32m+[m[32m          <label className="block text-sm font-semibold">[m[41m[m
-[32m+[m[32m            Body[m[41m[m
-[32m+[m[32m            <textarea[m[41m[m
-[32m+[m[32m              className="field"[m[41m[m
-[32m+[m[32m              rows="14"[m[41m[m
-[32m+[m[32m              required[m[41m[m
-[32m+[m[32m              value={form.body}[m[41m[m
-[32m+[m[32m              onChange={(event) => change("body", event.target.value)}[m[41m[m
-[32m+[m[32m            />[m[41m[m
-[32m+[m[32m          </label>[m[41m[m
-[32m+[m[32m          <div className="grid gap-4 md:grid-cols-2">[m[41m[m
-[32m+[m[32m            <label className="block text-sm font-semibold">[m[41m[m
-[32m+[m[32m              Tags[m[41m[m
-[32m+[m[32m              <input[m[41m[m
-[32m+[m[32m                className="field"[m[41m[m
-[32m+[m[32m                placeholder="react, firebase"[m[41m[m
-[32m+[m[32m                value={tagsText}[m[41m[m
-[32m+[m[32m                onChange={(event) => setTagsText(event.target.value)}[m[41m[m
-[32m+[m[32m              />[m[41m[m
-[32m+[m[32m            </label>[m[41m[m
-[32m+[m[32m            <label className="block text-sm font-semibold">[m[41m[m
-[32m+[m[32m              Cover image[m[41m[m
-[32m+[m[32m              <input[m[41m[m
-[32m+[m[32m                className="field"[m[41m[m
-[32m+[m[32m                type="url"[m[41m[m
-[32m+[m[32m                placeholder="https://example.com/cover.jpg"[m[41m[m
-[32m+[m[32m                value={form.image}[m[41m[m
-[32m+[m[32m                onChange={(event) => change("image", event.target.value)}[m[41m[m
-[32m+[m[32m              />[m[41m[m
-[32m+[m[32m              <span className="mt-1 block text-xs font-normal text-slate-500">[m[41m[m
-[32m+[m[32m                Firebase Storage requires a paid billing plan. Use an image URL[m[41m[m
-[32m+[m[32m                on the free plan.[m[41m[m
-[32m+[m[32m              </span>[m[41m[m
-[32m+[m[32m            </label>[m[41m[m
-[32m+[m[32m          </div>[m[41m[m
-[32m+[m[32m          <label className="block text-sm font-semibold">[m[41m[m
-[32m+[m[32m            Medium link[m[41m[m
-[32m+[m[32m            <input[m[41m[m
-[32m+[m[32m              className="field"[m[41m[m
-[32m+[m[32m              type="url"[m[41m[m
-[32m+[m[32m              value={form.medium_link}[m[41m[m
-[32m+[m[32m              onChange={(event) => change("medium_link", event.target.value)}[m[41m[m
-[32m+[m[32m            />[m[41m[m
-[32m+[m[32m          </label>[m[41m[m
-[32m+[m[32m          {notice && <p className="text-sm text-blue-700">{notice}</p>}[m[41m[m
-[32m+[m[32m          {preview && ([m[41m[m
-[32m+[m[32m            <article className="rounded-xl border border-slate-200 p-5 dark:border-slate-700">[m[41m[m
-[32m+[m[32m              {form.image && ([m[41m[m
-[32m+[m[32m                <img[m[41m[m
-[32m+[m[32m                  className="mb-4 max-h-64 w-full rounded-lg object-cover"[m[41m[m
-[32m+[m[32m                  src={form.image}[m[41m[m
-[32m+[m[32m                  alt=""[m[41m[m
-[32m+[m[32m                />[m[41m[m
-[32m+[m[32m              )}[m[41m[m
-[32m+[m[32m              <p className="text-xs font-bold uppercase tracking-widest text-blue-600">[m[41m[m
-[32m+[m[32m                {form.category} · {form.status}[m[41m[m
-[32m+[m[32m              </p>[m[41m[m
-[32m+[m[32m              <h2 className="mt-2 text-2xl font-extrabold">[m[41m[m
-[32m+[m[32m                {form.title || "Untitled article"}[m[41m[m
-[32m+[m[32m              </h2>[m[41m[m
-[32m+[m[32m              <p className="mt-2 text-sm text-slate-500">{form.excerpt}</p>[m[41m[m
-[32m+[m[32m              <div className="mt-5 space-y-3 text-sm leading-7">[m[41m[m
-[32m+[m[32m                {(form.body || "Write the article body to preview it.")[m[41m[m
-[32m+[m[32m                  .split(/\n+/)[m[41m[m
-[32m+[m[32m                  .filter(Boolean)[m[41m[m
-[32m+[m[32m                  .map((paragraph, index) => ([m[41m[m
-[32m+[m[32m                    <p key={`${index}-${paragraph.slice(0, 12)}`}>[m[41m[m
-[32m+[m[32m                      {paragraph}[m[41m[m
-[32m+[m[32m                    </p>[m[41m[m
-[32m+[m[32m                  ))}[m[41m[m
-[32m+[m[32m              </div>[m[41m[m
-[32m+[m[32m            </article>[m[41m[m
-[32m+[m[32m          )}[m[41m[m
-[32m+[m[32m          <div className="grid gap-3 sm:flex sm:flex-wrap">[m[41m[m
-[32m+[m[32m            <button[m[41m[m
-[32m+[m[32m              className="button-secondary inline-flex min-h-11 w-full items-center justify-center gap-2 sm:w-auto"[m[41m[m
-[32m+[m[32m              type="button"[m[41m[m
-[32m+[m[32m              onClick={() => setPreview((current) => !current)}[m[41m[m
-[32m+[m[32m            >[m[41m[m
-[32m+[m[32m              <FiEye aria-hidden="true" />[m[41m[m
-[32m+[m[32m              {preview ? "Hide preview" : "Preview"}[m[41m[m
-[32m+[m[32m            </button>[m[41m[m
-[32m+[m[32m            <button[m[41m[m
-[32m+[m[32m              className="button-primary min-h-11 w-full sm:w-auto"[m[41m[m
-[32m+[m[32m              disabled={saving}[m[41m[m
-[32m+[m[32m              type="submit"[m[41m[m
-[32m+[m[32m            >[m[41m[m
-[32m+[m[32m              {saving ? "Saving..." : "Save article"}[m[41m[m
-[32m+[m[32m            </button>[m[41m[m
-[32m+[m[32m            <button[m[41m[m
-[32m+[m[32m              className="button-secondary inline-flex min-h-11 w-full items-center justify-center gap-2 sm:w-auto"[m[41m[m
-[32m+[m[32m              type="button"[m[41m[m
-[32m+[m[32m              onClick={signOut}[m[41m[m
-[32m+[m[32m            >[m[41m[m
-[32m+[m[32m              <FiLogOut aria-hidden="true" />[m[41m[m
-[32m+[m[32m              Sign out[m[41m[m
-[32m+[m[32m            </button>[m[41m[m
-[32m+[m[32m          </div>[m[41m[m
-[32m+[m[32m        </form>[m[41m[m
-[32m+[m[32m      </div>[m[41m[m
-[32m+[m[32m    </Shell>[m[41m[m
-[32m+[m[32m  );[m[41m[m
-[32m+[m[32m}[m[41m[m
-[32m+[m[32mimport { useEffect, useState } from "react";[m[41m[m
-[32m+[m[32mimport { Helmet } from "react-helmet-async";[m[41m[m
-[32m+[m[32mimport { Link, Navigate } from "react-router-dom";[m[41m[m
-[32m+[m[32mimport {[m[41m[m
-[32m+[m[32m  FiArchive,[m[41m[m
-[32m+[m[32m  FiCheckCircle,[m[41m[m
-[32m+[m[32m  FiClock,[m[41m[m
-[32m+[m[32m  FiEdit3,[m[41m[m
-[32m+[m[32m  FiEye,[m[41m[m
-[32m+[m[32m  FiEyeOff,[m[41m[m
-[32m+[m[32m  FiFileText,[m[41m[m
-[32m+[m[32m  FiLogOut,[m[41m[m
-[32m+[m[32m  FiPlus,[m[41m[m
-[32m+[m[32m  FiTrash2,[m[41m[m
-[32m+[m[32m} from "react-icons/fi";[m[41m[m
-[32m+[m[32mimport { doc, getDoc } from "firebase/firestore";[m[41m[m
-[32m+[m[32mimport { useAuth } from "../context/AuthContext";[m[41m[m
-[32m+[m[32mimport { db } from "../lib/firebase";[m[41m[m
-[32m+[m[32mimport { createPost, deletePost, fetchPosts, updatePost } from "../lib/blog";[m[41m[m
-[32m+[m[41m[m
- const EMPTY = {[m
-   title: "",[m
-   slug: "",[m
