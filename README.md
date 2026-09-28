@@ -563,6 +563,21 @@ A production database should not be reset simply because a migration needs corre
    `GRADING_EXECUTOR_URL`, `GRADING_EXECUTOR_KEY`, and optional executor name
    and version secrets. The executor must be an isolated, no-network Python
    sandbox; the Edge Function deliberately does not execute student code.
+   The function's failure reporting is deliberate and worth preserving:
+
+   - `grading_unavailable` (503, retryable) means the executor was genuinely
+     unreachable, timed out, or returned 5xx. Nothing is wrong with the code.
+   - `grading_failed` (422, terminal) means the executor gave a verdict the
+     function could not verify, or the submission used a restricted feature.
+     This is surfaced to a teacher rather than retried forever.
+   - A submission is graded at most once. Re-running the function returns the
+     stored result instead of re-executing, so the endpoint cannot be used to
+     burn executor time and cost.
+
+   The restricted-pattern filter inside the function is a cheap pre-filter for
+   obvious mistakes, **not** a security boundary. It is trivially bypassed. The
+   boundary is that student code is never executed in the Edge Function at all.
+   Do not describe that filter as sandboxing.
 7. Confirm the `academy-live-retention` scheduled job exists. If `pg_cron` is
    unavailable, create an equivalent daily scheduled invocation of
    `select public.academy_cleanup_live_data();` using the Supabase scheduler.

@@ -1,0 +1,14 @@
+-- Reconciliation entry. Read only, nothing to re-run.
+--
+-- Verified separately that every column this migration's companion probe
+-- checked already exists on public.academy_submission_results: submission_id,
+-- assignment_id, student_id, objective_score, objective_status, final_score,
+-- score, max_score, tests_passed, tests_total, passed_tests, failed_tests,
+-- test_summary, deterministic_feedback, deterministic_source, executor_name,
+-- executor_version and ai_feedback_status were all present, so no schema change
+-- was needed here.
+--
+-- Note for the next person: a top level do block that ends in raise exception
+-- aborts its own migration, so the row is never written to schema_migrations
+-- and db push retries it forever. Probes should write their result and return
+-- normally, or be reconciled afterwards like this one.
