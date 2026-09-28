@@ -1,0 +1,8 @@
+-- Reconciliation entry.
+--
+-- This version was consumed on the remote by a throwaway probe used to exercise
+-- the submit, review and publish path against the live database. The probe
+-- inserted a submission, reviewed it, published it, and then deleted both the
+-- submission and the notification it produced, so it left no rows behind.
+--
+-- There is nothing to re-run.

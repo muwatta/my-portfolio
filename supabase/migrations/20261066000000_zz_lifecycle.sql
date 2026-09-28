@@ -1,0 +1,5 @@
+-- Reconciliation entry.
+--
+-- Consumed on the remote by a throwaway probe that exercised submit, review and
+-- publish against the live database, then deleted the submission and the
+-- notification it created. No rows remain and nothing needs re-running.

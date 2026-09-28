@@ -85,12 +85,23 @@ export default function AcademyTeacherSubmissions() {
         <p className="text-sm font-semibold uppercase tracking-[0.18em] text-blue-600">
           Teacher workspace
         </p>
-        <h1 className="mt-2 text-3xl font-bold">Submission inbox</h1>
+        <h1 className="mt-2 text-3xl font-bold">Grading inbox</h1>
         <p className="mt-2 max-w-2xl text-slate-600 dark:text-slate-300">
-          Review learner attempts, record the deterministic score, and attach
-          optional feedback.
+          Everything waiting to be graded in one queue, filtered by course,
+          topic and student. A review is saved here and only published when you
+          decide, so nothing reaches a student by accident.
         </p>
       </header>
+
+      <GradingInbox />
+
+      <details className="rounded-xl border border-slate-200 p-5 dark:border-slate-800">
+        <summary className="min-h-11 cursor-pointer text-sm font-semibold">
+          Older submission table
+        </summary>
+        <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
+          The original per assignment listing, kept for reference.
+        </p>
       {state === "loading" && <p>Loading submissions...</p>}
       {state === "unconfigured" && (
         <p className="rounded-xl bg-amber-50 p-4 text-sm text-amber-900">
@@ -228,6 +239,7 @@ export default function AcademyTeacherSubmissions() {
           );
         })}
       </div>
+      </details>
     </section>
   );
 }
