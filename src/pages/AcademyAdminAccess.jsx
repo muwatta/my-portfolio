@@ -21,7 +21,8 @@ export default function AcademyAdminAccess() {
     setState(result.error ? "error" : "ready");
   }, []);
 
-  useAutoRefresh(load);
+  // Same reasoning as the dashboards: no refresh on tab return.
+  useAutoRefresh(load, { interval: 120000 });
 
   async function changeAdmin(userId, enabled) {
     const { error } = await setAcademyAdmin(userId, enabled);

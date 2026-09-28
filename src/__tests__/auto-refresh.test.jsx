@@ -1,9 +1,10 @@
+import { readFileSync } from "node:fs";
 import { act, render } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { useAutoRefresh } from "../hooks/useAutoRefresh";
 
-function Harness({ load }) {
-  useAutoRefresh(load, 1000);
+function Harness({ load, refreshOnFocus }) {
+  useAutoRefresh(load, { interval: 1000, refreshOnFocus, preserveScroll: false });
   return null;
 }
 
@@ -35,7 +36,47 @@ describe("useAutoRefresh", () => {
     expect(load).toHaveBeenLastCalledWith(true);
   });
 
-  it("stops polling while the tab is hidden and refreshes when it returns", () => {
+  it("does not refresh when the tab regains focus or visibility", () => {
+    // This is the behaviour that made the dashboards unusable: coming back from
+    // another tab replaced the page and threw away the reader's place.
+    const load = vi.fn();
+    render(<Harness load={load} />);
+    const initial = load.mock.calls.length;
+
+    act(() => {
+      Object.defineProperty(document, "visibilityState", {
+        configurable: true,
+        value: "hidden",
+      });
+      document.dispatchEvent(new Event("visibilitychange"));
+    });
+    act(() => {
+      Object.defineProperty(document, "visibilityState", {
+        configurable: true,
+        value: "visible",
+      });
+      document.dispatchEvent(new Event("visibilitychange"));
+      window.dispatchEvent(new Event("focus"));
+    });
+
+    expect(load.mock.calls.length).toBe(initial);
+  });
+
+  it("refreshes at most once when focus and visibility both fire", () => {
+    const load = vi.fn();
+    render(<Harness load={load} refreshOnFocus />);
+    const initial = load.mock.calls.length;
+
+    act(() => {
+      window.dispatchEvent(new Event("focus"));
+      document.dispatchEvent(new Event("visibilitychange"));
+      window.dispatchEvent(new Event("focus"));
+    });
+
+    expect(load.mock.calls.length).toBe(initial + 1);
+  });
+
+  it("resumes polling once the tab is visible again, without an extra refresh", () => {
     const load = vi.fn();
     render(<Harness load={load} />);
     const initial = load.mock.calls.length;
@@ -50,7 +91,7 @@ describe("useAutoRefresh", () => {
     act(() => {
       vi.advanceTimersByTime(5000);
     });
-    expect(load).toHaveBeenCalledTimes(initial);
+    expect(load.mock.calls.length).toBe(initial);
 
     act(() => {
       Object.defineProperty(document, "visibilityState", {
@@ -59,8 +100,12 @@ describe("useAutoRefresh", () => {
       });
       document.dispatchEvent(new Event("visibilitychange"));
     });
-    expect(load.mock.calls.length).toBe(initial + 1);
+    act(() => {
+      vi.advanceTimersByTime(1500);
+    });
+    expect(load.mock.calls.length).toBeGreaterThan(initial);
   });
+
 
   it("skips a background poll while the user is typing in a field", () => {
     const load = vi.fn();
@@ -120,5 +165,21 @@ describe("useAutoRefresh", () => {
       vi.advanceTimersByTime(1000);
     });
     expect(load.mock.calls.length).toBeGreaterThan(initial);
+  });
+});
+
+describe("refresh controls on the dashboards", () => {
+  it("offer a manual refresh instead of relying on tab focus", () => {
+    const dashboards = [
+      "src/pages/AcademyAdminDashboard.jsx",
+      "src/pages/AcademyTeacherDashboard.jsx",
+    ];
+    dashboards.forEach((file) => {
+      const source = readFileSync(file, "utf8");
+      expect(source).toMatch(/RefreshControl/);
+      // Two minutes, not the old one minute, and never on return.
+      expect(source).toMatch(/interval: 120000/);
+      expect(source).not.toMatch(/useAutoRefresh\(load\)/);
+    });
   });
 });
