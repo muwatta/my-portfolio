@@ -1,0 +1,8 @@
+-- Reconciliation entry.
+--
+-- Consumed on the remote by a throwaway probe that created a schedule and a
+-- live room, then as a real enrolled student tried six ways to post into it:
+-- a direct text insert, a note stored in someone else's folder, a PDF, a six
+-- minute note, a 95 MB note, and one valid voice note. All five bad paths were
+-- refused and the valid one was accepted with a null body. The probe then
+-- deleted the message, the room and the schedule, so no fixture remains.
