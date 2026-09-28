@@ -26,13 +26,22 @@ const PUBLIC_LINK_GROUPS = [
   },
 ];
 
+// Help is one tap away on every footer without duplicating the app navigation.
+// The classroom and notification links need a session, so they only appear
+// once a student is signed in.
+const ALWAYS_HELP_LINKS = [{ label: "Help and FAQ", to: "/academy/faq" }];
+const SIGNED_IN_HELP_LINKS = [
+  { label: "Live classroom", to: "/academy/live" },
+  { label: "Notifications", to: "/academy/notifications" },
+];
+
 const FOCUS_RING =
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-950";
 
-const linkClass = `inline-flex min-h-11 items-center rounded-lg px-1 text-sm font-medium text-slate-600 transition-colors hover:text-blue-700 dark:text-slate-400 dark:hover:text-cyan-300 focus-visible:ring-cyan-500 ${FOCUS_RING}`;
+const linkClass = `inline-flex min-h-11 items-center rounded-lg px-2 text-sm font-medium text-slate-600 transition-colors hover:text-cyan-700 dark:text-slate-400 dark:hover:text-cyan-300 focus-visible:ring-cyan-500 ${FOCUS_RING}`;
 
 const contactLinkClass =
-  "inline-flex min-h-11 items-center gap-2 rounded-lg border px-4 py-2 text-sm font-semibold transition-colors";
+  "inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border px-4 py-2 text-sm font-semibold transition-colors";
 
 function WhatsAppIcon() {
   return (
@@ -69,6 +78,9 @@ function MailIcon() {
 export default function AcademyFooter({ isPublic = false }) {
   const year = new Date().getFullYear();
   const groups = isPublic ? PUBLIC_LINK_GROUPS : [];
+  const helpLinks = isPublic
+    ? ALWAYS_HELP_LINKS
+    : [...ALWAYS_HELP_LINKS, ...SIGNED_IN_HELP_LINKS];
   const bodyPadding = isPublic ? "" : "pb-24 lg:pb-10";
 
   return (
@@ -82,94 +94,98 @@ export default function AcademyFooter({ isPublic = false }) {
         Algorise Tech Explorers Academy footer
       </h2>
 
-      <div className={`mx-auto max-w-7xl px-4 py-10 sm:px-6 ${bodyPadding}`}>
-        <div
-          className={`grid gap-10 ${
-            groups.length > 0 ? "lg:grid-cols-[1.3fr_2fr]" : ""
-          }`}
-        >
-          <div className={groups.length > 0 ? "" : "max-w-xl"}>
-            <div className="flex items-center gap-3">
-              <img
-                src="/images/ate-icon-192.png"
-                alt=""
-                width="44"
-                height="44"
-                className="h-11 w-11"
-              />
-              <div>
-                <p className="text-sm font-bold tracking-wide text-slate-900 dark:text-slate-50">
-                  Algorise Tech Explorers
-                </p>
-                <p className="text-xs text-slate-500 dark:text-slate-400">
-                  Learning platform
-                </p>
-              </div>
-            </div>
+      <div
+        className={`mx-auto max-w-4xl px-4 py-12 text-center sm:px-6 ${bodyPadding}`}
+      >
+        <img
+          src="/images/ate-icon-192.png"
+          alt=""
+          width="56"
+          height="56"
+          className="mx-auto h-14 w-14"
+        />
+        <p className="mt-4 text-base font-bold tracking-wide text-slate-900 dark:text-slate-50">
+          Algorise Tech Explorers
+        </p>
+        <p className="text-xs text-slate-500 dark:text-slate-400">
+          Learning platform
+        </p>
 
-            <p className="mt-4 max-w-sm text-sm leading-6 text-slate-600 dark:text-slate-400">
-              Practical, project based learning in Python for AI and machine
-              learning, and C++ for embedded systems and robotics. Download a
-              course to keep learning without a connection.
-            </p>
+        <p className="mx-auto mt-4 max-w-xl text-sm leading-6 text-slate-600 dark:text-slate-400">
+          Practical, project based learning in Python for AI and machine
+          learning, and C++ for embedded systems and robotics. Download a course
+          to keep learning without a connection.
+        </p>
 
-            <div className="mt-5 flex flex-wrap gap-3">
-              <a
-                href={WHATSAPP_HREF}
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label={`Chat with us on WhatsApp at ${WHATSAPP_DISPLAY}`}
-                title={WHATSAPP_DISPLAY}
-                className={`${contactLinkClass} border-emerald-600 text-emerald-700 hover:bg-emerald-50 dark:text-emerald-400 dark:hover:bg-emerald-950/40 focus-visible:ring-emerald-600 ${FOCUS_RING}`}
-              >
-                <WhatsAppIcon />
-                <span>Chat on WhatsApp</span>
-              </a>
+        <div className="mt-6 flex flex-wrap justify-center gap-3">
+          <a
+            href={WHATSAPP_HREF}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label={`Chat with us on WhatsApp at ${WHATSAPP_DISPLAY}`}
+            title={WHATSAPP_DISPLAY}
+            className={`${contactLinkClass} border-emerald-600 text-emerald-700 hover:bg-emerald-50 dark:text-emerald-400 dark:hover:bg-emerald-950/40 focus-visible:ring-emerald-600 ${FOCUS_RING}`}
+          >
+            <WhatsAppIcon />
+            <span>Chat on WhatsApp</span>
+          </a>
 
-              <a
-                href={EMAIL_HREF}
-                aria-label={`Email us at ${EMAIL}`}
-                title={EMAIL}
-                className={`${contactLinkClass} border-slate-300 text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-900 focus-visible:ring-slate-500 ${FOCUS_RING}`}
-              >
-                <MailIcon />
-                <span>Email us</span>
-              </a>
-            </div>
-          </div>
-
-          {groups.length > 0 && (
-            <div className="grid gap-8 sm:grid-cols-2">
-              {groups.map((group) => (
-                <nav key={group.id} aria-label={`${group.title} links`}>
-                  <h3 className="text-xs font-bold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">
-                    {group.title}
-                  </h3>
-                  <ul className="mt-3 space-y-1">
-                    {group.links.map((link) => (
-                      <li key={`${group.id}-${link.to}-${link.label}`}>
-                        <Link to={link.to} className={linkClass}>
-                          {link.label}
-                        </Link>
-                      </li>
-                    ))}
-                  </ul>
-                </nav>
-              ))}
-            </div>
-          )}
+          <a
+            href={EMAIL_HREF}
+            aria-label={`Email us at ${EMAIL}`}
+            title={EMAIL}
+            className={`${contactLinkClass} border-slate-300 text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-900 focus-visible:ring-slate-500 ${FOCUS_RING}`}
+          >
+            <MailIcon />
+            <span>Email us</span>
+          </a>
         </div>
+
+        <nav
+          aria-label="Help and feedback"
+          className="mt-6 flex flex-wrap items-center justify-center gap-x-1 gap-y-1"
+        >
+          {helpLinks.map((link) => (
+            <Link key={link.to} to={link.to} className={linkClass}>
+              {link.label}
+            </Link>
+          ))}
+        </nav>
+
+        {groups.length > 0 && (
+          <div className="mt-8 flex flex-wrap items-center justify-center gap-x-8 gap-y-2 border-t border-slate-200 pt-6 dark:border-slate-800">
+            {groups.map((group) => (
+              <nav key={group.id} aria-label={`${group.title} links`}>
+                <h3 className="text-xs font-bold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">
+                  {group.title}
+                </h3>
+                <ul className="mt-1 flex flex-wrap justify-center">
+                  {group.links.map((link) => (
+                    <li key={`${group.id}-${link.to}-${link.label}`}>
+                      <Link to={link.to} className={linkClass}>
+                        {link.label}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </nav>
+            ))}
+          </div>
+        )}
+
+        <p className="mt-8 text-xs text-slate-500 dark:text-slate-400">
+          Algorise Tech Explorers &middot; RC No. RC-8665201
+        </p>
+        <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+          Learn anywhere. Progress syncs automatically when you reconnect.
+        </p>
       </div>
 
       <div className="border-t border-slate-200 dark:border-slate-800">
-        <div className="mx-auto flex max-w-7xl flex-col gap-2 px-4 py-5 text-xs text-slate-500 sm:flex-row sm:items-center sm:justify-between sm:px-6 dark:text-slate-400">
-          <p>&copy; {year} Algorise Tech Explorers. All rights reserved.</p>
-          <p>
-            Learn anywhere. Progress syncs automatically when you reconnect.
-          </p>
+        <div className="mx-auto max-w-4xl px-4 py-5 text-center text-xs text-slate-500 sm:px-6 dark:text-slate-400">
+          &copy; {year} Algorise Tech Explorers. All rights reserved.
         </div>
       </div>
     </footer>
   );
 }
-
