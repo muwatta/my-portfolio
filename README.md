@@ -746,3 +746,46 @@ individual column**, so removing a column needs its own
 hidden tests readable by every signed in student; see the header comment in
 `supabase/migrations/20261033000000_academy_exercise_column_grants.sql`.
 
+
+## Known gaps
+
+Recorded so nobody discovers them the hard way.
+
+**Auto grading needs a server executor, and it is not configured.** Code runs in
+the browser, so a student could report any score they liked. Browser runs are
+therefore stored as `client_reported`, marked `manual_review`, and shown to the
+teacher as a hint, never as a mark. Objective questions, meaning multiple choice
+and short answer, *are* graded server side today and cost nothing. For real auto
+marking of code:
+
+```bash
+npx supabase secrets set GRADING_EXECUTOR_URL=... GRADING_EXECUTOR_KEY=...
+npx supabase functions deploy academy-grade-submission
+```
+
+The executor must be an isolated, no network Python sandbox. The edge function
+deliberately does not execute student code itself.
+
+**Neither edge function is deployed and no secrets are set.** As of the last
+check, `supabase secrets list` and `supabase functions list` were both empty, so
+`academy-ai-feedback` returns `ai_feedback_status = 'disabled'`. It writes
+narrative feedback only; its prompt explicitly forbids inventing a score, so the
+"AI grades it" path does not exist. That is a deliberate boundary rather than an
+oversight, and a bulk AI grading button would ship dead until the key exists.
+
+**The primary administrator address matches no account.** See Roles and
+authorization above. Consolidate on a single `academy_admins` entry.
+
+**One student is not one account per role system.** Being a portfolio admin and an
+Academy admin are unrelated: Firebase `admin_users/{uid}` governs the former and
+`academy_admins` the latter, with nothing linking them.
+
+**There are no live rooms yet.** The voice note classroom needs a published
+`academy_schedules` row with `activity_type = 'live_class'` and a room attached
+to it, created from the teacher schedule form. The room itself is voice only,
+private, and expires after fourteen days along with its audio.
+
+**What is now enforced on the server.** Submission uploads carry a bucket size
+limit and an allowed mime type list, and `academy_register_submission` re-checks
+the recorded size, the extension and the attempt count. The browser check remains
+as a courtesy that saves a student a wasted upload, not as a control.

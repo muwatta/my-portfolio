@@ -1822,7 +1822,6 @@ export async function requestAcademyAiFeedback(
 export async function submitAssignment({
   assignmentId,
   studentId,
-  attemptNumber,
   sourceCode = null,
   filePath = null,
   originalFilename = null,
@@ -1833,30 +1832,18 @@ export async function submitAssignment({
   if (!supabase)
     return { data: null, error: new Error("Academy is not configured.") };
   const operationId = clientOperationId || createClientOperationId();
-  const submission = {
-    assignment_id: assignmentId,
-    student_id: studentId,
-    attempt_number: attemptNumber,
-    source_code: sourceCode,
-    file_path: filePath,
-    original_filename: originalFilename,
-    mime_type: mimeType,
-    file_size_bytes: fileSizeBytes,
-    client_operation_id: operationId,
-  };
-  const { data, error } = await supabase
-    .from("academy_submissions")
-    .insert(submission)
-    .select("id, assignment_id, attempt_number, status, submitted_at")
-    .single();
-  if (error?.code === "23505") {
-    const { data: existing, error: existingError } = await supabase
-      .from("academy_submissions")
-      .select("id, assignment_id, attempt_number, status, submitted_at")
-      .eq("client_operation_id", operationId)
-      .single();
-    if (!existingError) return { data: existing, error: null };
-  }
+  // The database validates the size, the file type and the attempt count. The
+  // browser check is a courtesy that saves the student a wasted upload, not a
+  // control, so the same rules are enforced again on the way in.
+  const { data, error } = await supabase.rpc("academy_register_submission", {
+    p_assignment_id: assignmentId,
+    p_source_code: sourceCode,
+    p_file_path: filePath,
+    p_original_filename: originalFilename,
+    p_mime_type: mimeType,
+    p_file_size_bytes: fileSizeBytes,
+    p_client_operation_id: operationId,
+  });
   if (!error) {
     invalidateAcademyCache(
       `progress:${studentId}`,
