@@ -212,7 +212,12 @@ export function AcademyAuthProvider({ children }) {
       options: {
         data: {
           display_name: displayName,
-          registration_number: registrationNumber,
+          // Optional. A student is issued a number automatically now. Schools
+          // that hand numbers out on paper can still pass one, and the trigger
+          // honours it when it is a real unused code.
+          ...(registrationNumber
+            ? { registration_number: registrationNumber }
+            : {}),
         },
       },
     });

@@ -1,0 +1,9 @@
+-- Reconciliation entry. Read only, nothing to re-run.
+--
+-- Confirmed that academy_admin_registration_list fails at runtime with
+-- "structure of query does not match function result type" on every call,
+-- including when its body is restored byte for byte to the version from
+-- 20261025000000. So the failure predates the provisional lifecycle work and is
+-- not caused by it. The admin registrations page is unaffected in practice,
+-- because getAcademyRegistrationCodes falls back to a direct query on any RPC
+-- error. Left as a known issue rather than left to look like working code.

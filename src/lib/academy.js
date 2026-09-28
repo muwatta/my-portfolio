@@ -1913,3 +1913,60 @@ export async function getAcademyProgress(studentId) {
   });
 }
 
+
+// Registration numbers are now issued automatically when a student signs up, as
+// a provisional number an administrator then accepts. These are the actions for
+// that lifecycle.
+
+export async function acceptAcademyRegistration(studentId) {
+  if (!supabase)
+    return { data: null, error: new Error("Academy is not configured.") };
+  const { data, error } = await supabase.rpc("academy_accept_registration", {
+    p_student_id: studentId,
+  });
+  return { data, error };
+}
+
+export async function withdrawAcademyRegistration(studentId) {
+  if (!supabase)
+    return { data: null, error: new Error("Academy is not configured.") };
+  const { data, error } = await supabase.rpc("academy_void_registration", {
+    p_student_id: studentId,
+  });
+  return { data, error };
+}
+
+export async function editAcademyRegistrationNumber(
+  registrationCodeId,
+  newSerial,
+) {
+  if (!supabase)
+    return { data: null, error: new Error("Academy is not configured.") };
+  const { data, error } = await supabase.rpc(
+    "academy_edit_registration_number",
+    {
+      p_registration_code_id: registrationCodeId,
+      p_new_serial: Number(newSerial),
+    },
+  );
+  return { data, error };
+}
+
+// Only unused numbers can be deleted. An issued number must be withdrawn, which
+// keeps its serial so it can never be reissued to another student.
+export async function deleteUnusedAcademyRegistration(registrationCodeId) {
+  if (!supabase)
+    return { data: null, error: new Error("Academy is not configured.") };
+  const { data, error } = await supabase.rpc(
+    "academy_delete_registration_code",
+    { p_registration_code_id: registrationCodeId },
+  );
+  return { data, error };
+}
+
+export async function getMyAcademyRegistration() {
+  if (!supabase)
+    return { data: null, error: new Error("Academy is not configured.") };
+  const { data, error } = await supabase.rpc("academy_my_registration");
+  return { data, error };
+}

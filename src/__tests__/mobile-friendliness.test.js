@@ -113,7 +113,6 @@ describe("form accessibility on a phone", () => {
     const signup = sources.get("src/pages/AcademySignup.jsx");
     expect(signup).toMatch(/autoComplete="name"/);
     expect(signup).toMatch(/autoComplete="new-password"/);
-    expect(signup).toMatch(/autoCapitalize="characters"/);
   });
 });
 

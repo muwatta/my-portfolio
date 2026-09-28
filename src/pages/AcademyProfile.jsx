@@ -202,6 +202,12 @@ export default function AcademyProfile() {
               {profile?.academy_registration_codes?.registration_number ||
                 "Not assigned"}
             </dd>
+            {profile?.academy_registration_codes?.registration_number &&
+              profile.academy_registration_codes.status !== "claimed" && (
+                <p className="mt-1 text-xs text-amber-700 dark:text-amber-400">
+                  Provisional, pending acceptance by an administrator.
+                </p>
+              )}
           </div>
         </dl>
       </section>

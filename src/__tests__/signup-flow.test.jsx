@@ -39,9 +39,6 @@ describe("Academy signup submission", () => {
       </MemoryRouter>,
     );
 
-    fireEvent.change(screen.getByLabelText("Academy Registration Number"), {
-      target: { value: "ATE-26-014" },
-    });
     fireEvent.change(screen.getByLabelText("Full name"), {
       target: { value: "Test Student" },
     });
