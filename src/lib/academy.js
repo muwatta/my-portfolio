@@ -945,7 +945,7 @@ export async function getAcademyTeacherCurriculum() {
     supabase
       .from("academy_lessons")
       .select(
-        "id, week_id, title, slug, lesson_number, objectives, content, published, sort_order",
+        "id, week_id, title, slug, lesson_number, objectives, content, published, sort_order, status, release_at, due_at, points, late_policy, unlock_after_id",
       )
       .order("lesson_number"),
   ]);

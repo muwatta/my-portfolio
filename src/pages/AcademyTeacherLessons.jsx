@@ -1,24 +1,25 @@
 import { useEffect, useState } from "react";
 import {
   getAcademyTeacherCurriculum,
-  saveAcademyLesson,
   saveAcademyWeek,
   publishAcademyWeek,
   scheduleAcademyLesson,
 } from "../lib/academy";
 import { friendlyError } from "../lib/utils";
+import {
+  duplicateLesson,
+  emptyTopic,
+  reorderLessons,
+  saveLessonRecord,
+  setLessonStatus,
+  topicFromRow,
+} from "../lib/academyContent";
+import TopicEditor from "../components/academy/TopicEditor";
+import TopicList from "../components/academy/TopicList";
+import BulkTopicImport from "../components/academy/BulkTopicImport";
 
 const emptyWeek = { id: "", course_id: "", week_number: 0, title: "", description: "" };
-const emptyLesson = {
-  id: "",
-  week_id: "",
-  title: "",
-  slug: "",
-  lesson_number: 1,
-  objectives: "",
-  content: "{}",
-  published: false,
-};
+const emptyLesson = emptyTopic;
 const initialSchedule = {
   course_id: "",
   lesson_id: "",
@@ -36,6 +37,10 @@ export default function AcademyTeacherLessons() {
   const [schedule, setSchedule] = useState(initialSchedule);
   const [state, setState] = useState("loading");
   const [message, setMessage] = useState("");
+  const [topicError, setTopicError] = useState("");
+  const [topicBusy, setTopicBusy] = useState(false);
+  const [activeWeekId, setActiveWeekId] = useState("");
+  const [showImport, setShowImport] = useState(false);
 
   async function load() {
     const result = await getAcademyTeacherCurriculum();
@@ -94,18 +99,84 @@ export default function AcademyTeacherLessons() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
+  // Topic lifecycle. The database owns the rules, so these only collect input
+  // and surface whatever the function reports.
+  const activeWeek =
+    data.weeks.find((item) => item.id === activeWeekId) ?? data.weeks[0];
+  const weekTopics = data.lessons
+    .filter((item) => item.week_id === activeWeek?.id)
+    .sort(
+      (left, right) =>
+        (left.sort_order ?? 0) - (right.sort_order ?? 0) ||
+        (left.lesson_number ?? 0) - (right.lesson_number ?? 0),
+    );
+
+  useEffect(() => {
+    if (!activeWeekId && data.weeks.length) {
+      setActiveWeekId(data.weeks[0].id);
+    }
+  }, [activeWeekId, data.weeks]);
+
+  async function handleTopicSubmit(topic) {
+    setTopicBusy(true);
+    setTopicError("");
+    const { error } = await saveLessonRecord(topic);
+    setTopicBusy(false);
+    if (error) {
+      setTopicError(error.message);
+      return;
+    }
+    setLesson({ ...emptyLesson, week_id: topic.week_id || activeWeekId });
+    await load();
+  }
+
+  async function handleDuplicate(topic) {
+    setTopicBusy(true);
+    setTopicError("");
+    const { error } = await duplicateLesson(topic.id);
+    setTopicBusy(false);
+    if (error) setTopicError(error.message);
+    await load();
+  }
+
+  async function handleSetStatus(topic, status) {
+    setTopicBusy(true);
+    setTopicError("");
+    const { error } = await setLessonStatus(
+      topic.id,
+      status,
+      topic.release_at,
+    );
+    setTopicBusy(false);
+    if (error) setTopicError(error.message);
+    await load();
+  }
+
+  async function handleReorder(orderedIds) {
+    const { error } = await reorderLessons(activeWeek?.id, orderedIds);
+    if (error) setTopicError(error.message);
+    await load();
+  }
+
+  async function handleImported() {
+    setShowImport(false);
+    await load();
+  }
+
   async function toggleLessonPublish(lessonRow) {
     setMessage("");
-    const { error } = await saveAcademyLesson({
-      ...lessonRow,
-      published: !lessonRow.published,
-    });
+    // Goes through the status helper rather than writing the published flag, so
+    // status and the legacy boolean stay in step.
+    const { error } = await setLessonStatus(
+      lessonRow.id,
+      lessonRow.published ? "draft" : "published",
+    );
     if (error)
       setMessage(
         friendlyError(error, "Publish state could not be changed."),
       );
     else {
-      setMessage(`Lesson ${lessonRow.published ? "unpublished" : "published"}.`);
+      setMessage(`Topic ${lessonRow.published ? "unpublished" : "published"}.`);
       await load();
     }
   }
@@ -238,110 +309,21 @@ export default function AcademyTeacherLessons() {
             </button>
           )}
         </form>
-        <form
-          className="space-y-4 border-l-4 border-cyan-400 bg-white p-5 shadow-sm dark:bg-slate-900"
-          onSubmit={(event) => {
-            event.preventDefault();
-            submit(saveAcademyLesson, lesson, () => setLesson(emptyLesson));
-          }}
-        >
+        <section className="space-y-4 border-l-4 border-cyan-400 bg-white p-5 shadow-sm dark:bg-slate-900">
           <h2 className="text-lg font-bold">
-            {lesson.id ? "Edit lesson" : "Add lesson"}
+            {lesson.id ? "Edit topic" : "Add a topic"}
           </h2>
-          <label className="label">
-            Week
-            <select
-              className="field"
-              name="week_id"
-              value={lesson.week_id}
-              onChange={update(setLesson)}
-              required
-            >
-              <option value="">Select week</option>
-              {data.weeks.map((item) => (
-                <option key={item.id} value={item.id}>
-                  Week {item.week_number}: {item.title}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="label">
-            Title
-            <input
-              className="field"
-              name="title"
-              value={lesson.title}
-              onChange={update(setLesson)}
-              required
-            />
-          </label>
-          <label className="label">
-            Slug
-            <input
-              className="field"
-              name="slug"
-              pattern="[a-z0-9-]+"
-              value={lesson.slug}
-              onChange={update(setLesson)}
-              required
-            />
-          </label>
-          <label className="label">
-            Lesson number
-            <input
-              className="field"
-              name="lesson_number"
-              type="number"
-              min="1"
-              value={lesson.lesson_number}
-              onChange={update(setLesson)}
-              required
-            />
-          </label>
-          <label className="label">
-            Objectives
-            <textarea
-              className="field"
-              name="objectives"
-              value={lesson.objectives}
-              onChange={update(setLesson)}
-              placeholder="One objective per line"
-              required
-            />
-          </label>
-          <label className="label">
-            Content (JSON)
-            <textarea
-              className="field min-h-48 font-mono text-xs"
-              name="content"
-              value={lesson.content}
-              onChange={update(setLesson)}
-              placeholder='{"explanation": "Plain text is also accepted."}'
-              required
-            />
-          </label>
-          <label className="flex items-center gap-2 text-sm font-semibold">
-            <input
-              name="published"
-              type="checkbox"
-              checked={lesson.published}
-              onChange={update(setLesson)}
-            />{" "}
-            Publish lesson
-          </label>
-          <button className="button-primary" type="submit">
-            Save lesson
-          </button>
-          {lesson.id && (
-            <button
-              className="button-ghost"
-              type="button"
-              onClick={() => setLesson(emptyLesson)}
-            >
-              Cancel edit
-            </button>
-          )}
-        </form>
+          <TopicEditor
+            topic={lesson}
+            weeks={data.weeks}
+            lessons={data.lessons}
+            onChange={setLesson}
+            onSubmit={handleTopicSubmit}
+            onCancel={() => setLesson({ ...emptyLesson, week_id: activeWeekId })}
+            busy={topicBusy}
+            error={topicError}
+          />
+        </section>
         <form
           className="space-y-4 border-l-4 border-cyan-400 bg-white p-5 shadow-sm dark:bg-slate-900"
           onSubmit={(event) => {
@@ -441,6 +423,70 @@ export default function AcademyTeacherLessons() {
         </form>
       </div>
       <section className="space-y-4">
+        <section className="border-l-4 border-cyan-400 bg-white p-5 shadow-sm dark:bg-slate-900">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <h2 className="text-lg font-bold">Topics in this week</h2>
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                className="button-secondary"
+                onClick={() => setShowImport((value) => !value)}
+                aria-expanded={showImport}
+              >
+                {showImport ? "Close bulk import" : "Bulk import topics"}
+              </button>
+            </div>
+          </div>
+
+          <label className="label mt-3">
+            Week
+            <select
+              className="field"
+              value={activeWeek?.id ?? ""}
+              onChange={(event) => setActiveWeekId(event.target.value)}
+            >
+              {data.weeks.map((item) => (
+                <option key={item.id} value={item.id}>
+                  Week {item.week_number}: {item.title}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          {showImport ? (
+            <div className="mt-4">
+              {activeWeek ? (
+                <BulkTopicImport
+                  week={activeWeek}
+                  onImported={handleImported}
+                  onCancel={() => setShowImport(false)}
+                />
+              ) : (
+                <p className="text-sm text-slate-600 dark:text-slate-300">
+                  Choose a week first.
+                </p>
+              )}
+            </div>
+          ) : (
+            <div className="mt-4">
+              <TopicList
+                topics={weekTopics}
+                weekTitle={activeWeek?.title ?? "this week"}
+                onEdit={(topic) =>
+                  setLesson({
+                    ...topicFromRow(topic),
+                    week_id: topic.week_id,
+                  })
+                }
+                onDuplicate={handleDuplicate}
+                onSetStatus={handleSetStatus}
+                onReorder={handleReorder}
+                busy={topicBusy}
+              />
+            </div>
+          )}
+        </section>
+
         <h2 className="text-xl font-bold">Published curriculum</h2>
         {state === "ready" && data.courses.length === 0 && (
           <p className="text-sm text-slate-600 dark:text-slate-300">
