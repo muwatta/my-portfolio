@@ -175,3 +175,22 @@ describe("the learner pages use the server answer", () => {
     });
   });
 });
+
+describe("the learner home survives a bad connection", () => {
+  const academy = readFileSync("src/lib/academy.js", "utf8");
+  const home = academy.slice(
+    academy.indexOf("export async function getAcademyStudentHome"),
+    academy.indexOf("export async function getAcademyStudentOverview"),
+  );
+
+  it("is cached to IndexedDB, not only to memory", () => {
+    // A student on a phone is regularly offline. If this is only in the memory
+    // cache a reload with no connection shows an empty home screen.
+    expect(home).toMatch(/fetchWithOfflineFallback/);
+    expect(home).toMatch(/OFFLINE_STORES\.metadata/);
+  });
+
+  it("is keyed per student so one student never sees another's snapshot", () => {
+    expect(home).toMatch(/userId,/);
+  });
+});

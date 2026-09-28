@@ -241,10 +241,11 @@ export default function AcademySignup() {
                   required
                 />
               </label>
-              <label className="label">
-                Password
-                <span className="relative block">
+              <span className="label">
+                <label htmlFor="academy-signup-password">Password</label>
+                <span className="relative mt-1 block">
                   <input
+                    id="academy-signup-password"
                     className="field pr-16"
                     type={showPassword ? "text" : "password"}
                     autoComplete="new-password"
@@ -271,7 +272,7 @@ export default function AcademySignup() {
                 >
                   At least 8 characters.
                 </span>
-              </label>
+              </span>
               <label className="label">
                 Confirm password
                 <input

@@ -1,6 +1,10 @@
 # Firebase CMS Foundation
 
-This repository is being prepared to replace the abandoned Supabase CMS direction with Firebase. This phase adds the Firestore and Storage security foundation only. The existing Markdown blog, `public/blog.json`, Decap CMS, and `/blog/:id` routes remain unchanged until the content migration phase.
+**Status: superseded for the Academy.** This document covers the blog and
+portfolio CMS only. The Academy LMS runs on Supabase and is a live, first class
+backend, not an abandoned direction, so do not read this file as describing the
+whole application. The Firebase steps below are already done. The existing
+Markdown blog, `public/blog.json` and the `/blog/:id` routes are unchanged.
 
 ## Firebase services
 
@@ -41,6 +45,11 @@ Collection: admin_users
 Document ID: <Firebase Auth user UID>
 Fields:
   role: admin
+  active: true
+
+Both fields are required. `firestore.rules` and `storage.rules` check
+`role == 'admin' && active == true`, and `useAdminGuard` checks the same, so a
+document with only `role` produces an admin who cannot do anything.
 ```
 
 Firestore rules use this document to authorize CMS operations. Authentication alone does not grant admin access.

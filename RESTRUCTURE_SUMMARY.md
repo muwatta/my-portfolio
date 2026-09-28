@@ -1,3 +1,10 @@
+> **Historical snapshot, 30 August 2026.** It records a portfolio
+> repositioning that is now complete. Several details have since changed and are
+> wrong here: `src/data/constants.js` does not exist, navigation is
+> Work / Academy / About / Writing / Let's Talk, `ShopCore` and
+> `ArchitectureDiagram` are undocumented, and the build size figures are stale.
+> `README.md` is the current documentation.
+
 # Portfolio Restructure - Complete Implementation Summary
 
 **Date:** August 30, 2026  

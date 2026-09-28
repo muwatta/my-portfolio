@@ -81,7 +81,7 @@ export default function AcademyDashboard() {
       OFFLINE_STORES.progress,
       "overview",
     );
-    loadSection("home", () => getAcademyStudentHome(), setHome);
+    loadSection("home", () => getAcademyStudentHome(user.id), setHome);
     return () => {
       cancelled = true;
     };

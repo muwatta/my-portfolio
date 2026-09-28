@@ -65,8 +65,8 @@ const AcademyLiveRoom = lazy(() => import("./pages/AcademyLiveRoom"));
 const AcademyTeacherAnalytics = lazy(
   () => import("./pages/AcademyTeacherAnalytics"),
 );
-const AcademyTeacherPlaceholder = lazy(
-  () => import("./pages/AcademyTeacherPlaceholder"),
+const AcademyTeacherDashboard = lazy(
+  () => import("./pages/AcademyTeacherDashboard"),
 );
 const AcademyTeacherStudents = lazy(
   () => import("./pages/AcademyTeacherStudents"),
@@ -285,7 +285,7 @@ function AppShell() {
                           <Route element={<AcademyTeacherLayout />}>
                             <Route
                               path="/academy/teacher"
-                              element={<AcademyTeacherPlaceholder />}
+                              element={<AcademyTeacherDashboard />}
                             />
                             <Route
                               path="/academy/teacher/students"

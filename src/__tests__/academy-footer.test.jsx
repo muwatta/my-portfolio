@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it } from "vitest";
 import AcademyFooter from "../components/academy/AcademyFooter";
@@ -11,23 +11,13 @@ function renderFooter(props = {}) {
   );
 }
 
-const ACADEMY_ROUTES = new Set([
-  "/academy/login",
-  "/academy/signup",
-  "/academy/faq",
-  "/academy/live",
-  "/academy/lessons",
-  "/academy/assignments",
-  "/academy/projects",
-  "/academy/materials",
-  "/academy/leaderboard",
-  "/academy/notifications",
-  "/academy/dashboard",
-  "/academy/practice",
-  "/academy/progress",
-  "/academy/profile",
-  "/",
-]);
+// The footer's content panel, found by its padding rather than by position,
+// because the first child is a decorative brand accent.
+function bodyPanel(container) {
+  return [...container.querySelectorAll("footer div")].find((node) =>
+    /pb-|safe-area/.test(node.className ?? ""),
+  );
+}
 
 describe("AcademyFooter", () => {
   it("is a single contentinfo landmark", () => {
@@ -38,88 +28,76 @@ describe("AcademyFooter", () => {
     ).toBeInTheDocument();
   });
 
-  it("keeps the WhatsApp button on the Academy number", () => {
+  it("keeps the WhatsApp contact on the Academy number", () => {
     renderFooter();
-    const links = screen.getAllByRole("link", { name: /whatsapp/i });
-    expect(links.length).toBeGreaterThan(0);
-    links.forEach((link) => {
-      expect(link.getAttribute("href")).toMatch(
-        /^https:\/\/wa\.me\/2348142797233\?text=/,
-      );
-    });
-    const button = links[0];
-    expect(button).toHaveAttribute(
+    const link = screen.getByRole("link", { name: /whatsapp/i });
+    expect(link.getAttribute("href")).toMatch(
+      /^https:\/\/wa\.me\/2348142797233\?text=/,
+    );
+    // The number is shown in text as well as the accessible name, so nobody has
+    // to long press to find out what it is.
+    expect(link).toHaveTextContent("+234 814 279 7233");
+    expect(link).toHaveAttribute(
       "aria-label",
       "Chat with us on WhatsApp at +234 814 279 7233",
     );
-    expect(button).toHaveAttribute("title", "+234 814 279 7233");
-    expect(button).toHaveTextContent("Chat on WhatsApp");
   });
 
-  it("keeps the email contact", () => {
+  it("opens WhatsApp in a new tab without leaking the opener", () => {
     renderFooter();
-    expect(
-      screen.getByRole("link", { name: /email us at/i }),
-    ).toHaveAttribute("href", "mailto:abdullahimusliudeen@gmail.com");
+    const link = screen.getByRole("link", { name: /whatsapp/i });
+    expect(link).toHaveAttribute("target", "_blank");
+    expect(link).toHaveAttribute("rel", "noopener noreferrer");
   });
 
-  it("centres the identity block", () => {
-    const { container } = renderFooter();
-    const identity = container.querySelector("footer h2 + div > div");
-    expect(identity.className).toContain("text-center");
-  });
-
-  it("organises navigation into labelled groups rather than one list", () => {
+  it("keeps the email contact with a subject already filled in", () => {
     renderFooter();
-    ["Quick links", "Support"].forEach((name) => {
-      expect(screen.getByRole("navigation", { name })).toBeInTheDocument();
-    });
-  });
-
-  it("does not repeat the bottom tab bar destinations", () => {
-    renderFooter();
-    const nav = screen.getByRole("navigation", { name: "Quick links" });
-    ["Home", "Learn", "Practice", "My work", "Progress", "Profile"].forEach(
-      (tab) => {
-        expect(within(nav).queryByRole("link", { name: tab })).not.toBeInTheDocument();
-      },
+    const link = screen.getByRole("link", { name: /email us at/i });
+    expect(link.getAttribute("href")).toMatch(
+      /^mailto:abdullahimusliudeen@gmail\.com\?subject=/,
     );
+    expect(link).toHaveTextContent("abdullahimusliudeen@gmail.com");
   });
 
-  it("only links to routes that exist", () => {
-    renderFooter();
-    screen
-      .getAllByRole("link")
-      .map((link) => link.getAttribute("href"))
-      .filter((href) => href && href.startsWith("/"))
-      .forEach((href) => expect(ACADEMY_ROUTES.has(href)).toBe(true));
-  });
-
-  it("shows the same short answers on every variant", () => {
-    ["default", "public"].forEach((variant) => {
-      const { container, unmount } = renderFooter(
-        variant === "public" ? { isPublic: true } : {},
-      );
-      const section = screen.getByRole("region", {
-        name: /common questions/i,
-      });
-      const questions = section.querySelectorAll("details");
-      expect(questions.length).toBeGreaterThanOrEqual(4);
-      questions.forEach((question) => {
-        expect(question.hasAttribute("open")).toBe(false);
-        expect(question.querySelector("summary")).not.toBeNull();
-      });
-      expect(container.textContent).not.toMatch(/Muwatta Academy/i);
-      unmount();
+  it("gives every contact card and question a comfortable tap target", () => {
+    const { container } = renderFooter();
+    // WCAG 2.2 asks for 24px minimum, the comfortable figure is 44px, and the
+    // phone is the primary device for the Academy.
+    const cards = [...container.querySelectorAll("footer a")];
+    expect(cards.length).toBeGreaterThan(0);
+    cards.forEach((card) => {
+      expect(card.className).toMatch(/min-h-(11|12|14)/);
     });
+    [...container.querySelectorAll("footer summary")].forEach((summary) => {
+      expect(summary.className).toMatch(/min-h-(11|12|14)/);
+    });
+  });
+
+  it("shows short answers as collapsed dropdowns", () => {
+    const { container } = renderFooter();
+    const questions = container.querySelectorAll("details");
+    expect(questions.length).toBeGreaterThanOrEqual(4);
+    questions.forEach((question) => {
+      expect(question.hasAttribute("open")).toBe(false);
+      expect(question.querySelector("summary")?.textContent?.trim()).toBeTruthy();
+    });
+  });
+
+  it("keeps only one short answer open at a time", () => {
+    // The shared name attribute is the native exclusive accordion, so opening
+    // one collapses the rest and the page never grows without bound.
+    const { container } = renderFooter();
+    const names = [...container.querySelectorAll("details")].map((node) =>
+      node.getAttribute("name"),
+    );
+    expect(names.every((name) => name === "academy-footer-faq")).toBe(true);
   });
 
   it("points at the full FAQ page for anything more", () => {
     renderFooter();
-    const link = screen.getByRole("link", {
-      name: /see all questions and answers/i,
-    });
-    expect(link).toHaveAttribute("href", "/academy/faq");
+    expect(
+      screen.getByRole("link", { name: /see all questions and answers/i }),
+    ).toHaveAttribute("href", "/academy/faq");
   });
 
   it("credits the organisation and the registration", () => {
@@ -132,18 +110,64 @@ describe("AcademyFooter", () => {
     ).toBeInTheDocument();
   });
 
-  it("does not send a logged out visitor to pages that need a session", () => {
+  it("respects a reduced motion preference", () => {
+    const { container } = renderFooter();
+    // The chevron rotates on open, so the transition must be droppable.
+    expect(container.innerHTML).toMatch(/motion-reduce:transition-none/);
+  });
+
+  it("leaves room for the bottom tab bar and the home indicator", () => {
+    const { container } = renderFooter();
+    // Signed in, the fixed tab bar sits over the footer on a phone.
+    expect(bodyPanel(container).className).toMatch(/pb-24/);
+  });
+
+  it("leaves the same room on the public page, which has no tab bar", () => {
+    const { container } = renderFooter({ isPublic: true });
+    expect(bodyPanel(container).className).toMatch(/safe-area-inset-bottom/);
+    expect(bodyPanel(container).className).not.toMatch(/pb-24/);
+  });
+
+  it("keeps the same short answers for a visitor who is not signed in", () => {
+    const { container, unmount } = renderFooter();
+    const signedIn = container.querySelectorAll("details").length;
+    unmount();
+
     renderFooter({ isPublic: true });
-    const support = screen.getByRole("navigation", { name: "Support" });
-    expect(within(support).queryByRole("link", { name: "Live classroom" })).not.toBeInTheDocument();
-    expect(within(support).queryByRole("link", { name: "Notifications" })).not.toBeInTheDocument();
-    const quick = screen.getByRole("navigation", { name: "Quick links" });
-    expect(within(quick).getByRole("link", { name: "Academy login" })).toBeInTheDocument();
+    expect(screen.getAllByRole("group").length).toBeGreaterThanOrEqual(
+      signedIn,
+    );
   });
 
   it("never presents the Academy under the old name", () => {
     const { container } = renderFooter();
     expect(container.textContent).not.toMatch(/Muwatta Academy/i);
     expect(container.textContent).not.toMatch(/ATE Academy/i);
+  });
+
+  it("only links to routes that exist in the Academy", () => {
+    const { container } = renderFooter();
+    const known = new Set([
+      "/academy/login",
+      "/academy/signup",
+      "/academy/faq",
+      "/academy/live",
+      "/academy/lessons",
+      "/academy/assignments",
+      "/academy/projects",
+      "/academy/materials",
+      "/academy/leaderboard",
+      "/academy/notifications",
+      "/academy/dashboard",
+      "/academy/practice",
+      "/academy/progress",
+      "/academy/profile",
+      "/",
+    ]);
+    const hrefs = [...container.querySelectorAll("a[href]")]
+      .map((node) => node.getAttribute("href"))
+      .filter((href) => href.startsWith("/"));
+    expect(hrefs.length).toBeGreaterThan(0);
+    hrefs.forEach((href) => expect(known.has(href)).toBe(true));
   });
 });
