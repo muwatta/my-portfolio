@@ -59,51 +59,44 @@ describe("AcademyFooter", () => {
     expect(link).toHaveTextContent("abdullahimusliudeen@gmail.com");
   });
 
-  it("gives every contact card and question a comfortable tap target", () => {
+  it("gives every link a comfortable tap target", () => {
     const { container } = renderFooter();
     // WCAG 2.2 asks for 24px minimum, the comfortable figure is 44px, and the
     // phone is the primary device for the Academy.
-    const cards = [...container.querySelectorAll("footer a")];
-    expect(cards.length).toBeGreaterThan(0);
-    cards.forEach((card) => {
-      expect(card.className).toMatch(/min-h-(11|12|14)/);
-    });
-    [...container.querySelectorAll("footer summary")].forEach((summary) => {
-      expect(summary.className).toMatch(/min-h-(11|12|14)/);
+    const links = [...container.querySelectorAll("footer a")];
+    expect(links.length).toBeGreaterThan(0);
+    links.forEach((link) => {
+      expect(link.className).toMatch(/min-h-(11|12|14)/);
     });
   });
 
-  it("shows short answers as collapsed dropdowns", () => {
+  it("stays a navigation aid rather than repeating the FAQ", () => {
+    // The footer used to carry a four question accordion on every page, which
+    // is most of why it felt endless. The answers live on /academy/faq, which
+    // is searchable and has the full list.
     const { container } = renderFooter();
-    const questions = container.querySelectorAll("details");
-    expect(questions.length).toBeGreaterThanOrEqual(4);
-    questions.forEach((question) => {
-      expect(question.hasAttribute("open")).toBe(false);
-      expect(question.querySelector("summary")?.textContent?.trim()).toBeTruthy();
-    });
-  });
-
-  it("keeps only one short answer open at a time", () => {
-    // The shared name attribute is the native exclusive accordion, so opening
-    // one collapses the rest and the page never grows without bound.
-    const { container } = renderFooter();
-    const names = [...container.querySelectorAll("details")].map((node) =>
-      node.getAttribute("name"),
+    expect(container.querySelectorAll("details")).toHaveLength(0);
+    expect(screen.getByRole("link", { name: /help & faq/i })).toHaveAttribute(
+      "href",
+      "/academy/faq",
     );
-    expect(names.every((name) => name === "academy-footer-faq")).toBe(true);
+    expect(screen.getByRole("link", { name: /read the faq/i })).toHaveAttribute(
+      "href",
+      "/academy/faq",
+    );
   });
 
-  it("points at the full FAQ page for anything more", () => {
+  it("groups the links under real headings", () => {
     renderFooter();
-    expect(
-      screen.getByRole("link", { name: /see all questions and answers/i }),
-    ).toHaveAttribute("href", "/academy/faq");
+    expect(screen.getByRole("navigation", { name: "Learn" })).toBeInTheDocument();
+    expect(screen.getByRole("navigation", { name: "Academy" })).toBeInTheDocument();
   });
 
   it("credits the organisation and the registration", () => {
     renderFooter();
+    expect(screen.getByText(/RC No\. RC-8665201/i)).toBeInTheDocument();
     expect(
-      screen.getByText(/Algorise Tech Explorers · RC No\. RC-8665201/i),
+      screen.getByText("Algorise Tech Explorers", { selector: "p" }),
     ).toBeInTheDocument();
     expect(
       screen.getByText(new RegExp(`© ${new Date().getFullYear()}`)),
@@ -128,13 +121,13 @@ describe("AcademyFooter", () => {
     expect(bodyPanel(container).className).not.toMatch(/pb-24/);
   });
 
-  it("keeps the same short answers for a visitor who is not signed in", () => {
+  it("shows the same navigation to a visitor who is not signed in", () => {
     const { container, unmount } = renderFooter();
-    const signedIn = container.querySelectorAll("details").length;
+    const signedIn = container.querySelectorAll("footer a").length;
     unmount();
 
-    renderFooter({ isPublic: true });
-    expect(screen.getAllByRole("group").length).toBeGreaterThanOrEqual(
+    const { container: publicContainer } = renderFooter({ isPublic: true });
+    expect(publicContainer.querySelectorAll("footer a").length).toBe(
       signedIn,
     );
   });
