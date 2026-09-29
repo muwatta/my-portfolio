@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAcademyAuth } from "../hooks/useAcademyAuth";
 import { friendlyError } from "../lib/utils";
+import ContactAdmin from "../components/academy/ContactAdmin";
 
 export default function AcademyResetPassword() {
   const { updatePassword, user, loading } = useAcademyAuth();
@@ -71,6 +72,9 @@ export default function AcademyResetPassword() {
             <Link className="button-secondary" to="/academy/login">
               Back to sign in
             </Link>
+          </div>
+          <div className="mt-4">
+            <ContactAdmin context="my reset link has expired" />
           </div>
         </div>
       </div>

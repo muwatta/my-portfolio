@@ -11,6 +11,17 @@ const FILE_RULES = {
     mime: ["text/csv", "application/vnd.ms-excel", "text/plain"],
   },
   ".pdf": { maxBytes: 5 * 1024 * 1024, mime: ["application/pdf"] },
+  // Screenshots are how most students will actually submit proof of a result:
+  // a working program, a wired robot, a passing test. Without these the only
+  // way to hand in work from a phone was to describe it in text.
+  ".png": {
+    maxBytes: 5 * 1024 * 1024,
+    mime: ["image/png"],
+  },
+  ".jpg": { maxBytes: 5 * 1024 * 1024, mime: ["image/jpeg"] },
+  ".jpeg": { maxBytes: 5 * 1024 * 1024, mime: ["image/jpeg"] },
+  ".webp": { maxBytes: 5 * 1024 * 1024, mime: ["image/webp"] },
+  ".heic": { maxBytes: 5 * 1024 * 1024, mime: ["image/heic", "image/heif"] },
   ".docx": {
     maxBytes: 5 * 1024 * 1024,
     mime: [
