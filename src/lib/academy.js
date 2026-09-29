@@ -666,7 +666,7 @@ export async function getAcademyStudentProfile(studentId) {
     supabase
       .from("academy_profiles")
       .select(
-        "id, display_name, role, avatar_url, current_course_id, school_id, state, city, student_level, registration_code_id, updated_at, academy_registration_codes!academy_profiles_registration_code_id_fkey(registration_number, status), academy_courses!academy_profiles_current_course_id_fkey(title, slug), academy_schools!academy_profiles_school_id_fkey(id, name, code, state, city)",
+        "id, display_name, email, role, avatar_url, current_course_id, school_id, state, city, student_level, registration_code_id, updated_at, academy_registration_codes!academy_profiles_registration_code_id_fkey(registration_number, status), academy_courses!academy_profiles_current_course_id_fkey(title, slug), academy_schools!academy_profiles_school_id_fkey(id, name, code, state, city)",
       )
       .eq("id", studentId)
       .maybeSingle(),
@@ -2141,4 +2141,62 @@ export async function getAcademyMaterialUrl(material) {
     .createSignedUrl(material.storage_path, 60 * 30);
   if (error) return { data: null, error };
   return { data, error: null };
+}
+
+// Administrator account management. Deleting or editing an account needs the
+// service role, which must never reach the browser, so it goes through the
+// academy-admin-manage-user Edge Function rather than a direct write.
+
+export async function adminUpdateAcademyUser(targetUserId, changes) {
+  if (!supabase)
+    return { data: null, error: new Error("Academy is not configured.") };
+  const { data, error } = await supabase.functions.invoke(
+    "academy-admin-manage-user",
+    { body: { action: "update", target_user_id: targetUserId, ...changes } },
+  );
+  if (error) return { data: null, error: friendlyFunctionError(error) };
+  return { data, error: null };
+}
+
+export async function adminDeleteAcademyUser(targetUserId, reason) {
+  if (!supabase)
+    return { data: null, error: new Error("Academy is not configured.") };
+  const { data, error } = await supabase.functions.invoke(
+    "academy-admin-manage-user",
+    {
+      body: {
+        action: "delete",
+        target_user_id: targetUserId,
+        reason: String(reason ?? "").trim(),
+      },
+    },
+  );
+  if (error) return { data: null, error: friendlyFunctionError(error) };
+  return { data, error: null };
+}
+
+// A deleted account frees the address again, so a student who was removed can
+// register afresh. Checked through the edge function because only the service
+// role can read the auth table authoritatively.
+export async function adminCheckAcademyEmail(email) {
+  if (!supabase)
+    return { data: null, error: new Error("Academy is not configured.") };
+  const { data, error } = await supabase.functions.invoke(
+    "academy-admin-manage-user",
+    { body: { action: "check_email", email: String(email ?? "").trim() } },
+  );
+  if (error) return { data: null, error: friendlyFunctionError(error) };
+  return { data, error: null };
+}
+
+function friendlyFunctionError(error) {
+  // Edge functions return their message inside the response context rather than
+  // as the error, so surface the real reason instead of "Edge Function Error".
+  const context = error?.context;
+  if (context && typeof context.json === "function") {
+    return context.json().then((body) =>
+      new Error(body?.error ?? "The request could not be completed."),
+    );
+  }
+  return error;
 }
