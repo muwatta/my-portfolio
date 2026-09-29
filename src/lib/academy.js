@@ -1970,3 +1970,175 @@ export async function getMyAcademyRegistration() {
   const { data, error } = await supabase.rpc("academy_my_registration");
   return { data, error };
 }
+
+// Course material files live in a private Supabase Storage bucket, so an
+// administrator can upload or replace a PDF without a code edit and redeploy.
+// Materials that are committed to the repository are served by the static host
+// instead and are marked storage_kind 'static', so the two coexist.
+
+const MATERIAL_BUCKET = "course-materials";
+const MATERIAL_MAX_BYTES = 25 * 1024 * 1024;
+
+function materialExtension(name) {
+  return `.${String(name ?? "").split(".").pop()?.toLowerCase() ?? ""}`;
+}
+
+export function validateAcademyMaterialFile(file) {
+  if (!file) return { valid: false, error: "Choose a file first." };
+  const extension = materialExtension(file.name);
+  const allowed = [
+    ".pdf",
+    ".docx",
+    ".txt",
+    ".md",
+    ".png",
+    ".jpg",
+    ".jpeg",
+    ".zip",
+  ];
+  if (!allowed.includes(extension))
+    return {
+      valid: false,
+      error: "Course materials must be a PDF, Word document, text file, image or zip.",
+    };
+  if (file.size > MATERIAL_MAX_BYTES)
+    return {
+      valid: false,
+      error: "Materials must be 25 MB or smaller.",
+    };
+  if (file.size === 0) return { valid: false, error: "That file is empty." };
+  return { valid: true, extension };
+}
+
+function materialObjectPath(file, materialId) {
+  // Random rather than derived from the title, so a signed URL cannot be
+  // guessed from a lesson name.
+  const random =
+    typeof crypto !== "undefined" && crypto.randomUUID
+      ? crypto.randomUUID()
+      : Math.random().toString(36).slice(2);
+  const safeName = String(file.name).replace(/[^a-zA-Z0-9._-]+/g, "-");
+  return `${materialId ?? "new"}/${random}-${safeName}`;
+}
+
+async function uploadMaterialObject(file, materialId) {
+  const path = materialObjectPath(file, materialId);
+  const { error } = await supabase.storage
+    .from(MATERIAL_BUCKET)
+    .upload(path, file, { cacheControl: "3600", upsert: false });
+  if (error) return { data: null, error };
+  return { data: { path }, error: null };
+}
+
+export async function uploadAcademyMaterial({ file, ...details }) {
+  if (!supabase)
+    return { data: null, error: new Error("Academy is not configured.") };
+  const check = validateAcademyMaterialFile(file);
+  if (!check.valid) return { data: null, error: new Error(check.error) };
+
+  const uploaded = await uploadMaterialObject(file, null);
+  if (uploaded.error) return { data: null, error: uploaded.error };
+
+  const { data, error } = await supabase.rpc("academy_register_material_file", {
+    p_course_id: details.course_id || null,
+    p_lesson_id: details.lesson_id || null,
+    p_title: String(details.title ?? "").trim(),
+    p_storage_path: uploaded.data.path,
+    p_mime_type: file.type || "application/pdf",
+    p_file_size_bytes: file.size,
+    p_published: Boolean(details.published),
+    p_material_id: null,
+  });
+
+  // Do not leave an orphan in the bucket if the row could not be created.
+  if (error) {
+    await supabase.storage.from(MATERIAL_BUCKET).remove([uploaded.data.path]);
+    return { data: null, error };
+  }
+  return { data, error: null };
+}
+
+// Replaces the file on an existing material and keeps the material id, so any
+// link a student already has keeps working. The previous file is removed only
+// after the new row has committed, so a failed upload leaves the old file in
+// place and the material still readable.
+export async function replaceAcademyMaterialFile(materialId, file) {
+  if (!supabase)
+    return { data: null, error: new Error("Academy is not configured.") };
+  const check = validateAcademyMaterialFile(file);
+  if (!check.valid) return { data: null, error: new Error(check.error) };
+
+  const { data: current, error: readError } = await supabase
+    .from("academy_materials")
+    .select("id, storage_path, storage_kind, title, course_id, lesson_id, published")
+    .eq("id", materialId)
+    .maybeSingle();
+  if (readError) return { data: null, error: readError };
+  if (!current)
+    return { data: null, error: new Error("That material no longer exists.") };
+
+  const uploaded = await uploadMaterialObject(file, materialId);
+  if (uploaded.error) return { data: null, error: uploaded.error };
+
+  const { data, error } = await supabase.rpc("academy_register_material_file", {
+    p_course_id: current.course_id,
+    p_lesson_id: current.lesson_id,
+    p_title: current.title,
+    p_storage_path: uploaded.data.path,
+    p_mime_type: file.type || "application/pdf",
+    p_file_size_bytes: file.size,
+    p_published: current.published,
+    p_material_id: materialId,
+  });
+
+  if (error) {
+    await supabase.storage.from(MATERIAL_BUCKET).remove([uploaded.data.path]);
+    return { data: null, error };
+  }
+
+  // Only now is the previous file unreferenced.
+  if (current.storage_kind === "storage" && current.storage_path) {
+    await supabase.storage
+      .from(MATERIAL_BUCKET)
+      .remove([current.storage_path]);
+  }
+  return { data, error: null };
+}
+
+export async function deleteAcademyMaterial(materialId) {
+  if (!supabase)
+    return { data: null, error: new Error("Academy is not configured.") };
+  const { data: current, error: readError } = await supabase
+    .from("academy_materials")
+    .select("id, storage_path, storage_kind")
+    .eq("id", materialId)
+    .maybeSingle();
+  if (readError) return { data: null, error: readError };
+  if (!current)
+    return { data: null, error: new Error("That material no longer exists.") };
+
+  const { data, error } = await supabase.rpc("academy_delete_material", {
+    p_material_id: materialId,
+  });
+  if (error) return { data: null, error };
+
+  if (current.storage_kind === "storage" && current.storage_path) {
+    await supabase.storage
+      .from(MATERIAL_BUCKET)
+      .remove([current.storage_path]);
+  }
+  return { data, error: null };
+}
+
+export async function getAcademyMaterialUrl(material) {
+  if (!supabase)
+    return { data: null, error: new Error("Academy is not configured.") };
+  if (material.storage_kind !== "storage") {
+    return { data: { url: `/${material.storage_path}` }, error: null };
+  }
+  const { data, error } = await supabase.storage
+    .from(MATERIAL_BUCKET)
+    .createSignedUrl(material.storage_path, 60 * 30);
+  if (error) return { data: null, error };
+  return { data, error: null };
+}
