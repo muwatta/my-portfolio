@@ -28,19 +28,22 @@ describe("AcademyFooter", () => {
     ).toBeInTheDocument();
   });
 
-  it("keeps the WhatsApp contact on the Academy number", () => {
+  it("still targets the Academy WhatsApp number", () => {
+    // The visible text is now just "WhatsApp" on request, so the number only
+    // has to be right in the link, which is where it actually matters.
     renderFooter();
     const link = screen.getByRole("link", { name: /whatsapp/i });
     expect(link.getAttribute("href")).toMatch(
       /^https:\/\/wa\.me\/2348142797233\?text=/,
     );
-    // The number is shown in text as well as the accessible name, so nobody has
-    // to long press to find out what it is.
-    expect(link).toHaveTextContent("+234 814 279 7233");
-    expect(link).toHaveAttribute(
-      "aria-label",
-      "Chat with us on WhatsApp at +234 814 279 7233",
-    );
+  });
+
+  it("does not print the phone number on the page", () => {
+    // Showing it was a deliberate choice once, so this pins the reversal rather
+    // than leaving it to drift back by accident.
+    const { container } = renderFooter();
+    expect(container.textContent).not.toMatch(/\+?234\s?814\s?279\s?7233/);
+    expect(container.textContent).not.toMatch(/9142797233/);
   });
 
   it("opens WhatsApp in a new tab without leaking the opener", () => {
@@ -50,13 +53,33 @@ describe("AcademyFooter", () => {
     expect(link).toHaveAttribute("rel", "noopener noreferrer");
   });
 
-  it("keeps the email contact with a subject already filled in", () => {
+  it("keeps the email link with a subject already filled in", () => {
     renderFooter();
-    const link = screen.getByRole("link", { name: /email us at/i });
+    const link = screen.getByRole("link", { name: /email/i });
     expect(link.getAttribute("href")).toMatch(
       /^mailto:abdullahimusliudeen@gmail\.com\?subject=/,
     );
-    expect(link).toHaveTextContent("abdullahimusliudeen@gmail.com");
+  });
+
+  it("does not print the email address on the page", () => {
+    const { container } = renderFooter();
+    expect(container.textContent).not.toMatch(/abdullahimusliudeen@gmail\.com/);
+  });
+
+  it("lists the social profiles as external links", () => {
+    const { container } = renderFooter();
+    const socials = [...container.querySelectorAll('a[href^="https://"]')]
+      .filter((link) => /github|linkedin|facebook/.test(link.getAttribute("href")))
+      .map((link) => link.getAttribute("href"));
+    expect(socials.length).toBeGreaterThan(0);
+    container
+      .querySelectorAll('a[href^="https://github.com"], a[href^="https://linkedin.com"], a[href^="https://facebook.com"]')
+      .forEach((link) => {
+        expect(link).toHaveAttribute("target", "_blank");
+        expect(link).toHaveAttribute("rel", "noopener noreferrer");
+        // No placeholder profile links, which would 404 in front of a student.
+        expect(link.getAttribute("href")).not.toMatch(/example|your-|placeholder/i);
+      });
   });
 
   it("gives every link a comfortable tap target", () => {

@@ -1,0 +1,8 @@
+-- Reconciliation entry. Nothing to re-run.
+--
+-- This version was applied to the remote database before the file was removed
+-- during the academy_register_submission repair, which left the migration
+-- history pointing at a version with no local file and made db push refuse to
+-- run. The function it created was superseded by
+-- 20261219000000_register_submission_verbatim.sql, which is the live version,
+-- so the only thing missing here is the record. This file restores the record.

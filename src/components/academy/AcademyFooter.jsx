@@ -12,6 +12,12 @@ const EMAIL_HREF = `mailto:${EMAIL}?subject=${encodeURIComponent(
   "Help with my learning account",
 )}`;
 
+// Social profiles. Only real, known URLs are listed here. A placeholder link in
+// a footer is worse than no link, so an absent profile is simply omitted.
+const SOCIALS = [
+  { label: "GitHub", href: "https://github.com/muwatta" },
+].filter((social) => social.href);
+
 const FOCUS_RING =
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-950";
 
@@ -67,6 +73,32 @@ function MailIcon() {
     >
       <rect x="3" y="5" width="18" height="14" rx="2" />
       <path d="m3.5 6.5 8.5 6 8.5-6" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function SocialIcon({ name }) {
+  const common = {
+    "aria-hidden": "true",
+    className: "h-4 w-4 shrink-0 fill-current",
+  };
+  if (name === "GitHub") {
+    return (
+      <svg viewBox="0 0 24 24" {...common}>
+        <path d="M12 .5a12 12 0 0 0-3.79 23.4c.6.1.82-.26.82-.58v-2.2c-3.34.73-4.04-1.42-4.04-1.42-.55-1.4-1.34-1.77-1.34-1.77-1.1-.75.08-.74.08-.74 1.21.09 1.84 1.24 1.84 1.24 1.08 1.85 2.83 1.32 3.52 1.01.11-.78.42-1.32.76-1.62-2.67-.3-5.47-1.34-5.47-5.96 0-1.32.47-2.4 1.24-3.24-.12-.3-.54-1.53.12-3.2 0 0 1.01-.32 3.3 1.24a11.5 11.5 0 0 1 6.01 0c2.29-1.56 3.3-1.24 3.3-1.24.66 1.67.24 2.9.12 3.2.77.84 1.24 1.92 1.24 3.24 0 4.63-2.81 5.65-5.49 5.95.43.37.82 1.1.82 2.22v3.29c0 .32.21.69.83.57A12 12 0 0 0 12 .5Z" />
+      </svg>
+    );
+  }
+  if (name === "LinkedIn") {
+    return (
+      <svg viewBox="0 0 24 24" {...common}>
+        <path d="M4.98 3.5a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5ZM3 9.5h4v11H3v-11Zm6.5 0h3.8v1.5h.05c.53-1 1.83-2.05 3.77-2.05 4.03 0 4.78 2.65 4.78 6.1v5.45h-4v-4.83c0-1.15-.02-2.63-1.6-2.63-1.6 0-1.85 1.25-1.85 2.55v4.91h-3.99v-11Z" />
+      </svg>
+    );
+  }
+  return (
+    <svg viewBox="0 0 24 24" {...common}>
+      <path d="M22 12a10 10 0 1 0-11.56 9.88v-6.99H7.9V12h2.54V9.8c0-2.5 1.5-3.89 3.77-3.89 1.1 0 2.24.2 2.24.2v2.46h-1.26c-1.24 0-1.63.77-1.63 1.56V12h2.78l-.45 2.89h-2.33v6.99A10 10 0 0 0 22 12Z" />
     </svg>
   );
 }
@@ -174,18 +206,18 @@ export default function AcademyFooter({ isPublic = false }) {
                   href={WHATSAPP_HREF}
                   external
                   icon={<WhatsAppIcon />}
-                  ariaLabel={`Chat with us on WhatsApp at ${WHATSAPP_DISPLAY}`}
+                  ariaLabel="Chat with us on WhatsApp"
                 >
-                  WhatsApp {WHATSAPP_DISPLAY}
+                  WhatsApp
                 </ContactLink>
               </li>
               <li>
                 <ContactLink
                   href={EMAIL_HREF}
                   icon={<MailIcon />}
-                  ariaLabel={`Email us at ${EMAIL}`}
+                  ariaLabel="Email us"
                 >
-                  {EMAIL}
+                  Email
                 </ContactLink>
               </li>
               <li>
@@ -196,6 +228,23 @@ export default function AcademyFooter({ isPublic = false }) {
                   Read the FAQ
                 </Link>
               </li>
+            </ul>
+
+            <ul className="mt-1 flex flex-wrap items-center gap-1">
+              {SOCIALS.map((social) => (
+                <li key={social.label}>
+                  <a
+                    href={social.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={`${social.label} profile`}
+                    className={`inline-flex min-h-11 items-center gap-1.5 rounded-lg px-2 text-sm text-slate-600 transition-colors motion-reduce:transition-none hover:text-cyan-700 dark:text-slate-400 dark:hover:text-cyan-300 ${FOCUS_RING}`}
+                  >
+                    <SocialIcon name={social.label} />
+                    {social.label}
+                  </a>
+                </li>
+              ))}
             </ul>
           </div>
         </div>
