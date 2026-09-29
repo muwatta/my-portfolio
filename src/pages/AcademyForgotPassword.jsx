@@ -1,7 +1,9 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAcademyAuth } from "../hooks/useAcademyAuth";
 import { friendlyError } from "../lib/utils";
+
+const RESEND_SECONDS = 45;
 
 export default function AcademyForgotPassword() {
   const { sendPasswordReset, isConfigured } = useAcademyAuth();
@@ -9,22 +11,44 @@ export default function AcademyForgotPassword() {
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [cooldown, setCooldown] = useState(0);
+  const timer = useRef(null);
+
+  useEffect(() => () => clearInterval(timer.current), []);
+
+  // Stops the button being used to hammer the mail server, and gives a student
+  // on a slow connection a moment before the next attempt.
+  useEffect(() => {
+    if (cooldown <= 0) return undefined;
+    timer.current = setInterval(() => {
+      setCooldown((value) => (value <= 1 ? 0 : value - 1));
+    }, 1000);
+    return () => clearInterval(timer.current);
+  }, [cooldown]);
 
   async function submit(event) {
     event.preventDefault();
     setMessage("");
     setError("");
+    const normalized = email.trim().toLowerCase();
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(normalized)) {
+      setError("Enter a valid email address, including the @ and the domain.");
+      return;
+    }
     setSubmitting(true);
-    const { error: resetError } = await sendPasswordReset(
-      email.trim().toLowerCase(),
-    );
+    const { error: resetError } = await sendPasswordReset(normalized);
     setSubmitting(false);
-    if (resetError)
-      setError(friendlyError(resetError, "We could not send the reset email."));
-    else
-      setMessage(
-        "If an account exists for that email, a secure reset link is on its way.",
-      );
+    if (resetError) {
+      setError(friendlyError(resetError, "The reset email could not be sent."));
+      return;
+    }
+    // Deliberately does not say whether the address exists. Saying so would let
+    // anyone test which students are enrolled. The "can't get in" route below
+    // is how a genuine blocked student gets help.
+    setMessage(
+      "If that address has an Academy account, a reset link is on its way. It expires after a short time, so use it soon.",
+    );
+    setCooldown(RESEND_SECONDS);
   }
 
   return (
@@ -48,6 +72,8 @@ export default function AcademyForgotPassword() {
               <input
                 className="field"
                 type="email"
+                autoComplete="email"
+                inputMode="email"
                 value={email}
                 onChange={(event) => setEmail(event.target.value)}
                 required
@@ -72,18 +98,45 @@ export default function AcademyForgotPassword() {
             <button
               className="button-primary w-full"
               type="submit"
-              disabled={submitting}
+              disabled={submitting || cooldown > 0}
             >
-              {submitting ? "Sending..." : "Send reset link"}
+              {submitting
+                ? "Sending..."
+                : cooldown > 0
+                  ? `Send again in ${cooldown}s`
+                  : "Send reset link"}
             </button>
           </form>
         )}
-        <Link
-          className="mt-6 block text-center text-sm font-semibold text-blue-600"
-          to="/academy/login"
-        >
-          Back to sign in
-        </Link>
+
+        <div className="mt-6 space-y-3 border-t border-slate-200 pt-5 text-sm dark:border-slate-800">
+          <p className="font-semibold text-slate-700 dark:text-slate-200">
+            Link not working?
+          </p>
+          <ul className="list-disc space-y-1 pl-5 text-slate-600 dark:text-slate-300">
+            <li>Check spam or junk, it sometimes lands there.</li>
+            <li>Links expire. Request a new one above.</li>
+            <li>
+              Use the address you signed up with. If you cannot remember it, ask
+              an administrator to check it for you.
+            </li>
+          </ul>
+          <p className="text-slate-500">
+            Locked out because the address on the account is wrong, or you no
+            longer have access to your email? An administrator can correct the
+            address on your profile, or delete the account so you can register
+            again. Contact the Academy and they will do this for you.
+          </p>
+        </div>
+
+        <p className="mt-6 text-center text-sm">
+          <Link
+            className="font-semibold text-blue-600"
+            to="/academy/login"
+          >
+            Back to sign in
+          </Link>
+        </p>
       </div>
     </div>
   );
