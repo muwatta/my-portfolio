@@ -275,7 +275,7 @@ export default function AcademyAssignment() {
         <input
           className="field"
           type="file"
-          accept=".py,.ipynb,.txt,.md,.csv,.pdf,.docx"
+          accept=".py,.ipynb,.txt,.md,.csv,.pdf,.docx,.png,.jpg,.jpeg,.webp,.heic"
           onChange={handleFile}
         />
       </label>

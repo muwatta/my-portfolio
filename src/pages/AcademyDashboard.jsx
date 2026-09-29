@@ -9,6 +9,7 @@ import {
   getAcademyStudentOverview,
 } from "../lib/academy";
 import ProgressBar from "../components/academy/ProgressBar";
+import NetworkRescue from "../components/academy/NetworkRescue";
 import { fetchWithOfflineFallback } from "../lib/academyOffline";
 import { OFFLINE_STORES } from "../lib/offlineStore";
 
@@ -21,6 +22,7 @@ export default function AcademyDashboard() {
   const [assignments, setAssignments] = useState([]);
   const [overview, setOverview] = useState(null);
   const [home, setHome] = useState(null);
+  const [reload, setReload] = useState(0);
   const [sectionState, setSectionState] = useState({
     lessons: "loading",
     progress: "loading",
@@ -85,7 +87,13 @@ export default function AcademyDashboard() {
     return () => {
       cancelled = true;
     };
-  }, [user.id]);
+  }, [user?.id, reload]);
+
+  // A failed section is usually the network, not a broken app. Say so plainly
+  // and offer something to do, rather than showing an empty dashboard.
+  const anyFailed = Object.values(sectionState).some(
+    (value) => value === "error",
+  );
 
   // The database decides what comes next, because only it knows the unlock chain
   // and which topics have actually been released.
@@ -97,6 +105,9 @@ export default function AcademyDashboard() {
 
   return (
     <div className="space-y-8">
+      {anyFailed && (
+        <NetworkRescue onRetry={() => setReload((value) => value + 1)} />
+      )}
       <section className="rounded-2xl bg-slate-900 p-6 text-white shadow-xl sm:p-8">
         <p className="text-sm font-semibold uppercase tracking-[0.18em] text-cyan-300">
           {course?.title || "Academy learning path"}

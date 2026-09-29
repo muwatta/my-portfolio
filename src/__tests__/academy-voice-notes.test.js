@@ -30,24 +30,33 @@ const recorder = readFileSync(
   "utf8",
 );
 
-describe("the room is voice only", () => {
-  it("has no text field left in the room", () => {
-    expect(room).not.toMatch(/Send a message/);
-    expect(room).not.toMatch(/aria-label="Message"/);
-    expect(room).not.toMatch(/sendAcademyLiveMessage/);
+// The room was built voice only, and that was a decision rather than an
+// oversight. It has since been reopened for class chat on request, so these
+// tests now check the two things that actually matter: a participant cannot post
+// as somebody else, and the retention rule still covers text as well as audio.
+describe("the room allows voice and chat, and both are constrained", () => {
+  it("mounts a chat panel in the room", () => {
+    expect(room).toMatch(/<LiveChat/);
   });
 
-  it("closes text off at the privilege level, not just in the interface", () => {
-    // A rule that only hides the text box is one UI change away from being wrong.
+  it("a participant can only post as themselves, and only into a room they can reach", () => {
     expect(allSql).toMatch(
-      /drop policy if exists academy_live_messages_self_insert on public\.academy_live_messages/,
+      /create policy academy_live_messages_self_insert\s*on public\.academy_live_messages[\s\S]*?with check \(\s*sender_id = auth\.uid\(\)[\s\S]*?academy_can_access_live_room\(room_id\)/,
     );
-    expect(post).toMatch(/body/);
+  });
+
+  it("reading a room's messages also requires access to that room", () => {
+    expect(allSql).toMatch(
+      /create policy academy_live_messages_read\s*on public\.academy_live_messages[\s\S]*?using \(public\.academy_can_access_live_room\(room_id\)\)/,
+    );
+  });
+
+  it("a voice note still cannot carry text into the audio path", () => {
+    // Chat is separate. The audio posting function still writes no body.
     expect(post).toMatch(/null, p_audio_path/);
   });
 
-  it("tells the student the rule and the retention", () => {
-    expect(room).toMatch(/Voice notes only/);
+  it("tells the student the retention rule for both", () => {
     expect(room).toMatch(/two weeks/);
   });
 });

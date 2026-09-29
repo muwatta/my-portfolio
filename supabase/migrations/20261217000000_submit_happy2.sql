@@ -1,0 +1,8 @@
+-- Reconciliation entry. Read only, nothing to re-run.
+--
+-- Confirmed the corrected academy_register_submission runs, that an image over
+-- 5 MB is refused at the server rather than only in the browser, and that
+-- academy_can_access_assignment correctly refuses a student the assignment is
+-- not targeted at. That last refusal is existing design: course enrolment alone
+-- does not grant an assignment, the student must be targeted directly or
+-- through a class.

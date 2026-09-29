@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAcademyAuth } from "../hooks/useAcademyAuth";
 import { friendlyError } from "../lib/utils";
+import ContactAdmin from "../components/academy/ContactAdmin";
 
 const RESEND_SECONDS = 45;
 
@@ -121,12 +122,9 @@ export default function AcademyForgotPassword() {
               an administrator to check it for you.
             </li>
           </ul>
-          <p className="text-slate-500">
-            Locked out because the address on the account is wrong, or you no
-            longer have access to your email? An administrator can correct the
-            address on your profile, or delete the account so you can register
-            again. Contact the Academy and they will do this for you.
-          </p>
+          <div className="mt-4">
+            <ContactAdmin context="resetting my password" tone="light" />
+          </div>
         </div>
 
         <p className="mt-6 text-center text-sm">

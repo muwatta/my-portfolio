@@ -119,9 +119,16 @@ describe("the forgot password flow helps someone who is actually stuck", () => {
   });
 
   it("tells a locked out student an administrator can fix it", () => {
-    const flat = forgot.replace(/\s+/g, " ");
-    expect(flat).toMatch(/administrator can correct the address/);
-    expect(flat).toMatch(/delete the account so you can register again/);
+    // Now a shared component, so check it is used and that the component
+    // actually offers the two things an administrator can do.
+    expect(forgot).toMatch(/<ContactAdmin context="resetting my password"/);
+    const contact = readFileSync(
+      "src/components/academy/ContactAdmin.jsx",
+      "utf8",
+    );
+    const flat = contact.replace(/\s+/g, " ");
+    expect(flat).toMatch(/correct a wrong email address/);
+    expect(flat).toMatch(/reset your access/);
   });
 });
 
