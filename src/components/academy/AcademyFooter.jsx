@@ -15,29 +15,9 @@ const EMAIL_HREF = `mailto:${EMAIL}?subject=${encodeURIComponent(
 const FOCUS_RING =
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-950";
 
-// Column links rather than a wall of prose. Every route here exists in the
-// Academy, and the footer stays a navigation aid instead of becoming a second
-// copy of the FAQ.
-const LINK_GROUPS = [
-  {
-    heading: "Learn",
-    links: [
-      { to: "/academy/dashboard", label: "Dashboard" },
-      { to: "/academy/lessons", label: "Lessons" },
-      { to: "/academy/practice", label: "Practice" },
-      { to: "/academy/progress", label: "Progress" },
-    ],
-  },
-  {
-    heading: "Academy",
-    links: [
-      { to: "/academy/materials", label: "Materials" },
-      { to: "/academy/live", label: "Live classes" },
-      { to: "/academy/leaderboard", label: "Leaderboard" },
-      { to: "/academy/faq", label: "Help & FAQ" },
-    ],
-  },
-];
+// No link columns. Navigation already lives in the tab bar and the student nav,
+// so repeating it here made the footer taller for no benefit. The only route the
+// footer offers is help, which is what a footer is actually for.
 
 function useOnlineStatus() {
   const [online, setOnline] = useState(() =>
@@ -147,7 +127,7 @@ export default function AcademyFooter({ isPublic = false }) {
       >
         {/* Brand, link columns and contact share one row on a desktop, so the
             footer is roughly two screens tall at worst instead of a page. */}
-        <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-[minmax(0,1.2fr)_repeat(2,minmax(0,0.8fr))_minmax(0,1fr)]">
+        <div className="grid gap-6 sm:grid-cols-[minmax(0,1fr)_minmax(0,auto)] sm:items-start">
           <div>
             <div className="flex items-center gap-2.5">
               <img
@@ -183,25 +163,6 @@ export default function AcademyFooter({ isPublic = false }) {
             </p>
           </div>
 
-          {LINK_GROUPS.map((group) => (
-            <nav key={group.heading} aria-label={group.heading}>
-              <h3 className="text-xs font-bold uppercase tracking-[0.12em] text-slate-900 dark:text-slate-100">
-                {group.heading}
-              </h3>
-              <ul className="mt-2 space-y-0.5">
-                {group.links.map((link) => (
-                  <li key={link.to}>
-                    <Link
-                      to={link.to}
-                      className={`inline-flex min-h-11 items-center rounded-lg px-1 text-sm text-slate-600 transition-colors motion-reduce:transition-none hover:text-cyan-700 dark:text-slate-400 dark:hover:text-cyan-300 ${FOCUS_RING}`}
-                    >
-                      {link.label}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </nav>
-          ))}
 
           <div>
             <h3 className="text-xs font-bold uppercase tracking-[0.12em] text-slate-900 dark:text-slate-100">

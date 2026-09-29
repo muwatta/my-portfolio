@@ -70,26 +70,36 @@ describe("AcademyFooter", () => {
     });
   });
 
-  it("stays a navigation aid rather than repeating the FAQ", () => {
-    // The footer used to carry a four question accordion on every page, which
-    // is most of why it felt endless. The answers live on /academy/faq, which
-    // is searchable and has the full list.
+  it("offers help and nothing else", () => {
+    // Navigation lives in the tab bar and the student nav, so the footer
+    // carries no link columns. It is for help, not for duplicating the app.
     const { container } = renderFooter();
+    expect(container.querySelectorAll("nav")).toHaveLength(0);
     expect(container.querySelectorAll("details")).toHaveLength(0);
-    expect(screen.getByRole("link", { name: /help & faq/i })).toHaveAttribute(
-      "href",
-      "/academy/faq",
-    );
+  });
+
+  it("keeps one clear route to the FAQ", () => {
+    renderFooter();
     expect(screen.getByRole("link", { name: /read the faq/i })).toHaveAttribute(
       "href",
       "/academy/faq",
     );
   });
 
-  it("groups the links under real headings", () => {
-    renderFooter();
-    expect(screen.getByRole("navigation", { name: "Learn" })).toBeInTheDocument();
-    expect(screen.getByRole("navigation", { name: "Academy" })).toBeInTheDocument();
+  it("no longer lists the student routes", () => {
+    const { container } = renderFooter();
+    const text = container.textContent;
+    for (const label of [
+      "Dashboard",
+      "Lessons",
+      "Practice",
+      "Progress",
+      "Materials",
+      "Live classes",
+      "Leaderboard",
+    ]) {
+      expect(text).not.toMatch(new RegExp(`\\b${label}\\b`));
+    }
   });
 
   it("credits the organisation and the registration", () => {
