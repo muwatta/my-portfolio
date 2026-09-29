@@ -1,0 +1,5 @@
+-- Reconciliation entry. Read only, nothing to re-run.
+--
+-- Confirmed there is exactly one academy_admin_registration_list, language sql,
+-- with the seven column result. No stale plpgsql overload is left for PostgREST
+-- to pick up, and the 400 seen in the browser predates the rewrite landing.

@@ -4,6 +4,7 @@ import {
   gradeAcademySubmission,
   requestAcademyAiFeedback,
 } from "../lib/academy";
+import GradingInbox from "../components/academy/GradingInbox";
 import { friendlyError } from "../lib/utils";
 
 export default function AcademyTeacherSubmissions() {
