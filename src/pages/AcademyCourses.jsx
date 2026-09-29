@@ -7,6 +7,7 @@ import {
 } from "../lib/academy";
 import { useAcademyAuth } from "../hooks/useAcademyAuth";
 import { friendlyError } from "../lib/utils";
+import CourseReviews from "../components/academy/CourseReviews";
 import DownloadedCourseManager from "../components/academy/DownloadedCourseManager";
 import { fetchWithOfflineFallback } from "../lib/academyOffline";
 import { OFFLINE_STORES } from "../lib/offlineStore";
@@ -83,6 +84,10 @@ export default function AcademyCourses() {
           this device.
         </p>
       )}
+
+      {/* Feedback on the path the student is actually following, rather than a
+          review form per course they might never open. */}
+      {activeCourse?.id && <CourseReviews courseId={activeCourse.id} />}
 
       {state === "loading" && (
         <p className="text-sm text-slate-500 dark:text-slate-400">

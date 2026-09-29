@@ -1,0 +1,5 @@
+-- Reconciliation entry. Read only, nothing to re-run.
+--
+-- Confirmed a student cannot edit or delete somebody else's review: the update
+-- and the delete both execute without error but RLS filters the rows out, so the
+-- other review's rating is unchanged and its row survives.

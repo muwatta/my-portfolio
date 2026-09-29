@@ -2200,3 +2200,62 @@ function friendlyFunctionError(error) {
   }
   return error;
 }
+
+// Course reviews and ratings. A student can write one review per course, edit
+// their own, and take it back. Everyone else sees it appear without a reload,
+// because the table is in the realtime publication and the RLS policies allow
+// any signed in user to read.
+
+export async function getAcademyCourseRatingSummaries() {
+  if (!supabase) return { data: null, error: new Error("Academy is not configured.") };
+  const { data, error } = await supabase.rpc("academy_course_rating_summary");
+  return { data: data ?? [], error };
+}
+
+export async function getAcademyCourseReviews(courseId) {
+  if (!supabase) return { data: null, error: new Error("Academy is not configured.") };
+  const { data, error } = await supabase
+    .from("academy_course_reviews")
+    .select(
+      "id, course_id, user_id, rating, body, created_at, updated_at, academy_profiles!academy_course_reviews_user_id_fkey(display_name)",
+    )
+    .eq("course_id", courseId)
+    .order("updated_at", { ascending: false })
+    .limit(100);
+  return { data: data ?? [], error };
+}
+
+// Upsert rather than insert, so an edit and a retried offline write are the
+// same call. The unique index on (course_id, user_id) is what makes that safe.
+export async function saveAcademyCourseReview({ courseId, rating, body }) {
+  if (!supabase) return { data: null, error: new Error("Academy is not configured.") };
+  const { data: userResult, error: userError } = await supabase.auth.getUser();
+  if (userError || !userResult?.user)
+    return { data: null, error: userError || new Error("Authentication required.") };
+
+  const value = Number(rating);
+  if (!Number.isInteger(value) || value < 1 || value > 5)
+    return { data: null, error: new Error("Choose a rating from 1 to 5.") };
+
+  const { data, error } = await supabase
+    .from("academy_course_reviews")
+    .upsert(
+      {
+        course_id: courseId,
+        user_id: userResult.user.id,
+        rating: value,
+        body: String(body ?? "").trim().slice(0, 2000),
+      },
+      { onConflict: "course_id,user_id" },
+    );
+  return { data, error };
+}
+
+export async function deleteAcademyCourseReview(courseId) {
+  if (!supabase) return { data: null, error: new Error("Academy is not configured.") };
+  const { data, error } = await supabase
+    .from("academy_course_reviews")
+    .delete()
+    .eq("course_id", courseId);
+  return { data, error };
+}
