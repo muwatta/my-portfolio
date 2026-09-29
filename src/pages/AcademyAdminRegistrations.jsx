@@ -1,12 +1,14 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import {
+  acceptAcademyRegistration,
   assignAcademyRegistrationCode,
   generateAcademyRegistrationCodes,
   getAcademyRegistrationCodes,
   getAcademyTeacherStudents,
   reassignAcademyRegistrationCode,
   suspendAcademyRegistrationCode,
+  withdrawAcademyRegistration,
 } from "../lib/academy";
 import { friendlyError } from "../lib/utils";
 
@@ -80,6 +82,8 @@ export default function AcademyAdminRegistrations() {
     () => ({
       all: rows.length,
       available: rows.filter((row) => row.status === "available").length,
+      provisional: rows.filter((row) => row.status === "provisional").length,
+      voided: rows.filter((row) => row.status === "voided").length,
       claimed: rows.filter((row) => row.status === "claimed").length,
       suspended: rows.filter((row) => row.status === "suspended").length,
     }),
@@ -147,6 +151,40 @@ export default function AcademyAdminRegistrations() {
     setSaving(false);
   }
 
+  async function handleAccept(row) {
+    setSaving(true);
+    setMessage("");
+    setError("");
+    const result = await acceptAcademyRegistration(row.student_id);
+    setSaving(false);
+    if (result.error) {
+      setError(friendlyError(result.error, "That registration could not be accepted."));
+      return;
+    }
+    setMessage(
+      `${row.registration_number} accepted. The student now has a final number.`,
+    );
+    await load();
+  }
+
+  async function handleWithdraw(row) {
+    setSaving(true);
+    setMessage("");
+    setError("");
+    const result = await withdrawAcademyRegistration(row.student_id);
+    setSaving(false);
+    if (result.error) {
+      setError(
+        friendlyError(result.error, "That registration could not be withdrawn."),
+      );
+      return;
+    }
+    setMessage(
+      `${row.registration_number} withdrawn. The serial is kept, so it is never issued to anyone else.`,
+    );
+    await load();
+  }
+
   async function handleSuspend(event) {
     event.preventDefault();
     if (!suspendTarget) return;
@@ -211,9 +249,10 @@ export default function AcademyAdminRegistrations() {
         </p>
       )}
 
-      <section className="grid gap-4 sm:grid-cols-4">
+      <section className="grid gap-4 sm:grid-cols-3 lg:grid-cols-6">
         {[
           ["Total", counts.all],
+          ["Awaiting acceptance", counts.provisional],
           ["Available", counts.available],
           ["Claimed", counts.claimed],
           ["Suspended", counts.suspended],
@@ -316,12 +355,50 @@ export default function AcademyAdminRegistrations() {
                 {rows.map((row) => (
                   <tr key={row.registration_number}>
                     <td className="px-4 py-3 font-semibold tracking-[0.1em]">{row.registration_number}</td>
-                    <td className="px-4 py-3"><span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${row.status === "available" ? "bg-emerald-100 text-emerald-800" : row.status === "claimed" ? "bg-blue-100 text-blue-800" : "bg-amber-100 text-amber-800"}`}>{row.status}</span></td>
+                    <td className="px-4 py-3"><span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${row.status === "available" ? "bg-emerald-100 text-emerald-800" : row.status === "provisional" ? "bg-violet-100 text-violet-800" : row.status === "claimed" ? "bg-blue-100 text-blue-800" : row.status === "voided" ? "bg-slate-200 text-slate-700" : "bg-amber-100 text-amber-800"}`}>{row.status === "provisional" ? "awaiting acceptance" : row.status}</span></td>
                     <td className="px-4 py-3">{row.student_name || "Not assigned"}</td>
                     <td className="px-4 py-3">{row.student_email || "Not available"}</td>
                     <td className="px-4 py-3">{row.course_title || "Not assigned"}</td>
                     <td className="px-4 py-3">{new Date(row.created_at).toLocaleDateString()}</td>
-                    <td className="px-4 py-3">{row.status !== "suspended" ? <button className="font-semibold text-red-600" type="button" onClick={() => setSuspendTarget(row)}>Suspend</button> : "Suspended"}</td>
+                    <td className="px-4 py-3">
+                      <div className="flex flex-wrap items-center gap-3">
+                        {row.status === "provisional" && row.student_id && (
+                          <>
+                            <button
+                              className="font-semibold text-emerald-700"
+                              type="button"
+                              disabled={saving}
+                              onClick={() => handleAccept(row)}
+                            >
+                              Accept
+                            </button>
+                            <button
+                              className="font-semibold text-red-600"
+                              type="button"
+                              disabled={saving}
+                              onClick={() => handleWithdraw(row)}
+                            >
+                              Withdraw
+                            </button>
+                          </>
+                        )}
+                        {row.status === "claimed" && row.student_id && (
+                          <button
+                            className="font-semibold text-red-600"
+                            type="button"
+                            disabled={saving}
+                            onClick={() => handleWithdraw(row)}
+                          >
+                            Withdraw
+                          </button>
+                        )}
+                        {row.status === "suspended" && "Suspended"}
+                        {row.status === "voided" && "Withdrawn"}
+                        {row.status === "available" && (
+                          <span className="text-xs text-slate-500">Unused</span>
+                        )}
+                      </div>
+                    </td>
                   </tr>
                 ))}
               </tbody>

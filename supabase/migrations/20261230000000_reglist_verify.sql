@@ -1,0 +1,6 @@
+-- Reconciliation entry. Read only, nothing to re-run.
+--
+-- Confirmed the SQL version of academy_admin_registration_list works: an
+-- administrator reads 25 rows, the provisional filter returns 5, a row comes
+-- back with its registration number, a nonsense search returns nothing rather
+-- than erroring, and a student gets zero rows instead of an error.
