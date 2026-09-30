@@ -355,12 +355,25 @@ describe("AcademyExamRunner offline and timeout behaviour", () => {
     ).toBeInTheDocument();
   });
 
-  it("resumes the same attempt rather than starting a second one", async () => {
-    await startPaper();
-    // The list page hands the live attempt back through the same start call on
-    // resume, so the server, not the browser, decides this is attempt one.
-    expect(api.startAcademyExamAttempt).toHaveBeenCalledTimes(1);
-    expect(api.getAcademyExamPaper).toHaveBeenCalledWith("attempt-1");
+  it("takes the attempt id from the server rather than one of its own", async () => {
+    // The old version of this test asserted startAcademyExamAttempt was called
+    // once, which was true only because the mock was written to return the same
+    // object every time. The real server refused a second call outright, so a
+    // student who refreshed lost their paper entirely. What the runner owes the
+    // server is that it works with whatever attempt it is handed, so give it an
+    // id it could never have guessed.
+    api.startAcademyExamAttempt.mockResolvedValue({
+      data: {
+        id: "attempt-from-server-9f2",
+        deadline_at: inMinutes(30),
+        status: "in_progress",
+      },
+    });
+    render(<AcademyExamRunner exam={EXAM} />);
+    fireEvent.click(await screen.findByRole("button", { name: /start examination/i }));
+    await screen.findByText("Which keyword declares a class?");
+
+    expect(api.getAcademyExamPaper).toHaveBeenCalledWith("attempt-from-server-9f2");
   });
 });
 

@@ -893,18 +893,43 @@ limit and an allowed mime type list, and `academy_register_submission` re-checks
 the recorded size, the extension and the attempt count. The browser check remains
 as a courtesy that saves a student a wasted upload, not as a control.
 
-**The assessment engine has never been run end to end.** Every part of it is
-covered by unit tests and by DDL being applied, but no real paper has been
-published, sat, marked and released against the live database. The timer, the
-autosave, the resume path and the release-then-student-sees-score path are all
-unexercised in anger. Treat the first real exam as a supervised run.
+**The assessment engine has been run end to end, and that is how four faults
+were found.** `scripts/e2e-exam.mjs` creates a real teacher and a real student,
+signs both in, and drives the published RPCs over HTTP exactly as the browser
+does. It needs the project's own `SUPABASE_SERVICE_ROLE_KEY` in the
+environment, uses it only to seed and to clean up, and deletes everything it
+creates. Run it with:
 
-Two narrower gaps in the same area:
+```bash
+SUPABASE_SERVICE_ROLE_KEY=... node scripts/e2e-exam.mjs
+```
 
-- The student-visible row policy on `academy_exams` was tightened to hide draft
-  papers, and that is proven by a regression test and by the policy applying
-  cleanly, not by a real student token being refused a draft row.
+It exists because every one of these had a passing test suite while the feature
+was broken. A mocked Supabase client will happily select a column nobody has
+been granted, and will happily let an insert miss a not null column the real
+table has. What it found:
+
+- **The question bank could not be used at all.** RLS allowed teachers, but the
+  table privilege had been revoked and never granted back. A policy does not
+  grant access on its own. Every list, create, edit and archive call failed.
+- **`created_by` was not null and nothing stamped it**, so even with the grant
+  restored the insert failed. A trigger now forces it to `auth.uid()`.
+- **The teacher mark sheet and Review could not read the marking**, because the
+  score columns are deliberately absent from the student column grant. The fix
+  is staff-only functions rather than new grants, because granting those columns
+  would hand every student their own result before release.
+- **An interrupted attempt could not be resumed.** The attempt count included
+  the attempt still in progress, so on a one-attempt paper a student who
+  refreshed was told they had used their attempt and could not get back into
+  their own paper. A start now returns the live attempt, unchanged, so the
+  deadline does not move.
+
+Two narrower gaps remain:
+
 - The C++ exam and lesson material implies auto-marked code, which is the
   executor gap above. The exam engine itself only does multiple choice and
   true/false, so a programming paper built through the builder is a paper of
   objective questions about C++, not a graded C++ program.
+- The E2E run exercises one question on one paper. Timing pressure, a randomised
+  paper, a multi-attempt paper and a genuinely wrong answer are covered by unit
+  tests but have not been sat by a person.
