@@ -12,6 +12,13 @@ const EMAIL_HREF = `mailto:${EMAIL}?subject=${encodeURIComponent(
   "Help with my learning account",
 )}`;
 
+// The WhatsApp channel, which is a broadcast rather than a chat. Kept separate
+// from the help number above on purpose: a student asking for help and a student
+// joining the community are different intents, and merging them into one WhatsApp
+// entry made the destination ambiguous.
+const COMMUNITY_HREF =
+  "https://whatsapp.com/channel/0029VbB1DYy4Y9lkPS0aNn2m";
+
 // Social profiles. Only real, known URLs are listed here. A placeholder link in
 // a footer is worse than no link, so an absent profile is simply omitted.
 const SOCIALS = [
@@ -64,6 +71,18 @@ function WhatsAppIcon() {
       className="h-4 w-4 shrink-0 fill-current"
     >
       <path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.46 1.32 4.96L2 22l5.25-1.38a9.9 9.9 0 0 0 4.79 1.22h.01c5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.82 9.82 0 0 0 12.04 2Zm0 18.15h-.01a8.2 8.2 0 0 1-4.19-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.22 8.22 0 0 1-1.26-4.38c0-4.54 3.7-8.23 8.25-8.23 2.2 0 4.27.86 5.83 2.42a8.19 8.19 0 0 1 2.41 5.82c0 4.54-3.7 8.23-8.24 8.23Zm4.52-6.16c-.25-.12-1.47-.72-1.69-.8-.23-.09-.39-.13-.56.12-.16.25-.64.8-.78.97-.15.16-.29.18-.54.06-.25-.12-1.05-.39-1.99-1.23-.74-.66-1.23-1.47-1.38-1.72-.14-.25-.01-.38.11-.5.11-.11.25-.29.37-.43.13-.15.17-.25.25-.41.09-.17.04-.31-.02-.43-.06-.12-.56-1.34-.76-1.84-.2-.48-.4-.42-.56-.43h-.47c-.17 0-.43.06-.66.31-.22.25-.86.85-.86 2.07 0 1.22.89 2.4 1.01 2.56.12.17 1.75 2.67 4.23 3.74.59.26 1.05.41 1.41.52.59.19 1.13.16 1.56.1.47-.07 1.47-.6 1.67-1.18.21-.58.21-1.07.15-1.18-.06-.11-.23-.17-.48-.29Z" />
+    </svg>
+  );
+}
+
+function CommunityIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+      className="h-4 w-4 shrink-0 fill-current"
+    >
+      <path d="M12 4.5c-4.14 0-7.5 2.87-7.5 6.4 0 1.99 1.16 3.77 2.97 4.93-.13.66-.55 1.96-1.2 2.9 1.3-.19 2.5-.8 3.16-1.22.83.23 1.71.36 2.62.36 4.14 0 7.5-2.87 7.5-6.4S16.14 4.5 12 4.5Zm-2.7 7.6a1 1 0 1 1 0-2 1 1 0 0 1 0 2Zm2.7 2.1a1 1 0 1 1 0-2 1 1 0 0 1 0 2Zm2.7-2.1a1 1 0 1 1 0-2 1 1 0 0 1 0 2Z" />
     </svg>
   );
 }
@@ -202,6 +221,22 @@ export default function AcademyFooter({ isPublic = false }) {
 
 
           <div>
+            {/*
+              A call to action, so it is styled as one rather than dropped into
+              the help list where a reader would take it for another way to
+              contact support.
+            */}
+            <a
+              href={COMMUNITY_HREF}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Join our community on WhatsApp"
+              className={`mb-5 inline-flex min-h-11 items-center gap-2 rounded-xl border border-cyan-300 bg-cyan-50 px-3.5 text-sm font-semibold text-cyan-900 transition-colors motion-reduce:transition-none hover:bg-cyan-100 dark:border-cyan-800 dark:bg-cyan-950/40 dark:text-cyan-100 dark:hover:bg-cyan-900/40 ${FOCUS_RING}`}
+            >
+              <CommunityIcon />
+              Join our community
+            </a>
+
             <h3 className="text-xs font-bold uppercase tracking-[0.12em] text-slate-900 dark:text-slate-100">
               Need help?
             </h3>

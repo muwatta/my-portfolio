@@ -30,9 +30,10 @@ describe("AcademyFooter", () => {
 
   it("still targets the Academy WhatsApp number", () => {
     // The visible text is now just "WhatsApp" on request, so the number only
-    // has to be right in the link, which is where it actually matters.
+    // has to be right in the link, which is where it actually matters. Matched
+    // on the exact name because the community channel is a second WhatsApp link.
     renderFooter();
-    const link = screen.getByRole("link", { name: /whatsapp/i });
+    const link = screen.getByRole("link", { name: "Chat with us on WhatsApp" });
     expect(link.getAttribute("href")).toMatch(
       /^https:\/\/wa\.me\/2348142797233\?text=/,
     );
@@ -48,9 +49,33 @@ describe("AcademyFooter", () => {
 
   it("opens WhatsApp in a new tab without leaking the opener", () => {
     renderFooter();
-    const link = screen.getByRole("link", { name: /whatsapp/i });
+    const link = screen.getByRole("link", { name: "Chat with us on WhatsApp" });
     expect(link).toHaveAttribute("target", "_blank");
     expect(link).toHaveAttribute("rel", "noopener noreferrer");
+  });
+
+  it("offers the community channel, kept apart from the help chat", () => {
+    // A channel is a broadcast and wa.me is a conversation. Presenting them as
+    // one "WhatsApp" entry would leave the destination ambiguous.
+    renderFooter();
+    const link = screen.getByRole("link", { name: /join our community/i });
+    expect(link.getAttribute("href")).toBe(
+      "https://whatsapp.com/channel/0029VbB1DYy4Y9lkPS0aNn2m",
+    );
+    expect(link).toHaveAttribute("target", "_blank");
+    expect(link).toHaveAttribute("rel", "noopener noreferrer");
+    // The help number must not be the community destination in disguise.
+    expect(link.getAttribute("href")).not.toMatch(/wa\.me/);
+  });
+
+  it("keeps the community link out of the help and social lists", () => {
+    renderFooter();
+    const link = screen.getByRole("link", { name: /join our community/i });
+    // Every other link in this column is a list item under a heading. The
+    // community call to action is standalone, so it should not be one, otherwise
+    // it reads as a third way to get help.
+    expect(link.closest("ul")).toBeNull();
+    expect(link.closest("li")).toBeNull();
   });
 
   it("keeps the email link with a subject already filled in", () => {
