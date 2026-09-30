@@ -8,6 +8,7 @@ const api = vi.hoisted(() => ({
   getAcademyExamAttempts: vi.fn(),
   getAcademyExamAttemptAnswers: vi.fn(),
   publishAcademyExamResults: vi.fn(),
+  getAcademyExamEvents: vi.fn(),
 }));
 
 vi.mock("../lib/academy", () => api);
@@ -78,6 +79,7 @@ describe("AcademyAdminExamResults", () => {
     api.getAcademyExamAttempts.mockResolvedValue({ data: ATTEMPTS, error: null });
     api.getAcademyExamAttemptAnswers.mockResolvedValue({ data: [], error: null });
     api.publishAcademyExamResults.mockResolvedValue({ data: true, error: null });
+    api.getAcademyExamEvents.mockResolvedValue({ data: [], error: null });
   });
 
   it("lists each attempt with the score the server worked out", async () => {
@@ -214,6 +216,128 @@ describe("AcademyAdminExamResults", () => {
     });
     renderPage();
     expect(await screen.findByText(/permission denied/i)).toBeInTheDocument();
+  });
+});
+
+describe("AcademyAdminExamResults deep link and activity log", () => {
+  const SECOND = {
+    id: "exam-2",
+    title: "Robotics",
+    status: "graded",
+    pass_mark: 60,
+    results_published: false,
+    ends_at: new Date(Date.now() - 86400000).toISOString(),
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    api.getAcademyExams.mockResolvedValue({
+      data: [EXAM, SECOND],
+      error: null,
+    });
+    api.getAcademyExamAttempts.mockResolvedValue({ data: ATTEMPTS, error: null });
+    api.getAcademyExamAttemptAnswers.mockResolvedValue({ data: [], error: null });
+    api.publishAcademyExamResults.mockResolvedValue({ data: true, error: null });
+    api.getAcademyExamEvents.mockResolvedValue({ data: [], error: null });
+  });
+
+  it("opens the exam named in the url rather than the first one", async () => {
+    // The builder links here after publishing, so arriving on the wrong paper
+    // would undo the hand-off.
+    render(
+      <MemoryRouter initialEntries={["/academy/admin/exam-results?exam=exam-2"]}>
+        <AcademyAdminExamResults />
+      </MemoryRouter>,
+    );
+    // "Robotics" also appears as an unselected option, so check the control's
+    // value and the request rather than the text.
+    await waitFor(() =>
+      expect(api.getAcademyExamAttempts).toHaveBeenCalledWith("exam-2"),
+    );
+    await waitFor(() =>
+      expect(screen.getByLabelText("Examination")).toHaveValue("exam-2"),
+    );
+  });
+
+  it("ignores an exam id that is not in the list", async () => {
+    render(
+      <MemoryRouter initialEntries={["/academy/admin/exam-results?exam=nope"]}>
+        <AcademyAdminExamResults />
+      </MemoryRouter>,
+    );
+    await waitFor(() =>
+      expect(api.getAcademyExamAttempts).toHaveBeenCalledWith("exam-1"),
+    );
+  });
+
+  it("does not fetch the activity log until it is opened", async () => {
+    renderPage();
+    expect(await screen.findByText("Ada Bello")).toBeInTheDocument();
+    expect(api.getAcademyExamEvents).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole("button", { name: /show activity log/i }));
+    await waitFor(() => expect(api.getAcademyExamEvents).toHaveBeenCalled());
+  });
+
+  it("shows what the engine recorded, in its own wording", async () => {
+    api.getAcademyExamEvents.mockResolvedValue({
+      data: [
+        {
+          id: "e1",
+          action: "exam_auto_submitted",
+          attempt_id: "abcdef123456",
+          student_id: "s2",
+          metadata: {},
+          created_at: "2026-01-01T10:30:00.000Z",
+        },
+        {
+          id: "e2",
+          action: "results_published",
+          attempt_id: null,
+          student_id: null,
+          metadata: {},
+          created_at: "2026-01-02T09:00:00.000Z",
+        },
+      ],
+      error: null,
+    });
+    renderPage();
+    expect(await screen.findByText("Ada Bello")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /show activity log/i }));
+
+    expect(
+      await screen.findByText(/auto-submitted at the deadline/i),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Results released")).toBeInTheDocument();
+  });
+
+  it("shows an unknown action raw rather than rendering nothing", async () => {
+    api.getAcademyExamEvents.mockResolvedValue({
+      data: [
+        {
+          id: "e1",
+          action: "some_future_action",
+          attempt_id: null,
+          student_id: null,
+          metadata: {},
+          created_at: "2026-01-01T10:30:00.000Z",
+        },
+      ],
+      error: null,
+    });
+    renderPage();
+    expect(await screen.findByText("Ada Bello")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /show activity log/i }));
+    expect(await screen.findByText("some_future_action")).toBeInTheDocument();
+  });
+
+  it("explains an empty log rather than showing a blank panel", async () => {
+    renderPage();
+    expect(await screen.findByText("Ada Bello")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /show activity log/i }));
+    expect(
+      await screen.findByText(/nothing recorded for this examination/i),
+    ).toBeInTheDocument();
   });
 });
 

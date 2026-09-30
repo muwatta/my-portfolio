@@ -2676,6 +2676,25 @@ export async function getAcademyExamResult(attemptId) {
   return { data, error };
 }
 
+// One student's own exam history, scores included only where the teacher has
+// released them. The publication check is the function's job, not the caller's,
+// so there is no client that could be trusted to hide a number it did not want.
+export async function getAcademyExamHistory() {
+  if (!supabase) return { data: null, error: new Error("Academy is not configured.") };
+  const { data, error } = await supabase.rpc("academy_exam_student_history");
+  return { data: data ?? [], error };
+}
+
+// The audit trail behind a disputed mark, for staff.
+export async function getAcademyExamEvents(examId, limit = 100) {
+  if (!supabase) return { data: null, error: new Error("Academy is not configured.") };
+  const { data, error } = await supabase.rpc("academy_exam_event_log", {
+    p_exam_id: examId,
+    p_limit: limit,
+  });
+  return { data: data ?? [], error };
+}
+
 // ---------------------------------------------------------------------------
 // Assessment engine: the teacher side
 //

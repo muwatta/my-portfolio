@@ -1,11 +1,24 @@
 import { useCallback, useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import {
   getAcademyExamAttemptAnswers,
   getAcademyExamAttempts,
+  getAcademyExamEvents,
   getAcademyExams,
   publishAcademyExamResults,
 } from "../lib/academy";
 import { friendlyError } from "../lib/utils";
+
+// Taken from the action values the engine actually writes, rather than invented
+// here. An action the engine adds later still shows its raw name instead of
+// quietly rendering as nothing.
+const ACTION_LABELS = {
+  exam_started: "Attempt started",
+  exam_submitted: "Attempt submitted",
+  exam_auto_submitted: "Auto-submitted at the deadline",
+  results_published: "Results released",
+  results_unpublished: "Results withheld",
+};
 
 const STATUS_LABELS = {
   in_progress: "In progress",
@@ -66,11 +79,17 @@ function publishBlockReason(attempts, exam) {
 }
 
 export default function AcademyAdminExamResults() {
+  const [searchParams] = useSearchParams();
+  // The builder links here with ?exam=<id> so a teacher who has just published
+  // lands on that paper rather than being asked to find it in a dropdown again.
+  const requestedExamId = searchParams.get("exam");
   const [exams, setExams] = useState([]);
   const [selectedId, setSelectedId] = useState("");
   const [attempts, setAttempts] = useState([]);
   const [openAttempt, setOpenAttempt] = useState(null);
   const [answers, setAnswers] = useState(null);
+  const [events, setEvents] = useState([]);
+  const [showLog, setShowLog] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
@@ -104,21 +123,41 @@ export default function AcademyAdminExamResults() {
     loadExams();
   }, [loadExams]);
 
-  // Landing on this page with nothing chosen is a dead end, so open the first
-  // exam that can actually have marks rather than making the teacher click.
+  // Landing on this page with nothing chosen is a dead end, so honour an exam
+  // handed over in the URL, and otherwise open the first one that could have
+  // marks rather than making the teacher click.
   useEffect(() => {
     if (selectedId || exams.length === 0) return;
-    const firstWithAttempts = exams.find((exam) => exam.status !== "draft");
+    if (requestedExamId && exams.some((row) => row.id === requestedExamId)) {
+      setSelectedId(requestedExamId);
+      return;
+    }
+    const firstWithAttempts = exams.find((row) => row.status !== "draft");
     setSelectedId((firstWithAttempts ?? exams[0]).id);
-  }, [exams, selectedId]);
+  }, [exams, selectedId, requestedExamId]);
 
   useEffect(() => {
     setOpenAttempt(null);
     setAnswers(null);
+    setEvents([]);
+    setShowLog(false);
     setMessage("");
     setError("");
     loadAttempts(selectedId);
   }, [selectedId, loadAttempts]);
+
+  // The log is only fetched when it is opened, because it is the part of this
+  // page nobody looks at day to day.
+  useEffect(() => {
+    if (!showLog || !selectedId) return;
+    getAcademyExamEvents(selectedId).then(({ data, error: failure }) => {
+      if (failure) {
+        setError(friendlyError(failure, "The activity log could not be loaded."));
+        return;
+      }
+      setEvents(data ?? []);
+    });
+  }, [showLog, selectedId]);
 
   async function togglePublish() {
     if (!selectedId) return;
@@ -427,6 +466,51 @@ export default function AcademyAdminExamResults() {
               </p>
             </section>
           )}
+
+          {/*
+            The record behind a disputed mark. Everything here is written by the
+            engine functions rather than by the page, so it is what happened
+            rather than what the page believes happened.
+          */}
+          <section className="rounded-xl border border-slate-200 p-4 dark:border-slate-800">
+            <button
+              type="button"
+              className="text-sm font-semibold text-blue-600 underline"
+              aria-expanded={showLog}
+              onClick={() => setShowLog((open) => !open)}
+            >
+              {showLog ? "Hide activity log" : "Show activity log"}
+            </button>
+            {showLog && (
+              <div className="mt-3">
+                {!events.length && (
+                  <p className="text-sm text-slate-500">
+                    Nothing recorded for this examination yet.
+                  </p>
+                )}
+                <ul className="space-y-1">
+                  {events.map((event) => (
+                    <li
+                      key={event.id}
+                      className="flex flex-wrap items-baseline gap-x-3 border-b border-slate-100 py-1.5 text-sm last:border-0 dark:border-slate-800/60"
+                    >
+                      <span className="font-medium">
+                        {ACTION_LABELS[event.action] ?? event.action}
+                      </span>
+                      <span className="text-slate-500">
+                        {new Date(event.created_at).toLocaleString()}
+                      </span>
+                      {event.attempt_id && (
+                        <span className="font-mono text-xs text-slate-400">
+                          {event.attempt_id.slice(0, 8)}
+                        </span>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </section>
         </>
       )}
     </div>

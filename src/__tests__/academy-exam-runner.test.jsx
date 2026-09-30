@@ -201,7 +201,9 @@ describe("AcademyExamRunner", () => {
     expect(api.getAcademyExamPaper).not.toHaveBeenCalled();
   });
 
-  it("caches the paper so a reopen can still show the questions", async () => {
+  it("stores the paper on the device once it has been served", async () => {
+    // Only the write is asserted here. Reading it back is covered by the
+    // "offline paper" block below, which is the half that was missing.
     await startPaper();
     await waitFor(() =>
       expect(store.records["examPapers:attempt-1"]).toBeDefined(),
@@ -359,5 +361,127 @@ describe("AcademyExamRunner offline and timeout behaviour", () => {
     // resume, so the server, not the browser, decides this is attempt one.
     expect(api.startAcademyExamAttempt).toHaveBeenCalledTimes(1);
     expect(api.getAcademyExamPaper).toHaveBeenCalledWith("attempt-1");
+  });
+});
+
+describe("AcademyExamRunner offline paper", () => {
+  const online = { value: true };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    store.records = {};
+    store.queue = [];
+    online.value = true;
+    Object.defineProperty(window.navigator, "onLine", {
+      configurable: true,
+      get: () => online.value,
+    });
+    authState.current = { user: { id: "student-1" } };
+    api.startAcademyExamAttempt.mockResolvedValue({
+      data: { id: "attempt-1", deadline_at: inMinutes(30), status: "in_progress" },
+    });
+    api.getAcademyExamPaper.mockResolvedValue({ data: PAPER });
+    api.saveAcademyExamAnswer.mockResolvedValue({ data: true });
+    api.submitAcademyExamAttempt.mockResolvedValue({ data: true });
+    api.getAcademyExamResult.mockResolvedValue({ data: null });
+  });
+
+  afterEach(() => {
+    Object.defineProperty(window.navigator, "onLine", {
+      configurable: true,
+      get: () => true,
+    });
+  });
+
+  // Sit the paper once so it is cached, then reopen it with no signal.
+  async function cacheThenReopen() {
+    const first = render(<AcademyExamRunner exam={EXAM} />);
+    fireEvent.click(
+      await screen.findByRole("button", { name: /start examination/i }),
+    );
+    await screen.findByText("Which keyword declares a class?");
+    await waitFor(() =>
+      expect(store.records["examPapers:attempt-1"]).toBeDefined(),
+    );
+    first.unmount();
+
+    online.value = false;
+    api.getAcademyExamPaper.mockResolvedValue({
+      data: null,
+      error: { message: "Failed to fetch" },
+    });
+    render(<AcademyExamRunner exam={EXAM} />);
+    fireEvent.click(
+      await screen.findByRole("button", { name: /start examination/i }),
+    );
+  }
+
+  it("falls back to the saved paper when the network is gone", async () => {
+    await cacheThenReopen();
+    // Without this the draft is restored and there is nothing to put it against.
+    expect(
+      await screen.findByText("Which keyword declares a class?"),
+    ).toBeInTheDocument();
+  });
+
+  it("says when the paper on screen is a saved copy", async () => {
+    await cacheThenReopen();
+    expect(
+      await screen.findByText(/saved copy of this paper/i),
+    ).toBeInTheDocument();
+  });
+
+  it("says so plainly that the deadline is still the server's", async () => {
+    await cacheThenReopen();
+    expect(
+      await screen.findByText(/time left is still set by the server/i),
+    ).toBeInTheDocument();
+  });
+
+  it("still lets a student answer from the saved copy", async () => {
+    await cacheThenReopen();
+    const question = await screen.findByText("Which keyword declares a class?");
+    expect(question).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /class/ }));
+    await waitFor(() => expect(store.queue).toHaveLength(1));
+  });
+
+  it("does not fall back to the cache when the server refuses online", async () => {
+    // This is the important one. A refusal can mean the window has closed, and
+    // answering a saved copy of a paper the server just refused would be working
+    // on an exam the student is no longer entitled to take.
+    render(<AcademyExamRunner exam={EXAM} />);
+    fireEvent.click(
+      await screen.findByRole("button", { name: /start examination/i }),
+    );
+    await screen.findByText("Which keyword declares a class?");
+    store.records["examPapers:attempt-1"] = { questions: PAPER };
+
+    api.getAcademyExamPaper.mockResolvedValue({
+      data: null,
+      error: { message: "Examination has ended." },
+    });
+    const again = render(<AcademyExamRunner exam={EXAM} />);
+    fireEvent.click(
+      await screen.findByRole("button", { name: /start examination/i }),
+    );
+
+    expect(await screen.findByText(/examination has ended/i)).toBeInTheDocument();
+    expect(again.container.textContent).not.toContain("Which keyword declares a class?");
+  });
+
+  it("says so when there is no saved copy to fall back on", async () => {
+    online.value = false;
+    api.getAcademyExamPaper.mockResolvedValue({
+      data: null,
+      error: { message: "Failed to fetch" },
+    });
+    render(<AcademyExamRunner exam={EXAM} />);
+    fireEvent.click(
+      await screen.findByRole("button", { name: /start examination/i }),
+    );
+    expect(
+      await screen.findByText(/not been saved to this device/i),
+    ).toBeInTheDocument();
   });
 });

@@ -770,6 +770,55 @@ hidden tests readable by every signed in student; see the header comment in
 `supabase/migrations/20261033000000_academy_exercise_column_grants.sql`.
 
 
+## Assessment engine
+
+One engine covers every subject. A Python paper and a Robotics paper differ by
+configuration, not by a different page, so there is no per-subject code path to
+keep in step.
+
+**Where the questions come from.** `academy_exam_questions` is a bank, and
+`academy_exam_build` on the admin side composes a paper from it, either by hand
+or by asking for a mix of difficulties and question types. An author may write
+options as `1/2/3/4` or `A/B/C/D`; the build step re-letters them, because a
+question authored with keys `1,2,3,4` and an answer of `3` has to arrive as
+`A/B/C/D` with the answer on `C`. Carrying the original key across would mark
+every student wrong.
+
+**Questions are snapshotted onto the paper.** `academy_exam_question_links`
+copies each question at publish time, so editing the bank afterwards cannot
+change a paper somebody has already sat.
+
+**The deadline belongs to the database.** `academy_exam_start_attempt` computes
+`deadline_at` and stores it. The browser is told that value and counts down from
+it; it never supplies one, and a student cannot mint an attempt, because there
+is no insert policy on the table at all.
+
+**Marks stay hidden until a teacher releases them.** A student may read their own
+attempt to know it exists and when they handed it in, but `score`, `percentage`
+and the counts are not in the column grant on `academy_exam_attempts`. The
+history function nulls them per row while the exam is unreleased, rather than
+trusting a client to hide a number it did not want.
+
+**Offline is a real path, not a fallback that pretends.** Answers are queued in
+IndexedDB with an operation id built from the answer's own client timestamp, so
+replaying one is a no-op rather than a second write, and the sync conflict is
+resolved on arrival using that timestamp. A paper already served to the device
+is cached, so an exam reopened with no signal still shows its questions. What
+is *not* cached is a refusal: if the server rejects the paper while the student
+is online, that is final, because a saved copy must not become a way to keep
+working on an exam whose window has closed.
+
+**Two different publish functions, deliberately.** `academy_exam_publish` puts
+the paper in front of students. `academy_exam_publish_results` releases the
+marks. They are not the same action: a teacher needs to hold marks back without
+un-sitting the exam, and the mark sheet refuses to release a paper that is still
+a draft, unsat, fully in progress, or still open.
+
+Attempt history and the engine's own activity log are both server functions
+(`academy_exam_student_history`, `academy_exam_event_log`) rather than table
+reads, so the scoping and the publication check are in the database.
+
+
 ## Known gaps
 
 Recorded so nobody discovers them the hard way.
@@ -843,3 +892,19 @@ private, and expires after fourteen days along with its audio.
 limit and an allowed mime type list, and `academy_register_submission` re-checks
 the recorded size, the extension and the attempt count. The browser check remains
 as a courtesy that saves a student a wasted upload, not as a control.
+
+**The assessment engine has never been run end to end.** Every part of it is
+covered by unit tests and by DDL being applied, but no real paper has been
+published, sat, marked and released against the live database. The timer, the
+autosave, the resume path and the release-then-student-sees-score path are all
+unexercised in anger. Treat the first real exam as a supervised run.
+
+Two narrower gaps in the same area:
+
+- The student-visible row policy on `academy_exams` was tightened to hide draft
+  papers, and that is proven by a regression test and by the policy applying
+  cleanly, not by a real student token being refused a draft row.
+- The C++ exam and lesson material implies auto-marked code, which is the
+  executor gap above. The exam engine itself only does multiple choice and
+  true/false, so a programming paper built through the builder is a paper of
+  objective questions about C++, not a graded C++ program.

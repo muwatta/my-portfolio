@@ -40,6 +40,7 @@ export default function AcademyExamRunner({ exam }) {
   const [error, setError] = useState("");
   const [pending, setPending] = useState(0);
   const [offline, setOffline] = useState(!navigator.onLine);
+  const [stalePaper, setStalePaper] = useState(false);
   const [result, setResult] = useState(null);
 
   const timers = useRef({});
@@ -89,24 +90,55 @@ export default function AcademyExamRunner({ exam }) {
     );
   }, [user?.id, attempt]);
 
-  // Cached so a refresh, a closed tab or a dropped connection can still show
-  // the questions. The correct answers are not in here and never were.
+  // The questions are cached so a refresh, a closed tab or a dropped connection
+  // can still show the paper. Without this the draft below is unreachable: a
+  // student who reopens an exam with no signal would have their answers
+  // restored and no questions to put them against.
+  //
+  // The cache is only a fallback, never the primary source, because the server
+  // decides what a paper contains. A cached copy can only ever be what that same
+  // attempt was already served, so it cannot show different questions, and it
+  // carries no answer key, which never left the server in the first place.
   const loadPaper = useCallback(
     async (attemptId) => {
       const result = await getAcademyExamPaper(attemptId);
-      if (result.error) {
+      if (!result.error) {
+        setPaper(result.data ?? []);
+        setStalePaper(false);
+        if (user?.id) {
+          await putOfflineRecord(
+            OFFLINE_STORES.examPapers,
+            user.id,
+            attemptId,
+            { questions: result.data ?? [], cachedAt: new Date().toISOString() },
+          );
+        }
+        return;
+      }
+
+      // A refusal from the server is final. Falling back here would let a
+      // student keep working on a paper they are no longer entitled to, for
+      // example one whose window has closed.
+      if (navigator.onLine) {
         setError(friendlyError(result.error, "The paper could not be loaded."));
         return;
       }
-      setPaper(result.data ?? []);
-      if (user?.id) {
-        await putOfflineRecord(
-          OFFLINE_STORES.examPapers,
-          user.id,
-          attemptId,
-          { questions: result.data ?? [], cachedAt: new Date().toISOString() },
+
+      if (!user?.id) return;
+      const cached = await getOfflineRecord(
+        OFFLINE_STORES.examPapers,
+        user.id,
+        attemptId,
+      );
+      const questions = cached?.data?.questions;
+      if (!Array.isArray(questions) || questions.length === 0) {
+        setError(
+          "You are offline and this examination has not been saved to this device yet.",
         );
+        return;
       }
+      setPaper(questions);
+      setStalePaper(true);
     },
     [user?.id],
   );
@@ -444,6 +476,17 @@ export default function AcademyExamRunner({ exam }) {
             You are offline. Keep going, your answers are saved here and sent when
             you reconnect.
             {pending > 0 ? ` ${pending} waiting to send.` : ""}
+          </p>
+        )}
+        {/*
+          Only reachable when the paper came off this device. The deadline is
+          still the server's, so the countdown is right, but the student should
+          know the questions on screen are a saved copy rather than a fresh copy.
+        */}
+        {stalePaper && (
+          <p className="mt-2 text-xs text-amber-200">
+            Working from a saved copy of this paper. The time left is still set
+            by the server, so it is accurate.
           </p>
         )}
       </header>

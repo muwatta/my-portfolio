@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import {
   addAcademyExamQuestion,
   createAcademyExam,
@@ -201,9 +202,22 @@ export default function AcademyAdminExamBuilder() {
       </header>
 
       {message && (
-        <p className="rounded-xl border border-emerald-300 bg-emerald-50 p-3 text-sm font-semibold text-emerald-900 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-200">
-          {message}
-        </p>
+        <div className="rounded-xl border border-emerald-300 bg-emerald-50 p-3 text-sm font-semibold text-emerald-900 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-200">
+          <p>{message}</p>
+          {/* Publishing is only the first half of the job. Without this the
+              teacher has finished building and then has to go and find the
+              results page by name to release anything. */}
+          {selectedId && (
+            <p className="mt-2 font-normal">
+              <Link
+                to={`/academy/admin/exam-results?exam=${selectedId}`}
+                className="underline"
+              >
+                Go to the mark sheet for this examination
+              </Link>
+            </p>
+          )}
+        </div>
       )}
       {error && (
         <p className="rounded-xl border border-rose-300 bg-rose-50 p-3 text-sm font-semibold text-rose-900 dark:border-rose-800 dark:bg-rose-950/40 dark:text-rose-200">
