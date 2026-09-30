@@ -218,3 +218,42 @@ describe("a locked lesson will not open", () => {
     expect(screen.queryByText(/not unlocked yet/i)).toBeNull();
   });
 });
+
+describe("a teacher's reorder drives the unlock order", () => {
+  const reorder = readFileSync(
+    "supabase/migrations/20261321000000_lesson_reorder_chain.sql",
+    "utf8",
+  );
+  const followOrder = readFileSync(
+    "supabase/migrations/20261322000000_rechain_follows_sort_order.sql",
+    "utf8",
+  );
+
+  it("initialises the position counter", () => {
+    // It declared `position integer;` and did `position + 1`. In plpgsql an
+    // uninitialised integer is NULL and NULL + 1 is NULL, so the first lesson in
+    // every reorder was written with sort_order = NULL. Nothing stopped it until
+    // the sort_order > 0 check, which then made reordering fail outright.
+    expect(reorder).toMatch(/position integer := 0;/);
+    expect(reorder).toMatch(/position := position \+ 1;/);
+  });
+
+  it("rebuilds the chain inside the reorder, so the two cannot drift", () => {
+    expect(reorder).toMatch(
+      /perform public\.academy_rechain_course_lessons\(course_id\)/,
+    );
+  });
+
+  it("the chain follows the displayed order, not the lesson number", () => {
+    // Verified live: swapping lessons 3 and 4 put lesson 4 on screen before
+    // lesson 3 while lesson 4 still required lesson 3, so a student was told to
+    // finish something further down the page.
+    expect(followOrder).toMatch(
+      /order by w\.week_number, l\.sort_order, l\.lesson_number, l\.id/,
+    );
+  });
+
+  it("keeps a total order, so the same input always gives the same chain", () => {
+    expect(followOrder).toMatch(/l\.lesson_number, l\.id/);
+  });
+});
