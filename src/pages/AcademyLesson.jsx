@@ -16,6 +16,7 @@ import LessonContent from "../components/academy/LessonContent";
 import TopicStepper from "../components/academy/TopicStepper";
 import CppEditor from "../components/academy/CppEditor";
 import PythonEditor from "../components/academy/PythonEditor";
+import TerminalEditor from "../components/academy/TerminalEditor";
 
 export default function AcademyLesson() {
   const { id } = useParams();
@@ -153,6 +154,7 @@ export default function AcademyLesson() {
   // no change here.
   const courseLanguage = lesson.academy_weeks?.academy_courses?.language ?? "python";
   const isCppCourse = courseLanguage === "cpp";
+  const isTerminalCourse = courseLanguage === "shell";
   const practice = lesson.exercises ?? [];
   const tasks = lesson.tasks ?? [];
   const jumpTo = (target) => {
@@ -210,6 +212,23 @@ export default function AcademyLesson() {
             </p>
           </div>
           <CppEditor starterCode={content.starter_code} />
+        </section>
+      )}
+      {isTerminalCourse && content.starter_code && (
+        <section className="space-y-3">
+          <div>
+            <p className="text-sm font-semibold uppercase tracking-[0.18em] text-blue-600">
+              Command terminal
+            </p>
+            <h2 className="mt-1 text-2xl font-bold">Run the commands yourself</h2>
+            <p className="mt-2 text-slate-600 dark:text-slate-300">
+              Type the commands rather than reading about them. This terminal is
+              sandboxed in your browser: it has its own small filesystem and only
+              the commands from the lesson, and nothing it does reaches your
+              computer or the server.
+            </p>
+          </div>
+          <TerminalEditor starterScript={content.starter_code} />
         </section>
       )}
       {lesson.academy_weeks.academy_courses.slug ===
