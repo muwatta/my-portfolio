@@ -52,7 +52,15 @@ const teacherEmail = `e2e-teacher-${stamp}@example.test`;
 const studentEmail = `e2e-student-${stamp}@example.test`;
 const PASSWORD = "e2e-only-not-a-real-password";
 
-const created = { users: [], course: null, klass: null, subject: null, exam: null };
+// Every exam this script creates is recorded, not just the one under test. The
+// first version tracked a single exam and forgot the draft it also made, and
+// because academy_exams.class_id is on delete set null, deleting the class
+// orphaned the draft rather than removing it. The draft then held a
+// created_by reference to the test teacher, and academy_exams_created_by_fkey is
+// on delete restrict, so the user delete failed and the script left a real
+// account behind in a live database. Tracking the list, and checking every
+// delete, is what stops that.
+const created = { users: [], course: null, klass: null, subject: null, exams: [] };
 const results = [];
 
 function check(name, passed, detail = "") {
@@ -228,6 +236,7 @@ async function main() {
     p_max_attempts: 1,
   });
   created.exam = exam.data?.id ?? exam.data?.[0]?.id;
+  if (created.exam) created.exams.push(created.exam);
   check("teacher can create an exam", Boolean(created.exam), JSON.stringify(exam.data).slice(0, 120));
   if (!created.exam) return finish();
 
@@ -255,6 +264,66 @@ async function main() {
     p_exam_id: created.exam,
   });
   check("exam publishes", published.status < 300, JSON.stringify(published.data).slice(0, 120));
+
+  // ---------------------------------- the draft-paper leak, with a real token
+  // This policy was tightened after a review found a class member could read a
+  // draft's title, duration and instructions even though starting one was
+  // refused. It was only ever proven by a test and by the DDL applying cleanly.
+  const draft = await rpc(teacherToken, "academy_exam_create", {
+    p_title: `E2E Draft ${stamp}`,
+    p_subject_id: created.subject,
+    p_class_id: created.klass,
+    p_duration_minutes: 20,
+    p_starts_at: new Date(Date.now() - 60000).toISOString(),
+    p_ends_at: new Date(Date.now() + 3600000).toISOString(),
+  });
+  const draftId = draft.data?.id ?? draft.data?.[0]?.id;
+  if (draftId) created.exams.push(draftId);
+  check("a draft exam can be created", Boolean(draftId), JSON.stringify(draft.data).slice(0, 140));
+
+  if (draftId) {
+    const studentDraft = await asUser(
+      studentToken,
+      `academy_exams?id=eq.${draftId}&select=id,title,instructions,duration_minutes`,
+    );
+    check(
+      "a class member cannot read a draft exam",
+      (Array.isArray(studentDraft.data) ? studentDraft.data.length : 0) === 0
+        || studentDraft.status >= 300,
+      `status=${studentDraft.status} rows=${Array.isArray(studentDraft.data) ? studentDraft.data.length : "n/a"}`,
+    );
+
+    const draftAsStudentList = await asUser(
+      studentToken,
+      "academy_exams?select=id,title,status",
+    );
+    const leaked = (Array.isArray(draftAsStudentList.data) ? draftAsStudentList.data : [])
+      .filter((row) => row.id === draftId);
+    check(
+      "and it does not appear in the student's own exam list",
+      leaked.length === 0,
+      `saw=${JSON.stringify(leaked).slice(0, 140)}`,
+    );
+
+    const teacherDraft = await asUser(
+      teacherToken,
+      `academy_exams?id=eq.${draftId}&select=id,title,status`,
+    );
+    check(
+      "a teacher can still read the same draft",
+      Array.isArray(teacherDraft.data) && teacherDraft.data.length === 1,
+      `status=${teacherDraft.status}`,
+    );
+
+    const startDraft = await rpc(studentToken, "academy_exam_start_attempt", {
+      p_exam_id: draftId,
+    });
+    check(
+      "a student still cannot start a draft",
+      startDraft.status >= 300,
+      `status=${startDraft.status}`,
+    );
+  }
 
   // ------------------------------------------------------ the student refuses
   const draftPeek = await api({ apikey: ANON }, `academy_exams?select=id&id=eq.${created.exam}`);
@@ -498,6 +567,53 @@ async function main() {
     `status=${bankAsStudent.status} rows=${Array.isArray(bankAsStudent.data) ? bankAsStudent.data.length : "n/a"}`,
   );
 
+  // ------------------------------- the exam has to reach progress and the board
+  const pointsAfter = await asUser(
+    studentToken,
+    `academy_leaderboard_points?source_type=eq.exam&select=points,verification_status`,
+  );
+  const examPoints = Array.isArray(pointsAfter.data) ? pointsAfter.data : [];
+  check(
+    "releasing results puts the exam on the leaderboard",
+    examPoints.length === 1 && examPoints[0].points === 20,
+    JSON.stringify(examPoints).slice(0, 200),
+  );
+  check(
+    "the leaderboard entry is verified, not pending",
+    examPoints[0]?.verification_status === "verified",
+  );
+
+  const withdrawn = await rpc(teacherToken, "academy_exam_publish_results", {
+    p_exam_id: created.exam,
+    p_publish: false,
+  });
+  check("results can be withheld again", withdrawn.status < 300);
+
+  const pointsWithheld = await asUser(
+    studentToken,
+    `academy_leaderboard_points?source_type=eq.exam&select=points`,
+  );
+  check(
+    "withholding takes the exam back off the leaderboard",
+    (Array.isArray(pointsWithheld.data) ? pointsWithheld.data.length : 0) === 0,
+    JSON.stringify(pointsWithheld.data).slice(0, 200),
+  );
+
+  const hiddenAgain = await rpc(studentToken, "academy_exam_student_result", {
+    p_attempt_id: attemptId,
+  });
+  check(
+    "withholding hides the score again",
+    hiddenAgain.data?.results_published === false,
+    JSON.stringify(hiddenAgain.data).slice(0, 160),
+  );
+
+  // Put it back so the log assertions below see the publication.
+  await rpc(teacherToken, "academy_exam_publish_results", {
+    p_exam_id: created.exam,
+    p_publish: true,
+  });
+
   const eventsAsStudent = await rpc(studentToken, "academy_exam_event_log", {
     p_exam_id: created.exam,
     p_limit: 50,
@@ -513,17 +629,63 @@ async function main() {
 
 async function finish() {
   console.log("\nCleaning up");
-  // Deleting the exam cascades to its links, attempts, answers and events.
-  if (created.exam) await rest(`academy_exams?id=eq.${created.exam}`, { method: "DELETE" });
-  if (created.klass) await rest(`academy_classes?id=eq.${created.klass}`, { method: "DELETE" });
-  if (created.course) await rest(`academy_courses?id=eq.${created.course}`, { method: "DELETE" });
-  if (created.subject) await rest(`academy_subjects?id=eq.${created.subject}`, { method: "DELETE" });
+  const problems = [];
+  // Order matters. academy_exams_created_by_fkey is on delete restrict, so every
+  // exam has to go before the user that made it, or the user delete is refused.
+  for (const id of created.exams) {
+    const res = await rest(`academy_exams?id=eq.${id}`, { method: "DELETE" });
+    if (res.status >= 300) {
+      problems.push(`exam ${id}: ${res.status} ${JSON.stringify(res.data).slice(0, 120)}`);
+    }
+  }
+  if (created.klass) {
+    const res = await rest(`academy_classes?id=eq.${created.klass}`, { method: "DELETE" });
+    if (res.status >= 300) problems.push(`class: ${res.status}`);
+  }
+  if (created.course) {
+    const res = await rest(`academy_courses?id=eq.${created.course}`, { method: "DELETE" });
+    if (res.status >= 300) problems.push(`course: ${res.status}`);
+  }
+  if (created.subject) {
+    const res = await rest(`academy_subjects?id=eq.${created.subject}`, { method: "DELETE" });
+    if (res.status >= 300) problems.push(`subject: ${res.status}`);
+  }
   for (const id of created.users) {
-    await fetch(`${URL_BASE}/auth/v1/admin/users/${id}`, {
+    const res = await fetch(`${URL_BASE}/auth/v1/admin/users/${id}`, {
       method: "DELETE",
       headers: { apikey: SERVICE, Authorization: `Bearer ${SERVICE}` },
     });
+    if (!res.ok) {
+      problems.push(`user ${id}: ${res.status} ${(await res.text()).slice(0, 120)}`);
+    }
   }
+
+  // Verified rather than assumed. A cleanup that reports success while leaving
+  // rows behind is worse than one that fails loudly.
+  const residue = await rest(
+    "academy_exams?select=id&title=like.*E2E*",
+  );
+  const leftExams = Array.isArray(residue.data) ? residue.data.length : 0;
+  if (leftExams > 0) problems.push(`${leftExams} e2e exam(s) still present`);
+
+  // The accounts matter more than the rows. A leftover test teacher in a live
+  // database is an account somebody could sign in to, so this is checked too
+  // rather than assumed from the delete calls returning 2xx.
+  const users = await fetch(`${URL_BASE}/auth/v1/admin/users?per_page=100`, {
+    headers: { apikey: SERVICE, Authorization: `Bearer ${SERVICE}` },
+  });
+  const leftUsers = ((await users.json()).users ?? []).filter((user) =>
+    /^e2e-/.test(user.email ?? ""),
+  );
+  if (leftUsers.length > 0) {
+    problems.push(
+      `${leftUsers.length} e2e account(s) still exist: ${leftUsers
+        .map((user) => user.email)
+        .join(", ")}`,
+    );
+  }
+
+  console.log(problems.length ? `CLEANUP PROBLEMS:\n - ${problems.join("\n - ")}` : "clean");
   console.log("done\n");
 
   const failed = results.filter((r) => !r.passed);
@@ -532,7 +694,8 @@ async function finish() {
     console.log("\nFAILED:");
     for (const f of failed) console.log(` - ${f.name} :: ${f.detail}`);
   }
-  process.exit(failed.length ? 1 : 0);
+  // Cleanup trouble is a failure of this script, so it fails the run.
+  process.exit(failed.length || problems.length ? 1 : 0);
 }
 
 main().catch(async (error) => {

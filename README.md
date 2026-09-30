@@ -926,6 +926,10 @@ table has. What it found:
 
 Two narrower gaps remain:
 
+- The draft-paper policy on `academy_exams` is now checked with a real signed-in
+  student token rather than only by a test: a class member reads zero rows for a
+  draft, the draft is absent from their exam list, a teacher still reads it, and
+  starting one is still refused.
 - The C++ exam and lesson material implies auto-marked code, which is the
   executor gap above. The exam engine itself only does multiple choice and
   true/false, so a programming paper built through the builder is a paper of
@@ -933,3 +937,18 @@ Two narrower gaps remain:
 - The E2E run exercises one question on one paper. Timing pressure, a randomised
   paper, a multi-attempt paper and a genuinely wrong answer are covered by unit
   tests but have not been sat by a person.
+
+**Exams now reach progress and the leaderboard.** A student could score 80% on a
+paper and it appeared in exactly one place. Progress now shows papers sat, results
+released and an average taken over released results only, served by the existing
+history function so no new read path was needed. The leaderboard was a bigger
+decision, because it is a public ranking: `academy_leaderboard_points` had no
+`'exam'` source type, so an award was rejected by the table itself. The award
+follows the existing intent, which is small and first-time only (10 for a first
+lesson, 5 for a first practice): an exam awards once per paper, on the student's
+best attempt, scaled by score, so re-sitting cannot farm the board. Points are
+added when a teacher releases results and removed when they withhold them, so
+marks a teacher has chosen not to release are never visible as a ranking. The
+award is also isolated from the release: a fault in it is recorded as a
+`leaderboard_sync_failed` event rather than being allowed to stop marks being
+released.

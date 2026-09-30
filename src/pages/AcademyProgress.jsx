@@ -1,10 +1,28 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { getAcademyProgress, getAcademyStudentOverview } from "../lib/academy";
+import {
+  getAcademyExamHistory,
+  getAcademyProgress,
+  getAcademyStudentOverview,
+} from "../lib/academy";
 import { useAcademyAuth } from "../hooks/useAcademyAuth";
 import ProgressBar from "../components/academy/ProgressBar";
 import { fetchWithOfflineFallback } from "../lib/academyOffline";
 import { OFFLINE_STORES } from "../lib/offlineStore";
+
+// Averaged over released results only. An unreleased attempt has no percentage
+// and must not drag the figure down as though it were a zero.
+function releasedAverage(exams) {
+  const released = exams.filter(
+    (attempt) => attempt.results_published && attempt.percentage !== null,
+  );
+  if (released.length === 0) return "—";
+  const total = released.reduce(
+    (sum, attempt) => sum + Number(attempt.percentage),
+    0,
+  );
+  return `${(total / released.length).toFixed(1)}%`;
+}
 
 export default function AcademyProgress() {
   const { user } = useAcademyAuth();
@@ -12,9 +30,23 @@ export default function AcademyProgress() {
   const [state, setState] = useState("loading");
   const [offline, setOffline] = useState(false);
   const [overview, setOverview] = useState(null);
+  const [exams, setExams] = useState(null);
 
   useEffect(() => {
     getAcademyStudentOverview(user.id).then(({ data }) => setOverview(data));
+  }, [user.id]);
+
+  // An exam used to appear nowhere on this page, so a student could score 80%
+  // and see it in exactly one place. Exam history is the student's own record,
+  // so there is nothing to weigh here: it is simply part of their progress.
+  useEffect(() => {
+    let cancelled = false;
+    getAcademyExamHistory().then(({ data }) => {
+      if (!cancelled) setExams(data ?? []);
+    });
+    return () => {
+      cancelled = true;
+    };
   }, [user.id]);
 
   useEffect(() => {
@@ -92,6 +124,77 @@ export default function AcademyProgress() {
           </div>
         ))}
       </section>
+
+      {exams && exams.length > 0 && (
+        <section className="rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <h2 className="font-bold">Examinations</h2>
+            <Link
+              to="/academy/exams"
+              className="text-sm font-semibold text-amber-600 hover:text-amber-700 dark:text-amber-400 dark:hover:text-amber-300"
+            >
+              Open examinations
+            </Link>
+          </div>
+
+          <div className="mt-4 grid gap-4 sm:grid-cols-3">
+            <div>
+              <p className="text-sm text-slate-500 dark:text-slate-400">
+                Papers sat
+              </p>
+              <p className="mt-1 text-2xl font-bold">
+                {exams.filter((attempt) => attempt.status !== "in_progress")
+                  .length}
+              </p>
+            </div>
+            <div>
+              <p className="text-sm text-slate-500 dark:text-slate-400">
+                Results released
+              </p>
+              <p className="mt-1 text-2xl font-bold">
+                {exams.filter((attempt) => attempt.results_published).length}
+              </p>
+            </div>
+            <div>
+              <p className="text-sm text-slate-500 dark:text-slate-400">
+                Average score
+              </p>
+              <p className="mt-1 text-2xl font-bold">
+                {releasedAverage(exams)}
+              </p>
+            </div>
+          </div>
+
+          {/*
+            An attempt whose results are not out yet is shown as sat, with no
+            number beside it. The history function already returns those columns
+            as null, and this must not paper over that by reaching for a score the
+            server declined to send.
+          */}
+          <ul className="mt-4 space-y-2">
+            {exams.map((attempt) => (
+              <li
+                key={attempt.attempt_id}
+                className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-2 text-sm last:border-0 dark:border-slate-800/60"
+              >
+                <span className="font-medium">{attempt.exam_title}</span>
+                {attempt.results_published && attempt.percentage !== null ? (
+                  <span className="tabular-nums text-slate-600 dark:text-slate-300">
+                    {attempt.percentage}% ({attempt.score}/
+                    {attempt.total_marks})
+                  </span>
+                ) : (
+                  <span className="text-slate-500 dark:text-slate-400">
+                    {attempt.status === "in_progress"
+                      ? "In progress"
+                      : "Marked, result not released"}
+                  </span>
+                )}
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       <section className="rounded-2xl border border-slate-200 p-6 dark:border-slate-800">
         <div className="flex flex-wrap items-center justify-between gap-3">

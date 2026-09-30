@@ -171,6 +171,28 @@ describe("the live script stays honest", () => {
     expect(e2e).toMatch(/auth\/v1\/admin\/users\/\$\{id\}/);
   });
 
+  it("deletes every exam it made, not just the one under test", () => {
+    // It only tracked one exam and forgot the draft it also created. Because
+    // academy_exams.class_id is on delete set null, deleting the class orphaned
+    // the draft, and the draft's created_by reference then blocked the user
+    // delete, so a run left a real test account behind in the live database.
+    expect(e2e).toMatch(/created\.exams\.push\(draftId\)/);
+    expect(e2e).toMatch(/for \(const id of created\.exams\)/);
+  });
+
+  it("checks its cleanup instead of trusting a 2xx", () => {
+    expect(e2e).toMatch(/CLEANUP PROBLEMS/);
+    expect(e2e).toMatch(/e2e account\(s\) still exist/);
+    expect(e2e).toMatch(/process\.exit\(failed\.length \|\| problems\.length \? 1 : 0\)/);
+  });
+
+  it("removes exams before users, because created_by is on delete restrict", () => {
+    const examDeletes = e2e.indexOf("for (const id of created.exams)");
+    const userDeletes = e2e.indexOf("for (const id of created.users)");
+    expect(examDeletes).toBeGreaterThan(-1);
+    expect(userDeletes).toBeGreaterThan(examDeletes);
+  });
+
   it("asserts the guarantee that motivated the column grants", () => {
     expect(e2e).toMatch(/selecting a score column on an own row is refused/);
     expect(e2e).toMatch(/no score is visible before publication/);
