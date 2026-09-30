@@ -482,6 +482,67 @@ async function main() {
     eventRows.map((e) => e.action).join(","),
   );
 
+  // ------------------------------------------------------- the course selection lock
+  // A student can take the course they are on, but not a second one. Re-selecting
+  // the current course used to fail, because the upsert fired the guard trigger
+  // with a new id and the student's own enrollment looked like a second one.
+  const courseList = await rest(
+    "academy_courses?select=id,slug&is_active=eq.true&published=eq.true&order=sort_order",
+  );
+  const selectable = Array.isArray(courseList.data) ? courseList.data : [];
+  check(
+    "there are at least two selectable courses",
+    selectable.length >= 2,
+    selectable.map((row) => row.slug).join(", "),
+  );
+
+  const firstSelect = await rpc(studentToken, "academy_select_course", {
+    target_student_id: studentId,
+    target_course_id: selectable[0].id,
+  });
+  check("a student can select a course", firstSelect.status < 300, `status=${firstSelect.status}`);
+
+  const sameAgain = await rpc(studentToken, "academy_select_course", {
+    target_student_id: studentId,
+    target_course_id: selectable[0].id,
+  });
+  check(
+    "selecting the course they are already on is allowed and changes nothing",
+    sameAgain.status < 300
+      && sameAgain.data?.id === firstSelect.data?.id,
+    `status=${sameAgain.status}`,
+  );
+
+  const enrollments = await rest(
+    `academy_enrollments?student_id=eq.${studentId}&status=eq.active`,
+  );
+  check(
+    "and leaves exactly one active enrollment, not two",
+    (Array.isArray(enrollments.data) ? enrollments.data.length : 0) === 1,
+    `rows=${Array.isArray(enrollments.data) ? enrollments.data.length : "n/a"}`,
+  );
+
+  const secondCourse = await rpc(studentToken, "academy_select_course", {
+    target_student_id: studentId,
+    target_course_id: selectable[1].id,
+  });
+  check("selecting a different course is refused", secondCourse.status >= 400, `status=${secondCourse.status}`);
+  check(
+    "with the friendly locked message rather than a database error",
+    String(secondCourse.data?.message ?? "").includes("locked"),
+    String(secondCourse.data?.message ?? JSON.stringify(secondCourse.data)).slice(0, 120),
+  );
+
+  const afterRefusal = await rest(
+    `academy_enrollments?student_id=eq.${studentId}&status=eq.active`,
+  );
+  check(
+    "the refused switch left the original course in place",
+    Array.isArray(afterRefusal.data) &&
+      afterRefusal.data.length === 1 &&
+      afterRefusal.data[0].course_id === selectable[0].id,
+  );
+
   // ------------------------------- the two staff reads that were broken outright
   const sheet = await rpc(teacherToken, "academy_exam_attempt_sheet", {
     p_exam_id: created.exam,
@@ -630,7 +691,19 @@ async function main() {
 async function finish() {
   console.log("\nCleaning up");
   const problems = [];
-  // Order matters. academy_exams_created_by_fkey is on delete restrict, so every
+  // Enrollments first. academy_enrollments.student_id references auth.users, and
+  // the course selection test creates one, so deleting the user before clearing
+  // it is refused. Found by the cleanup check failing, which is what it is for.
+  for (const id of created.users) {
+    const enrollment = await rest(`academy_enrollments?student_id=eq.${id}`, {
+      method: "DELETE",
+    });
+    if (enrollment.status >= 300) {
+      problems.push(`enrollments for ${id}: ${enrollment.status}`);
+    }
+  }
+
+  // Then exams. academy_exams_created_by_fkey is on delete restrict, so every
   // exam has to go before the user that made it, or the user delete is refused.
   for (const id of created.exams) {
     const res = await rest(`academy_exams?id=eq.${id}`, { method: "DELETE" });

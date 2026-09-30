@@ -186,11 +186,18 @@ describe("the live script stays honest", () => {
     expect(e2e).toMatch(/process\.exit\(failed\.length \|\| problems\.length \? 1 : 0\)/);
   });
 
-  it("removes exams before users, because created_by is on delete restrict", () => {
+  it("removes everything a user points at before deleting the user", () => {
+    // Three references block a user delete: an exam they created (restrict), an
+    // enrollment they hold, and the course-selection test creates one. The
+    // account delete must come last, or it is refused and a test account is left
+    // behind in a live database, which is exactly what happened once.
+    const enrollmentDeletes = e2e.indexOf("academy_enrollments?student_id=eq.${id}");
     const examDeletes = e2e.indexOf("for (const id of created.exams)");
-    const userDeletes = e2e.indexOf("for (const id of created.users)");
+    const userDeletes = e2e.indexOf("auth/v1/admin/users/${id}");
+    expect(enrollmentDeletes).toBeGreaterThan(-1);
     expect(examDeletes).toBeGreaterThan(-1);
     expect(userDeletes).toBeGreaterThan(examDeletes);
+    expect(userDeletes).toBeGreaterThan(enrollmentDeletes);
   });
 
   it("asserts the guarantee that motivated the column grants", () => {
