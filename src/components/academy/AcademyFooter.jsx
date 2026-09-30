@@ -16,6 +16,11 @@ const EMAIL_HREF = `mailto:${EMAIL}?subject=${encodeURIComponent(
 // a footer is worse than no link, so an absent profile is simply omitted.
 const SOCIALS = [
   { label: "GitHub", href: "https://github.com/muwatta" },
+  {
+    label: "LinkedIn",
+    href: "https://www.linkedin.com/in/abdullahi-musliudeen-64435a239/",
+  },
+  { label: "Facebook", href: "https://web.facebook.com/algorise" },
 ].filter((social) => social.href);
 
 const FOCUS_RING =

@@ -1232,6 +1232,15 @@ export async function getAcademyRegistrationCodes(searchText = "", status = "") 
   });
   if (!error) return { data: data ?? [], error: null, configured: true };
 
+  // PostgREST puts the real Postgres reason in `message` and wraps it in
+  // `details`, `hint` and `code`. The wrapped form is longer than the friendly
+  // error helper will show, so the administrator saw a generic sentence and the
+  // actual cause never reached them. Keep the Postgres message.
+  const pgMessage = typeof error.message === "string" && error.message.length < 200
+    ? error.message
+    : String(error?.details ?? error?.message ?? "").slice(0, 200);
+  error.message = pgMessage || error.message;
+
   const message = String(error.message ?? "");
   if (/administrator/i.test(message)) {
     return {
