@@ -1,0 +1,37 @@
+# How the executor is meant to run. The flags are the security, so they are here
+# rather than in a README to be copied from by hand.
+#
+# The single most important line is `network_mode: none`. A student program that
+# can open a socket can reach the grading service, the database, or anything else
+# on the network, and no amount of care inside the process compensates for that.
+# It also means the container needs no published port to do its job: the edge
+# function reaches it over the Docker network, or you put it behind a private
+# interface and expose it with an authenticated proxy.
+services:
+  executor:
+    build: .
+    image: academy-cpp-executor
+    restart: unless-stopped
+    init: true
+    environment:
+      EXECUTOR_TOKEN: ${EXECUTOR_TOKEN:?set EXECUTOR_TOKEN in .env}
+      CXX: /usr/bin/g++
+      TEST_TIMEOUT_MS: "5000"
+      COMPILE_TIMEOUT_MS: "15000"
+      MAX_MEMORY_MB: "256"
+    # Isolation. Each of these removes a capability the program should not have.
+    network_mode: none
+    read_only: true
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    tmpfs:
+      # The only writable path. No exec, so a binary cannot be staged here and run.
+      - /tmp:rw,noexec,nosuid,size=64m
+    pids_limit: 128
+    mem_limit: 512m
+    cpus: 1.0
+    # No ports published on purpose. See network_mode above.
+    expose:
+      - "8080"
