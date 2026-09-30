@@ -31,6 +31,7 @@ describe("student navigation", () => {
       "My work",
       "Projects",
       "Progress",
+      "Examinations",
       "Leaderboard",
     ]);
   });
@@ -63,5 +64,6 @@ describe("student navigation", () => {
     expect(hrefs.every((href) => href.startsWith("/academy/"))).toBe(true);
     expect(hrefs).toContain("/academy/leaderboard");
     expect(hrefs).toContain("/academy/projects");
+    expect(hrefs).toContain("/academy/exams");
   });
 });

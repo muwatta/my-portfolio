@@ -2675,3 +2675,74 @@ export async function getAcademyExamResult(attemptId) {
   });
   return { data, error };
 }
+
+// ---------------------------------------------------------------------------
+// Assessment engine: the teacher side
+//
+// This is what closes the loop the student runner waits on. A runner that says
+// "results appear once published" needs someone able to actually publish them.
+
+// Releases or withholds an exam's results. Separate from publishAcademyExam,
+// which puts the paper in front of students in the first place; conflating the
+// two would mean a teacher cannot hold marks back without un-sitting the exam.
+export async function publishAcademyExamResults(examId, publish = true) {
+  if (!supabase) return { data: null, error: new Error("Academy is not configured.") };
+  const { data, error } = await supabase.rpc("academy_exam_publish_results", {
+    p_exam_id: examId,
+    p_publish: publish,
+  });
+  return { data, error };
+}
+
+// Every attempt on an exam, for the teacher's mark sheet. Scores are already
+// computed by the submit function, so this is a read, not a re-grade.
+export async function getAcademyExamAttempts(examId) {
+  if (!supabase) return { data: null, error: new Error("Academy is not configured.") };
+  const { data, error } = await supabase
+    .from("academy_exam_attempts")
+    .select(
+      "id, student_id, attempt_number, started_at, deadline_at, submitted_at, submit_reason, client_submitted_at, status, score, total_marks, correct_count, incorrect_count, unanswered_count, percentage, graded_at",
+    )
+    .eq("exam_id", examId)
+    .order("percentage", { ascending: false, nullsFirst: false })
+    .order("started_at", { ascending: true });
+  if (error) return { data: null, error };
+
+  // academy_exam_attempts.student_id and academy_profiles.id both point at
+  // auth.users rather than at each other, so PostgREST has no relationship to
+  // embed here. Resolve the names in a second query instead of assuming one.
+  const studentIds = [...new Set((data ?? []).map((row) => row.student_id))];
+  if (studentIds.length === 0) return { data: [], error: null };
+
+  const profiles = await supabase
+    .from("academy_profiles")
+    .select("id, display_name")
+    .in("id", studentIds);
+  if (profiles.error) return { data: null, error: profiles.error };
+
+  const names = new Map(
+    (profiles.data ?? []).map((profile) => [profile.id, profile.display_name]),
+  );
+  return {
+    data: (data ?? []).map((attempt) => ({
+      ...attempt,
+      student_name: names.get(attempt.student_id) || "Unknown student",
+    })),
+    error: null,
+  };
+}
+
+// One student's paper as the teacher sees it, for reviewing a mark. Staff only
+// by row policy, and it is the one place the answer key is shown alongside what
+// the student chose.
+export async function getAcademyExamAttemptAnswers(attemptId) {
+  if (!supabase) return { data: null, error: new Error("Academy is not configured.") };
+  const { data, error } = await supabase
+    .from("academy_exam_answers")
+    .select(
+      "id, question_id, selected_key, is_correct, marks_awarded, client_answered_at, updated_at",
+    )
+    .eq("attempt_id", attemptId)
+    .order("question_id", { ascending: true });
+  return { data: data ?? [], error };
+}

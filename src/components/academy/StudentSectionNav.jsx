@@ -24,8 +24,12 @@ const SECTIONS = [
     id: "progress",
     label: "Progress",
     to: "/academy/progress",
+    // The first link is the section's own primary destination and is rendered
+    // as the section button itself, so Examinations sits after it to actually
+    // appear in the row.
     links: [
       { label: "My progress", to: "/academy/progress" },
+      { label: "Examinations", to: "/academy/exams" },
       { label: "Leaderboard", to: "/academy/leaderboard" },
     ],
   },
