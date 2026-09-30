@@ -15,6 +15,8 @@ export const OFFLINE_STORES = {
   notifications: "notifications",
   leaderboard: "leaderboard",
   syncQueue: "syncQueue",
+  examPapers: "examPapers",
+  examDrafts: "examDrafts",
   metadata: "metadata",
   profile: "profile",
 };

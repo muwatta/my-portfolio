@@ -2566,3 +2566,112 @@ export async function validateAcademyExam(examId) {
   });
   return { data: data ?? [], error };
 }
+
+// ---------------------------------------------------------------------------
+// Assessment engine: the student runner
+//
+// The timer is never authoritative here. The server computes deadline_at when
+// the attempt is created and hands it over, and this only counts down from it.
+// A student changing their computer clock changes nothing, because the backend
+// refuses an answer that arrives after the deadline regardless of what the
+// browser believes.
+// ---------------------------------------------------------------------------
+
+export async function getAcademyAvailableExams() {
+  if (!supabase) return { data: null, error: new Error("Academy is not configured.") };
+  const { data, error } = await supabase
+    .from("academy_exams")
+    .select(
+      "id, title, instructions, duration_minutes, starts_at, ends_at, max_attempts, status, academy_subjects(name), academy_classes(name)",
+    )
+    // Repeated on the client as well as in the row policy, so a draft can never
+    // reach the list even if the policy is ever widened.
+    .in("status", [
+      "scheduled",
+      "active",
+      "closed",
+      "graded",
+      "results_published",
+    ])
+    .order("starts_at", { ascending: false });
+  return { data: data ?? [], error };
+}
+
+// Whether the window is open right now, according to the server clock.
+export async function getAcademyExamWindowState(examId) {
+  if (!supabase) return { data: null, error: new Error("Academy is not configured.") };
+  const { data, error } = await supabase.rpc("academy_exam_window_is_open", {
+    p_exam_id: examId,
+  });
+  return { data: { is_open: Boolean(data) }, error };
+}
+
+// An attempt in progress, if there is one. Lets a refresh or a reopened browser
+// come back to the same paper rather than starting a second attempt.
+export async function getAcademyExamLiveAttempt(examId) {
+  if (!supabase) return { data: null, error: new Error("Academy is not configured.") };
+  const { data, error } = await supabase
+    .from("academy_exam_attempts")
+    .select("id, attempt_number, started_at, deadline_at, status")
+    .eq("exam_id", examId)
+    .eq("status", "in_progress")
+    .maybeSingle();
+  return { data, error };
+}
+
+export async function startAcademyExamAttempt(examId) {
+  if (!supabase) return { data: null, error: new Error("Academy is not configured.") };
+  const { data, error } = await supabase.rpc("academy_exam_start_attempt", {
+    p_exam_id: examId,
+  });
+  return { data, error };
+}
+
+export async function getAcademyExamPaper(attemptId) {
+  if (!supabase) return { data: null, error: new Error("Academy is not configured.") };
+  const { data, error } = await supabase.rpc("academy_exam_paper", {
+    p_attempt_id: attemptId,
+  });
+  return { data: data ?? [], error };
+}
+
+// One request per answer change, not a poll. The server resolves the ordering
+// itself: an answer that arrives carrying an older client timestamp is dropped
+// rather than allowed to undo a newer one.
+export async function saveAcademyExamAnswer(
+  attemptId,
+  questionId,
+  selectedKey,
+  clientAnsweredAt,
+) {
+  if (!supabase) return { data: null, error: new Error("Academy is not configured.") };
+  const { data, error } = await supabase.rpc("academy_exam_save_answer", {
+    p_attempt_id: attemptId,
+    p_question_id: questionId,
+    p_selected_key: selectedKey,
+    p_client_answered_at: clientAnsweredAt || null,
+  });
+  return { data, error };
+}
+
+export async function submitAcademyExamAttempt(
+  attemptId,
+  reason = "student",
+  clientSubmittedAt = null,
+) {
+  if (!supabase) return { data: null, error: new Error("Academy is not configured.") };
+  const { data, error } = await supabase.rpc("academy_exam_submit_attempt", {
+    p_attempt_id: attemptId,
+    p_reason: reason,
+    p_client_submitted_at: clientSubmittedAt || null,
+  });
+  return { data, error };
+}
+
+export async function getAcademyExamResult(attemptId) {
+  if (!supabase) return { data: null, error: new Error("Academy is not configured.") };
+  const { data, error } = await supabase.rpc("academy_exam_student_result", {
+    p_attempt_id: attemptId,
+  });
+  return { data, error };
+}

@@ -19,6 +19,10 @@ const probe = readFileSync(
   "supabase/migrations/20261295000000_builder_probe.sql",
   "utf8",
 );
+const publishedRead = readFileSync(
+  "supabase/migrations/20261298000000_exam_student_published_read.sql",
+  "utf8",
+);
 
 describe("options are re-lettered so a student's answer letter is always right", () => {
   // This is the specific risk: a question authored with keys 1/2/3/4 and an
@@ -155,5 +159,29 @@ describe("the builder is reachable", () => {
 describe("the alias collision is recorded, not just fixed", () => {
   it("explains that a subquery alias cannot shadow a plpgsql variable", () => {
     expect(aliasFix).toMatch(/aliased n rather than i because i is a variable/);
+  });
+});
+
+describe("a draft paper is not readable by a student", () => {
+  // Starting a draft was already refused by the attempt function, but a class
+  // member could still read the exam row itself and see the title, duration and
+  // instructions in their list. Both the row policy and the client query now
+  // require a status a student is allowed to see.
+  it("keeps drafts and archived papers out of the student row policy", () => {
+    expect(publishedRead).toMatch(
+      /status in \(\s*'scheduled', 'active', 'closed', 'graded', 'results_published'\s*\)/,
+    );
+    expect(publishedRead).not.toMatch(/'draft'/);
+    expect(publishedRead).not.toMatch(/'archived'/);
+  });
+
+  it("still lets a teacher see every status", () => {
+    expect(publishedRead).toMatch(/public\.academy_is_teacher\(\)/);
+  });
+
+  it("repeats the filter on the client query", () => {
+    expect(lib).toMatch(
+      /\.in\("status", \[\s*"scheduled",\s*"active",\s*"closed",\s*"graded",\s*"results_published"/,
+    );
   });
 });

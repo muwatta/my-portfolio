@@ -6,7 +6,9 @@ import {
   markLessonComplete,
   markProjectMilestoneComplete,
   requestAcademyDeterministicGrading,
+  saveAcademyExamAnswer,
   submitAssignment,
+  submitAcademyExamAttempt,
   submitObjectiveAnswer,
 } from "../../lib/academy";
 import { supabase } from "../../lib/supabase";
@@ -67,6 +69,26 @@ export default function OfflineStatus() {
       },
       lesson_complete: async ({ lessonId, studentId }) => {
         const { error } = await markLessonComplete(lessonId, studentId);
+        if (error) throw error;
+      },
+      // Replayed exam writes go through the same server functions as a live
+      // save, so the deadline and the last-write-wins rule are enforced by the
+      // database rather than by whatever the queued payload claims.
+      exam_answer: async ({ attemptId, questionId, selectedKey, clientAnsweredAt }) => {
+        const { error } = await saveAcademyExamAnswer(
+          attemptId,
+          questionId,
+          selectedKey,
+          clientAnsweredAt,
+        );
+        if (error) throw error;
+      },
+      exam_submit: async ({ attemptId, reason, clientSubmittedAt }) => {
+        const { error } = await submitAcademyExamAttempt(
+          attemptId,
+          reason,
+          clientSubmittedAt,
+        );
         if (error) throw error;
       },
     };
