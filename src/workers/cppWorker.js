@@ -1,3 +1,13 @@
+// Loosest first. findTopLevel returns the rightmost match, so splitting a level
+// at a time parses each level left to right, which is the associativity C++ uses.
+const PRECEDENCE = [
+  ["||"],
+  ["&&"],
+  ["==", "!=", "<=", ">=", "<", ">"],
+  ["+", "-"],
+  ["*", "/", "%"],
+];
+
 const MAX_OUTPUT = 100000;
 const MAX_STEPS = 10000;
 
@@ -103,7 +113,38 @@ function findTopLevel(value, operators) {
     if (character === "(" || character === "[" || character === "{") depth -= 1;
     if (depth !== 0) continue;
     const operator = operators.find((item) => value.slice(index, index + item.length) === item);
-    if (operator) return { index, operator };
+    if (!operator) continue;
+    // A + or - with nothing meaningful before it is a sign, not an operation.
+    // Without this, `value * -1` split at the sign and tried to evaluate
+    // `value *`, which then failed as an unknown expression.
+    if (operator === "+" || operator === "-") {
+      const before = value.slice(0, index).replace(/\s+$/, "");
+      if (before === "" || /[+\-*/%<>=!(&|,]$/.test(before)) continue;
+    }
+    return { index, operator };
+  }
+  return null;
+}
+
+// Returns { name, index } for `name[...]`, or null. The closing bracket is found
+// by counting rather than by a greedy regex, because `centre[step] < left[step]`
+// otherwise matched with the whole comparison swallowed as the index.
+function parseArrayAccess(expression) {
+  const match = expression.match(/^([A-Za-z_]\w*)\[/);
+  if (!match) return null;
+  let depth = 1;
+  let index = match[0].length;
+  for (; index < expression.length; index += 1) {
+    const character = expression[index];
+    if (character === "[") depth += 1;
+    else if (character === "]") {
+      depth -= 1;
+      if (depth === 0) {
+        return index === expression.length - 1
+          ? { name: match[1], index: expression.slice(match[0].length, index) }
+          : null;
+      }
+    }
   }
   return null;
 }
@@ -175,9 +216,14 @@ class BeginnerCpp {
     if (expression === "false") return false;
     if (/^-?\d+(\.\d+)?$/.test(expression)) return Number(expression);
     if (expression.startsWith("!")) return !this.evaluate(expression.slice(1));
-    const arrayAccess = expression.match(/^([A-Za-z_]\w*)\[(.+)\]$/);
-    if (arrayAccess && this.arrays.has(arrayAccess[1])) {
-      return this.arrays.get(arrayAccess[1])[Number(this.evaluate(arrayAccess[2]))] ?? null;
+    // Unary minus, so `x * -1` works. It is the standard way to make a value
+    // positive again, and it appeared in the course content as `value * -1`.
+    if (/^-\s*[\w(]/.test(expression) && !/^-[\s\d.]/.test(expression.slice(1))) {
+      return -this.evaluate(expression.slice(1));
+    }
+    const arrayAccess = parseArrayAccess(expression);
+    if (arrayAccess && this.arrays.has(arrayAccess.name)) {
+      return this.arrays.get(arrayAccess.name)[Number(this.evaluate(arrayAccess.index))] ?? null;
     }
     if (expression.endsWith("++") || expression.endsWith("--")) {
       const variable = expression.slice(0, -2).trim();
@@ -190,32 +236,57 @@ class BeginnerCpp {
     if (functionCall && this.functions.has(functionCall[1])) {
       return this.callFunction(functionCall[1], functionCall[2]);
     }
-    const operators = ["<=", ">=", "==", "!=", "&&", "||", "+", "-", "*", "/", "%", "<", ">"];
-    const operation = findTopLevel(expression, operators);
-    if (operation) {
+    // The conditional operator, tightest of all, so it is handled before the
+    // binary levels. `kept > 0 ? total / kept : 0` is the natural way to avoid
+    // dividing by zero and appeared in the course content.
+    const question = findTopLevel(expression, ["?"]);
+    if (question) {
+      const condition = expression.slice(0, question.index).trim();
+      const rest = expression.slice(question.index + 1);
+      const colon = findTopLevel(rest, [":"]);
+      if (colon) {
+        const whenTrue = rest.slice(0, colon.index).trim();
+        const whenFalse = rest.slice(colon.index + 1).trim();
+        return this.evaluate(condition)
+          ? this.evaluate(whenTrue)
+          : this.evaluate(whenFalse);
+      }
+    }
+
+    // C++ precedence, applied one level at a time from the loosest. Splitting on
+    // the rightmost operator of the whole expression at once, which is what this
+    // did, got mixed expressions wrong: in `a < b && c < d` it split at the last
+    // `<` and then tried to evaluate `300 && attempts` as a number.
+    for (const level of PRECEDENCE) {
+      const operation = findTopLevel(expression, level);
+      if (!operation) continue;
       const left = expression.slice(0, operation.index).trim();
       const right = expression.slice(operation.index + operation.operator.length).trim();
-      const leftValue = this.evaluate(left);
-      const rightValue = this.evaluate(right);
-      switch (operation.operator) {
-        case "+": return typeof leftValue === "string" || typeof rightValue === "string" ? `${leftValue}${rightValue}` : leftValue + rightValue;
-        case "-": return leftValue - rightValue;
-        case "*": return leftValue * rightValue;
-        case "/": return leftValue / rightValue;
-        case "%": return leftValue % rightValue;
-        case "<": return leftValue < rightValue;
-        case ">": return leftValue > rightValue;
-        case "<=": return leftValue <= rightValue;
-        case ">=": return leftValue >= rightValue;
-        case "==": return leftValue === rightValue;
-        case "!=": return leftValue !== rightValue;
-        case "&&": return Boolean(leftValue && rightValue);
-        case "||": return Boolean(leftValue || rightValue);
-        default: break;
-      }
+      if (!left || !right) continue;
+      return this.applyOperator(operation.operator, this.evaluate(left), this.evaluate(right));
     }
     if (this.variables.has(expression)) return this.variables.get(expression);
     throw new Error(`This beginner console lab does not support the expression: ${expression}`);
+  }
+
+  applyOperator(operator, leftValue, rightValue) {
+    switch (operator) {
+      case "+": return typeof leftValue === "string" || typeof rightValue === "string" ? `${leftValue}${rightValue}` : leftValue + rightValue;
+      case "-": return leftValue - rightValue;
+      case "*": return leftValue * rightValue;
+      case "/": return leftValue / rightValue;
+      case "%": return leftValue % rightValue;
+      case "<": return leftValue < rightValue;
+      case ">": return leftValue > rightValue;
+      case "<=": return leftValue <= rightValue;
+      case ">=": return leftValue >= rightValue;
+      case "==": return leftValue === rightValue;
+      case "!=": return leftValue !== rightValue;
+      case "&&": return Boolean(leftValue && rightValue);
+      case "||": return Boolean(leftValue || rightValue);
+      default:
+        return undefined;
+    }
   }
 
   emit(value) {
@@ -415,10 +486,13 @@ class BeginnerCpp {
       this.arrays.set(arraySizing[1], new Array(Number(arraySizing[2])).fill(0));
       return;
     }
-    const arrayAssignment = text.match(/^([A-Za-z_]\w*)\[(\d+)\]\s*=\s*(.+)$/);
-    if (arrayAssignment && this.arrays.has(arrayAssignment[1])) {
-      const array = this.arrays.get(arrayAssignment[1]);
-      array[Number(arrayAssignment[2])] = this.evaluate(arrayAssignment[3]);
+    // The index may be any expression, not just digits: copying into
+    // kept[count] as you filter a list is ordinary C++ and was refused.
+    const arrayAssignment = parseArrayAccess(text.match(/^(.+?)\s*=\s*([\s\S]+)$/)?.[1] ?? "");
+    if (arrayAssignment && this.arrays.has(arrayAssignment.name)) {
+      const value = text.match(/^(.+?)\s*=\s*([\s\S]+)$/)[2];
+      const array = this.arrays.get(arrayAssignment.name);
+      array[Number(this.evaluate(arrayAssignment.index))] = this.evaluate(value);
       return;
     }
     const declaration = text.match(/^(?:const\s+)?((?:unsigned\s+)?(?:long|short|int|double|float|bool|char|string))\s+([A-Za-z_]\w*)\s*=\s*(.+)$/);

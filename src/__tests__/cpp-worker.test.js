@@ -165,3 +165,54 @@ describe("honest failures", () => {
     expect(() => run(main("  int n;\n  cin >> n;"))).toThrow(/Input is not available/);
   });
 });
+
+describe("operator precedence", () => {
+  it("multiplies before adding", () => {
+    expect(run(main("  cout << 2 + 3 * 4 << endl;"))).toBe("14\n");
+  });
+
+  it("still respects parentheses", () => {
+    expect(run(main("  cout << (2 + 3) * 4 << endl;"))).toBe("20\n");
+  });
+
+  it("compares before combining with and", () => {
+    // Splitting on the rightmost operator of the whole expression, which is what
+    // this did first, tried to evaluate "300 && attempts" as a number and then
+    // looped forever or gave up.
+    expect(
+      run(main("  int a = 3; int b = 5; int c = 1; int d = 9;\n  if (a < b && c < d) {\n    cout << \"both\" << endl;\n  }")),
+    ).toBe("both\n");
+  });
+
+  it("compares two array elements in one condition", () => {
+    // The array-access pattern was greedy, so `centre[step] < left[step] && ...`
+    // was read as one array index and the whole comparison was lost.
+    expect(
+      run(main("  int left[2]; int centre[2]; int right[2];\n  left[0] = 40; centre[0] = 10; right[0] = 20;\n  left[1] = 5; centre[1] = 40; right[1] = 30;\n  for (int step = 0; step < 2; step++) {\n    if (centre[step] < left[step] && centre[step] < right[step]) {\n      cout << \"forward\" << endl;\n    } else if (left[step] < right[step]) {\n      cout << \"left\" << endl;\n    } else {\n      cout << \"right\" << endl;\n    }\n  }")),
+    ).toBe("forward\nleft\n");
+  });
+
+  it("treats a trailing minus as a sign, not an operation", () => {
+    // `difference * -1` split at the sign and tried to evaluate `difference *`.
+    expect(
+      run(main("  int difference = 5;\n  if (difference < 0) {\n    difference = difference * -1;\n  }\n  cout << difference << endl;")),
+    ).toBe("5\n");
+  });
+
+  it("runs the conditional operator", () => {
+    expect(run(main("  int kept = 3; int total = 60;\n  cout << (kept > 0 ? total / kept : 0) << endl;"))).toBe(
+      "20\n",
+    );
+    expect(run(main("  int kept = 0; int total = 60;\n  cout << (kept > 0 ? total / kept : 0) << endl;"))).toBe(
+      "0\n",
+    );
+  });
+});
+
+describe("array indices that are expressions", () => {
+  it("assigns through a computed index", () => {
+    expect(
+      run(main("  int kept[3];\n  int count = 0;\n  kept[count] = 7;\n  count++;\n  cout << kept[0] << endl;")),
+    ).toBe("7\n");
+  });
+});
