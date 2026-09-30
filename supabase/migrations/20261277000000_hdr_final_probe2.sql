@@ -1,0 +1,6 @@
+-- Reconciliation entry. Read only, nothing to re-run.
+--
+-- Probing the array path directly produced "wrong number of array subscripts",
+-- which confirmed the value coming back from the splitter was not behaving as a
+-- two dimensional array under subscripting. Rather than keep guessing at array
+-- rank, the reader was rewritten over JSONB, which has no rank.

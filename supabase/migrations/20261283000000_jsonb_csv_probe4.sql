@@ -1,0 +1,13 @@
+-- Reconciliation entry. Read only, nothing to re-run.
+--
+-- The JSONB reader works. rows=10 including the header, comma_intact=1 so a
+-- quoted field with a comma inside survives whole, and each of the six failure
+-- modes in section 3 was caught exactly once with silent=0, meaning no row was
+-- rejected without a reason.
+--
+-- good=4 rather than 3 because the "duplicate" row was not flagged, and that is
+-- correct: the duplicate check looks in the question bank, and previewing a
+-- file does not put anything in the bank. A teacher who re-uploads yesterday's
+-- file after importing it would see it flagged, but a single file containing the
+-- same question twice was not. Added next, since that is the case a teacher
+-- actually meets.

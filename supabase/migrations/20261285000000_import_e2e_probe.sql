@@ -1,0 +1,6 @@
+-- Reconciliation entry. Read only, nothing to re-run.
+--
+-- The probe counted the question bank after switching to the authenticated role,
+-- which is exactly the access the RLS migration denies students and teachers by
+-- direct select. The count has to be taken before the switch. The importer
+-- itself is security definer and is unaffected.

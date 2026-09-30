@@ -1,0 +1,6 @@
+-- Reconciliation entry. Nothing to re-run.
+--
+-- The probe used "= any(problems)" and Postgres tried to cast the literal string
+-- to an array, which says more about the probe than about the importer. The
+-- checks now match on the rendered text instead, which is what a teacher
+-- actually reads.

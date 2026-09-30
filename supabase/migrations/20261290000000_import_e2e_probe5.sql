@@ -1,0 +1,6 @@
+-- Reconciliation entry. Read only, nothing to re-run.
+--
+-- The CSV import works end to end: imported=2 skipped=2, the repeated question
+-- inside one file was caught, the bank grew by exactly two, and both the mcq and
+-- the true_false row arrived with the right options, key, marks and difficulty.
+-- The row with no answer was refused and not written.

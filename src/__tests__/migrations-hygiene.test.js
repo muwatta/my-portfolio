@@ -37,9 +37,16 @@ describe("migrations cannot wedge db push", () => {
   });
 
   it("has a reconciliation entry for every former probe", () => {
-    // Each one is now a no-op comment, which is what keeps the chain moving.
+    // Only files that are actually a throwaway probe need the note. A real
+    // migration can legitimately be called something like remove_probe_data,
+    // because it really does delete probe rows, and demanding a reconciliation
+    // entry of it would be wrong.
     for (const name of files.filter((n) => /probe|verify|reconcil/i.test(n))) {
       const sql = readFileSync(`${MIGRATIONS}/${name}`, "utf8");
+      const isThrowawayProbe = /^\s*do\s*\$\$/m.test(
+        sql.replace(/--.*$/gm, ""),
+      );
+      if (!isThrowawayProbe) continue;
       expect(sql, `${name} should be a recorded no-op`).toMatch(
         /Reconciliation entry|Read only/i,
       );

@@ -4,6 +4,7 @@ const CONTENT_SECTIONS = [
   { label: "Overview", to: "/academy/admin/content", end: true },
   { label: "Courses", to: "/academy/admin/courses" },
   { label: "Lessons", to: "/academy/admin/lessons" },
+  { label: "Question bank", to: "/academy/admin/question-bank" },
   { label: "Practice", to: "/academy/admin/practice" },
   { label: "Assignments", to: "/academy/admin/assignments" },
   { label: "Projects", to: "/academy/admin/projects" },

@@ -1,0 +1,7 @@
+-- Reconciliation entry. Read only, nothing to re-run.
+--
+-- "reset role" did not restore access, because academy_exam_questions has RLS
+-- and the session user is not exempt the way a role switch back would be. The
+-- probe now stays in its own role and only sets the JWT claims, which is enough
+-- for academy_is_teacher to resolve and leaves the direct table reads working.
+-- A teacher only ever sees the functions, which is what the RLS is for.

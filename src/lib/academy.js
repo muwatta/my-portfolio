@@ -2268,3 +2268,197 @@ export async function deleteAcademyCourseReview(courseId) {
     .eq("course_id", courseId);
   return { data, error };
 }
+
+// ---------------------------------------------------------------------------
+// Assessment engine: question bank
+//
+// The bank is staff only at the row level, so a student cannot read the answer
+// key. These calls are therefore for teachers, and every one of them is a
+// security definer function rather than a direct table read.
+// ---------------------------------------------------------------------------
+
+export async function getAcademyExamSubjects() {
+  if (!supabase) return { data: null, error: new Error("Academy is not configured.") };
+  const { data, error } = await supabase
+    .from("academy_subjects")
+    .select("id, slug, name, active")
+    .eq("active", true)
+    .order("name");
+  return { data: data ?? [], error };
+}
+
+// Paginated rather than loading the whole bank, because the bank is only going
+// to grow and a teacher does not need every question in the browser at once.
+export async function getAcademyExamQuestions({
+  subjectId = "",
+  difficulty = "",
+  questionType = "",
+  search = "",
+  page = 0,
+  pageSize = 25,
+} = {}) {
+  if (!supabase) return { data: null, error: new Error("Academy is not configured.") };
+  let query = supabase
+    .from("academy_exam_questions")
+    .select(
+      "id, subject_id, topic, difficulty, question_type, prompt, options, correct_key, marks, status, created_at, academy_subjects(name)",
+      { count: "exact" },
+    )
+    .neq("status", "archived")
+    .order("created_at", { ascending: false })
+    .range(page * pageSize, page * pageSize + pageSize - 1);
+
+  if (subjectId) query = query.eq("subject_id", subjectId);
+  if (difficulty) query = query.eq("difficulty", difficulty);
+  if (questionType) query = query.eq("question_type", questionType);
+  if (search.trim()) query = query.ilike("prompt", `%${search.trim()}%`);
+
+  const { data, error, count } = await query;
+  return { data: data ?? [], error, total: count ?? 0 };
+}
+
+export async function getAcademyExamQuestion(questionId) {
+  if (!supabase) return { data: null, error: new Error("Academy is not configured.") };
+  const { data, error } = await supabase
+    .from("academy_exam_questions")
+    .select("id, subject_id, topic, difficulty, question_type, prompt, options, correct_key, explanation, marks, status")
+    .eq("id", questionId)
+    .maybeSingle();
+  return { data, error };
+}
+
+export async function saveAcademyExamQuestion(question) {
+  if (!supabase) return { data: null, error: new Error("Academy is not configured.") };
+  const options = Array.isArray(question.options)
+    ? question.options
+        .filter((option) => option?.label)
+        .map((option, index) => ({
+          key: option.key || String.fromCharCode(65 + index),
+          label: String(option.label).trim(),
+        }))
+    : [];
+
+  const payload = {
+    subject_id: question.subject_id,
+    topic: String(question.topic ?? "").trim(),
+    difficulty: question.difficulty,
+    question_type: question.question_type,
+    prompt: String(question.prompt ?? "").trim(),
+    options,
+    correct_key: question.correct_key,
+    marks: Number(question.marks) || 1,
+    status: question.status || "active",
+  };
+  if (question.id) {
+    const { data, error } = await supabase
+      .from("academy_exam_questions")
+      .update(payload)
+      .eq("id", question.id)
+      .select()
+      .single();
+    return { data, error };
+  }
+  const { data, error } = await supabase
+    .from("academy_exam_questions")
+    .insert(payload)
+    .select()
+    .single();
+  return { data, error };
+}
+
+// Archived rather than deleted. A question that has already sat in an exam must
+// not disappear from the record, and its fingerprint has to stay spent so it is
+// not reimported as new.
+export async function archiveAcademyExamQuestion(questionId) {
+  if (!supabase) return { data: null, error: new Error("Academy is not configured.") };
+  const { data, error } = await supabase
+    .from("academy_exam_questions")
+    .update({ status: "archived" })
+    .eq("id", questionId)
+    .select("id")
+    .single();
+  return { data, error };
+}
+
+// Dry run. The teacher sees every row, what is wrong with it, and imports
+// nothing yet, which is section 3.
+export async function previewAcademyExamCsvImport(csv, { subjectId = null, allowDuplicates = false } = {}) {
+  if (!supabase) return { data: null, error: new Error("Academy is not configured.") };
+  const { data, error } = await supabase.rpc("academy_exam_preview_csv", {
+    p_csv: csv,
+    p_default_subject_id: subjectId || null,
+    p_allow_duplicates: allowDuplicates,
+  });
+  return { data: data ?? [], error };
+}
+
+export async function importAcademyExamCsv(
+  csv,
+  { subjectId = null, allowDuplicates = false, onlyValid = true } = {},
+) {
+  if (!supabase) return { data: null, error: new Error("Academy is not configured.") };
+  const { data, error } = await supabase.rpc("academy_exam_import_csv", {
+    p_csv: csv,
+    p_default_subject_id: subjectId || null,
+    p_allow_duplicates: allowDuplicates,
+    p_import_only_valid: onlyValid,
+  });
+  const row = Array.isArray(data) ? data[0] : null;
+  return {
+    data: {
+      imported: row?.imported ?? 0,
+      skipped: row?.skipped ?? 0,
+      problems: row?.problems ?? [],
+    },
+    error,
+  };
+}
+
+// The template a teacher downloads, with the exact headers the importer expects
+// and two worked examples, one of each type.
+export function academyExamCsvTemplate() {
+  const rows = [
+    [
+      "question",
+      "type",
+      "option_a",
+      "option_b",
+      "option_c",
+      "option_d",
+      "correct_answer",
+      "marks",
+      "subject",
+      "topic",
+      "difficulty",
+    ],
+    [
+      "What is 2 + 2?",
+      "mcq",
+      "3",
+      "4",
+      "5",
+      "6",
+      "B",
+      "1",
+      "Python",
+      "Arithmetic",
+      "easy",
+    ],
+    [
+      "Python lists are mutable.",
+      "true_false",
+      "True",
+      "False",
+      "",
+      "",
+      "True",
+      "1",
+      "Python",
+      "Introduction",
+      "easy",
+    ],
+  ];
+  return rows
+    .map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(","))
+    .join("\n");
+}

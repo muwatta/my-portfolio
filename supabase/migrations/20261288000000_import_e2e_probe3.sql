@@ -1,0 +1,5 @@
+-- Reconciliation entry. Nothing to re-run.
+--
+-- Counted the question bank after switching role, which the RLS migration
+-- denies. All direct reads belong before the switch; only the functions are
+-- called as a teacher.
