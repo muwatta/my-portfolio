@@ -45,7 +45,7 @@ export default function AcademyTeacherDashboard() {
   // to the tab. Grading moves fast, but so does getting distracted, and
   // replacing the page the moment they alt-tab is worse than being a minute
   // behind. RefreshControl gives them the choice.
-  useAutoRefresh(load, { interval: 120000 });
+  useAutoRefresh(load, { interval: 120000, refreshOnFocus: true });
 
   const totals = data?.totals ?? {};
   const grading = data?.needsGrading ?? [];

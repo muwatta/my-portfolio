@@ -22,7 +22,7 @@ export default function AcademyAdminAccess() {
   }, []);
 
   // Same reasoning as the dashboards: no refresh on tab return.
-  useAutoRefresh(load, { interval: 120000 });
+  useAutoRefresh(load, { interval: 120000, refreshOnFocus: true });
 
   async function changeAdmin(userId, enabled) {
     const { error } = await setAcademyAdmin(userId, enabled);

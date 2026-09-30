@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAcademyAuth } from "../hooks/useAcademyAuth";
 import { getAcademyLessons } from "../lib/academy";
@@ -7,6 +7,7 @@ import { OFFLINE_STORES } from "../lib/offlineStore";
 import DownloadedCourseManager from "../components/academy/DownloadedCourseManager";
 import AcademyConnectionState from "../components/academy/AcademyConnectionState";
 import { useNetworkStatus } from "../hooks/useNetworkStatus";
+import { useAutoRefresh } from "../hooks/useAutoRefresh";
 
 const LESSON_STATUS = {
   completed: {
@@ -30,47 +31,61 @@ export default function AcademyLessons() {
   const [offline, setOffline] = useState(false);
   const { user } = useAcademyAuth();
   const network = useNetworkStatus();
-  const [reloadToken, setReloadToken] = useState(0);
 
-  useEffect(() => {
-    fetchWithOfflineFallback({
-      userId: user.id,
-      store: OFFLINE_STORES.lessons,
-      fetcher: () => getAcademyLessons(user.id),
-    }).then(({ data, error, configured, offline: isOffline }) => {
-      setOffline(Boolean(isOffline));
-      if (error) setState("error");
-      else if (!configured) setState("unconfigured");
-      else {
-        const grouped = new Map();
-        (data ?? []).forEach((lesson) => {
-          const weekNumber = lesson.academy_weeks?.week_number ?? 0;
-          const weekTitle = lesson.academy_weeks?.title ?? `Week ${weekNumber}`;
-          const entry = grouped.get(weekNumber) ?? {
-            week_number: weekNumber,
-            week_title: weekTitle,
-            lessons: [],
-          };
-          entry.lessons.push(lesson);
-          grouped.set(weekNumber, entry);
-        });
-        setWeeks(
-          [...grouped.values()]
-            .sort((a, b) => a.week_number - b.week_number)
-            .map((week) => ({
-              ...week,
-              lessons: week.lessons.sort(
-                (a, b) =>
-                  (a.sort_order ?? a.lesson_number ?? 0) -
-                    (b.sort_order ?? b.lesson_number ?? 0) ||
-                  (a.lesson_number ?? 0) - (b.lesson_number ?? 0),
-              ),
-            })),
-        );
-        setState("ready");
-      }
+
+  // Extracted so the page can refetch on its own. The prerequisite chain is
+  // what makes this matter: a student finishes a lesson, comes back to this list
+  // and the next one is still marked locked, because nothing asked again. That
+  // reads as a bug in the unlock, and it is not.
+  const load = useCallback(async () => {
+    const { data, error, configured, offline: isOffline } =
+      await fetchWithOfflineFallback({
+        userId: user.id,
+        store: OFFLINE_STORES.lessons,
+        fetcher: () => getAcademyLessons(user.id),
+      });
+    setOffline(Boolean(isOffline));
+    if (error) {
+      setState("error");
+      return;
+    }
+    if (!configured) {
+      setState("unconfigured");
+      return;
+    }
+    const grouped = new Map();
+    (data ?? []).forEach((lesson) => {
+      const weekNumber = lesson.academy_weeks?.week_number ?? 0;
+      const weekTitle = lesson.academy_weeks?.title ?? `Week ${weekNumber}`;
+      const entry = grouped.get(weekNumber) ?? {
+        week_number: weekNumber,
+        week_title: weekTitle,
+        lessons: [],
+      };
+      entry.lessons.push(lesson);
+      grouped.set(weekNumber, entry);
     });
-  }, [user.id, reloadToken]);
+    setWeeks(
+      [...grouped.values()]
+        .sort((a, b) => a.week_number - b.week_number)
+        .map((week) => ({
+          ...week,
+          lessons: week.lessons.sort(
+            (a, b) =>
+              (a.sort_order ?? a.lesson_number ?? 0) -
+                (b.sort_order ?? b.lesson_number ?? 0) ||
+              (a.lesson_number ?? 0) - (b.lesson_number ?? 0),
+          ),
+        })),
+    );
+    setState("ready");
+  }, [user.id]);
+
+  // refreshOnFocus so coming back to the tab shows the current unlock state
+  // rather than whatever was true when the page was opened. The hook already
+  // skips a hidden tab, an offline tab, and a background refresh while the
+  // reader is typing, and it collapses the focus and visibility events into one.
+  useAutoRefresh(load, { interval: 120000, refreshOnFocus: true });
 
   const totalLessons = weeks.reduce(
     (sum, week) => sum + week.lessons.length,
@@ -131,7 +146,7 @@ export default function AcademyLessons() {
           onRetry={
             network.online
               ? undefined
-              : () => setReloadToken((value) => value + 1)
+              : () => load()
           }
         />
       )}

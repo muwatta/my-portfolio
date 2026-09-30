@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import AcademyExamRunner from "../components/academy/AcademyExamRunner";
 import {
   getAcademyAvailableExams,
@@ -6,6 +6,7 @@ import {
   getAcademyExamLiveAttempt,
 } from "../lib/academy";
 import { useNetworkStatus } from "../hooks/useNetworkStatus";
+import { useAutoRefresh } from "../hooks/useAutoRefresh";
 import { friendlyError } from "../lib/utils";
 
 const SUBMIT_REASONS = {
@@ -54,9 +55,11 @@ export default function AcademyExams() {
     setLive(Object.fromEntries(entries));
   }, []);
 
-  useEffect(() => {
-    load();
-  }, [load]);
+  // Replaced the bare useEffect. An exam's state changes constantly: an attempt
+  // is finished in another tab, a teacher releases results, the window reopens.
+  // Refetching on return means the list says what is true now rather than what
+  // was true when the page opened.
+  useAutoRefresh(load, { interval: 120000, refreshOnFocus: true });
 
   if (active) {
     return (

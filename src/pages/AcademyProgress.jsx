@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   getAcademyExamHistory,
@@ -9,6 +9,7 @@ import { useAcademyAuth } from "../hooks/useAcademyAuth";
 import ProgressBar from "../components/academy/ProgressBar";
 import { fetchWithOfflineFallback } from "../lib/academyOffline";
 import { OFFLINE_STORES } from "../lib/offlineStore";
+import { useAutoRefresh } from "../hooks/useAutoRefresh";
 
 // Averaged over released results only. An unreleased attempt has no percentage
 // and must not drag the figure down as though it were a zero.
@@ -32,35 +33,42 @@ export default function AcademyProgress() {
   const [overview, setOverview] = useState(null);
   const [exams, setExams] = useState(null);
 
-  useEffect(() => {
-    getAcademyStudentOverview(user.id).then(({ data }) => setOverview(data));
+  // One load for everything on the page, so a return to the tab brings back one
+  // consistent view rather than three that each refetch on their own.
+  const load = useCallback(async () => {
+    const [summary, history] = await Promise.all([
+      getAcademyStudentOverview(user.id),
+      // Exam history used not to appear on this page at all, so a student could
+      // score 80% and see it in exactly one place. It is the student's own
+      // record, so there is nothing to weigh here: it is part of their progress,
+      // and it goes stale the moment a teacher releases a result.
+      getAcademyExamHistory(),
+    ]);
+    if (summary.data !== undefined) setOverview(summary.data ?? null);
+    setExams(history.data ?? []);
   }, [user.id]);
 
-  // An exam used to appear nowhere on this page, so a student could score 80%
-  // and see it in exactly one place. Exam history is the student's own record,
-  // so there is nothing to weigh here: it is simply part of their progress.
   useEffect(() => {
     let cancelled = false;
-    getAcademyExamHistory().then(({ data }) => {
-      if (!cancelled) setExams(data ?? []);
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [user.id]);
-
-  useEffect(() => {
     fetchWithOfflineFallback({
       userId: user.id,
       store: OFFLINE_STORES.progress,
       id: "summary",
       fetcher: () => getAcademyProgress(user.id),
     }).then(({ data, error, configured, offline: isOffline }) => {
+      if (cancelled) return;
       setOffline(Boolean(isOffline));
       setProgress(data);
       setState(error ? "error" : configured ? "ready" : "unconfigured");
     });
+    return () => {
+      cancelled = true;
+    };
   }, [user.id]);
+
+  useAutoRefresh(load, { interval: 120000, refreshOnFocus: true });
+
+
 
   if (state === "loading")
     return (

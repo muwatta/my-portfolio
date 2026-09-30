@@ -26,7 +26,7 @@ export default function AcademyAdminDashboard() {
   }, []);
   // Slow poll, and no refresh when the tab regains focus. Refreshing the moment
   // someone comes back is what used to throw away their place on the page.
-  useAutoRefresh(load, { interval: 120000 });
+  useAutoRefresh(load, { interval: 120000, refreshOnFocus: true });
   const learningHours = Math.round((overview?.learningSeconds ?? 0) / 3600);
   const cards = [
     ["Students", overview?.students ?? 0],

@@ -1,5 +1,10 @@
 const CACHE_PREFIX = "muwatta-academy";
-const CACHE_VERSION = "v6";
+// Bumped whenever a deploy changes the app, because a returning visitor keeps
+// the previously cached bundle until this moves. Navigation requests are already
+// network first, so a hard refresh always gets fresh HTML, but the hashed assets
+// it pulls in are cache first, and a new deploy produces new names. Without a
+// bump here, an old app can sit in the cache indefinitely on a flaky connection.
+const CACHE_VERSION = "v7";
 const APP_SHELL_CACHE = `${CACHE_PREFIX}-shell-${CACHE_VERSION}`;
 const ASSET_CACHE = `${CACHE_PREFIX}-assets-${CACHE_VERSION}`;
 const CONTENT_CACHE = `${CACHE_PREFIX}-content-${CACHE_VERSION}`;
