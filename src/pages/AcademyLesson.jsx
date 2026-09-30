@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import {
   getAcademyLesson,
+  isAcademyLessonUnlocked,
   markLessonComplete,
   markLessonStarted,
 } from "../lib/academy";
@@ -21,6 +22,7 @@ export default function AcademyLesson() {
   const { user } = useAcademyAuth();
   const [lesson, setLesson] = useState(null);
   const [state, setState] = useState("loading");
+  const [locked, setLocked] = useState(false);
   const [completed, setCompleted] = useState(false);
   const [step, setStep] = useState("learn");
   const [notice, setNotice] = useState("");
@@ -28,18 +30,47 @@ export default function AcademyLesson() {
   const network = useNetworkStatus();
 
   useEffect(() => {
-    if (navigator.onLine) void markLessonStarted(id, user.id).catch(() => undefined);
-    fetchWithOfflineFallback({
-      userId: user.id,
-      store: OFFLINE_STORES.lessons,
-      id,
-      fetcher: () => getAcademyLesson(id, user.id),
-    }).then(({ data, error, configured, offline }) => {
+    let cancelled = false;
+    // Ask the server whether this lesson is available before marking it started
+    // or rendering it. Marking first and swallowing the failure, which is what
+    // this used to do, meant a locked lesson still displayed its content and the
+    // refusal was invisible.
+    (async () => {
+      const { data: available, error: checkError } = await isAcademyLessonUnlocked(
+        id,
+        user.id,
+      );
+      if (cancelled) return;
+      // Only an explicit "no" locks the lesson. If the question could not be
+      // asked, showing a locked screen would strand a student on a network blip,
+      // and it would be a lie about their progress. The server still refuses a
+      // locked lesson when it is actually started, so the worst case here is a
+      // page whose actions then fail, which is the lesser of the two.
+      if (!checkError && available === false) {
+        setLocked(true);
+        setState("ready");
+        return;
+      }
+      setLocked(false);
+      if (navigator.onLine) {
+        void markLessonStarted(id, user.id).catch(() => undefined);
+      }
+      const result = await fetchWithOfflineFallback({
+        userId: user.id,
+        store: OFFLINE_STORES.lessons,
+        id,
+        fetcher: () => getAcademyLesson(id, user.id),
+      });
+      if (cancelled) return;
+      const { data, error, configured, offline } = result;
       setLesson(data);
       setCompleted(Boolean(data?.progress?.completed_at));
       setState(error ? "error" : configured ? "ready" : "unconfigured");
       if (offline) setCompleted(Boolean(data?.progress?.completed_at));
-    });
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, [id, user.id, reloadToken]);
 
   async function completeLesson() {
@@ -77,6 +108,22 @@ export default function AcademyLesson() {
       <p className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">
         Connect Supabase to load this lesson.
       </p>
+    );
+  if (locked)
+    return (
+      <section className="space-y-4 rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900">
+        <h1 className="text-xl font-bold">This lesson is not unlocked yet</h1>
+        <p className="text-sm text-slate-600 dark:text-slate-300">
+          Lessons open in order. Finish the one before this and it will unlock
+          straight away, with nothing extra to do.
+        </p>
+        <Link
+          to="/academy/lessons"
+          className="inline-flex min-h-11 items-center rounded-lg px-3 text-sm font-semibold text-blue-600 hover:text-blue-700 dark:text-blue-400"
+        >
+          Back to your lessons
+        </Link>
+      </section>
     );
   if (state === "error" || !lesson)
     return (

@@ -1431,6 +1431,25 @@ export async function markLessonStarted(lessonId, studentId) {
   return { error };
 }
 
+// Whether the server considers this lesson available to this student right now.
+// Asked before a lesson is rendered rather than inferred from the caller's own
+// progress rows, because the chain is the server's decision and a client that
+// reimplemented it would eventually disagree with it.
+//
+// On error it returns data: null rather than guessing. The caller decides what
+// an unanswered question means; a caller that cannot tell "locked" from "could
+// not ask" must not treat the two the same.
+export async function isAcademyLessonUnlocked(lessonId, studentId) {
+  if (!supabase) return { data: null, error: new Error("Academy is not configured.") };
+  if (!studentId) return { data: null, error: new Error("Authentication required.") };
+  const { data, error } = await supabase.rpc("academy_lesson_is_unlocked_for_student", {
+    p_student_id: studentId,
+    p_lesson_id: lessonId,
+  });
+  if (error) return { data: null, error };
+  return { data: Boolean(data), error: null };
+}
+
 export async function getAcademyLesson(id, studentId) {
   if (!supabase) return unavailable(null);
   return withAcademyCache(`lesson:${id}:${studentId ?? "anon"}`, 10 * 60 * 1000, async () => {

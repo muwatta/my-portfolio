@@ -158,12 +158,17 @@ export default function AcademyLessons() {
               {week.lessons.map((lesson) => {
                 const status =
                   LESSON_STATUS[lesson.status] ?? LESSON_STATUS.default;
-                return (
-                  <Link
-                    key={lesson.id}
-                    to={`/academy/lessons/${lesson.id}`}
-                    className="rounded-xl border border-slate-200 bg-slate-50 p-5 transition-colors hover:border-amber-400 dark:border-slate-800 dark:bg-slate-950 dark:hover:border-amber-500"
-                  >
+                const locked = lesson.status === "locked";
+                // A locked lesson is not a link. The database already refuses to
+                // start it, but a link that goes nowhere is worse than no link:
+                // it looks like the content is missing rather than earned.
+                const className = `rounded-xl border p-5 transition-colors ${
+                  locked
+                    ? "cursor-not-allowed border-slate-200 bg-slate-100 dark:border-slate-800 dark:bg-slate-950/60"
+                    : "border-slate-200 bg-slate-50 hover:border-amber-400 dark:border-slate-800 dark:bg-slate-950 dark:hover:border-amber-500"
+                }`;
+                const body = (
+                  <>
                     <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                       Lesson {lesson.lesson_number}
                     </p>
@@ -176,6 +181,29 @@ export default function AcademyLessons() {
                     >
                       {status.label}
                     </p>
+                  </>
+                );
+
+                if (locked) {
+                  return (
+                    <div
+                      key={lesson.id}
+                      className={className}
+                      aria-disabled="true"
+                      title="Finish the previous lesson to unlock this one"
+                    >
+                      {body}
+                    </div>
+                  );
+                }
+
+                return (
+                  <Link
+                    key={lesson.id}
+                    to={`/academy/lessons/${lesson.id}`}
+                    className={className}
+                  >
+                    {body}
                   </Link>
                 );
               })}
