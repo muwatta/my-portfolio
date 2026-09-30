@@ -1,0 +1,5 @@
+-- Reconciliation entry. Nothing to re-run.
+--
+-- Written before the header fix landed, so it ran against the broken preview
+-- function and raised. A probe that raises is never recorded, so it retried on
+-- every push. Re-run after the fix in the next migration.

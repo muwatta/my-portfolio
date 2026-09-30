@@ -1,0 +1,7 @@
+-- Reconciliation entry. Nothing to re-run.
+--
+-- Seeded a probe class, subject, two questions and an active exam, used to attack
+-- the assessment engine. The first attempt looked the account owner up by email
+-- and got nothing, because probing lower(email) on this database has given
+-- contradictory answers more than once now, so the fixture pins the owner id
+-- instead. Lesson recorded rather than rediscovered.

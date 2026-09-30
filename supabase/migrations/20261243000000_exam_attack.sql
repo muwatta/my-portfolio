@@ -1,0 +1,7 @@
+-- Reconciliation entry. Nothing to re-run.
+--
+-- An early attack probe. Left unrecorded because it raised, which is why db push
+-- kept retrying it. The useful finding from it is recorded in the probe that
+-- replaced it: a profile whose role column says student can still satisfy
+-- academy_is_teacher if it sits in academy_admins, so the start_attempt guard
+-- refused it. The guard was working; the fixture was wrong.

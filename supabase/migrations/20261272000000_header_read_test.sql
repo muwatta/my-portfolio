@@ -1,0 +1,7 @@
+-- Reconciliation entry. Read only, nothing to re-run.
+--
+-- Isolated the fault precisely. generate_subscripts gives the right two rows, so
+-- the iteration is fine, but every value came back null. The loop variable was
+-- declared text[][] while each element of the splitter's result is already a
+-- text[], so the per row value never landed in it. Same class of mistake as the
+-- earlier flattening: getting the array rank wrong.

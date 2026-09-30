@@ -1,0 +1,6 @@
+-- Reconciliation entry. Nothing to re-run.
+--
+-- Idempotent fixture for the assessment engine tests: one probe subject, one
+-- probe class, one mcq and one true_false question, and an active exam holding
+-- a snapshot of both. Written to run once and be found by title, because a
+-- fixture that raises is never recorded and so re-runs on every db push.

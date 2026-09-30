@@ -1,0 +1,3 @@
+-- Reconciliation entry. Nothing to re-run.
+--
+-- Used the jsonb ? operator against a text[] in one assertion. Re-run corrected.

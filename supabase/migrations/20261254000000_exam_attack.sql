@@ -1,0 +1,6 @@
+-- Reconciliation entry. Nothing to re-run.
+--
+-- The attack found a real leak: a student could read both correct_key values
+-- straight out of academy_exam_question_links, because RLS had not been enabled
+-- on the new tables. The paper function was never the weak point; the table
+-- underneath it was. Fixed in the next migration and re-attacked after it.

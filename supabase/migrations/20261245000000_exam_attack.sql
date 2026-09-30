@@ -1,0 +1,7 @@
+-- Reconciliation entry. Nothing to re-run.
+--
+-- The first attempt picked a profile with role 'student' and was refused with
+-- "Teachers take the paper from the preview". That guard working is the point:
+-- the profile chosen turned out to be in academy_admins, so academy_is_teacher
+-- was true for it. The fixture now picks somebody who is not an administrator
+-- and not a teacher.

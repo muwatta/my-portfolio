@@ -1,0 +1,8 @@
+-- Reconciliation entry. Read only, nothing to re-run.
+--
+-- Confirmed the engine's own view of a student: a profile whose role is student,
+-- which is not in academy_admins, reports auth.uid() correctly, is_admin false
+-- and is_teacher false. The earlier refusal was a bad fixture, not a bad guard.
+--
+-- Also surfaced that academy_admins now holds four rows where two were expected.
+-- Audited and cleaned in the next migration.

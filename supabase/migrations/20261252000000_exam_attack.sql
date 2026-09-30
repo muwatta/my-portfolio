@@ -1,0 +1,5 @@
+-- Reconciliation entry. Nothing to re-run.
+--
+-- Surfaces a real bug: academy_exam_paper raised "column reference question_id is
+-- ambiguous" from its lateral join, so no student could ever load a paper.
+-- Rewritten in the next migration.
