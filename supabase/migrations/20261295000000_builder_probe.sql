@@ -1,0 +1,19 @@
+-- Reconciliation entry. Read only, nothing to re-run.
+--
+-- The exam builder passes, and the part that mattered most is proven:
+--
+--   add_mcq=keysABCD/ansC
+--   add_tf=ansB
+--   shortfall=true
+--
+-- A question authored with option keys 1/2/3/4 and a correct answer of "3" went
+-- into the exam as keys A, B, C, D with the answer on C, which is the third
+-- option. A true/false question whose answer was written as the word "False" went
+-- in as B. So a question can be authored or imported with any keys at all and
+-- still reaches a student as a clean A/B/C or A/B with the answer pointing at
+-- the right letter. That was the specific risk, since a wrong letter would mark
+-- every student wrong.
+--
+-- Asking for five hard questions when the bank has none was reported rather than
+-- quietly filled from the easy pool. fill_added=0 in this run because the
+-- medium pool was empty for the same reason, which is the correct answer.

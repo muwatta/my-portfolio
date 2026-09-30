@@ -2462,3 +2462,107 @@ export function academyExamCsvTemplate() {
     .map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(","))
     .join("\n");
 }
+
+// ---------------------------------------------------------------------------
+// Assessment engine: exam builder
+//
+// Every one of these is a security definer function, because the exam snapshot
+// holds the correct answers and a teacher must not be able to read it with a
+// plain select either.
+// ---------------------------------------------------------------------------
+
+export async function getAcademyExams() {
+  if (!supabase) return { data: null, error: new Error("Academy is not configured.") };
+  const { data, error } = await supabase
+    .from("academy_exams")
+    .select(
+      "id, title, subject_id, class_id, level_id, instructions, duration_minutes, starts_at, ends_at, pass_mark, randomize_questions, randomize_options, allow_review, allow_early_submit, max_attempts, results_published, status, academy_subjects(name), academy_classes(name)",
+    )
+    .order("starts_at", { ascending: false });
+  return { data: data ?? [], error };
+}
+
+export async function createAcademyExam(details) {
+  if (!supabase) return { data: null, error: new Error("Academy is not configured.") };
+  const { data, error } = await supabase.rpc("academy_exam_create", {
+    p_title: details.title,
+    p_subject_id: details.subject_id || null,
+    p_class_id: details.class_id || null,
+    p_level_id: details.level_id || null,
+    p_instructions: details.instructions ?? "",
+    // Per exam, because a Python paper and a Robotics paper are not the same
+    // length. Never a global default.
+    p_duration_minutes: Number(details.duration_minutes) || 20,
+    p_starts_at: details.starts_at || null,
+    p_ends_at: details.ends_at || null,
+    p_pass_mark: details.pass_mark === "" || details.pass_mark == null
+      ? null
+      : Number(details.pass_mark),
+    p_randomize_questions: Boolean(details.randomize_questions),
+    p_randomize_options: Boolean(details.randomize_options),
+    p_allow_review: details.allow_allow_review ?? true,
+    p_allow_early_submit: Boolean(details.allow_early_submit),
+    p_max_attempts: Number(details.max_attempts) || 1,
+  });
+  return { data, error };
+}
+
+export async function getAcademyExamQuestionsInExam(examId) {
+  if (!supabase) return { data: null, error: new Error("Academy is not configured.") };
+  const { data, error } = await supabase.rpc("academy_exam_paper_preview", {
+    p_exam_id: examId,
+  });
+  return { data: data ?? [], error };
+}
+
+export async function addAcademyExamQuestion(examId, questionId) {
+  if (!supabase) return { data: null, error: new Error("Academy is not configured.") };
+  const { data, error } = await supabase.rpc("academy_exam_add_question", {
+    p_exam_id: examId,
+    p_question_id: questionId,
+  });
+  return { data, error };
+}
+
+export async function removeAcademyExamQuestion(examId, questionId) {
+  if (!supabase) return { data: null, error: new Error("Academy is not configured.") };
+  const { data, error } = await supabase.rpc("academy_exam_remove_question", {
+    p_exam_id: examId,
+    p_question_id: questionId,
+  });
+  return { data, error };
+}
+
+// The mix is a specification, not a single number: ask for five easy, four medium
+// and one hard, or twenty five mcq and five true/false.
+export async function fillAcademyExamFromMix(examId, mix) {
+  if (!supabase) return { data: null, error: new Error("Academy is not configured.") };
+  const { data, error } = await supabase.rpc("academy_exam_fill_from_mix", {
+    p_exam_id: examId,
+    p_difficulty_counts: mix.difficulties,
+    p_type_counts: mix.types ?? null,
+    p_subject_id: mix.subject_id || null,
+    p_topic: mix.topic || null,
+  });
+  const row = Array.isArray(data) ? data[0] : null;
+  return {
+    data: { added: row?.added ?? 0, short_by: row?.short_by ?? null },
+    error,
+  };
+}
+
+export async function publishAcademyExam(examId) {
+  if (!supabase) return { data: null, error: new Error("Academy is not configured.") };
+  const { data, error } = await supabase.rpc("academy_exam_publish", {
+    p_exam_id: examId,
+  });
+  return { data, error };
+}
+
+export async function validateAcademyExam(examId) {
+  if (!supabase) return { data: null, error: new Error("Academy is not configured.") };
+  const { data, error } = await supabase.rpc("academy_exam_validate", {
+    p_exam_id: examId,
+  });
+  return { data: data ?? [], error };
+}

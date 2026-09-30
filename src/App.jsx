@@ -123,6 +123,7 @@ const AcademyAdminPractice = lazy(() => import("./pages/AcademyAdminPractice"));
 const AcademyAdminProjects = lazy(() => import("./pages/AcademyAdminProjects"));
 const AcademyAdminMaterials = lazy(() => import("./pages/AcademyAdminMaterials"));
 const AcademyAdminQuestionBank = lazy(() => import("./pages/AcademyAdminQuestionBank"));
+const AcademyAdminExamBuilder = lazy(() => import("./pages/AcademyAdminExamBuilder"));
 const AcademyMaterials = lazy(() => import("./pages/AcademyMaterials"));
 const AcademyAdminAccess = lazy(() => import("./pages/AcademyAdminAccess"));
 const AcademyProfile = lazy(() => import("./pages/AcademyProfile"));
@@ -396,7 +397,15 @@ function AppShell() {
                               path="/academy/admin/submissions/:submissionId"
                               element={<AcademyTeacherSubmissions />}
                             />
-                                          <Route
+                                                        <Route
+                path="/academy/admin/exams"
+                element={
+                  <AcademyAdminGuard>
+                    <AcademyAdminExamBuilder />
+                  </AcademyAdminGuard>
+                }
+              />
+<Route
                 path="/academy/admin/question-bank"
                 element={
                   <AcademyAdminGuard>
