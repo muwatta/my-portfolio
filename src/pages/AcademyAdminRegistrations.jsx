@@ -43,12 +43,27 @@ export default function AcademyAdminRegistrations() {
     ]);
     setRows(registrationResult.data ?? []);
     setStudents(studentResult.data?.students ?? []);
-    setError(
-      friendlyError(
-        [registrationResult.error, studentResult.error].filter(Boolean)[0],
-        "Registration numbers could not be loaded.",
-      ),
-    );
+
+    // Report the registration failure on its own rather than merged with the
+    // student list, so a message about numbers never gets blamed on students
+    // and the other way round.
+    if (registrationResult.error) {
+      setError(
+        friendlyError(
+          registrationResult.error,
+          "Registration numbers could not be loaded. Try again in a moment.",
+        ),
+      );
+    } else if (studentResult.error) {
+      setError(
+        friendlyError(
+          studentResult.error,
+          "The student list could not be loaded.",
+        ),
+      );
+    } else {
+      setError("");
+    }
     setLoading(false);
   }, [search, status]);
 
