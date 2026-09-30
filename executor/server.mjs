@@ -118,9 +118,23 @@ function runLimited(command, args, options = {}) {
     child.stdout.on("data", collect("out"));
     child.stderr.on("data", collect("err"));
 
+    // A child that exits without reading its stdin closes the pipe, and the
+    // pending write then fails with EPIPE. That is ordinary, not exceptional:
+    // most exercises print without reading anything. Left unhandled it is an
+    // unhandled 'error' event, which takes down the whole executor, so a
+    // student who submitted a program that ignores its input could take the
+    // grading service offline for everyone.
+    child.stdin.on("error", () => {
+      /* the program did not read its input; nothing to do */
+    });
+
     if (options.input !== undefined && !child.stdin.destroyed) {
-      child.stdin.write(options.input);
-      child.stdin.end();
+      try {
+        child.stdin.write(options.input);
+        child.stdin.end();
+      } catch {
+        /* the pipe closed between the check and the write */
+      }
     }
 
     const finish = (result) => {

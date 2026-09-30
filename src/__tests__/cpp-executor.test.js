@@ -53,11 +53,23 @@ beforeAll(async () => {
     env: { ...process.env, EXECUTOR_TOKEN: TOKEN, PORT, CXX: "g++" },
     stdio: ["ignore", "pipe", "pipe"],
   });
-  await new Promise((resolve) => {
+  // Waiting on a timeout alone turns "the server never started" into a wall of
+  // unrelated failures, because a bind conflict looks exactly like a slow boot.
+  // An early exit is a real error and says so.
+  await new Promise((resolve, reject) => {
+    const failFast = (code, signal) =>
+      reject(
+        new Error(
+          `executor exited before listening (code=${code} signal=${signal}); port ${PORT} may already be in use`,
+        ),
+      );
+    server.on("exit", failFast);
     server.stdout.on("data", (chunk) => {
-      if (String(chunk).includes("listening")) resolve();
+      if (!String(chunk).includes("listening")) return;
+      server.off("exit", failFast);
+      resolve();
     });
-    setTimeout(resolve, 4000);
+    setTimeout(resolve, 8000);
   });
 }, 20000);
 
@@ -139,6 +151,55 @@ suite("the C++ executor grades real programs", () => {
   it("rejects a request with no tests rather than scoring nothing", async () => {
     const result = await call({ source_code: CORRECT, tests: [] });
     expect(result.status).toBe(400);
+  });
+
+  it("survives a program that ignores its input and exits at once", async () => {
+    // This killed the executor. The child never reads stdin, so the pipe closes
+    // while the write is still pending and the failure surfaces as EPIPE. With
+    // no error handler on child.stdin that is an unhandled 'error' event, which
+    // exits the process: one student submitting a program that prints a constant
+    // would have taken grading down for everyone.
+    const ignoresInput = "int main() { return 0; }";
+    for (let attempt = 0; attempt < 5; attempt += 1) {
+      const result = await call({
+        source_code: ignoresInput,
+        tests: [{ name: "no read", input: ["1", "2", "3"], expected: "" }],
+        max_score: 10,
+      });
+      expect(result.status).toBe(200);
+    }
+    // Still serving, which is the part that matters.
+    const after = await call({ source_code: CORRECT, tests: TESTS, max_score: 10 });
+    expect(after.body.status).toBe("completed");
+  });
+
+  it("survives a large input to a program that never reads it", async () => {
+    // Just inside the 16 KiB input bound, and far more than a pipe buffer holds,
+    // so the write is still pending when the child exits. That is the ordinary
+    // EPIPE case rather than a rare race.
+    const bigInput = "9\n".repeat(4000);
+    const result = await call({
+      source_code: "int main() { return 0; }",
+      tests: [{ name: "flooded", input: [bigInput], expected: "" }],
+      max_score: 10,
+    });
+    expect(result.status).toBe(200);
+    const after = await call({ source_code: CORRECT, tests: TESTS, max_score: 10 });
+    expect(after.body.status).toBe("completed");
+  });
+
+  it("refuses an over-limit input cleanly instead of crashing", async () => {
+    // The bound is a control, so it is worth pinning. A 400 is the correct answer
+    // here; a dead process would not be.
+    const result = await call({
+      source_code: CORRECT,
+      tests: [{ name: "too big", input: ["9\n".repeat(20000)], expected: "5" }],
+      max_score: 10,
+    });
+    expect(result.status).toBe(400);
+    expect(result.body.error).toMatch(/too large/);
+    const after = await call({ source_code: CORRECT, tests: TESTS, max_score: 10 });
+    expect(after.body.status).toBe("completed");
   });
 
   it("rejects a test with no expected value", async () => {
