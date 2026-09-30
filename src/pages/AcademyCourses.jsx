@@ -7,6 +7,7 @@ import {
 } from "../lib/academy";
 import { useAcademyAuth } from "../hooks/useAcademyAuth";
 import { friendlyError } from "../lib/utils";
+import { settleAll } from "../lib/settle";
 import CourseReviews from "../components/academy/CourseReviews";
 import DownloadedCourseManager from "../components/academy/DownloadedCourseManager";
 import { fetchWithOfflineFallback } from "../lib/academyOffline";
@@ -23,16 +24,22 @@ export default function AcademyCourses() {
 
   useEffect(() => {
     let mounted = true;
-    Promise.all([
-      fetchWithOfflineFallback({
-        userId: user?.id,
-        store: OFFLINE_STORES.courses,
-        id: "list:courses",
-        fetcher: () => getAcademyCourses(),
-      }),
-      user?.id && navigator.onLine
-        ? getActiveCourseForStudent(user.id)
-        : Promise.resolve({ data: null }),
+    // Settled individually. If the active-course lookup rejected, Promise.all
+    // rejected with it, setState never ran and this page sat on its loading
+    // state showing nothing and saying nothing, which reads as a blank page
+    // rather than as a failed request.
+    settleAll([
+      () =>
+        fetchWithOfflineFallback({
+          userId: user?.id,
+          store: OFFLINE_STORES.courses,
+          id: "list:courses",
+          fetcher: () => getAcademyCourses(),
+        }),
+      () =>
+        user?.id && navigator.onLine
+          ? getActiveCourseForStudent(user.id)
+          : Promise.resolve({ data: null }),
     ]).then(([courseResult, active]) => {
       if (!mounted) return;
       setOffline(Boolean(courseResult.offline));
@@ -110,6 +117,7 @@ export default function AcademyCourses() {
 
       <div className="grid gap-4 md:grid-cols-2">
         {courses.map((course) => {
+          const subjectName = course.academy_subjects?.name ?? null;
           const isActive = activeCourse?.id === course.id;
           const isLocked = Boolean(activeCourse) && !isActive;
           return (
@@ -124,9 +132,10 @@ export default function AcademyCourses() {
               }`}
             >
               <div className="flex flex-wrap gap-2 text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                {course.academy_subjects?.name && (
-                  <span>{course.academy_subjects.name}</span>
-                )}
+                {/* Resolved once, so the guard and the use cannot drift apart.
+                    Reading it twice meant safety depended on the line above, which
+                    no linter and no reviewer can verify. */}
+                {subjectName && <span>{subjectName}</span>}
                 {isActive && (
                   <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300">
                     Current path

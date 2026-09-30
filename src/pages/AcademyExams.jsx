@@ -8,6 +8,7 @@ import {
 import { useNetworkStatus } from "../hooks/useNetworkStatus";
 import { useAutoRefresh } from "../hooks/useAutoRefresh";
 import { friendlyError } from "../lib/utils";
+import { settle, settleAll } from "../lib/settle";
 
 const SUBMIT_REASONS = {
   student: "Handed in",
@@ -36,21 +37,36 @@ export default function AcademyExams() {
   const { online } = useNetworkStatus();
 
   const load = useCallback(async () => {
-    const [result, past] = await Promise.all([
-      getAcademyAvailableExams(),
-      getAcademyExamHistory(),
-    ]);
+    // Never rejects, and always reaches a terminal state. This used to be a
+    // Promise.all, so one failing call meant setState never ran, the page sat on
+    // "Loading examinations..." for ever and showed no error at all, and the
+    // auto refresh swallowed the rejection so nothing ever said otherwise. That
+    // is the whole of the "loads and shows nothing until I refresh" report.
+    const [result, past] = await settleAll([
+      () => getAcademyAvailableExams(),
+      () => getAcademyExamHistory(),
+    ], []);
+
     setExams(result.data ?? []);
     setHistory(past.data ?? []);
-    setError(friendlyError(result.error, "Examinations could not be loaded."));
+    // The list decides the state, not the history. History failing is worth
+    // saying, but it is not the page, and turning it into an error state would
+    // blank a perfectly good list of papers over a secondary panel.
+    const failed = result.error || past.error;
+    setError(failed ? friendlyError(failed, "Examinations could not be loaded.") : "");
     setState(result.error ? "error" : "ready");
 
     // A refresh mid exam should come back to the same paper, not a new attempt.
+    // A failure here must not take the list down with it, so each one settles on
+    // its own and a failed lookup just means that paper shows as not started.
+    const exams = result.data ?? [];
     const entries = await Promise.all(
-      (result.data ?? []).map(async (exam) => {
-        const attempt = await getAcademyExamLiveAttempt(exam.id);
-        return [exam.id, attempt.data ?? null];
-      }),
+      exams.map((exam) =>
+        settle(() => getAcademyExamLiveAttempt(exam.id), null).then((attempt) => [
+          exam.id,
+          attempt?.data ?? null,
+        ]),
+      ),
     );
     setLive(Object.fromEntries(entries));
   }, []);

@@ -56,8 +56,10 @@ describe("the existing committed PDFs are not disturbed", () => {
   });
 
   it("serves a static material without a signed URL", () => {
+    // Committed to the repository and served from the app, so a plain path is
+    // correct for these and needs no signature. Only uploaded objects need one.
     expect(lib).toMatch(/material\.storage_kind !== "storage"/);
-    expect(lib).toContain('return { data: { url: `/${material.storage_path}` }, error: null };');
+    expect(lib).toMatch(/return \{ data: \{ url: `\/\$\{String\(material\.storage_path\)/);
   });
 });
 

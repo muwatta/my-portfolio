@@ -153,6 +153,7 @@ export default function AcademyLesson() {
   // Driven by academy_courses.language so a new course in a new language needs
   // no change here.
   const courseLanguage = lesson.academy_weeks?.academy_courses?.language ?? "python";
+  const courseSlug = lesson.academy_weeks?.academy_courses?.slug ?? "";
   const isCppCourse = courseLanguage === "cpp";
   const isTerminalCourse = courseLanguage === "shell";
   const practice = lesson.exercises ?? [];
@@ -174,7 +175,7 @@ export default function AcademyLesson() {
       </Link>
       <header>
         <p className="text-sm font-semibold uppercase tracking-[0.18em] text-blue-600">
-          Week {lesson.academy_weeks.week_number}
+          Week {lesson.academy_weeks?.week_number ?? "?"}
         </p>
         <h1 className="mt-2 text-4xl font-bold tracking-tight">
           {lesson.title}
@@ -193,7 +194,7 @@ export default function AcademyLesson() {
       <section id="topic-step-learn">
         <h2 className="text-xl font-bold">What you will learn</h2>
         <ul className="mt-3 list-disc space-y-2 pl-5 text-slate-600 dark:text-slate-300">
-          {lesson.objectives.map((objective) => (
+          {(lesson.objectives ?? []).map((objective) => (
             <li key={objective}>{objective}</li>
           ))}
         </ul>
@@ -231,8 +232,10 @@ export default function AcademyLesson() {
           <TerminalEditor starterScript={content.starter_code} />
         </section>
       )}
-      {lesson.academy_weeks.academy_courses.slug ===
-        "python-for-ai-machine-learning" && (
+      {/* Optional all the way down. These come from a join, and a lesson whose
+          week or course is missing used to throw here and take the whole page
+          with it, which is what a blank page with no error is. */}
+      {courseSlug === "python-for-ai-machine-learning" && (
         <section className="space-y-3">
           <div>
             <p className="text-sm font-semibold uppercase tracking-[0.18em] text-blue-600">

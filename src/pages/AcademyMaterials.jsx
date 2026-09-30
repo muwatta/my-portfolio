@@ -3,19 +3,14 @@ import { Link } from "react-router-dom";
 import { useAcademyAuth } from "../hooks/useAcademyAuth";
 import {
   getAcademyCourseMaterials,
+  getAcademyMaterialUrl,
   getActiveCourseForStudent,
 } from "../lib/academy";
 import { cacheOfflineAsset, removeOfflineAsset, OFFLINE_STORES } from "../lib/offlineStore";
 import { fetchWithOfflineFallback } from "../lib/academyOffline";
 import AcademyConnectionState from "../components/academy/AcademyConnectionState";
 import { useNetworkStatus } from "../hooks/useNetworkStatus";
-
-function assetUrl(storagePath) {
-  const path = String(storagePath  ??  "");
-  if (!path) return null;
-  if (/^https?:\/\//.test(path)) return path;
-  return `/${path.replace(/^\//, "")}`;
-}
+import { settle } from "../lib/settle";
 
 function formatBytes(bytes) {
   const value = Number(bytes  ??  0);
@@ -31,6 +26,7 @@ export default function AcademyMaterials() {
   const [materials, setMaterials] = useState([]);
   const [state, setState] = useState("loading");
   const [downloaded, setDownloaded] = useState({});
+  const [urls, setUrls] = useState({});
   const [downloading, setDownloading] = useState("");
   const network = useNetworkStatus();
   const [reloadToken, setReloadToken] = useState(0);
@@ -54,15 +50,48 @@ export default function AcademyMaterials() {
     };
   }, [user.id, reloadToken]);
 
+  // A real URL per material, resolved through getAcademyMaterialUrl.
+  //
+  // This used to build `/${storage_path}` on the app's own origin. For a
+  // committed file that is right. For an uploaded one it is not: the bucket is
+  // private and the object key is not a path on this origin, so the link 404ed
+  // into the app's single-page fallback and the browser saved a few kilobytes of
+  // index.html under the name of the PDF. That is the small file students were
+  // getting, and nothing was wrong with the upload.
+  useEffect(() => {
+    if (!materials.length) {
+      setUrls({});
+      return undefined;
+    }
+    let cancelled = false;
+    void (async () => {
+      const entries = await Promise.all(
+        materials.map(async (material) => {
+          const result = await settle(() =>
+            getAcademyMaterialUrl(material),
+          );
+          if (result.error) return [material.id, null];
+          return [material.id, result.data?.url ?? null];
+        }),
+      );
+      if (!cancelled) setUrls(Object.fromEntries(entries));
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [materials]);
+
+  // Checked against the resolved URL, so "downloaded" means the actual file is
+  // on the device and not some address that never served it.
   useEffect(() => {
     if (!materials.length || !("caches" in window)) return;
     void Promise.all(
       materials.map(async (material) => {
-        const url = assetUrl(material.storage_path);
+        const url = urls[material.id];
         return [material.id, url ? Boolean(await caches.match(url)) : false];
       }),
     ).then((entries) => setDownloaded(Object.fromEntries(entries)));
-  }, [materials]);
+  }, [materials, urls]);
 
   return (
     <div className="space-y-8">
@@ -116,9 +145,9 @@ export default function AcademyMaterials() {
       {materials.length > 0 && (
         <ul className="grid gap-4 md:grid-cols-2">
           {materials.map((material) => {
-            const url = assetUrl(material.storage_path);
+            const url = urls[material.id];
   async function downloadMaterial(material) {
-    const url = assetUrl(material.storage_path);
+    const url = urls[material.id];
     if (!url) return;
     setDownloading(material.id);
     try {
@@ -130,7 +159,7 @@ export default function AcademyMaterials() {
   }
 
   async function removeMaterial(material) {
-    const url = assetUrl(material.storage_path);
+    const url = urls[material.id];
     if (!url) return;
     await removeOfflineAsset(url);
     setDownloaded((current) => ({ ...current, [material.id]: false }));

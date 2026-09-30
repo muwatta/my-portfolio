@@ -1,5 +1,6 @@
 import { lazy, Suspense, useEffect } from "react";
 import { Navigate, Routes, Route, useLocation } from "react-router-dom";
+import ErrorBoundary from "./components/academy/ErrorBoundary";
 import { useAcademyBranding } from "./hooks/useAcademyBranding";
 import { HelmetProvider } from "react-helmet-async";
 import { MotionConfig } from "framer-motion";
@@ -159,6 +160,11 @@ function AppShell() {
                 <Loader>
                   {!isAdminRoute && !isAcademyRoute && <Navbar />}
                   <main id="main-content" className="flex-grow">
+                    {/* Around the outlet, not inside a route, so a throw anywhere
+                        becomes a message with a way out rather than a blank
+                        page. resetKey is the location, so navigating away clears
+                        it and one broken page cannot follow anyone around. */}
+                    <ErrorBoundary resetKey={`${pathname}${search}`}>
                     <Suspense fallback={<PageLoader />}>
                       <Routes>
                         <Route path="/" element={<Home />} />
@@ -456,6 +462,7 @@ function AppShell() {
                         <Route path="*" element={<NotFound />} />
                       </Routes>
                     </Suspense>
+                    </ErrorBoundary>
                   </main>
                   {!isAdminRoute && !isAcademyRoute && <Footer />}
                 </Loader>

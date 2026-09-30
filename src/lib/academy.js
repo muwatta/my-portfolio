@@ -215,10 +215,15 @@ export async function getAcademyCourses() {
     const { data, error } = await supabase
       .from("academy_courses")
       .select(
-        "id, slug, title, description, duration_weeks, academy_subjects(name, slug), course_family, is_programming_course",
+        "id, slug, title, description, duration_weeks, sort_order, academy_subjects(name, slug), course_family, is_programming_course",
       )
       .eq("published", true)
-      .order("title");
+      // By sort_order, then by id so the order is total and two courses can
+      // never swap places between loads. Ordering by title, which is what this
+      // did, put C++ before Python before Terminal, which is not the order
+      // anybody set and is the "scattered" symptom.
+      .order("sort_order", { ascending: true })
+      .order("id", { ascending: true });
     return { data: data ?? [], error, configured: true };
   });
 }
@@ -1380,8 +1385,12 @@ export async function getAcademyLessons(studentId) {
       .select(lessonSelect)
       .eq("published", true)
       .eq("academy_weeks.course_id", activeCourse.id)
-      .order("academy_weeks(week_number)")
-      .order("lesson_number");
+      // Week, then the deliberate order within it. lesson_number was used on
+      // its own, so anything an administrator reordered was discarded on the
+      // next load, which is how a syllabus ends up looking shuffled.
+      .order("academy_weeks(week_number)", { ascending: true })
+      .order("sort_order", { ascending: true })
+      .order("lesson_number", { ascending: true });
 
     if (error || !studentId) {
       return { data: data ?? [], error, configured: true };
@@ -2011,6 +2020,28 @@ function materialExtension(name) {
   return `.${String(name ?? "").split(".").pop()?.toLowerCase() ?? ""}`;
 }
 
+// Storage rejects anything outside the bucket's allow list, and it matches on
+// the content type the request carries. The browser's own type for a PDF is not
+// reliable: Windows and some Linux desktops report application/octet-stream, an
+// empty string, or application/x-pdf, and all of those are refused. Deriving it
+// from the extension the validation already approved means an upload succeeds
+// whatever the operating system claims the file is.
+const MATERIAL_CONTENT_TYPES = {
+  ".pdf": "application/pdf",
+  ".docx":
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  ".txt": "text/plain",
+  ".md": "text/markdown",
+  ".png": "image/png",
+  ".jpg": "image/jpeg",
+  ".jpeg": "image/jpeg",
+  ".zip": "application/zip",
+};
+
+function materialContentType(extension) {
+  return MATERIAL_CONTENT_TYPES[extension] ?? "application/octet-stream";
+}
+
 export function validateAcademyMaterialFile(file) {
   if (!file) return { valid: false, error: "Choose a file first." };
   const extension = materialExtension(file.name);
@@ -2053,7 +2084,13 @@ async function uploadMaterialObject(file, materialId) {
   const path = materialObjectPath(file, materialId);
   const { error } = await supabase.storage
     .from(MATERIAL_BUCKET)
-    .upload(path, file, { cacheControl: "3600", upsert: false });
+    .upload(path, file, {
+      cacheControl: "3600",
+      upsert: false,
+      // Set explicitly rather than inferred from the File, because the bucket
+      // enforces it and an OS that calls a PDF "octet-stream" would be refused.
+      contentType: materialContentType(materialExtension(file.name)),
+    });
   if (error) return { data: null, error };
   return { data: { path }, error: null };
 }
@@ -2158,17 +2195,41 @@ export async function deleteAcademyMaterial(materialId) {
   return { data, error: null };
 }
 
-export async function getAcademyMaterialUrl(material) {
+// An hour is plenty for opening one file. A downloaded copy that is meant to
+// work with no connection needs longer, because the URL is what was cached and
+// it stops working when it expires. Seven days is a week of offline study, and
+// the student is told to reconnect to refresh it rather than being surprised.
+const MATERIAL_URL_TTL_SECONDS = 60 * 60;
+const MATERIAL_OFFLINE_TTL_SECONDS = 60 * 60 * 24 * 7;
+
+// Returns { url } for every kind of material, because two callers were reading
+// `.url` and one of them got undefined.
+//
+// The important part is that an uploaded file must go through a signed URL. The
+// course-materials bucket is private, and the object key is not a path on the
+// app's origin, so building one and using it as a link hands the browser a URL
+// that 404s into the single-page app's fallback. What a student downloaded in
+// place of their multi-megabyte PDF was a few kilobytes of index.html. There is
+// no size cap anywhere that could have produced that, and the upload itself was
+// always fine.
+export async function getAcademyMaterialUrl(material, { offline = false } = {}) {
   if (!supabase)
     return { data: null, error: new Error("Academy is not configured.") };
   if (material.storage_kind !== "storage") {
-    return { data: { url: `/${material.storage_path}` }, error: null };
+    // Committed to the repository and served from the app, so a plain path is
+    // correct for these and needs no signature.
+    return { data: { url: `/${String(material.storage_path).replace(/^\//, "")}` }, error: null };
   }
   const { data, error } = await supabase.storage
     .from(MATERIAL_BUCKET)
-    .createSignedUrl(material.storage_path, 60 * 30);
+    .createSignedUrl(
+      material.storage_path,
+      offline ? MATERIAL_OFFLINE_TTL_SECONDS : MATERIAL_URL_TTL_SECONDS,
+    );
   if (error) return { data: null, error };
-  return { data, error: null };
+  // Supabase calls it signedUrl. Returning the raw object is why the admin
+  // Open button passed undefined to window.open and showed a blank tab.
+  return { data: { url: data?.signedUrl ?? null, path: data?.path ?? null }, error: null };
 }
 
 // Administrator account management. Deleting or editing an account needs the
