@@ -1,0 +1,5 @@
+-- Reconciliation entry. Read only, nothing to re-run.
+--
+-- academy_exam_split_csv is correct: two rows by three columns, and a quoted
+-- field containing a comma came back whole as "Hi, there". So the fault is in
+-- how academy_exam_preview_csv reads the header out of it.

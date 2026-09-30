@@ -1,0 +1,16 @@
+-- Reconciliation entry. Read only, nothing to re-run.
+--
+-- The assessment engine passes its own attack, verified live as a real student:
+--
+--   link_key_read=REFUSED       the snapshot table holding correct_key is closed
+--   bank_key_read=REFUSED       the question bank is closed
+--   LEAKS_ANSWER=false          academy_exam_paper returns no correct_key
+--   own_marks_readable=REFUSED  is_correct is withheld at the column level
+--   own_score_readable=REFUSED  the graded totals are withheld too
+--   hidden_has_score=false      no score before results are published
+--   graded correct=1 wrong=1 unans=0 score=1.00/2.00 pct=50.00
+--   after_publish_has_score=true pct=50.00
+--
+-- The mark was 50 percent because options are randomised and the probe answered
+-- the first option of each question, which happened to be right for one of the
+-- two. That is the randomisation working, not a fault.

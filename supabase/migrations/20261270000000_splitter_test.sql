@@ -1,0 +1,4 @@
+-- Reconciliation entry. Nothing to re-run.
+--
+-- The splitter is revoked from every role by design, so it has to be exercised
+-- as the owner, before the role switch, not as a signed in user.

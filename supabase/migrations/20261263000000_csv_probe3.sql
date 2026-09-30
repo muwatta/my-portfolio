@@ -1,0 +1,5 @@
+-- Reconciliation entry. Nothing to re-run.
+--
+-- Preview returned zero rows. The loop used with ordinality directly on a
+-- function returning text[][], which treats the whole array as a single row, so
+-- every data row was skipped as if it were the header. Corrected next.

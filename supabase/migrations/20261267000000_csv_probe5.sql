@@ -1,0 +1,3 @@
+-- Reconciliation entry. Nothing to re-run.
+--
+-- Still "malformed array literal". Recorded; the real cause is described next.

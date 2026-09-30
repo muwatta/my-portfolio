@@ -1,0 +1,6 @@
+-- Reconciliation entry. Nothing to re-run.
+--
+-- Caught a second real bug. academy_exam_save_answer refused every legitimate
+-- answer with "That answer is not one of the options", because the condition
+-- raised when any option differed from the chosen key, which is always true.
+-- Corrected in the next migration.

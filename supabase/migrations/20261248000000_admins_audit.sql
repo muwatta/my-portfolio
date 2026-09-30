@@ -1,0 +1,10 @@
+-- Reconciliation entry. Nothing to re-run.
+--
+-- Audited academy_admins after noticing it holds four rows where an earlier note
+-- in this repo said two. The two extra are abdulafarolamilekan41@gmail.com and
+-- shodipoibrahim41@gmail.com, both added 2026-09-30, which is consistent with
+-- them being promoted through the admin access page on purpose.
+--
+-- Deliberately not removed. Removing a real person's administrator access on an
+-- ambiguous reading is the same mistake as deleting the colleague's registration
+-- earlier in this project. Flagged for the account owner to confirm instead.
