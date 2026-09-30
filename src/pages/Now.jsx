@@ -5,13 +5,13 @@ import { Container } from "../components/layout/Container";
 import { SectionHeader } from "../components/ui/SectionHeader";
 import { nowContent } from "../data/now";
 import Seo from "../components/seo/Seo";
+import { PAGE_SEO } from "../data/pageSeo";
 
 export const Now = () => {
   return (
     <div className="min-h-screen bg-white dark:bg-[#06090f] text-slate-800 dark:text-slate-200">
       <Seo
-        title="Now | Abdullahi Musliudeen"
-        description="What Abdullahi Musliudeen is currently working on and focusing on: backend and full-stack engineering."
+        {...PAGE_SEO["/now"]}
         path="/now"
       />
 

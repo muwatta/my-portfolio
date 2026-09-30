@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { skillCategories } from "../data";
 import Seo from "../components/seo/Seo";
+import { PAGE_SEO } from "../data/pageSeo";
 
 const SKILLS = {
   frontend: [
@@ -138,8 +139,7 @@ export default function Skills() {
   return (
     <div className="min-h-screen bg-white dark:bg-[#080c14] text-slate-800 dark:text-slate-200 relative overflow-hidden">
       <Seo
-        title="Skills | Abdullahi Musliudeen Oladipupo"
-        description="Software Developer: Python, Django, Django REST Framework, PostgreSQL, Redis, Celery, Docker and React."
+        {...PAGE_SEO["/skills"]}
         path="/skills"
       >
         <link

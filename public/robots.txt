@@ -1,6 +1,32 @@
 User-agent: *
 Allow: /
+
+# Admin tooling and the logged-in academy. These are behind a sign-in, so a
+# crawler only ever gets the login screen, and letting it into the URL space just
+# spends crawl budget on pages that cannot be indexed anyway. The public academy
+# pages (/academy, /academy/faq, /courses, /courses/:slug) are deliberately not
+# blocked: those are the pages the academy needs in the index.
 Disallow: /admin
 Disallow: /api/
+
+Disallow: /academy/dashboard
+Disallow: /academy/login
+Disallow: /academy/signup
+Disallow: /academy/reset-password
+Disallow: /academy/forgot-password
+Disallow: /academy/lessons
+Disallow: /academy/assignments
+Disallow: /academy/practice
+Disallow: /academy/projects
+Disallow: /academy/progress
+Disallow: /academy/leaderboard
+Disallow: /academy/notifications
+Disallow: /academy/live
+Disallow: /academy/profile
+Disallow: /academy/achievements
+Disallow: /academy/materials
+Disallow: /academy/exams
+Disallow: /academy/teacher
+Disallow: /academy/admin
 
 Sitemap: https://www.muwatta.com.ng/sitemap.xml

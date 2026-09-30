@@ -3,13 +3,13 @@ import { Link } from "react-router-dom";
 import { HiDownload } from "react-icons/hi";
 import { Container } from "../components/layout/Container";
 import Seo from "../components/seo/Seo";
+import { PAGE_SEO } from "../data/pageSeo";
 
 export const Resume = () => {
   return (
     <div className="min-h-screen bg-white dark:bg-[#06090f] text-slate-800 dark:text-slate-200">
       <Seo
-        title="Resume | Abdullahi Musliudeen"
-        description="Resume and CV for Abdullahi Musliudeen: Software Developer building production systems with Django, DRF, PostgreSQL, Redis and React."
+        {...PAGE_SEO["/resume"]}
         path="/resume"
       />
 

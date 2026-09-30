@@ -4,6 +4,7 @@ import emailjs from "emailjs-com";
 import { HiArrowRight } from "react-icons/hi";
 import { FaGithub, FaLinkedin, FaTwitter, FaEnvelope } from "react-icons/fa";
 import Seo from "../components/seo/Seo";
+import { PAGE_SEO } from "../data/pageSeo";
 
 // ─── CONTACT LINKS ────────────────────────────────────────────────────────────
 
@@ -83,8 +84,7 @@ const Contact = () => {
       style={{ fontFamily: "'Syne', sans-serif" }}
     >
       <Seo
-        title="Contact | Abdullahi Musliudeen Oladipupo"
-        description="Open to backend & full-stack engineering opportunities. Get in touch with Abdullahi Musliudeen for contract development or full-time work."
+        {...PAGE_SEO["/contact"]}
         path="/contact"
       >
         <link

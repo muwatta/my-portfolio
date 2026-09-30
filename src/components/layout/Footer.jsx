@@ -61,8 +61,13 @@ const SOCIAL_LINKS = [
   },
 ];
 
+// The link text is the anchor text a crawler reads, so the full brand name
+// rather than a bare arrow. This footer is on every marketing page, which makes
+// it the strongest internal link the site has to the academy.
 const QUICK_LINKS = [
   { name: "Portfolio", href: "/portfolio" },
+  { name: "Courses", href: "/courses" },
+  { name: "Algorise Tech Explorers", href: "/academy" },
   { name: "Blog", href: "/blog" },
   { name: "About", href: "/about" },
   { name: "Contact", href: "/contact" },

@@ -1,6 +1,9 @@
 import { Link } from "react-router-dom";
 import { useTheme } from "../context/useTheme";
 import AcademyFooter from "../components/academy/AcademyFooter";
+import Seo from "../components/seo/Seo";
+import { ACADEMY } from "../data/academy";
+
 
 const tracks = [
   {
@@ -66,6 +69,24 @@ export default function AcademyHome() {
 
   return (
     <div className="min-h-screen bg-[#F2F4F8] text-[#101425] dark:bg-[#0B0F1A] dark:text-slate-100">
+      {/* The prerendered file already carries this, but the crawlers and
+          share-preview bots that do run JavaScript look at the live DOM, and
+          without it they get the portfolio's title and canonical instead. */}
+      <Seo
+        title={`${ACADEMY.name} | Learn Programming, C++ and AI Online`}
+        description={`${ACADEMY.name} is an online tech school teaching Python, C++ for embedded systems, and the terminal, with weekly lessons, graded exercises, and projects you build as you learn.`}
+        path={ACADEMY.path}
+        jsonLd={{
+          "@context": "https://schema.org",
+          "@type": "EducationalOrganization",
+          name: ACADEMY.name,
+          url: ACADEMY.url,
+          founder: {
+            "@type": "Person",
+            name: "Abdullahi Oladipupo Musliudeen",
+          },
+        }}
+      />
       <style>{`
         @media (prefers-reduced-motion: no-preference) {
           .ate-hero-in {

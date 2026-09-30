@@ -5,6 +5,7 @@ import { Container } from "../components/layout/Container";
 import { SectionHeader } from "../components/ui/SectionHeader";
 import { engineeringExperience } from "../data/experience";
 import Seo from "../components/seo/Seo";
+import { PAGE_SEO } from "../data/pageSeo";
 
 export const EngineeringExperience = () => {
   const typeColors = {
@@ -16,8 +17,7 @@ export const EngineeringExperience = () => {
   return (
     <div className="min-h-screen bg-white dark:bg-[#06090f] text-slate-800 dark:text-slate-200">
       <Seo
-        title="Engineering Experience | Abdullahi Musliudeen"
-        description="Production systems built, users served, learners mentored. Engineering impact and domain experience from Abdullahi Musliudeen."
+        {...PAGE_SEO["/engineering-experience"]}
         path="/engineering-experience"
       />
 

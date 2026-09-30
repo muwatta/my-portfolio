@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { FaQuoteLeft } from "react-icons/fa";
 import Seo from "../components/seo/Seo";
+import { PAGE_SEO } from "../data/pageSeo";
 
 // DATA
 
@@ -139,8 +140,7 @@ const About = () => {
       style={{ fontFamily: "'Syne', sans-serif" }}
     >
       <Seo
-        title="About Abdullahi Musliudeen | Software Developer"
-        description="Learn about Abdullahi Musliudeen, a Nigerian software developer building production APIs, Django systems, React applications, and data-driven platforms."
+        {...PAGE_SEO["/about"]}
         path="/about"
         type="profile"
       >

@@ -19,10 +19,10 @@ export const CoursePreview = () => (
           </p>
         </div>
         <Link
-          to="/academy"
+          to="/courses"
           className="font-semibold text-blue-600 dark:text-blue-400"
         >
-          Explore Academy →
+          Browse courses at Algorise Tech Explorers →
         </Link>
       </div>
       <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -32,7 +32,7 @@ export const CoursePreview = () => (
           .map((course) => (
             <Link
               key={course.slug}
-              to="/academy"
+              to={`/courses/${course.slug}`}
               className="rounded-2xl border border-slate-200 bg-white p-5 transition hover:-translate-y-1 hover:border-blue-400 dark:border-slate-800 dark:bg-slate-900"
             >
               <p className="text-xs font-semibold uppercase tracking-wider text-blue-500">

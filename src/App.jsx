@@ -24,6 +24,7 @@ const AcademyAuthProvider = lazy(() =>
 
 const Home = lazy(() => import("./pages/Home"));
 const Portfolio = lazy(() => import("./pages/Portfolio"));
+const PublicCourses = lazy(() => import("./pages/PublicCourses"));
 const ProjectDetail = lazy(() => import("./pages/ProjectDetail"));
 const CourseDetail = lazy(() => import("./pages/CourseDetail"));
 const Contact = lazy(() => import("./pages/Contact"));
@@ -173,7 +174,10 @@ function AppShell() {
                           path="/portfolio/:id"
                           element={<ProjectDetail />}
                         />
-                        <Route path="/courses" element={<Portfolio />} />
+                        {/* Was the Portfolio page, which meant a duplicate of
+                            /portfolio under a course URL and a catalogue that
+                            listed no courses. */}
+                        <Route path="/courses" element={<PublicCourses />} />
                         <Route
                           path="/courses/:slug"
                           element={<CourseDetail />}

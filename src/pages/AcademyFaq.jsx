@@ -1,5 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
+import Seo from "../components/seo/Seo";
+import { ACADEMY } from "../data/academy";
+
 
 const WHATSAPP_NUMBER = "2348142797233";
 const WHATSAPP_HREF = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(
@@ -172,6 +175,14 @@ export default function AcademyFaq() {
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
+      {/* Same reason as the academy home page: a bot that runs JavaScript reads
+          the live DOM, and without this it sees the portfolio's title and
+          canonical. */}
+      <Seo
+        title={`Frequently Asked Questions | ${ACADEMY.name}`}
+        description={`Answers about ${ACADEMY.name} courses, weekly structure, exercises, grading, hardware requirements, and how to get started.`}
+        path={`${ACADEMY.path}/faq`}
+      />
       <header className="border-b border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950">
         <div className="mx-auto flex max-w-3xl items-center justify-between gap-4 px-4 py-5 sm:px-6">
           <Link

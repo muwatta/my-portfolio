@@ -1,13 +1,19 @@
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
+import { HelmetProvider } from "react-helmet-async";
 import { describe, expect, it } from "vitest";
 import AcademyFaq from "../pages/AcademyFaq";
 
+// The page sets its own SEO tags, and react-helmet-async needs a provider above
+// it. AppShell provides one in the real app, so the test does the same rather
+// than rendering a tree that cannot occur.
 function renderFaq() {
   return render(
-    <MemoryRouter>
-      <AcademyFaq />
-    </MemoryRouter>,
+    <HelmetProvider>
+      <MemoryRouter>
+        <AcademyFaq />
+      </MemoryRouter>
+    </HelmetProvider>,
   );
 }
 

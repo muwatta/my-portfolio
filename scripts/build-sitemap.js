@@ -2,6 +2,8 @@ import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { projects } from "../src/data/projects.js";
+import { fetchPublicCourses } from "./lib/academy-catalogue.mjs";
+import { ACADEMY } from "../src/data/academy.js";
 
 const rootDir = join(fileURLToPath(new URL(".", import.meta.url)), "..");
 const siteUrl = "https://www.muwatta.com.ng";
@@ -48,6 +50,16 @@ async function fetchPublishedProjectRoutes() {
 
 async function main() {
   const cmsProjectRoutes = await fetchPublishedProjectRoutes();
+  // The academy is the part that was missing. A page with no sitemap entry is a
+  // page Google has to be told about some other way, and the only other way here
+  // was a link nobody had followed yet.
+  const academyCourses = await fetchPublicCourses(rootDir);
+  const academyRoutes = [
+    ACADEMY.path,
+    `${ACADEMY.path}/faq`,
+    ACADEMY.coursesPath,
+    ...academyCourses.map((course) => `/courses/${course.slug}`),
+  ];
   const routes = [
     "/",
     "/portfolio",
@@ -61,9 +73,13 @@ async function main() {
     ...projects.map((project) => `/portfolio/${project.id}`),
     ...cmsProjectRoutes,
     ...indexablePosts.map((post) => `/blog/${post.id}`),
+    ...academyRoutes,
   ];
 
   const uniqueRoutes = [...new Set(routes)];
+  // No lastmod. Google is told to ignore it when it is not accurate, and a build
+  // timestamp is not: these pages change on their own schedule, not on deploy.
+  // A real per-page date is worth adding when the content model has one.
   const xml = uniqueRoutes
     .map((path) => `  <url><loc>${siteUrl}${path}</loc></url>`)
     .join("\n");
@@ -74,7 +90,7 @@ async function main() {
     "utf8",
   );
   console.log(
-    `✔ Generated public/sitemap.xml with ${uniqueRoutes.length} URLs`,
+    `✔ Generated public/sitemap.xml with ${uniqueRoutes.length} URLs (${academyCourses.length} academy courses)`,
   );
 }
 

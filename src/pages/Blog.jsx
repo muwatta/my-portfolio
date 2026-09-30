@@ -5,6 +5,7 @@ import { FaSearch, FaShareAlt, FaClock } from "react-icons/fa";
 import { HiArrowRight } from "react-icons/hi";
 import { fetchPosts } from "../lib/blog";
 import Seo from "../components/seo/Seo";
+import { PAGE_SEO } from "../data/pageSeo";
 
 const CATEGORIES = ["All", "Tech", "Education", "IoT", "Frontend"];
 
@@ -109,8 +110,7 @@ const Blog = () => {
       style={{ fontFamily: "'Syne', sans-serif" }}
     >
       <Seo
-        title="Writing | Abdullahi Musliudeen Oladipupo"
-        description="Writing on backend engineering, Django REST Framework, API design, system design, DevOps, React and computer vision."
+        {...PAGE_SEO["/blog"]}
         path="/blog"
       >
         <link
