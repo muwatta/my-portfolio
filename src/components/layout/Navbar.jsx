@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { FiMenu, FiX } from "react-icons/fi";
 import { HiSun, HiMoon } from "react-icons/hi";
 import { navItems } from "../../data/navigation";
+import { preloadAcademy } from "../../features/academyPreload";
 import { useTheme } from "../../context/useTheme";
 
 const MotionLink = motion.create(Link);
@@ -146,6 +147,8 @@ function NavBar() {
               <MotionNavLink
                 key={item.name}
                 to={item.path}
+                onMouseEnter={item.path.startsWith("/academy") ? preloadAcademy : undefined}
+                onFocus={item.path.startsWith("/academy") ? preloadAcademy : undefined}
                 className={({ isActive }) =>
                   `relative py-2 text-sm font-medium transition-colors duration-300 ${
                     item.name === "Let's Talk"
@@ -256,6 +259,12 @@ function NavBar() {
                     <NavLink
                       to={item.path}
                       onClick={closeMenu}
+                      onMouseEnter={
+                        item.path.startsWith("/academy") ? preloadAcademy : undefined
+                      }
+                      onFocus={
+                        item.path.startsWith("/academy") ? preloadAcademy : undefined
+                      }
                       className={({ isActive }) =>
                         `block rounded-xl px-4 py-3 text-base font-medium transition-all ${
                           item.name === "Let's Talk"

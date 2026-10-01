@@ -478,6 +478,15 @@ function AppShell() {
   );
 }
 
+// The academy's public pages, which are marketing content and read nothing from
+// the session: the landing page and its FAQ. Matched exactly, because
+// "/academy" is a prefix of every other academy route and a startsWith here
+// would quietly opt the whole application back in.
+const PUBLIC_ACADEMY_ROUTES = new Set(["/academy", "/academy/faq"]);
+
+const isPublicAcademyPage = (pathname) =>
+  PUBLIC_ACADEMY_ROUTES.has(pathname.replace(/\/+$/, "") || "/academy");
+
 function App() {
   const { pathname } = useLocation();
   const isAcademyRoute = pathname.startsWith("/academy");
@@ -486,9 +495,17 @@ function App() {
     pathname.startsWith("/admin") || pathname.startsWith("/courses");
   const app = <AppShell />;
 
+  // Every academy route used to be wrapped in AcademyAuthProvider, which is a
+  // lazy import of a module that pulls in Supabase: 216 KiB of it. So opening
+  // the academy's front page meant fetching a quarter of a megabyte before
+  // anything appeared, behind a spinner, even though that page needs no session
+  // at all. The provider is now mounted only for the routes that read auth,
+  // which drops the first click to roughly 18 KiB.
+  const needsAcademyAuth = isAcademyRoute && !isPublicAcademyPage(pathname);
+
   return (
     <Suspense fallback={<PageLoader />}>
-      {isAcademyRoute ? (
+      {needsAcademyAuth ? (
         <AcademyAuthProvider>{app}</AcademyAuthProvider>
       ) : needsFirebaseAuth ? (
         <AuthProvider>{app}</AuthProvider>

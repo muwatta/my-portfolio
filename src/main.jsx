@@ -3,6 +3,7 @@ import ReactDOM from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
 import { HelmetProvider } from "react-helmet-async";
 import App from "./App";
+import { preloadAcademyWhenIdle } from "./features/academyPreload";
 import "./index.css";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
@@ -14,6 +15,11 @@ ReactDOM.createRoot(document.getElementById("root")).render(
     </HelmetProvider>
   </React.StrictMode>,
 );
+
+// Warm the academy once the browser is idle. Without this the first click on
+// "Academy" waited on a spinner while it fetched its chunks, which on a slow
+// connection is the difference between instant and a couple of seconds.
+preloadAcademyWhenIdle();
 
 // Register Service Worker for PWA support
 if ("serviceWorker" in navigator) {
