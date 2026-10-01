@@ -240,10 +240,42 @@ describe("the executor's isolation is declared, not assumed", () => {
     expect(compose).toMatch(/pids_limit:/);
   });
 
-  it("does not publish a port to the host", () => {
-    // It is reached over the container network or an authenticated proxy, never
-    // straight off the machine.
-    expect(compose).not.toMatch(/^\s*ports:/m);
+  it("does not use network_mode: none, which makes the service unreachable", () => {
+    // Verified against the built image. A container with no network interfaces
+    // cannot be reached either, so every request from the edge function would
+    // fail. It read like the most secure line in the file and was the one line
+    // that could not work at all.
+    expect(compose).not.toMatch(/^\s*network_mode:\s*none/m);
+    expect(compose).not.toMatch(/^\s*--internal\b.*true/m);
+  });
+
+  it("publishes only on loopback, never on a public interface", () => {
+    // The service speaks plain HTTP and holds a bearer token. It must sit behind
+    // a TLS reverse proxy, so the published port is bound to 127.0.0.1.
+    const published = [...compose.matchAll(/^\s*-\s*"([^"]+):(\d+):(\d+)"/gm)].map(
+      (match) => match[1],
+    );
+    expect(published.length).toBeGreaterThan(0);
+    for (const host of published) {
+      expect(host, `port published on ${host}`).toMatch(/^127\.0\.0\.1$|^localhost$/);
+    }
+  });
+
+  it("gives the grader an executable work area and keeps scratch space noexec", () => {
+    // Docker mounts every --tmpfs noexec by default, so the work directory has to
+    // say exec or the grader cannot run what it compiles: the compile succeeds,
+    // the exec is refused, and every submission fails looking like a wrong answer.
+    expect(compose).toMatch(/\/work:rw,exec,/);
+    expect(compose).toMatch(/\/tmp:rw,noexec,/);
+  });
+
+  it("owns the work area, because a tmpfs is mounted root-owned", () => {
+    // The executor does not run as root, so without uid/gid mkdtemp fails EACCES.
+    expect(compose).toMatch(/\/work:[^\n]*uid=10001,gid=10001/);
+  });
+
+  it("points the executor at the work area", () => {
+    expect(compose).toMatch(/WORK_DIR:\s*\/work/);
   });
 
   it("runs as an unprivileged user", () => {

@@ -21,6 +21,23 @@ const latestWith = (needle) =>
 
 const MATERIAL_RPC = "academy_register_material_file";
 
+// The migration that *registers* a file, which is the earliest one that inserts
+// it, not the most recent that mentions it. Later migrations list earlier files in
+// their allow list of static materials that exist, and those contain an insert of
+// their own for a different file, so "latest migration mentioning this one" found
+// the wrong migration and then asserted things its insert never did.
+const registering = (filename) =>
+  files
+    .filter((name) => {
+      const sql = read(name);
+      if (!sql.includes(filename)) return false;
+      if (!/insert into public\.academy_materials/i.test(sql)) return false;
+      // A bare mention inside the allow list is not a registration.
+      const allowList = sql.indexOf("storage_path not in (");
+      return allowList === -1 || sql.indexOf(filename) < allowList;
+    })
+    .sort()[0];
+
 describe("materials show a filename, not a storage path", () => {
   const rpc = latestWith(MATERIAL_RPC);
   const sql = read(rpc);
@@ -91,7 +108,7 @@ describe("no material points at a file that is not in the tree", () => {
 });
 
 describe("the electronics handout is registered, not just committed", () => {
-  const sql = read(latestWith("Electronics_and_Wiring_for_Beginners.pdf"));
+  const sql = read(registering("Electronics_and_Wiring_for_Beginners.pdf"));
 
   it("inserts it against the C++ course", () => {
     expect(sql).toMatch(/insert into public\.academy_materials/);

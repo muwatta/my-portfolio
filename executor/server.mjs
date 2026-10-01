@@ -217,8 +217,18 @@ async function compile(directory, source) {
   return { ok: true, binaryPath };
 }
 
+// Where compiled binaries are written.
+//
+// Split out from tmpdir() on purpose. The sandbox mounts /tmp noexec so that a
+// student cannot stage a binary in the scratch area and run it, but the grader
+// itself has to execute the one binary it just compiled. Writing to /tmp with
+// noexec set means every submission fails, and silently: the compile succeeds and
+// the exec is refused. The container gives the grader its own work directory that
+// is writable and executable, and nothing else uses it.
+const WORK_DIR = process.env.WORK_DIR || tmpdir();
+
 async function grade(sourceCode, tests) {
-  const directory = await mkdtemp(join(tmpdir(), "grade-"));
+  const directory = await mkdtemp(join(WORK_DIR, "grade-"));
   try {
     const compiled = await compile(directory, sourceCode);
     if (!compiled.ok) {

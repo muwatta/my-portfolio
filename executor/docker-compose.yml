@@ -1,12 +1,24 @@
-# How the executor is meant to run. The flags are the security, so they are here
-# rather than in a README to be copied from by hand.
+# How the executor is meant to run.
 #
-# The single most important line is `network_mode: none`. A student program that
-# can open a socket can reach the grading service, the database, or anything else
-# on the network, and no amount of care inside the process compensates for that.
-# It also means the container needs no published port to do its job: the edge
-# function reaches it over the Docker network, or you put it behind a private
-# interface and expose it with an authenticated proxy.
+# Read the network section before changing it. The first version of this file
+# said `network_mode: none`, which reads like the most secure option available
+# and is in fact the one that cannot work: a container with no network interfaces
+# cannot be reached either, so the edge function's every request would fail. It
+# was only found by building the image and trying to call it.
+#
+# The trade is real and there is no single-container answer:
+#
+#   network_mode: none      no egress, and no ingress either. Service dead.
+#   internal: true network  no egress, and port publishing stops working too.
+#   default bridge          ingress works, egress also works.
+#
+# Isolating the student program from the network needs a network namespace per
+# job, which needs CAP_SYS_ADMIN, which is exactly the privilege the rest of this
+# file exists to remove. So this container reaches the outside world, and the
+# student's program shares that. Egress is therefore cut one level up, on the
+# host, with the rules in executor/firewall-executor.sh. That is the only place
+# it can be cut.
+
 services:
   executor:
     build: .
@@ -16,22 +28,42 @@ services:
     environment:
       EXECUTOR_TOKEN: ${EXECUTOR_TOKEN:?set EXECUTOR_TOKEN in .env}
       CXX: /usr/bin/g++
+      WORK_DIR: /work
       TEST_TIMEOUT_MS: "5000"
       COMPILE_TIMEOUT_MS: "15000"
       MAX_MEMORY_MB: "256"
-    # Isolation. Each of these removes a capability the program should not have.
-    network_mode: none
+    # Bound to loopback on purpose. Put a TLS reverse proxy in front of it rather
+    # than exposing this port to the internet: the service speaks plain HTTP and
+    # holds a bearer token. Do not publish it on the host's public interface.
+    ports:
+      - "127.0.0.1:8080:8080"
+
+    # Isolation that does not need a network namespace. All of this is verified
+    # against the built image in src/__tests__/executor-container.test.js.
     read_only: true
     cap_drop:
       - ALL
     security_opt:
       - no-new-privileges:true
     tmpfs:
-      # The only writable path. No exec, so a binary cannot be staged here and run.
+      # Scratch space for the compiler and the program, writable but not
+      # executable, so a student cannot stage a binary here and run it.
       - /tmp:rw,noexec,nosuid,size=64m
+      # Compiled binaries go here and this one *is* executable, because the
+      # grader has to run what it compiles. Without this split the whole
+      # executor is useless: the compile succeeds and the exec is refused, so
+      # every submission fails and nothing says why.
+      # Two defaults of --tmpfs have to be overridden explicitly here, and both
+      # were found only by running the image:
+      #
+      #   exec     Docker mounts every --tmpfs noexec by default, so the grader
+      #            could not run what it compiled. Every submission failed, with
+      #            no error anywhere: the compile succeeded and the exec was
+      #            refused, which reads as a wrong answer.
+      #   uid/gid  A tmpfs is mounted root-owned and the executor does not run as
+      #            root, so mkdtemp failed with EACCES. Owned by the executor user
+      #            rather than 1777 so nothing else on the host can write in.
+      - /work:rw,exec,nosuid,size=64m,uid=10001,gid=10001,mode=0750
     pids_limit: 128
     mem_limit: 512m
     cpus: 1.0
-    # No ports published on purpose. See network_mode above.
-    expose:
-      - "8080"
