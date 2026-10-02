@@ -1,4 +1,5 @@
 import { readFile, writeFile, mkdir } from "node:fs/promises";
+import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import React from "react";
@@ -8,6 +9,8 @@ import { createServer } from "vite";
 import { fetchPublicCourses, courseDescription } from "./lib/academy-catalogue.mjs";
 import { ACADEMY, academyCourseTitle } from "../src/data/academy.js";
 import { PAGE_SEO } from "../src/data/pageSeo.js";
+import { projects } from "../src/data/projects.js";
+import { breadcrumbSchema, pageUrl, absoluteUrl } from "../src/lib/seo.js";
 
 const rootDir = dirname(fileURLToPath(import.meta.url));
 const projectDir = dirname(rootDir);
@@ -67,6 +70,73 @@ const escapeHtml = (value) =>
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;");
+
+// The content pages: one per project and one per published post.
+//
+// These were the last routes still being served index.html, which carries the
+// homepage's canonical and title. Nine project pages and six blog posts were in
+// the sitemap telling Google to index them while the page itself said "this is
+// really the homepage", so Google was told to drop all fifteen. Nothing errored;
+// the sitemap and the served HTML simply disagreed.
+//
+// Titles and descriptions are read from the same fields the page components use,
+// so the prerendered head and the live head cannot drift.
+
+const blogPosts = () => {
+  const posts = JSON.parse(
+    readFileSync(join(projectDir, "public", "blog.json"), "utf8"),
+  );
+  // The same filter build-sitemap applies, so the two cannot disagree about
+  // which posts are indexable.
+  return posts.filter(
+    (post) => post.published !== false && post.id != null && post.title && post.excerpt,
+  );
+};
+
+const projectRoutes = () =>
+  projects.map((project) => ({
+    path: `/portfolio/${project.id}`,
+    title: project.seoTitle || `${project.title} | Muwatta`,
+    description:
+      project.seoDescription || project.shortDescription || project.description,
+    image: project.imageUrl || project.image,
+    canonicalUrl: project.canonicalUrl || undefined,
+    type: "article",
+    h1: project.title,
+  }));
+
+const postRoutes = () =>
+  blogPosts().map((post) => ({
+    path: `/blog/${post.id}`,
+    title: `${post.title} | Abdullahi Musliudeen`,
+    description: post.excerpt,
+    type: "article",
+    jsonLd: [
+      {
+        "@context": "https://schema.org",
+        "@type": "BlogPosting",
+        "@id": `${pageUrl(`/blog/${post.id}`)}#article`,
+        headline: post.title,
+        description: post.excerpt,
+        url: pageUrl(`/blog/${post.id}`),
+        mainEntityOfPage: pageUrl(`/blog/${post.id}`),
+        ...(post.image ? { image: absoluteUrl(post.image) } : {}),
+        author: {
+          "@type": "Person",
+          name: "Abdullahi Oladipupo Musliudeen",
+          url: pageUrl("/about"),
+        },
+        datePublished: post.date,
+        publisher: { "@type": "Person", name: "Abdullahi Oladipupo Musliudeen" },
+      },
+      breadcrumbSchema([
+        { name: "Home", path: "/" },
+        { name: "Writing", path: "/blog" },
+        { name: post.title, path: `/blog/${post.id}` },
+      ]),
+    ],
+    h1: post.title,
+  }));
 
 // A static shell written into #root, which createRoot replaces on hydration.
 // It exists so a crawler that does not run JavaScript still finds text and,
@@ -134,6 +204,9 @@ const renderRoute = async (HelmetProvider, Seo, route) => {
           description: route.description,
           path: route.path,
           jsonLd: route.jsonLd,
+          type: route.type,
+          image: route.image,
+          canonicalUrl: route.canonicalUrl,
         }),
       ),
     ),
@@ -205,7 +278,12 @@ try {
     })),
   ];
 
-  const routes = [...publicRoutes, ...courseRoutes];
+  const routes = [
+    ...publicRoutes,
+    ...courseRoutes,
+    ...projectRoutes(),
+    ...postRoutes(),
+  ];
   const seen = new Set();
   const uniqueRoutes = routes.filter((route) => {
     if (seen.has(route.path)) return false;

@@ -114,6 +114,55 @@ suite("the academy is reachable and describes itself", () => {
   });
 });
 
+suite("every URL in the sitemap is a real, self-canonical page", () => {
+  // This is the test whose absence let 15 pages sit broken in the sitemap.
+  //
+  // Nine project pages and six blog posts were listed there telling Google to
+  // index them, while the page served index.html, which carries the homepage's
+  // canonical and title. So each one said "this is really the homepage" and
+  // Google was told to drop it. Nothing errored and the sitemap and the served
+  // HTML simply disagreed.
+  const sitemap = readFileSync(join(root, "public", "sitemap.xml"), "utf8");
+  const locations = [...sitemap.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1]);
+
+  it("has at least one content page, so the check is not vacuous", () => {
+    const content = locations.filter(
+      (l) => /\/portfolio\//.test(l) || /\/blog\/\d/.test(l),
+    );
+    expect(content.length).toBeGreaterThan(0);
+  });
+
+  it.each(locations)("%s has its own prerendered file", (location) => {
+    const route = location.replace("https://www.muwatta.com.ng", "") || "/";
+    expect(existsSync(join(dist, routeFile(route))), `${route} has no file`).toBe(true);
+  });
+
+  it.each(locations)("%s canonicalises to itself, not to the homepage", (location) => {
+    const route = location.replace("https://www.muwatta.com.ng", "") || "/";
+    const html = read(routeFile(route));
+    const expected = location.replace(/\/$/, "");
+    expect(canonical(html).replace(/\/$/, "")).toBe(expected);
+  });
+
+  it.each(locations.filter((l) => !l.endsWith(".ng/")))(
+    "%s carries its own title, not the site default",
+    (location) => {
+      // The homepage is excluded: its title is the site title, which is correct.
+      // Every other page getting the site title is the signature of index.html
+      // being served in its place.
+      const route = location.replace("https://www.muwatta.com.ng", "") || "/";
+      expect(title(read(routeFile(route)))).not.toMatch(
+        /^Muwatta \| Abdullahi Musliudeen — Software Engineer/,
+      );
+    },
+  );
+
+  it.each(locations)("%s is indexable", (location) => {
+    const route = location.replace("https://www.muwatta.com.ng", "") || "/";
+    expect(read(routeFile(route))).not.toMatch(/noindex/);
+  });
+});
+
 suite("the sitemap covers the public surface", () => {
   const sitemap = readFileSync(join(root, "public", "sitemap.xml"), "utf8");
   const locations = [...sitemap.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1]);
