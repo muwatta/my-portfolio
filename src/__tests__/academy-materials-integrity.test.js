@@ -12,8 +12,20 @@ const MIGRATIONS = "supabase/migrations";
 const files = readdirSync(MIGRATIONS).filter((name) => name.endsWith(".sql"));
 const read = (name) => readFileSync(`${MIGRATIONS}/${name}`, "utf8");
 
-/** The newest migration that defines or redefines a function. */
+// The newest migration that actually *defines* the function, not merely names
+// it. A later migration that only revokes EXECUTE or pins search_path mentions the
+// function without redefining it, and "latest migration mentioning this" then
+// returns a file whose body says none of the things the test is asserting.
 const latestWith = (needle) =>
+  files
+    .filter((name) => read(name).includes(`function public.${needle}(`))
+    .sort()
+    .pop();
+
+// The newest migration that merely *mentions* a string. Used for filenames, where
+// the point is which migration last talked about the file rather than which one
+// defines something.
+const latestMentioning = (needle) =>
   files
     .filter((name) => read(name).includes(needle))
     .sort()
@@ -83,7 +95,7 @@ describe("materials show a filename, not a storage path", () => {
 });
 
 describe("no material points at a file that is not in the tree", () => {
-  const removal = latestWith("ATE_Robotics_Manual_Mr_Muwatta.pdf");
+  const removal = latestMentioning("ATE_Robotics_Manual_Mr_Muwatta.pdf");
   const removalSql = read(removal);
 
   it("deletes the row for the removed robotics manual", () => {
