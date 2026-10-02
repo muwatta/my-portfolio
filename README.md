@@ -520,6 +520,34 @@ Secrets required by server-side functionality must never be exposed through the 
 
 ---
 
+# Supabase Auth settings that SQL cannot manage
+
+Some Auth settings are GoTrue configuration rather than database state, so no
+file in `supabase/migrations/` can set them. Applying every migration will not
+produce the settings below; they have to be applied per project.
+
+| Setting | Value | Why |
+| --- | --- | --- |
+| `password_min_length` | `8` | The signup and reset pages already reject anything shorter, but the server used to accept 6, so anything calling `auth/v1/signup` directly could bypass the UI check. |
+| `password_hibp_enabled` | `true` | Rejects passwords already known to be breached. **Pro plan and above only.** A free-plan project gets `HTTP 402`, so this cannot be enabled there. |
+
+Apply them with the Management API rather than by hand in the dashboard:
+
+```bash
+curl -X PATCH "https://api.supabase.com/v1/projects/<project-ref>/config/auth" \
+  -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"password_min_length":8,"password_hibp_enabled":true}'
+```
+
+Set the fields separately if the project is on the free plan, otherwise the
+`hibp` field fails the whole request and the password length is left unchanged.
+
+Note that `password_hibp_enabled` is the real field name. Patching
+`leaked_password_protection` returns `HTTP 200` and silently does nothing.
+
+---
+
 # Database & Migrations
 
 Academy database changes are maintained through Supabase migrations:
