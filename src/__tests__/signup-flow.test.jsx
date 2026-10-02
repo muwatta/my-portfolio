@@ -46,10 +46,10 @@ describe("Academy signup submission", () => {
       target: { value: "student@example.com" },
     });
     fireEvent.change(screen.getByLabelText("Password"), {
-      target: { value: "password123" },
+      target: { value: "Cplusplus2026!" },
     });
     fireEvent.change(screen.getByLabelText("Confirm password"), {
-      target: { value: "password123" },
+      target: { value: "Cplusplus2026!" },
     });
 
     const submitButton = screen.getByRole("button", {

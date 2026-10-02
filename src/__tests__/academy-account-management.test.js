@@ -17,6 +17,7 @@ const forgot = readFileSync("src/pages/AcademyForgotPassword.jsx", "utf8");
 const reset = readFileSync("src/pages/AcademyResetPassword.jsx", "utf8");
 const profile = readFileSync("src/pages/AcademyAdminStudentProfile.jsx", "utf8");
 const signup = readFileSync("src/lib/registration.js", "utf8");
+const passwordPolicy = readFileSync("src/lib/password.js", "utf8");
 
 describe("one account per email address", () => {
   it("is enforced by a unique index, not by whichever code checked first", () => {
@@ -147,9 +148,19 @@ describe("an expired reset link is not a dead end", () => {
   });
 
   it("rejects the passwords that actually cause lockouts", () => {
-    expect(reset).toMatch(/Use at least 8 characters/);
-    expect(reset).toMatch(/not only numbers/);
+    // The rule itself now lives in one place so signup and reset cannot drift.
+    // This test asserts the reset page still consults it, rather than
+    // re-stating the wording and breaking whenever the copy improves.
+    expect(reset).toMatch(/getAcademyPasswordProblems\(password\)/);
+    expect(reset).toMatch(/Passwords do not match/);
     expect(reset).toMatch(/cannot start or end with a space/);
+    expect(passwordPolicy).toMatch(
+      /ACADEMY_PASSWORD_MIN_LENGTH = 8[\s\S]*At least \$\{ACADEMY_PASSWORD_MIN_LENGTH\} characters/,
+    );
+    expect(passwordPolicy).toMatch(/An uppercase letter/);
+    expect(passwordPolicy).toMatch(/A lowercase letter/);
+    expect(passwordPolicy).toMatch(/A number/);
+    expect(passwordPolicy).toMatch(/A symbol/);
   });
 
   it("explains a failure as an expired link rather than a bare error", () => {

@@ -5,6 +5,11 @@ import { useTheme } from "../context/useTheme";
 import {
   getAcademySignupErrorMessage,
 } from "../lib/registration";
+import {
+  getAcademyPasswordErrorMessage,
+  getAcademyPasswordProblems,
+} from "../lib/password";
+import PasswordField from "../components/academy/PasswordField";
 
 const sidePanelHighlights = [
   { text: "Paths across software, embedded, and AI/ML", accent: "teal" },
@@ -26,7 +31,7 @@ export default function AcademySignup() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
+  const [passwordAttempted, setPasswordAttempted] = useState(false);
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [signupStarted, setSignupStarted] = useState(false);
@@ -52,8 +57,12 @@ export default function AcademySignup() {
     const name = displayName.trim();
     const normalizedEmail = email.trim().toLowerCase();
     if (!name) return setError("Please enter your full name.");
-    if (password.length < 8) {
-      return setError("Your password must be at least 8 characters.");
+    const problems = getAcademyPasswordProblems(password);
+    if (problems.length) {
+      setPasswordAttempted(true);
+      return setError(
+        `Your password needs ${problems.length === 1 ? "one more thing" : `${problems.length} more things`}: ${problems.join(", ").toLowerCase()}.`,
+      );
     }
     if (password !== confirmPassword)
       return setError("Passwords do not match.");
@@ -73,7 +82,15 @@ export default function AcademySignup() {
       setCreated(true);
       completed = true;
     } catch (signUpError) {
-      setError(getAcademySignupErrorMessage(signUpError));
+      // A password the server refuses must say which rule was missed, or the
+      // student is left guessing why a form they filled in correctly failed.
+      const isPasswordProblem =
+        /password/i.test(String(signUpError?.message ?? signUpError?.msg ?? ""));
+      setError(
+        isPasswordProblem
+          ? getAcademyPasswordErrorMessage(signUpError)
+          : getAcademySignupErrorMessage(signUpError),
+      );
     } finally {
       if (!completed) {
         signupRequestStarted.current = false;
@@ -209,50 +226,23 @@ export default function AcademySignup() {
                   required
                 />
               </label>
-              <span className="label">
-                <label htmlFor="academy-signup-password">Password</label>
-                <span className="relative mt-1 block">
-                  <input
-                    id="academy-signup-password"
-                    className="field pr-16"
-                    type={showPassword ? "text" : "password"}
-                    autoComplete="new-password"
-                    value={password}
-                    onChange={(event) => setPassword(event.target.value)}
-                    required
-                    minLength={8}
-                    aria-describedby="password-hint"
-                  />
-                  <button
-                    type="button"
-                    className="absolute right-1 top-1/2 flex min-h-11 -translate-y-1/2 items-center rounded-md px-3 text-xs font-semibold text-slate-500 hover:text-amber-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 dark:hover:text-amber-400"
-                    onClick={() => setShowPassword((value) => !value)}
-                    aria-label={
-                      showPassword ? "Hide password" : "Show password"
-                    }
-                  >
-                    {showPassword ? "Hide" : "Show"}
-                  </button>
-                </span>
-                <span
-                  id="password-hint"
-                  className="mt-1 block text-xs font-normal text-slate-500 dark:text-slate-400"
-                >
-                  At least 8 characters.
-                </span>
-              </span>
-              <label className="label">
-                Confirm password
-                <input
-                  className="field"
-                  type={showPassword ? "text" : "password"}
-                  autoComplete="new-password"
-                  value={confirmPassword}
-                  onChange={(event) => setConfirmPassword(event.target.value)}
-                  required
-                  minLength={8}
-                />
-              </label>
+              <PasswordField
+                id="academy-signup-password"
+                label="Password"
+                value={password}
+                onChange={(next) => {
+                  setPassword(next);
+                  if (passwordAttempted) setPasswordAttempted(false);
+                }}
+                hint="Use a password you have not used on another site."
+              />
+              <PasswordField
+                id="academy-signup-password-confirm"
+                label="Confirm password"
+                value={confirmPassword}
+                onChange={setConfirmPassword}
+                showToggle={false}
+              />
               {error && (
                 <p
                   role="alert"
@@ -270,6 +260,10 @@ export default function AcademySignup() {
                   ? "Creating your Academy account..."
                   : "Create student account"}
               </button>
+              <p className="text-center text-xs leading-5 text-slate-500 dark:text-slate-400">
+                Academy never asks for your password over chat or by email. Keep it
+                to yourself.
+              </p>
             </form>
           )}
         </div>

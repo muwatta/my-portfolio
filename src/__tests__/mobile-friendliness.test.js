@@ -112,7 +112,11 @@ describe("form accessibility on a phone", () => {
 
     const signup = sources.get("src/pages/AcademySignup.jsx");
     expect(signup).toMatch(/autoComplete="name"/);
-    expect(signup).toMatch(/autoComplete="new-password"/);
+    // The password inputs moved into PasswordField, which is also used by the
+    // reset page, so the assertion follows it rather than the page that renders it.
+    expect(sources.get("src/components/academy/PasswordField.jsx")).toMatch(
+      /autoComplete = "new-password"/,
+    );
   });
 });
 

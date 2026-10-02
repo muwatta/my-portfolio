@@ -10,6 +10,7 @@ import {
 } from "../lib/academy";
 import ProgressBar from "../components/academy/ProgressBar";
 import NetworkRescue from "../components/academy/NetworkRescue";
+import PasswordPolicyNotice from "../components/academy/PasswordPolicyNotice";
 import { fetchWithOfflineFallback } from "../lib/academyOffline";
 import { OFFLINE_STORES } from "../lib/offlineStore";
 
@@ -141,6 +142,7 @@ export default function AcademyDashboard() {
           Some dashboard sections are temporarily unavailable. The rest of your Academy remains usable.
         </p>
       )}
+      <PasswordPolicyNotice userId={user.id} />
       <section className="grid gap-4 sm:grid-cols-3">
         {[
           {

@@ -3,6 +3,11 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAcademyAuth } from "../hooks/useAcademyAuth";
 import { friendlyError } from "../lib/utils";
 import ContactAdmin from "../components/academy/ContactAdmin";
+import PasswordField from "../components/academy/PasswordField";
+import {
+  getAcademyPasswordErrorMessage,
+  getAcademyPasswordProblems,
+} from "../lib/password";
 
 export default function AcademyResetPassword() {
   const { updatePassword, user, loading } = useAcademyAuth();
@@ -30,12 +35,13 @@ export default function AcademyResetPassword() {
     setError("");
     setMessage("");
 
-    if (password.length < 8) {
-      return setError("Use at least 8 characters.");
+    const problems = getAcademyPasswordProblems(password);
+    if (problems.length) {
+      return setError(
+        `Your new password needs ${problems.length === 1 ? "one more thing" : `${problems.length} more things`}: ${problems.join(", ").toLowerCase()}.`,
+      );
     }
     if (password !== confirm) return setError("Passwords do not match.");
-    if (password === confirm && /^\d+$/.test(password))
-      return setError("Use more than just numbers for a password.");
     if (confirm.length > 0 && confirm.trim() !== confirm)
       return setError("Passwords cannot start or end with a space.");
 
@@ -44,11 +50,20 @@ export default function AcademyResetPassword() {
     setSubmitting(false);
 
     if (updateError) {
+      // An expired link is the one failure the student can actually do
+      // something about, so it keeps its own wording. Anything else is a
+      // password rule, which needs to say which rule was missed.
+      const isExpiredLink =
+        /expired|already been used|invalid|token/i.test(
+          String(updateError?.message ?? ""),
+        );
       setError(
-        friendlyError(
-          updateError,
-          "That reset link has expired or has already been used. Request a new one.",
-        ),
+        isExpiredLink
+          ? friendlyError(
+              updateError,
+              "That reset link has expired or has already been used. Request a new one.",
+            )
+          : getAcademyPasswordErrorMessage(updateError),
       );
       return;
     }
@@ -89,31 +104,22 @@ export default function AcademyResetPassword() {
       >
         <h1 className="text-2xl font-bold">Choose a new password</h1>
         <p className="text-sm text-slate-600 dark:text-slate-300">
-          Pick something you have not used elsewhere. At least 8 characters, and
-          not only numbers.
+          Pick something you have not used on another site, and keep it to
+          yourself. Academy staff will never ask you for it.
         </p>
-        <label className="label">
-          New password
-          <input
-            className="field"
-            type="password"
-            autoComplete="new-password"
-            value={password}
-            onChange={(event) => setPassword(event.target.value)}
-            required
-          />
-        </label>
-        <label className="label">
-          Confirm new password
-          <input
-            className="field"
-            type="password"
-            autoComplete="new-password"
-            value={confirm}
-            onChange={(event) => setConfirm(event.target.value)}
-            required
-          />
-        </label>
+        <PasswordField
+          id="academy-reset-password"
+          label="New password"
+          value={password}
+          onChange={setPassword}
+        />
+        <PasswordField
+          id="academy-reset-password-confirm"
+          label="Confirm new password"
+          value={confirm}
+          onChange={setConfirm}
+          showToggle={false}
+        />
         {error && (
           <p role="alert" className="rounded-lg bg-red-50 p-3 text-sm text-red-700">
             {error}
