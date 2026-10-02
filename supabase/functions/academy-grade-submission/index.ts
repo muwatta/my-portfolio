@@ -28,14 +28,23 @@ Deno.serve(async (request) => {
   const executorKey = Deno.env.get("GRADING_EXECUTOR_KEY");
   if (!authorization || !supabaseUrl || !anonKey || !serviceKey)
     return json({ error: "Authentication or Supabase configuration is missing." }, 401);
-  if (!executorUrl || !executorKey)
-    return json({ status: "grading_unavailable" }, 503);
 
+  // Authenticate before reporting on configuration.
+  //
+  // The executor check used to come first, so an anonymous caller got a 503 that
+  // told them the grader was unconfigured. Nothing leaked and no outbound request
+  // was made, so it was not exploitable, but it answered the wrong question and
+  // it is a live endpoint now.
   const userClient = createClient(supabaseUrl, anonKey, {
     global: { headers: { Authorization: authorization } },
   });
   const { data: userResult } = await userClient.auth.getUser();
   if (!userResult.user) return json({ error: "Authentication required." }, 401);
+
+  // Retryable, and honestly so: a submission that hits this stays queued rather
+  // than being marked wrong because a service happens to be down.
+  if (!executorUrl || !executorKey)
+    return json({ status: "grading_unavailable" }, 503);
 
   let input: { submission_id?: string };
   try {

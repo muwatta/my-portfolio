@@ -824,14 +824,23 @@ reads, so the scoping and the publication check are in the database.
 Recorded so nobody discovers them the hard way.
 
 **Auto grading needs a server executor, and it is not deployed.** The executor
-now exists, in `executor/`, and is verified against a real `g++` — see
-`executor/README.md` for the isolation model and the contract. What is still
-missing is a host to run it on and the Supabase secrets pointing at it:
+exists in `executor/`, and it is verified rather than asserted: the image builds
+and runs, and `src/__tests__/executor-container.test.js` checks the isolation and
+the grading contract against the running container. What is missing is a host.
 
 ```bash
-npx supabase secrets set GRADING_EXECUTOR_URL=... GRADING_EXECUTOR_KEY=...
-npx supabase functions deploy academy-grade-submission
+# On the host that will run it, after copying executor/ there:
+PUBLIC_HOST=executor.example.com ./deploy.sh
 ```
+
+Two things that script refuses to skip, because both fail silently otherwise:
+
+- **Egress.** The container must be reachable from Supabase, so the student's
+  program shares its network namespace and can open a socket. `firewall-executor.sh`
+  cuts that on the host, which is the only place it can be cut.
+- **The `--tmpfs` defaults.** Docker mounts every `--tmpfs` `noexec`, so the
+  grader could not execute what it compiled: a correct program scored zero and it
+  looked like a wrong answer. `/work` says `exec`; `/tmp` stays `noexec`.
 
 Until then, code runs in the browser, so a student could report any score they
 liked. Browser runs are therefore stored as `client_reported`, marked
@@ -884,12 +893,26 @@ pointing real traffic at it — the flags are the security, so an unbuilt
 `docker-compose.yml` is an untested security control, not a finished one.
 
 
-**Neither edge function is deployed and no secrets are set.** As of the last
-check, `supabase secrets list` and `supabase functions list` were both empty, so
-`academy-ai-feedback` returns `ai_feedback_status = 'disabled'`. It writes
-narrative feedback only; its prompt explicitly forbids inventing a score, so the
-"AI grades it" path does not exist. That is a deliberate boundary rather than an
-oversight, and a bulk AI grading button would ship dead until the key exists.
+**All three edge functions are deployed. The grading executor is not.** As of the
+last check `supabase functions list` shows `academy-admin-manage-user`,
+`academy-ai-feedback` and `academy-grade-submission` as ACTIVE, and
+`AI_PROVIDER_API_KEY` and `AI_FEEDBACK_MODEL` are set, so `academy-ai-feedback`
+is live. It writes narrative feedback only; its prompt explicitly forbids
+inventing a score, so the "AI grades it" path still does not exist. That is a
+deliberate boundary rather than an oversight.
+
+`academy-grade-submission` is deployed but has no `GRADING_EXECUTOR_URL` or
+`GRADING_EXECUTOR_KEY`, so every code submission gets
+`status = 'grading_unavailable'`: a retryable 503, recorded on the submission,
+and **never** a mark. A signed-in caller sees that; an anonymous one gets 401 and
+learns nothing about the configuration. Deploying the function before the
+executor is deliberate, since it fails safe rather than failing open.
+
+Getting from here to working auto grading is one script on the host that will run
+it, `executor/deploy.sh`, which generates the token, starts the container, and
+refuses to point Supabase anywhere until the executor answers, rejects a bad
+token, grades a real program correctly, and egress is blocked. See
+`executor/README.md`.
 
 **The hard coded administrator address is unverified.** See Roles and
 authorization above. It reads the JWT, so whether it matches depends on the token
