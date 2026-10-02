@@ -16,9 +16,6 @@ import { enqueueAcademyOperation } from "../../lib/academySync";
 import { useAcademyAuth } from "../../hooks/useAcademyAuth";
 import { friendlyError } from "../../lib/utils";
 
-// Save at most this long after an answer changes, so a student thinking for a
-// moment does not produce a request, and one who taps through quickly still
-// gets their work saved.
 const SAVE_DEBOUNCE_MS = 700;
 
 function formatRemaining(ms) {
@@ -62,8 +59,6 @@ export default function AcademyExamRunner({ exam }) {
       if (!user?.id) return;
       await enqueueAcademyOperation(user.id, {
         type: "exam_answer",
-        // The operation id carries the answer's own timestamp, so replaying the
-        // same answer is a no-op rather than a second write.
         operationId: `exam-answer-${attemptId}-${questionId}-${answeredAt}`,
         payload: {
           attemptId,
@@ -90,15 +85,6 @@ export default function AcademyExamRunner({ exam }) {
     );
   }, [user?.id, attempt]);
 
-  // The questions are cached so a refresh, a closed tab or a dropped connection
-  // can still show the paper. Without this the draft below is unreachable: a
-  // student who reopens an exam with no signal would have their answers
-  // restored and no questions to put them against.
-  //
-  // The cache is only a fallback, never the primary source, because the server
-  // decides what a paper contains. A cached copy can only ever be what that same
-  // attempt was already served, so it cannot show different questions, and it
-  // carries no answer key, which never left the server in the first place.
   const loadPaper = useCallback(
     async (attemptId) => {
       const result = await getAcademyExamPaper(attemptId);
@@ -116,9 +102,6 @@ export default function AcademyExamRunner({ exam }) {
         return;
       }
 
-      // A refusal from the server is final. Falling back here would let a
-      // student keep working on a paper they are no longer entitled to, for
-      // example one whose window has closed.
       if (navigator.onLine) {
         setError(friendlyError(result.error, "The paper could not be loaded."));
         return;
@@ -167,9 +150,6 @@ export default function AcademyExamRunner({ exam }) {
     [user?.id],
   );
 
-  // Counts down from the server's deadline. A refresh, a tab switch and a dropped
-  // connection do not restart it, because the deadline is a timestamp the server
-  // handed over rather than a count the browser keeps.
   useEffect(() => {
     if (!attempt?.deadline_at) return undefined;
     const tick = () => {
@@ -177,8 +157,6 @@ export default function AcademyExamRunner({ exam }) {
       setRemaining(left);
       if (left <= 0 && !submitting.current) {
         submitting.current = true;
-        // The server decides the reason: past its own deadline it records this
-        // as an automatic submission, whatever the browser thinks.
         submitAcademyExamAttempt(
           attempt.id,
           "timeout",
@@ -189,9 +167,6 @@ export default function AcademyExamRunner({ exam }) {
             setPhase("done");
           })
           .catch(() => {
-            // Offline at the deadline. The queue replays it on reconnect and the
-            // server still marks it as timed out, so a lost connection is not
-            // treated as anything the student did.
             if (user?.id) {
               void enqueueAcademyOperation(user.id, {
                 type: "exam_submit",
@@ -215,7 +190,6 @@ export default function AcademyExamRunner({ exam }) {
     return () => clearInterval(handle);
   }, [attempt, user?.id]);
 
-  // One request per settled change, not one per tap.
   const choose = useCallback(
     (questionId, key) => {
       if (!attempt) return;
@@ -245,8 +219,6 @@ export default function AcademyExamRunner({ exam }) {
     [answers, attempt, saveDraft, countPending, queueAnswer],
   );
 
-  // Anything still in the debounce window when the page goes away is queued
-  // rather than lost, which is the point of the draft in IndexedDB.
   useEffect(() => {
     const flush = () => {
       if (!attempt || !user?.id) return;
@@ -282,7 +254,6 @@ export default function AcademyExamRunner({ exam }) {
     setError("");
     const clientSubmittedAt = new Date().toISOString();
 
-    // Whatever is still in the debounce window goes out with the paper.
     Object.entries(timers.current).forEach(([questionId, handle]) => {
       clearTimeout(handle);
       const entry = answers[questionId];
@@ -478,11 +449,6 @@ export default function AcademyExamRunner({ exam }) {
             {pending > 0 ? ` ${pending} waiting to send.` : ""}
           </p>
         )}
-        {/*
-          Only reachable when the paper came off this device. The deadline is
-          still the server's, so the countdown is right, but the student should
-          know the questions on screen are a saved copy rather than a fresh copy.
-        */}
         {stalePaper && (
           <p className="mt-2 text-xs text-amber-200">
             Working from a saved copy of this paper. The time left is still set
