@@ -1,9 +1,15 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import {
+  FiAward,
+  FiBookOpen,
+  FiCheckCircle,
+  FiClock,
+  FiTarget,
+} from "react-icons/fi";
 import { useAcademyAuth } from "../hooks/useAcademyAuth";
 import {
   getAcademyAssignments,
-  getAcademyLessons,
   getAcademyProgress,
   getAcademyStudentHome,
   getAcademyStudentOverview,
@@ -17,15 +23,14 @@ import { OFFLINE_STORES } from "../lib/offlineStore";
 export default function AcademyDashboard() {
   const { profile, user } = useAcademyAuth();
   const name = profile?.display_name || user?.email?.split("@")[0] || "Student";
-  const [, setLessons] = useState([]);
   const [progress, setProgress] = useState(null);
   const [assignmentCount, setAssignmentCount] = useState(0);
   const [assignments, setAssignments] = useState([]);
   const [overview, setOverview] = useState(null);
   const [home, setHome] = useState(null);
+  const [homeOffline, setHomeOffline] = useState(false);
   const [reload, setReload] = useState(0);
   const [sectionState, setSectionState] = useState({
-    lessons: "loading",
     progress: "loading",
     assignments: "loading",
     overview: "loading",
@@ -56,12 +61,6 @@ export default function AcademyDashboard() {
         });
     };
     loadSection(
-      "lessons",
-      () => getAcademyLessons(user.id),
-      (data) => setLessons(data ?? []),
-      OFFLINE_STORES.lessons,
-    );
-    loadSection(
       "progress",
       () => getAcademyProgress(user.id),
       setProgress,
@@ -84,7 +83,21 @@ export default function AcademyDashboard() {
       OFFLINE_STORES.progress,
       "overview",
     );
-    loadSection("home", () => getAcademyStudentHome(user.id), setHome);
+    getAcademyStudentHome(user.id)
+      .then((result) => {
+        if (cancelled) return;
+        setHome(result.data ?? null);
+        setHomeOffline(Boolean(result.offline));
+        setSectionState((current) => ({
+          ...current,
+          home: result.error ? "error" : "ready",
+        }));
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setSectionState((current) => ({ ...current, home: "error" }));
+        }
+      });
     return () => {
       cancelled = true;
     };
@@ -109,44 +122,81 @@ export default function AcademyDashboard() {
       {anyFailed && (
         <NetworkRescue onRetry={() => setReload((value) => value + 1)} />
       )}
-      <section className="rounded-2xl bg-slate-900 p-6 text-white shadow-xl sm:p-8">
-        <p className="text-sm font-semibold uppercase tracking-[0.18em] text-cyan-300">
-          {course?.title || "Academy learning path"}
+      {homeOffline && (
+        <p className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-200">
+          You’re viewing your saved learning snapshot. Work queued on this
+          device will sync when you reconnect.
         </p>
-        <h1 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">
-          Good to see you, {name}.
-        </h1>
-        {profile?.academy_registration_codes?.registration_number && (
-          <p className="mt-3 text-sm font-semibold uppercase tracking-[0.18em] text-cyan-300">
-            Academy Registration No. {profile.academy_registration_codes.registration_number}
+      )}
+      <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 p-6 text-white shadow-xl sm:p-8">
+        <div className="pointer-events-none absolute -right-12 -top-20 h-64 w-64 rounded-full border-[28px] border-cyan-300/10" />
+        <div className="pointer-events-none absolute -bottom-20 right-32 h-44 w-44 rounded-full bg-indigo-400/10 blur-2xl" />
+        <div className="relative">
+          <p className="inline-flex items-center gap-2 rounded-full border border-cyan-300/20 bg-cyan-300/10 px-3 py-1 text-xs font-bold uppercase tracking-[0.16em] text-cyan-200">
+            <FiTarget aria-hidden="true" />
+            Your learning journey
           </p>
-        )}
-        <p className="mt-3 max-w-2xl text-slate-300">
-          {course?.title
-             ? "Your learning path is ready. Pick up where you left off, one step at a time."
-            : "Choose the learning path you want to explore. Once you pick a course, it becomes your current path."}
-        </p>
-        <Link
-          to={hasCourse ? "/academy/lessons" : "/academy/courses"}
-          className="mt-6 inline-flex min-h-11 items-center rounded-lg bg-cyan-400 px-4 py-2 text-sm font-bold text-slate-950 hover:bg-cyan-300"
-        >
-          {hasCourse
-            ? resumeLesson
-              ? "Continue learning"
-              : "Explore lessons"
-            : "Choose a learning path"}
-        </Link>
+          <p className="mt-4 text-sm font-semibold text-indigo-200">
+            {course?.title || "Academy learning path"}
+          </p>
+          <h1 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">
+            Good to see you, {name}.
+          </h1>
+          {profile?.academy_registration_codes?.registration_number && (
+            <p className="mt-3 text-sm font-semibold uppercase tracking-[0.18em] text-cyan-300">
+              Academy Registration No.{" "}
+              {profile.academy_registration_codes.registration_number}
+            </p>
+          )}
+          <p className="mt-3 max-w-2xl text-slate-300">
+            {course?.title
+              ? "Your learning path is ready. Pick up where you left off, one step at a time."
+              : "Choose the learning path you want to explore. Once you pick a course, it becomes your current path."}
+          </p>
+          <div className="mt-6 flex flex-wrap items-center gap-3">
+            <Link
+              to={hasCourse ? "/academy/lessons" : "/academy/courses"}
+              className="inline-flex min-h-11 items-center rounded-xl bg-cyan-300 px-5 py-2 text-sm font-bold text-slate-950 shadow-lg shadow-cyan-950/20 transition hover:-translate-y-0.5 hover:bg-cyan-200"
+            >
+              {hasCourse
+                ? resumeLesson
+                  ? "Continue learning"
+                  : "Explore lessons"
+                : "Choose a learning path"}
+            </Link>
+            {overview?.badges?.length > 0 && (
+              <Link
+                to="/academy/progress"
+                className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-white/15 bg-white/10 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/15"
+              >
+                <FiAward aria-hidden="true" className="text-amber-300" />
+                {overview.badges.length} recent badge
+                {overview.badges.length === 1 ? "" : "s"} earned
+              </Link>
+            )}
+          </div>
+        </div>
       </section>
-      {(sectionState.lessons === "error" || sectionState.progress === "error" || sectionState.assignments === "error" || sectionState.overview === "error") && (
-        <p role="status" className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">
-          Some dashboard sections are temporarily unavailable. The rest of your Academy remains usable.
+      {[
+        sectionState.progress,
+        sectionState.assignments,
+        sectionState.overview,
+        sectionState.home,
+      ].includes("error") && (
+        <p
+          role="status"
+          className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900"
+        >
+          Some dashboard sections are temporarily unavailable. The rest of
+          your Academy remains usable.
         </p>
       )}
       <PasswordPolicyNotice userId={user.id} />
-      <section className="grid gap-4 sm:grid-cols-3">
+      <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
         {[
           {
             label: "Completed lessons",
+            Icon: FiCheckCircle,
             value:
               progress == null ? "Loading" : (progress.completedLessons ?? 0),
             detail:
@@ -156,6 +206,7 @@ export default function AcademyDashboard() {
           },
           {
             label: "Pending assignments",
+             Icon: FiTarget,
              value: sectionState.assignments === "error" ? "Unavailable" : assignmentCount,
              detail: sectionState.assignments === "error"
               ? "Assignments are unavailable."
@@ -165,6 +216,7 @@ export default function AcademyDashboard() {
           },
           {
             label: "Current week",
+            Icon: FiBookOpen,
             value:
               progress?.currentWeek == null || course?.duration_weeks == null
                 ? "Loading"
@@ -176,21 +228,36 @@ export default function AcademyDashboard() {
           },
           {
             label: "Learning time",
+            Icon: FiClock,
              value: overview == null ? "Loading" : `${learningMinutes} min`,
             detail:
               overview == null
                 ? "Learning time is unavailable."
                 : "Server-recorded active Academy time.",
           },
+          {
+            label: "Recent badges",
+            Icon: FiAward,
+            value: overview == null ? "Loading" : (overview.badges?.length ?? 0),
+            detail:
+              overview == null
+                ? "Achievements are unavailable."
+                : "Latest milestones from your learning journey.",
+          },
         ].map((card) => (
           <div
             key={card.label}
-            className="rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900"
+            className="group rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-cyan-300 hover:shadow-md dark:border-slate-800 dark:bg-slate-900 dark:hover:border-cyan-800"
           >
-            <p className="text-sm font-semibold text-slate-500 dark:text-slate-400">
-              {card.label}
-            </p>
-            <p className="mt-3 text-3xl font-bold">{card.value}</p>
+            <div className="flex items-center justify-between gap-2">
+              <p className="text-sm font-semibold text-slate-500 dark:text-slate-400">
+                {card.label}
+              </p>
+              <span className="rounded-xl bg-cyan-50 p-2 text-cyan-700 dark:bg-cyan-950/60 dark:text-cyan-300">
+                <card.Icon aria-hidden="true" />
+              </span>
+            </div>
+            <p className="mt-3 text-3xl font-extrabold tracking-tight tabular-nums">{card.value}</p>
             <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
               {card.detail}
             </p>
@@ -264,9 +331,9 @@ export default function AcademyDashboard() {
         </div>
       </section>
       {hasCourse && (
-        <section className="rounded-xl border border-cyan-200 bg-cyan-50 p-6 dark:border-cyan-900 dark:bg-cyan-950/30">
+        <section className="rounded-3xl border border-cyan-200 bg-gradient-to-br from-cyan-50 via-white to-indigo-50 p-6 shadow-sm dark:border-cyan-900 dark:from-cyan-950/50 dark:via-slate-900 dark:to-indigo-950/40">
           <p className="text-sm font-semibold uppercase tracking-[0.18em] text-cyan-700 dark:text-cyan-300">
-            {resumeLesson ? "Continue where you left off" : "Your next topic"}
+            {resumeLesson ? "Next step in your journey" : "Your next milestone"}
           </p>
 
           {resumeLesson ? (

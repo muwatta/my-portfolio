@@ -18,7 +18,6 @@ const APP_SHELL_URLS = [
   "/images/ate-logo.jpg",
   "/images/ate-icon-192.png",
   "/images/ate-icon-512.png",
-  "/images/ate-icon-1024.png",
   "/images/ate-maskable-192.png",
   "/images/ate-maskable-512.png",
   "/images/ate-favicon-32.png",

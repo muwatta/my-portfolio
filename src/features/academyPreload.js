@@ -1,4 +1,4 @@
-// Warms the academy before it is needed.
+// Warms the academy when a visitor signals intent to open it.
 //
 // A cold click on "Academy" had to fetch 9 chunks. Two changes cut that: the
 // public pages no longer mount the auth provider, and these prefetches cover
@@ -6,9 +6,6 @@
 // pointing at a link is a signal they are about to click it, and a keyboard user
 // tabbing onto it has usually already decided.
 //
-// requestIdleCallback rather than a timeout, so this never competes with the
-// page the visitor is actually reading.
-
 const loaded = new Map();
 
 /** Import once, and never let a prefetch failure surface as an unhandled rejection. */
@@ -39,21 +36,4 @@ export const preloadAcademyAuth = () => {
 export const preloadAcademy = () => {
   preloadAcademyPublic();
   preloadAcademyAuth();
-};
-
-let idleScheduled = false;
-
-/** Warm the academy once the browser is idle, without delaying first paint. */
-export const preloadAcademyWhenIdle = () => {
-  if (idleScheduled || typeof window === "undefined") return;
-  idleScheduled = true;
-  const run = () => {
-    idleScheduled = false;
-    preloadAcademy();
-  };
-  if (typeof window.requestIdleCallback === "function") {
-    window.requestIdleCallback(run, { timeout: 3000 });
-  } else {
-    window.setTimeout(run, 2000);
-  }
 };

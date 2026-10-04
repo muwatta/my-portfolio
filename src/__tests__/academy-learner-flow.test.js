@@ -129,6 +129,19 @@ describe("the learner pages use the server answer", () => {
     expect(dashboard).toMatch(/home\?\.nextLesson/);
   });
 
+  it("uses existing progress and earned badges for the student journey UI", () => {
+    expect(dashboard).toMatch(/Your learning journey/);
+    expect(dashboard).toMatch(/overview\?\.badges\?\.length/);
+    expect(dashboard).toMatch(/getAcademyProgress/);
+    expect(dashboard).not.toMatch(/getAcademyLessons/);
+  });
+
+  it("uses the home query's own offline snapshot rather than wrapping it in another cache", () => {
+    expect(dashboard).toMatch(/getAcademyStudentHome\(user\.id\)/);
+    expect(dashboard).toMatch(/setHomeOffline\(Boolean\(result\.offline\)\)/);
+    expect(dashboard).not.toMatch(/loadSection\("home"/);
+  });
+
   it("surfaces the task step with its submission state", () => {
     expect(lesson).toMatch(/topic-step-task/);
     expect(lesson).toMatch(/task\.submission/);

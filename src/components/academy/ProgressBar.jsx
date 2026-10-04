@@ -7,7 +7,7 @@ export default function ProgressBar({ value = 0, label = "Progress" }) {
         <span>{safeValue}%</span>
       </div>
       <div
-        className="mt-2 h-3 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800"
+        className="mt-2 h-3 overflow-hidden rounded-full bg-slate-200 shadow-inner dark:bg-slate-800"
         role="progressbar"
         aria-label={label}
         aria-valuemin="0"
@@ -15,7 +15,7 @@ export default function ProgressBar({ value = 0, label = "Progress" }) {
         aria-valuenow={safeValue}
       >
         <div
-          className="h-full rounded-full bg-blue-600 transition-[width]"
+          className="h-full rounded-full bg-gradient-to-r from-cyan-400 via-sky-500 to-indigo-500 transition-[width] duration-700 motion-reduce:transition-none"
           style={{ width: `${safeValue}%` }}
         />
       </div>

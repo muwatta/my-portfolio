@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 
 const sw = readFileSync("public/sw.js", "utf8");
 const hook = readFileSync("src/hooks/useAutoRefresh.js", "utf8");
+const main = readFileSync("src/main.jsx", "utf8");
 
 const page = (name) => readFileSync(`src/pages/${name}.jsx`, "utf8");
 
@@ -90,5 +91,16 @@ describe("the service worker hands back a fresh app", () => {
 
   it("only trusts the Pyodide version it is built against", () => {
     expect(sw).toMatch(/cdn\.jsdelivr\.net[\s\S]*pyodide\/v0\.27\.2\//);
+  });
+
+  it("does not poll for updates every minute", () => {
+    expect(main).not.toMatch(/registration\.update\(\)/);
+    expect(main).not.toMatch(/setInterval/);
+  });
+
+  it("does not precache the oversized 1024px app icon", () => {
+    const shell = sw.slice(sw.indexOf("const APP_SHELL_URLS"), sw.indexOf("];", sw.indexOf("const APP_SHELL_URLS")));
+    expect(shell).not.toContain("ate-icon-1024.png");
+    expect(shell).toContain("ate-icon-192.png");
   });
 });
