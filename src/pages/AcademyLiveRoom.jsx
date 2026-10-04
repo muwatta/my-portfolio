@@ -14,7 +14,7 @@ import { useAcademyAuth } from "../hooks/useAcademyAuth";
 import { friendlyError } from "../lib/utils";
 
 export default function AcademyLiveRoom() {
-  const { user } = useAcademyAuth();
+  const { user, isAdmin } = useAcademyAuth();
   const [rooms, setRooms] = useState([]);
   const [roomId, setRoomId] = useState("");
   const [messages, setMessages] = useState([]);
@@ -342,13 +342,14 @@ export default function AcademyLiveRoom() {
             {roomId && (
               <div className="border-t border-slate-200 p-4 dark:border-slate-800">
                 <p className="mb-3 text-xs text-slate-500 dark:text-slate-400">
-                  Record a voice note, or use the class chat below. Everything
-                  here disappears after two weeks.
+                  Voice notes are removed after two weeks. Class chat messages
+                  remain saved unless an administrator removes one.
                 </p>
                 <div className="mb-4">
                   <LiveChat
                     roomId={roomId}
                     userId={user.id}
+                    isAdmin={isAdmin}
                     disabled={offline}
                   />
                 </div>

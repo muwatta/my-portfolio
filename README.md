@@ -606,10 +606,16 @@ A production database should not be reset simply because a migration needs corre
    obvious mistakes, **not** a security boundary. It is trivially bypassed. The
    boundary is that student code is never executed in the Edge Function at all.
    Do not describe that filter as sandboxing.
-7. Confirm the `academy-live-retention` scheduled job exists. If `pg_cron` is
-   unavailable, create an equivalent daily scheduled invocation of
-   `select public.academy_cleanup_live_data();` using the Supabase scheduler.
-8. Run `npm test -- --run`, `npm run lint`, and `npm run build` before
+7. Confirm the `academy-live-retention` scheduled job exists. It retains text
+   chat until an administrator removes it, while voice notes and inactive
+   learning telemetry keep their 14-day retention window.
+8. Deploy `supabase/functions/academy-cleanup-assignment-files` and configure
+   the GitHub Actions repository secrets `SUPABASE_URL` and
+   `SUPABASE_SERVICE_ROLE_KEY`. The daily
+   `cleanup-assignment-files.yml` workflow removes uploaded assignment files
+   after 30 days through the Storage API while keeping submission and grading
+   history. Keep the service-role key out of browser configuration.
+9. Run `npm test -- --run`, `npm run lint`, and `npm run build` before
    promoting the frontend.
 
 ---

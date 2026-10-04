@@ -124,7 +124,7 @@ export default function AcademyAssignment() {
     // typing it by hand are the same path. C++ sources have to be included here
     // or the upload silently discards the code and submits an empty submission.
     const isSource =
-      /\.(py|cpp|cc|cxx|h|hpp)$/i.test(selected?.name || "");
+      /\.(py|cpp|cc|cxx|h|hpp|ino)$/i.test(selected?.name || "");
     if (result.valid && selected && isSource) {
       setSourceCode(await selected.text());
     }
@@ -280,13 +280,22 @@ export default function AcademyAssignment() {
     ".csv",
     ".pdf",
     ".docx",
+    ".zip",
+    ".log",
+    ".mp4",
+    ".mov",
+    ".webm",
+    ".ogg",
+    ".mp3",
+    ".m4a",
     ".png",
     ".jpg",
     ".jpeg",
     ".webp",
     ".heic",
+    ".heif",
     ...(assignment?.academy_courses?.language === "cpp"
-      ? [".cpp", ".cc", ".cxx", ".h", ".hpp"]
+      ? [".cpp", ".cc", ".cxx", ".h", ".hpp", ".ino"]
       : []),
   ].join(",");
   return (
@@ -327,6 +336,10 @@ export default function AcademyAssignment() {
           onChange={handleFile}
         />
       </label>
+      <p className="-mt-4 text-sm text-slate-500 dark:text-slate-400">
+        Python, C++ (for C++ courses), documents, and images are supported.
+        Files must be 5 MB or smaller and are removed 30 days after submission.
+      </p>
       {file && <p className="text-sm text-slate-500">Selected: {file.name}</p>}
       {notice && (
         <p

@@ -1,52 +1,58 @@
+const MAX_FILE_BYTES = 5 * 1024 * 1024;
+
 const FILE_RULES = {
   ".py": {
-    maxBytes: 200 * 1024,
+    maxBytes: MAX_FILE_BYTES,
     mime: ["text/x-python", "text/plain", "application/octet-stream"],
   },
-  // C++ sources. Matched against the Python budget deliberately: these are
-  // hand-written lesson answers, not archives, and the executor compiles them
-  // server-side so anything much larger is not what we want to accept.
   ".cpp": {
-    maxBytes: 200 * 1024,
+    maxBytes: MAX_FILE_BYTES,
     mime: ["text/x-c++", "text/x-c", "text/plain", "application/octet-stream"],
   },
   ".cc": {
-    maxBytes: 200 * 1024,
+    maxBytes: MAX_FILE_BYTES,
     mime: ["text/x-c++", "text/x-c", "text/plain", "application/octet-stream"],
   },
   ".cxx": {
-    maxBytes: 200 * 1024,
+    maxBytes: MAX_FILE_BYTES,
     mime: ["text/x-c++", "text/x-c", "text/plain", "application/octet-stream"],
   },
   ".h": {
-    maxBytes: 200 * 1024,
+    maxBytes: MAX_FILE_BYTES,
     mime: ["text/x-c", "text/x-c++", "text/plain", "application/octet-stream"],
   },
   ".hpp": {
-    maxBytes: 200 * 1024,
+    maxBytes: MAX_FILE_BYTES,
     mime: ["text/x-c++", "text/plain", "application/octet-stream"],
   },
-  ".ipynb": { maxBytes: 1024 * 1024, mime: ["application/json", "text/plain"] },
-  ".txt": { maxBytes: 1024 * 1024, mime: ["text/plain"] },
-  ".md": { maxBytes: 1024 * 1024, mime: ["text/markdown", "text/plain"] },
+  ".ipynb": { maxBytes: MAX_FILE_BYTES, mime: ["application/json", "text/plain"] },
+  ".txt": { maxBytes: MAX_FILE_BYTES, mime: ["text/plain"] },
+  ".md": { maxBytes: MAX_FILE_BYTES, mime: ["text/markdown", "text/plain"] },
   ".csv": {
-    maxBytes: 1024 * 1024,
+    maxBytes: MAX_FILE_BYTES,
     mime: ["text/csv", "application/vnd.ms-excel", "text/plain"],
   },
-  ".pdf": { maxBytes: 5 * 1024 * 1024, mime: ["application/pdf"] },
-  // Screenshots are how most students will actually submit proof of a result:
-  // a working program, a wired robot, a passing test. Without these the only
-  // way to hand in work from a phone was to describe it in text.
-  ".png": {
-    maxBytes: 5 * 1024 * 1024,
-    mime: ["image/png"],
+  ".pdf": { maxBytes: MAX_FILE_BYTES, mime: ["application/pdf"] },
+  ".png": { maxBytes: MAX_FILE_BYTES, mime: ["image/png"] },
+  ".jpg": { maxBytes: MAX_FILE_BYTES, mime: ["image/jpeg"] },
+  ".jpeg": { maxBytes: MAX_FILE_BYTES, mime: ["image/jpeg"] },
+  ".webp": { maxBytes: MAX_FILE_BYTES, mime: ["image/webp"] },
+  ".heic": { maxBytes: MAX_FILE_BYTES, mime: ["image/heic", "image/heif"] },
+  ".heif": { maxBytes: MAX_FILE_BYTES, mime: ["image/heif", "image/heic"] },
+  ".ino": {
+    maxBytes: MAX_FILE_BYTES,
+    mime: ["text/x-c++", "text/x-c", "text/plain", "application/octet-stream"],
   },
-  ".jpg": { maxBytes: 5 * 1024 * 1024, mime: ["image/jpeg"] },
-  ".jpeg": { maxBytes: 5 * 1024 * 1024, mime: ["image/jpeg"] },
-  ".webp": { maxBytes: 5 * 1024 * 1024, mime: ["image/webp"] },
-  ".heic": { maxBytes: 5 * 1024 * 1024, mime: ["image/heic", "image/heif"] },
+  ".log": { maxBytes: MAX_FILE_BYTES, mime: ["text/plain"] },
+  ".zip": { maxBytes: MAX_FILE_BYTES, mime: ["application/zip"] },
+  ".mp4": { maxBytes: MAX_FILE_BYTES, mime: ["video/mp4"] },
+  ".mov": { maxBytes: MAX_FILE_BYTES, mime: ["video/quicktime"] },
+  ".webm": { maxBytes: MAX_FILE_BYTES, mime: ["audio/webm"] },
+  ".ogg": { maxBytes: MAX_FILE_BYTES, mime: ["audio/ogg"] },
+  ".mp3": { maxBytes: MAX_FILE_BYTES, mime: ["audio/mpeg"] },
+  ".m4a": { maxBytes: MAX_FILE_BYTES, mime: ["audio/mp4"] },
   ".docx": {
-    maxBytes: 5 * 1024 * 1024,
+    maxBytes: MAX_FILE_BYTES,
     mime: [
       "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
     ],
@@ -58,17 +64,16 @@ export function validateAcademyFile(file) {
   const extension = `.${file.name.split(".").pop()?.toLowerCase()}`;
   const rule = FILE_RULES[extension];
   if (!rule) return { valid: false, error: "This file type is not supported." };
-  if (file.size > rule.maxBytes)
-    return {
-      valid: false,
-      error: `${extension} files must be smaller than ${Math.round(rule.maxBytes / 1024)} KB.`,
-    };
-  if (file.type && !rule.mime.includes(file.type))
+  if (file.size > rule.maxBytes) {
+    return { valid: false, error: `${extension} files must be 5 MB or smaller.` };
+  }
+  if (file.type && !rule.mime.includes(file.type)) {
     return {
       valid: false,
       error: "The file MIME type does not match its extension.",
     };
+  }
   return { valid: true, extension };
 }
 
-export { FILE_RULES };
+export { FILE_RULES, MAX_FILE_BYTES };

@@ -1,0 +1,27 @@
+name: Clean up expired assignment files
+
+on:
+  schedule:
+    - cron: "17 3 * * *"
+  workflow_dispatch:
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    concurrency:
+      group: assignment-file-cleanup
+      cancel-in-progress: false
+    steps:
+      - name: Remove assignment uploads older than 30 days
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          set -eu
+          test -n "$SUPABASE_URL"
+          test -n "$SUPABASE_SERVICE_ROLE_KEY"
+          curl --fail-with-body --silent --show-error \
+            --request POST \
+            "${SUPABASE_URL%/}/functions/v1/academy-cleanup-assignment-files" \
+            --header "Authorization: Bearer ${SUPABASE_SERVICE_ROLE_KEY}" \
+            --header "apikey: ${SUPABASE_SERVICE_ROLE_KEY}"

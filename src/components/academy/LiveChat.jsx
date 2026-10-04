@@ -13,7 +13,12 @@ const MAX_BODY = 2000;
 // recordings. Messages are persisted server side, so they survive a reload and
 // are delivered to everyone in the room through the realtime subscription that
 // the room already opens.
-export default function LiveChat({ roomId, userId, disabled = false }) {
+export default function LiveChat({
+  roomId,
+  userId,
+  isAdmin = false,
+  disabled = false,
+}) {
   const [messages, setMessages] = useState([]);
   const [draft, setDraft] = useState("");
   const [sending, setSending] = useState(false);
@@ -59,17 +64,22 @@ export default function LiveChat({ roomId, userId, disabled = false }) {
       .on(
         "postgres_changes",
         {
-          event: "INSERT",
+          event: "*",
           schema: "public",
           table: "academy_live_messages",
-          filter: `room_id=eq.${roomId}`,
         },
         (payload) => {
+          if (payload.eventType === "DELETE") {
+            if (payload.old?.room_id === roomId && payload.old?.id) {
+              setMessages((current) =>
+                current.filter((message) => message.id !== payload.old.id),
+              );
+            }
+            return;
+          }
           const row = payload.new;
-          if (!row?.body) return;
+          if (payload.eventType !== "INSERT" || row?.room_id !== roomId || !row?.body) return;
           setMessages((current) => {
-            // The sender already has this from its own insert, and realtime
-            // echoes it back, so a naive append renders the message twice.
             if (current.some((message) => message.id === row.id)) return current;
             return [...current, row].slice(-200);
           });
@@ -110,6 +120,24 @@ export default function LiveChat({ roomId, userId, disabled = false }) {
     setDraft("");
   }
 
+  async function deleteMessage(messageId) {
+    if (!isAdmin || !roomId) return;
+    if (!window.confirm("Delete this class chat message? This cannot be undone.")) {
+      return;
+    }
+    setError("");
+    const { error: deleteError } = await supabase
+      .from("academy_live_messages")
+      .delete()
+      .eq("id", messageId)
+      .eq("room_id", roomId);
+    if (deleteError) {
+      setError(friendlyError(deleteError, "The message could not be deleted."));
+      return;
+    }
+    setMessages((current) => current.filter((message) => message.id !== messageId));
+  }
+
   if (!roomId) return null;
 
   return (
@@ -119,8 +147,8 @@ export default function LiveChat({ roomId, userId, disabled = false }) {
           Class chat
         </h3>
         <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
-          Everyone in this room can read and post. Messages are saved, so you
-          can catch up after a dropout.
+          Everyone in this room can read and post. Messages stay saved unless
+          an administrator removes one.
         </p>
       </header>
 
@@ -137,6 +165,8 @@ export default function LiveChat({ roomId, userId, disabled = false }) {
               key={message.id}
               message={message}
               isMine={message.sender_id === userId}
+              isAdmin={isAdmin && !disabled}
+              onDelete={deleteMessage}
             />
           ))
         )}
@@ -190,9 +220,19 @@ export default function LiveChat({ roomId, userId, disabled = false }) {
   );
 }
 
-function ChatBubble({ message, isMine }) {
+function ChatBubble({ message, isMine, isAdmin, onDelete }) {
   return (
-    <div className={isMine ? "flex justify-end" : "flex justify-start"}>
+    <div className={`flex items-end gap-2 ${isMine ? "justify-end" : "justify-start"}`}>
+      {isAdmin && (
+        <button
+          type="button"
+          className="rounded-lg px-2 py-1 text-xs font-semibold text-red-600 hover:bg-red-50 dark:text-red-300 dark:hover:bg-red-950/40"
+          aria-label={`Delete message: ${message.body.slice(0, 40)}`}
+          onClick={() => onDelete(message.id)}
+        >
+          Delete
+        </button>
+      )}
       <div
         className={`max-w-[85%] rounded-2xl px-3 py-2 text-sm ${
           isMine

@@ -1,6 +1,16 @@
 import { useCallback, useState } from "react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
+import {
+  FiActivity,
+  FiArrowUpRight,
+  FiAward,
+  FiBookOpen,
+  FiClock,
+  FiInbox,
+  FiShield,
+  FiUsers,
+} from "react-icons/fi";
 import { getAcademyAdminOverview } from "../lib/academy";
 import { useAutoRefresh } from "../hooks/useAutoRefresh";
 import RefreshControl from "../components/academy/RefreshControl";
@@ -29,26 +39,33 @@ export default function AcademyAdminDashboard() {
   useAutoRefresh(load, { interval: 120000, refreshOnFocus: true });
   const learningHours = Math.round((overview?.learningSeconds ?? 0) / 3600);
   const cards = [
-    ["Students", overview?.students ?? 0],
-    ["Courses", overview?.courses ?? 0],
-    ["Active learners", overview?.activeLearners ?? 0],
-    ["Verified points", overview?.verifiedPoints ?? 0],
-    ["Learning time", `${learningHours}h`],
-    ["Pending submissions", overview?.pendingSubmissions ?? 0],
+    { label: "Students", value: overview?.students ?? 0, Icon: FiUsers },
+    { label: "Courses", value: overview?.courses ?? 0, Icon: FiBookOpen },
+    { label: "Active learners", value: overview?.activeLearners ?? 0, Icon: FiActivity },
+    { label: "Verified points", value: overview?.verifiedPoints ?? 0, Icon: FiAward },
+    { label: "Learning time", value: `${learningHours}h`, Icon: FiClock },
+    { label: "Pending submissions", value: overview?.pendingSubmissions ?? 0, Icon: FiInbox },
   ];
   return (
     <div className="space-y-8">
-      <header>
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-cyan-600 dark:text-cyan-300">
-            Academy administration
+      <header className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-950 via-indigo-950 to-cyan-950 p-6 text-white shadow-xl sm:p-8">
+        <div className="pointer-events-none absolute -right-14 -top-24 h-72 w-72 rounded-full border-[32px] border-cyan-200/10" />
+        <div className="relative">
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <p className="inline-flex items-center gap-2 rounded-full border border-cyan-100/15 bg-white/10 px-3 py-1 text-xs font-bold uppercase tracking-[0.16em] text-cyan-100">
+              <FiShield aria-hidden="true" />
+              Academy control room
+            </p>
+            <RefreshControl onRefresh={() => load(false)} busy={busy} updatedAt={updatedAt} />
+          </div>
+          <h1 className="mt-5 text-3xl font-extrabold tracking-tight sm:text-4xl">
+            Admin overview
+          </h1>
+          <p className="mt-3 max-w-2xl text-slate-300">
+            Follow learner activity, keep submissions moving, and guide the
+            Academy from one place.
           </p>
-          <RefreshControl onRefresh={() => load(false)} busy={busy} updatedAt={updatedAt} />
         </div>
-        <h1 className="mt-2 text-3xl font-bold">Admin overview</h1>
-        <p className="mt-2 text-slate-600 dark:text-slate-300">
-          Manage people, curriculum, and activity from one protected workspace.
-        </p>
       </header>
       {state === "loading" && (
         <div className="space-y-6">
@@ -75,34 +92,52 @@ export default function AcademyAdminDashboard() {
           transition={{ duration: 0.3, ease: "easeOut" }}
           className="space-y-8"
         >
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {cards.map(([label, value]) => (
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            {cards.map(({ label, value, Icon }) => (
               <div
                 key={label}
-                className="border-l-4 border-cyan-400 bg-white p-5 shadow-sm dark:bg-slate-900"
+                className="group rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-cyan-300 hover:shadow-md dark:border-slate-800 dark:bg-slate-900 dark:hover:border-cyan-800"
               >
-                <p className="text-sm text-slate-500">{label}</p>
-                <p className="mt-2 text-3xl font-bold">{value}</p>
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-sm font-semibold text-slate-500 dark:text-slate-400">
+                    {label}
+                  </p>
+                  <span className="rounded-xl bg-cyan-50 p-2.5 text-cyan-700 dark:bg-cyan-950/60 dark:text-cyan-300">
+                    <Icon aria-hidden="true" />
+                  </span>
+                </div>
+                <p className="mt-4 text-3xl font-extrabold tracking-tight tabular-nums">
+                  {value}
+                </p>
               </div>
             ))}
           </div>
-          <div className="flex flex-wrap gap-3">
-            <Link className="button-primary" to="/academy/admin/content">
-              Course content
-            </Link>
-            <Link className="button-secondary" to="/academy/admin/students">
-              Manage students
-            </Link>
-            <Link className="button-secondary" to="/academy/admin/submissions">
-              Review submissions
-            </Link>
-            <Link className="button-secondary" to="/academy/admin/access">
-              Manage access
-            </Link>
-          </div>
+          <section aria-label="Admin shortcuts" className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            {[
+              { label: "Course content", to: "/academy/admin/content", Icon: FiBookOpen },
+              { label: "Manage students", to: "/academy/admin/students", Icon: FiUsers },
+              { label: "Review submissions", to: "/academy/admin/submissions", Icon: FiInbox },
+              { label: "Manage access", to: "/academy/admin/access", Icon: FiShield },
+            ].map(({ label, to, Icon }) => (
+              <Link
+                key={to}
+                to={to}
+                className="group flex min-h-16 items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 font-semibold shadow-sm transition hover:-translate-y-0.5 hover:border-cyan-300 hover:shadow-md dark:border-slate-800 dark:bg-slate-900 dark:hover:border-cyan-800"
+              >
+                <span className="flex items-center gap-3">
+                  <Icon aria-hidden="true" className="text-cyan-700 dark:text-cyan-300" />
+                  {label}
+                </span>
+                <FiArrowUpRight
+                  aria-hidden="true"
+                  className="text-slate-400 transition group-hover:-translate-y-0.5 group-hover:translate-x-0.5"
+                />
+              </Link>
+            ))}
+          </section>
           <section className="grid gap-4 lg:grid-cols-2">
-            <div className="border border-amber-200 bg-amber-50 p-5 dark:border-amber-900 dark:bg-amber-950/30">
-              <p className="text-sm font-semibold uppercase tracking-wide text-amber-800 dark:text-amber-200">
+            <div className="rounded-2xl border border-amber-200 bg-gradient-to-br from-amber-50 to-orange-50 p-5 dark:border-amber-900 dark:from-amber-950/40 dark:to-orange-950/30">
+              <p className="text-sm font-bold uppercase tracking-wide text-amber-800 dark:text-amber-200">
                 Needs attention
               </p>
               <p className="mt-3 text-sm text-amber-900 dark:text-amber-100">
@@ -119,13 +154,14 @@ export default function AcademyAdminDashboard() {
                 Review submissions
               </Link>
             </div>
-            <div className="border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
-              <p className="text-sm font-semibold uppercase tracking-wide text-slate-500">
-                Teaching control center
+            <div className="rounded-2xl border border-indigo-200 bg-gradient-to-br from-indigo-50 to-cyan-50 p-5 dark:border-indigo-900 dark:from-indigo-950/40 dark:to-cyan-950/30">
+              <p className="text-sm font-bold uppercase tracking-wide text-indigo-700 dark:text-indigo-200">
+                Learning impact
               </p>
               <p className="mt-3 text-sm text-slate-600 dark:text-slate-300">
-                Publish course content, assign learning paths, and monitor
-                student activity from the admin workspace.
+                Your students have earned {overview?.verifiedPoints ?? 0}{" "}
+                verified points and recorded {learningHours} hours of learning.
+                Use the learner and content controls to keep their path moving.
               </p>
             </div>
           </section>

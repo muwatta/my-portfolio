@@ -59,6 +59,7 @@ export default function AcademyCourses() {
   }, [user?.id]);
 
   async function selectCourse(courseId) {
+    if (activeCourse || selecting || offline) return;
     setSelecting(courseId);
     setNotice("");
     const { error } = await selectAcademyCourse(user.id, courseId);
@@ -152,7 +153,7 @@ export default function AcademyCourses() {
                 isActive
                   ? "border-emerald-300 border-l-emerald-500 ring-1 ring-emerald-200 dark:border-emerald-900 dark:border-l-emerald-500 dark:ring-emerald-950"
                   : isLocked
-                    ? "border-slate-200 border-l-slate-300 dark:border-slate-800 dark:border-l-slate-700"
+                    ? "border-slate-200 border-l-slate-300 bg-slate-50/80 dark:border-slate-800 dark:border-l-slate-700 dark:bg-slate-950/50"
                     : "border-slate-200 border-l-teal-400 dark:border-slate-800 dark:border-l-teal-500"
               }`}
             >
@@ -168,7 +169,7 @@ export default function AcademyCourses() {
                 )}
                 {isLocked && (
                   <span className="rounded-full bg-slate-100 px-2 py-0.5 text-slate-700 dark:bg-slate-800 dark:text-slate-200">
-                    Not selected
+                    Locked
                   </span>
                 )}
               </div>
@@ -189,10 +190,10 @@ export default function AcademyCourses() {
               </div>
               {isLocked && (
                 <p className="mt-4 rounded-lg bg-slate-50 p-3 text-sm leading-5 text-slate-700 dark:bg-slate-800/70 dark:text-slate-200">
-                  You are currently on{" "}
+                  This course is locked while you are on{" "}
                   <strong className="font-semibold">{activeCourse.title}</strong>
-                  . Ask your teacher or an Academy admin if you need to switch
-                  courses.
+                  . You cannot select another course yourself. Ask your teacher
+                  or an Academy admin if you need to switch.
                 </p>
               )}
               <button
@@ -200,17 +201,27 @@ export default function AcademyCourses() {
                 className={`mt-4 min-h-11 w-full rounded-lg px-4 py-2 text-sm font-bold transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 ${
                   isLocked
                     ? "cursor-not-allowed border border-slate-300 bg-slate-100 text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
-                    : "bg-amber-500 text-slate-950 hover:bg-amber-400 focus-visible:outline-amber-600 disabled:cursor-wait disabled:opacity-70"
+                    : isActive
+                      ? "cursor-not-allowed border border-emerald-300 bg-emerald-50 text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-200"
+                      : "bg-amber-500 text-slate-950 hover:bg-amber-400 focus-visible:outline-amber-600 disabled:cursor-wait disabled:opacity-70"
                 }`}
-                disabled={selecting === course.id || isActive || isLocked}
+                disabled={
+                  Boolean(activeCourse) ||
+                  selecting === course.id ||
+                  isActive ||
+                  isLocked ||
+                  offline
+                }
                 onClick={() => selectCourse(course.id)}
               >
                 {isActive
                   ? "Your current course"
                   : isLocked
-                    ? `Unavailable while you’re on ${activeCourse.title}`
+                    ? `Locked while you’re on ${activeCourse.title}`
                     : selecting === course.id
                       ? "Selecting..."
+                      : offline
+                        ? "Connect to select this course"
                       : "Select this course"}
               </button>
               {isActive && <DownloadedCourseManager course={course} />}

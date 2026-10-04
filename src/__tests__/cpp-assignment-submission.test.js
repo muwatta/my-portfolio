@@ -49,25 +49,31 @@ describe("a C++ assignment offers the C++ editor", () => {
 
 describe("C++ files are accepted by the shared validator", () => {
   for (const extension of [".cpp", ".cc", ".cxx", ".h", ".hpp"]) {
-    it(`accepts ${extension} within the source budget`, () => {
+    it(`accepts ${extension} within the 5 MB limit`, () => {
       expect(FILE_RULES[extension]).toBeDefined();
       const result = validateAcademyFile({
         name: `answer${extension}`,
         size: 4 * 1024,
         type: "text/plain",
       });
+
+      it("caps all supported file types at 5 MB", () => {
+        for (const rule of Object.values(FILE_RULES)) {
+          expect(rule.maxBytes).toBe(5 * 1024 * 1024);
+        }
+      });
       expect(result.valid).toBe(true);
     });
   }
 
-  it("still rejects an oversized C++ file", () => {
+  it("rejects a C++ file larger than 5 MB", () => {
     const result = validateAcademyFile({
       name: "answer.cpp",
-      size: FILE_RULES[".cpp"].maxBytes + 1,
+      size: 5 * 1024 * 1024 + 1,
       type: "text/plain",
     });
     expect(result.valid).toBe(false);
-    expect(result.error).toMatch(/smaller than/i);
+    expect(result.error).toMatch(/5 MB or smaller/i);
   });
 
   it("still rejects an unsupported extension", () => {

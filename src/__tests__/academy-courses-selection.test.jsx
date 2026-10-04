@@ -5,6 +5,7 @@ import AcademyCourses from "../pages/AcademyCourses";
 import {
   getAcademyCourses,
   getActiveCourseForStudent,
+  selectAcademyCourse,
 } from "../lib/academy";
 
 vi.mock("../lib/academy", () => ({
@@ -78,10 +79,12 @@ describe("course selection guidance", () => {
       screen.getByRole("link", { name: "Continue learning" }),
     ).toHaveAttribute("href", "/academy/lessons");
 
-    expect(screen.getByText("You are currently on")).toBeInTheDocument();
+    expect(
+      screen.getByText(/This course is locked while you are on/),
+    ).toBeInTheDocument();
     expect(
       screen.getByRole("button", {
-        name: "Unavailable while you’re on Python for AI and ML",
+        name: "Locked while you’re on Python for AI and ML",
       }),
     ).toBeDisabled();
     expect(
@@ -90,5 +93,6 @@ describe("course selection guidance", () => {
     expect(
       screen.getByRole("button", { name: "Your current course" }),
     ).toBeDisabled();
+    expect(selectAcademyCourse).not.toHaveBeenCalled();
   });
 });

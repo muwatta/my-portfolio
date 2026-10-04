@@ -26,7 +26,7 @@ describe("class chat is persistent and open to everyone in the room", () => {
 
   it("is not voice only any more, and the copy says so", () => {
     expect(room).not.toMatch(/Voice notes only/);
-    expect(room.replace(/\s+/g, " ")).toMatch(/class chat below/);
+    expect(room.replace(/\s+/g, " ")).toMatch(/Class chat messages remain saved/);
   });
 
   it("does not duplicate the sender's own message when realtime echoes it", () => {
@@ -44,6 +44,26 @@ describe("class chat is persistent and open to everyone in the room", () => {
 
   it("is honest that an offline message does not send", () => {
     expect(chat).toMatch(/You are offline\. Messages will not send/);
+  });
+
+  it("only renders message deletion controls for admins", () => {
+    expect(chat).toMatch(/isAdmin = false/);
+    expect(chat).toMatch(/\{isAdmin && \(/);
+    expect(chat).toMatch(/\.delete\(\)/);
+  });
+
+  it("keeps text chat while voice notes expire", () => {
+    const migration = readFileSync(
+      "supabase/migrations/20261335000000_academy_upload_retention_persistent_chat.sql",
+      "utf8",
+    );
+    expect(migration).toMatch(/create policy academy_live_messages_admin_delete/);
+    expect(migration).toMatch(/using \(public\.academy_is_admin\(\)\)/);
+    expect(migration).toMatch(/where body is null[\s\S]*'14 days'/);
+    expect(migration).toMatch(/update public\.academy_live_messages[\s\S]*audio_path = null/);
+    expect(migration).not.toMatch(/delete from public\.academy_live_messages\s+where created_at/);
+    expect(chat).toMatch(/an administrator removes one/);
+    expect(room).toMatch(/remain saved unless an administrator removes one/);
   });
 });
 
@@ -157,4 +177,5 @@ describe("students can hand in a screenshot, and the limit holds server side", (
     expect(client).toMatch(/p_file_path: filePath/);
     expect(register).toMatch(/p_file_path/);
   });
+
 });

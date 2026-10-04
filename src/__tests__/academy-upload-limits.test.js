@@ -30,7 +30,7 @@ describe("the bucket refuses oversized uploads", () => {
     expect(allSql).toMatch(
       /update storage\.objects|update storage\.buckets/,
     );
-    expect(allSql).toMatch(/set file_size_limit = 26214400/);
+    expect(allSql).toMatch(/set file_size_limit = 5242880/);
   });
 
   it("restricts the bucket to types an assignment could reasonably need", () => {
@@ -46,7 +46,7 @@ describe("the bucket refuses oversized uploads", () => {
 
 describe("the database validates the submission", () => {
   it("has a hard ceiling no assignment can exceed", () => {
-    expect(ceiling).toMatch(/20971520/);
+    expect(ceiling).toMatch(/5242880/);
     expect(register).toMatch(/p_file_size_bytes > ceiling/);
   });
 

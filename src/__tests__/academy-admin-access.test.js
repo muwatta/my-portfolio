@@ -79,6 +79,6 @@ describe("other teachers and colleagues keep their access", () => {
     expect(allSql).toMatch(
       /grant execute on function public\.academy_set_user_admin\(uuid, boolean\) to authenticated/,
     );
-    expect(guard).toMatch(/Primary administrator access required/);
+    expect(guard).toMatch(/Administrator access required/);
   });
 });

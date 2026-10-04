@@ -47,12 +47,12 @@ export default function AcademyAdminAccess() {
     <div className="space-y-8">
       <header>
         <p className="text-sm font-semibold uppercase tracking-[0.18em] text-cyan-600 dark:text-cyan-300">
-          Primary administrator
+          Administrator controls
         </p>
         <h1 className="mt-2 text-3xl font-bold">Access and roles</h1>
         <p className="mt-2 max-w-2xl text-slate-600 dark:text-slate-300">
-          Appoint trusted administrators and set teaching roles. Current-course
-          assignment remains a staff-only action.
+          Administrators can appoint or remove other administrators and set
+          teaching roles. The primary administrator cannot be removed.
         </p>
       </header>
       {message && (
@@ -126,14 +126,15 @@ export default function AcademyAdminAccess() {
                       <input
                         type="checkbox"
                         checked={adminIds.has(profile.id)}
+                        aria-label={`Grant administrator access to ${profile.display_name || "this user"}`}
                         onChange={(event) =>
                           changeAdmin(profile.id, event.target.checked)
                         }
                       />
                       <span>
                         {adminIds.has(profile.id)
-                          ? "Admin"
-                          : "Student or teacher"}
+                          ? "Administrator"
+                          : "Grant admin access"}
                       </span>
                     </label>
                   </td>
