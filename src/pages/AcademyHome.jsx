@@ -74,7 +74,7 @@ export default function AcademyHome() {
           without it they get the portfolio's title and canonical instead. */}
       <Seo
         title={`${ACADEMY.name} | Learn Programming, C++ and AI Online`}
-        description={`${ACADEMY.name} is an online tech school teaching Python, C++ for embedded systems, and the terminal, with weekly lessons, graded exercises, and projects you build as you learn.`}
+        description={`${ACADEMY.name} teaches Python for AI and machine learning and C++ for embedded systems through weekly lessons, graded exercises, and projects you build as you learn.`}
         path={ACADEMY.path}
         jsonLd={{
           "@context": "https://schema.org",

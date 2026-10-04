@@ -40,10 +40,10 @@ const publicRoutes = [
   {
     path: ACADEMY.path,
     title: `${ACADEMY.name} | Learn Programming, C++ and AI Online`,
-    description: `${ACADEMY.name} is an online tech school teaching Python, C++ for embedded systems, and the terminal, with weekly lessons, graded exercises, and projects you build as you learn.`,
+    description: `${ACADEMY.name} teaches Python for AI and machine learning and C++ for embedded systems through weekly lessons, graded exercises, and projects you build as you learn.`,
     h1: ACADEMY.name,
     intro:
-      "Learn programming, C++ and embedded systems, and the terminal, with weekly lessons, exercises that are graded as you go, and projects you finish by building something real.",
+      "Learn Python for AI and machine learning or C++ for embedded systems, with weekly lessons, exercises graded as you go, and projects you finish by building something real.",
   },
   {
     path: `${ACADEMY.path}/faq`,
@@ -57,7 +57,7 @@ const publicRoutes = [
   {
     path: ACADEMY.coursesPath,
     title: `Courses | ${ACADEMY.name}`,
-    description: `Programming, C++ and embedded systems, and terminal courses taught at ${ACADEMY.name}, with weekly lessons, graded exercises, and projects.`,
+    description: `Python for AI and machine learning and C++ for embedded systems at ${ACADEMY.name}, with weekly lessons, graded exercises, and projects.`,
     h1: "Courses",
     intro:
       "Every course runs in weekly lessons with exercises that are graded as you go.",
@@ -250,25 +250,16 @@ const vite = await createServer({
 });
 
 try {
-  const [{ default: Seo }, { courses }, { HelmetProvider }] = await Promise.all([
+  const [{ default: Seo }, { HelmetProvider }] = await Promise.all([
     vite.ssrLoadModule("/src/components/seo/Seo.jsx"),
-    vite.ssrLoadModule("/src/data/courses.js"),
     vite.ssrLoadModule("/node_modules/react-helmet-async/lib/index.esm.js"),
   ]);
   const template = await readFile(join(distDir, "index.html"), "utf8");
 
-  // The marketing courses in src/data, plus the live academy catalogue, so both
-  // sets of course pages exist as files and neither is served the homepage's
-  // canonical.
+  // Only the published Academy catalogue is a public course offering.
   const academyCourses = await fetchPublicCourses(projectDir);
 
   const courseRoutes = [
-    ...courses.map((course) => ({
-      path: `/courses/${course.slug}`,
-      title: course.title,
-      description: course.description,
-      h1: course.title,
-    })),
     ...academyCourses.map((course) => ({
       path: `/courses/${course.slug}`,
       title: academyCourseTitle(course.title),

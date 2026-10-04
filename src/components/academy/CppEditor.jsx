@@ -99,7 +99,7 @@ export default function CppEditor({ starterCode = "" }) {
   return (
     <section className="overflow-hidden rounded-xl border border-slate-800 bg-slate-950 text-slate-100">
       <div className="flex items-center justify-between border-b border-slate-800 px-4 py-3 text-xs font-semibold uppercase tracking-[0.18em] text-cyan-300">
-        <span>C++ Console Lab</span>
+        <span>C++ Practice Terminal</span>
         <span>Beginner subset</span>
       </div>
       <textarea
@@ -111,7 +111,7 @@ export default function CppEditor({ starterCode = "" }) {
       />
       <div className="flex flex-wrap gap-2 border-t border-slate-800 p-3">
         <button type="button" className="button-primary" onClick={run} disabled={running}>
-          {running ? "Running..." : "Run C++"}
+          {running ? "Running..." : "Run program"}
         </button>
         <button
           type="button"

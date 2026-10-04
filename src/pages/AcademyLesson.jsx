@@ -204,12 +204,13 @@ export default function AcademyLesson() {
         <section className="space-y-3">
           <div>
             <p className="text-sm font-semibold uppercase tracking-[0.18em] text-blue-600">
-              C++ practice terminal
+              C++ embedded-systems terminal
             </p>
-            <h2 className="mt-1 text-2xl font-bold">Run the starter program</h2>
+            <h2 className="mt-1 text-2xl font-bold">Write and run C++</h2>
             <p className="mt-2 text-slate-600 dark:text-slate-300">
-              Change one small part, run it, and explain what changed. This lab
-              supports the beginner console skills used in the first weeks.
+              Edit the starter program, run it in your browser, and experiment
+              with the lesson. Hardware calls are simulated here; nothing is
+              sent to a device or the server.
             </p>
           </div>
           <CppEditor starterCode={content.starter_code} />

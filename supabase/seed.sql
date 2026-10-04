@@ -1,7 +1,7 @@
 insert into public.academy_courses (slug, title, description, duration_weeks, published)
 values (
   'python-for-ai-machine-learning',
-  'Python for AI & Machine Learning',
+  'Python for AI and ML',
   'An 11-week path from Python foundations to a first AI/ML project.',
   11,
   true
@@ -145,4 +145,3 @@ where not exists (
   where m.project_id = p.id
     and m.milestone_number = milestones.milestone_number
 );
-

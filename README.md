@@ -179,7 +179,7 @@ The platform is designed to support:
 * learning materials
 * live classroom functionality
 
-The initial technical curriculum includes **Python, Python for AI/ML, and C++/embedded systems**, with the architecture designed to support additional subjects later.
+The currently available technical curriculum includes **Python for AI and ML** and **C++ for embedded systems**, with the architecture designed to support additional subjects later.
 
 🔗 **Academy:** https://www.muwatta.com.ng/academy
 

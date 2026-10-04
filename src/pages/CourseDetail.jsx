@@ -2,7 +2,6 @@ import { Link, useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { Container } from "../components/layout/Container";
 import Seo from "../components/seo/Seo";
-import { fetchCourse } from "../lib/courses";
 import { enrollInCourse } from "../lib/courses";
 import { fetchPublicCourse, courseSummary } from "../lib/publicCourses";
 import { ACADEMY, academyCourseTitle } from "../data/academy";
@@ -126,11 +125,8 @@ function RegisterForm({ signUp, signIn, onAuthenticated, isConfigured }) {
 export default function CourseDetail() {
   const { slug } = useParams();
   const [course, setCourse] = useState(null);
-  // The academy courses live in Supabase, not in the Firestore collection this
-  // page was built around, so a slug like cpp-embedded-robotics used to fall
-  // through to "Course not found" even though the course was published. One URL
-  // per course is the point: splitting them across two URL spaces would split
-  // their search ranking too.
+  // Resolve from the published Academy catalogue only; retired legacy courses
+  // must not stay available through an old direct URL.
   const [academyCourse, setAcademyCourse] = useState(null);
   const [loading, setLoading] = useState(true);
   const [registering, setRegistering] = useState(false);
@@ -139,15 +135,10 @@ export default function CourseDetail() {
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "auto" });
     setAcademyCourse(null);
-    fetchCourse(slug)
-      .then((found) => {
-        if (found) {
-          setCourse(found);
-          return null;
-        }
-        return fetchPublicCourse(slug).then(setAcademyCourse);
-      })
-      .catch(() => setCourse(null))
+    setCourse(null);
+    fetchPublicCourse(slug)
+      .then(setAcademyCourse)
+      .catch(() => setAcademyCourse(null))
       .finally(() => setLoading(false));
   }, [slug]);
 
@@ -397,4 +388,3 @@ export default function CourseDetail() {
     </>
   );
 }
-

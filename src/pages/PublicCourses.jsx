@@ -4,23 +4,20 @@ import { Container } from "../components/layout/Container";
 import Seo from "../components/seo/Seo";
 import { fetchPublicCourses, courseSummary, coursePath } from "../lib/publicCourses";
 import { ACADEMY } from "../data/academy";
-import { fetchCourses } from "../lib/courses";
 
 // The course catalogue is the sitemap route into the academy, so it links to
 // every public course by its real name. Anchor text is the course title, which
 // is the phrase someone would actually search for.
 export default function PublicCourses() {
   const [academyCourses, setAcademyCourses] = useState([]);
-  const [studioCourses, setStudioCourses] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let cancelled = false;
-    Promise.all([fetchPublicCourses(), fetchCourses()])
-      .then(([academy, studio]) => {
+    fetchPublicCourses()
+      .then((academy) => {
         if (cancelled) return;
         setAcademyCourses(academy);
-        setStudioCourses(studio);
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -30,26 +27,16 @@ export default function PublicCourses() {
     };
   }, []);
 
-  const allCourses = [
-    ...academyCourses.map((course) => ({
-      key: `academy-${course.slug}`,
-      slug: course.slug,
-      title: course.title,
-      summary: courseSummary(course),
-      meta: course.durationWeeks
-        ? `${course.durationWeeks} weeks`
-        : course.language || "Online",
-      href: coursePath(course.slug),
-    })),
-    ...studioCourses.map((course) => ({
-      key: `studio-${course.slug}`,
-      slug: course.slug,
-      title: course.title,
-      summary: course.description,
-      meta: course.duration || course.level || "Online",
-      href: coursePath(course.slug),
-    })),
-  ];
+  const allCourses = academyCourses.map((course) => ({
+    key: `academy-${course.slug}`,
+    slug: course.slug,
+    title: course.title,
+    summary: courseSummary(course),
+    meta: course.durationWeeks
+      ? `${course.durationWeeks} weeks`
+      : course.language || "Online",
+    href: coursePath(course.slug),
+  }));
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -67,7 +54,7 @@ export default function PublicCourses() {
     <div className="min-h-screen bg-white text-slate-900 dark:bg-slate-950 dark:text-slate-100">
       <Seo
         title={`Courses | ${ACADEMY.name}`}
-        description={`Programming, C++ and embedded systems, and terminal courses taught at ${ACADEMY.name}, with weekly lessons, graded exercises, and projects.`}
+        description={`Python for AI and machine learning, and C++ for embedded systems at ${ACADEMY.name}, with weekly lessons, graded exercises, and projects.`}
         path="/courses"
         jsonLd={jsonLd}
       />
