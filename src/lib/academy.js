@@ -1654,7 +1654,10 @@ export async function getAcademyAssignment(id) {
   const { data, error } = await supabase
     .from("academy_assignments")
     .select(
-      "id, course_id, lesson_id, title, instructions, due_at, points, allowed_submission_types, starter_code, hints, retry_limit, published, is_draft, created_at",
+      // academy_courses!inner because the page has to know which language the
+      // assignment is written in before it can offer the right editor, and a
+      // half-fetched assignment must not silently fall back to Python.
+      "id, course_id, lesson_id, title, instructions, due_at, points, allowed_submission_types, starter_code, hints, retry_limit, published, is_draft, created_at, academy_courses!inner(id, slug, title, language)",
     )
     .eq("id", id)
     .eq("is_draft", false)

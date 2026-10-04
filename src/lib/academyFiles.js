@@ -3,6 +3,29 @@ const FILE_RULES = {
     maxBytes: 200 * 1024,
     mime: ["text/x-python", "text/plain", "application/octet-stream"],
   },
+  // C++ sources. Matched against the Python budget deliberately: these are
+  // hand-written lesson answers, not archives, and the executor compiles them
+  // server-side so anything much larger is not what we want to accept.
+  ".cpp": {
+    maxBytes: 200 * 1024,
+    mime: ["text/x-c++", "text/x-c", "text/plain", "application/octet-stream"],
+  },
+  ".cc": {
+    maxBytes: 200 * 1024,
+    mime: ["text/x-c++", "text/x-c", "text/plain", "application/octet-stream"],
+  },
+  ".cxx": {
+    maxBytes: 200 * 1024,
+    mime: ["text/x-c++", "text/x-c", "text/plain", "application/octet-stream"],
+  },
+  ".h": {
+    maxBytes: 200 * 1024,
+    mime: ["text/x-c", "text/x-c++", "text/plain", "application/octet-stream"],
+  },
+  ".hpp": {
+    maxBytes: 200 * 1024,
+    mime: ["text/x-c++", "text/plain", "application/octet-stream"],
+  },
   ".ipynb": { maxBytes: 1024 * 1024, mime: ["application/json", "text/plain"] },
   ".txt": { maxBytes: 1024 * 1024, mime: ["text/plain"] },
   ".md": { maxBytes: 1024 * 1024, mime: ["text/markdown", "text/plain"] },

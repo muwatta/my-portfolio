@@ -20,6 +20,29 @@ import { friendlyError } from "../lib/utils";
 import { supabase } from "../lib/supabase";
 import { useAcademyAuth } from "../hooks/useAcademyAuth";
 import PythonEditor from "../components/academy/PythonEditor";
+import CppEditor from "../components/academy/CppEditor";
+
+// A C++ assignment is graded by compiling and running the source, so the editor
+// has to be the C++ one. Choosing by course language rather than by sniffing the
+// starter code means a lesson with no starter snippet still gets the right tool
+// instead of silently defaulting to Python.
+function CodeEditorForAssignment({ assignment, onCaptureSource }) {
+  const isCpp = assignment?.academy_courses?.language === "cpp";
+  if (isCpp) {
+    return (
+      <CppEditor
+        starterCode={assignment.starter_code || ""}
+        onSubmit={onCaptureSource}
+      />
+    );
+  }
+  return (
+    <PythonEditor
+      starterCode={assignment.starter_code}
+      onSubmit={onCaptureSource}
+    />
+  );
+}
 
 export default function AcademyAssignment() {
   const { id } = useParams();
@@ -97,8 +120,14 @@ export default function AcademyAssignment() {
     const result = validateAcademyFile(selected);
     setNotice(result.valid ? "" : result.error);
     setFile(result.valid ? selected : null);
-    if (result.valid && selected.name.toLowerCase().endsWith(".py"))
+    // Load the source into whichever editor is showing, so uploading a file and
+    // typing it by hand are the same path. C++ sources have to be included here
+    // or the upload silently discards the code and submits an empty submission.
+    const isSource =
+      /\.(py|cpp|cc|cxx|h|hpp)$/i.test(selected?.name || "");
+    if (result.valid && selected && isSource) {
       setSourceCode(await selected.text());
+    }
   }
 
   async function submit(source = sourceCode) {
@@ -241,6 +270,25 @@ export default function AcademyAssignment() {
       </div>
     );
   const attemptsRemaining = Math.max(0, assignment.retry_limit - attempts);
+  // C++ sources are only offered for a C++ assignment. Accepting .cpp on a
+  // Python assignment would let a student upload a file the grader cannot run.
+  const acceptAttribute = [
+    ".py",
+    ".ipynb",
+    ".txt",
+    ".md",
+    ".csv",
+    ".pdf",
+    ".docx",
+    ".png",
+    ".jpg",
+    ".jpeg",
+    ".webp",
+    ".heic",
+    ...(assignment?.academy_courses?.language === "cpp"
+      ? [".cpp", ".cc", ".cxx", ".h", ".hpp"]
+      : []),
+  ].join(",");
   return (
     <article className="max-w-3xl space-y-6">
       <Link
@@ -266,16 +314,16 @@ export default function AcademyAssignment() {
           Allowed:           {(assignment.allowed_submission_types || []).join(", ") || "Code or file"}
         </p>
       </div>
-      <PythonEditor
-        starterCode={assignment.starter_code}
-        onSubmit={setSourceCode}
+      <CodeEditorForAssignment
+        assignment={assignment}
+        onCaptureSource={setSourceCode}
       />
       <label className="label">
         Upload a file
         <input
           className="field"
           type="file"
-          accept=".py,.ipynb,.txt,.md,.csv,.pdf,.docx,.png,.jpg,.jpeg,.webp,.heic"
+          accept={acceptAttribute}
           onChange={handleFile}
         />
       </label>

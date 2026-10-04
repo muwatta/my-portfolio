@@ -58,7 +58,7 @@ Deno.serve(async (request) => {
   const serviceClient = createClient(supabaseUrl, serviceKey);
   const { data: submission, error: submissionError } = await serviceClient
     .from("academy_submissions")
-    .select("id, student_id, source_code, assignment_id, academy_assignments(points, automated_tests)")
+    .select("id, student_id, source_code, assignment_id, academy_assignments(points, automated_tests, academy_courses(language))")
     .eq("id", input.submission_id)
     .maybeSingle();
   if (submissionError || !submission) return json({ error: "Submission not found." }, 404);
@@ -96,16 +96,26 @@ Deno.serve(async (request) => {
   )
     return fail(serviceClient, submission.id, "Submission or assignment tests are invalid.");
 
-  // A cheap pre-filter for the most obvious mistakes, not a security boundary.
-  // It is trivially bypassed, so it must never be described as one. The real
-  // boundary is that this function never executes student code at all: it is
-  // posted to a separate isolated executor, and nothing here runs it.
-  const obvious = [
-    /\b(?:import|from)\s+(?:os|sys|subprocess|socket|requests|urllib|pathlib)\b/i,
-    /\b(?:eval|exec|compile|__import__|open)\s*\(/i,
-  ];
-  if (obvious.some((pattern) => pattern.test(submission.source_code)))
-    return fail(serviceClient, submission.id, "Submission uses a restricted Python feature.");
+// A cheap pre-filter for the most obvious mistakes, not a security boundary.
+    // It is trivially bypassed, so it must never be described as one. The real
+    // boundary is that this function never executes student code at all: it is
+    // posted to a separate isolated executor, and nothing here runs it.
+    //
+    // These patterns are Python syntax. Embedded C++ legitimately calls open(),
+    // exec() and compile() (std::compile_error, POSIX open), so running this
+    // against C++ rejected valid embedded answers with a message about Python.
+    // Skipped only when the course is positively known to be a different
+    // language; an unreadable language still gets the filter, so a failed join
+    // cannot quietly weaken the Python path.
+    const language = submission.academy_assignments?.academy_courses?.language;
+    if (language !== "cpp" && language !== "shell") {
+      const obvious = [
+        /\b(?:import|from)\s+(?:os|sys|subprocess|socket|requests|urllib|pathlib)\b/i,
+        /\b(?:eval|exec|compile|__import__|open)\s*\(/i,
+      ];
+      if (obvious.some((pattern) => pattern.test(submission.source_code)))
+        return fail(serviceClient, submission.id, "Submission uses a restricted Python feature.");
+    }
 
   if (
     tests.some((test: { name?: unknown; input?: unknown; expected?: unknown }) =>

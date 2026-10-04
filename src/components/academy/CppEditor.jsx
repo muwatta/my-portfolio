@@ -62,7 +62,7 @@ function runCpp(code) {
   });
 }
 
-export default function CppEditor({ starterCode = "" }) {
+export default function CppEditor({ starterCode = "", onSubmit }) {
   const [code, setCode] = useState(starterCode);
   const [output, setOutput] = useState("");
   const [error, setError] = useState("");
@@ -125,6 +125,19 @@ export default function CppEditor({ starterCode = "" }) {
         >
           Reset
         </button>
+        {onSubmit && (
+          // Mirrors PythonEditor: onSubmit hands the current source back to the
+          // page, which owns the actual assignment submission. Gated on the prop
+          // so the in-lesson terminal, which is run-only, gains no dead button.
+          <button
+            type="button"
+            className="button-secondary border-slate-700 text-slate-200"
+            onClick={() => onSubmit(code)}
+            disabled={running}
+          >
+            Submit code
+          </button>
+        )}
       </div>
       {(output || error) && (
         <pre
