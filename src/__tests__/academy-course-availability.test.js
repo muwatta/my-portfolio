@@ -43,17 +43,11 @@ describe("only the requested Academy courses are available", () => {
     expect(courseDetail).not.toContain("fetchCourse(slug)");
   });
 
-  it("advertises both available courses from the home page", () => {
-    // Quote-agnostic: the slugs are data, and asserting a particular quote
-    // style would fail on a formatting change with no behaviour change.
-    for (const slug of [
-      "python-for-ai-machine-learning",
-      "cpp-embedded-robotics",
-    ]) {
-      expect(homePreview).toMatch(new RegExp(slug));
-    }
-    expect(homePreview).toContain("Python for AI and Machine Learning");
-    expect(homePreview).toContain("C++ for Embedded Systems");
+  it("derives homepage course cards from the published catalogue", () => {
+    expect(homePreview).toContain("fetchPublicCourses()");
+    expect(homePreview).toContain("courses.map((course)");
+    expect(homePreview).not.toContain("python-for-ai-machine-learning");
+    expect(homePreview).not.toContain("cpp-embedded-robotics");
   });
 
   it("does not prerender or list retired course pages", () => {

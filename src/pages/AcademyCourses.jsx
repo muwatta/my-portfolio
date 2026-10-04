@@ -79,11 +79,36 @@ export default function AcademyCourses() {
       <header>
         <h1 className="text-3xl font-bold tracking-tight">Courses</h1>
         <p className="mt-2 max-w-2xl text-slate-600 dark:text-slate-300">
-          Choose one learning path to focus on. Once you pick a course, it
-          becomes your current path and the others are locked. Ask your teacher
-          or admin to change it if needed.
+          Choose the learning path you want to follow. Your lessons and progress
+          are organized around one course at a time.
         </p>
       </header>
+
+      {activeCourse && (
+        <section
+          aria-label="Your current course"
+          className="flex flex-col gap-4 rounded-2xl border border-emerald-200 bg-emerald-50 p-5 dark:border-emerald-900 dark:bg-emerald-950/40 sm:flex-row sm:items-center sm:justify-between"
+        >
+          <div>
+            <p className="text-xs font-bold uppercase tracking-[0.16em] text-emerald-800 dark:text-emerald-300">
+              Your current course
+            </p>
+            <h2 className="mt-1 text-xl font-bold text-emerald-950 dark:text-emerald-100">
+              {activeCourse.title}
+            </h2>
+            <p className="mt-1 text-sm text-emerald-900 dark:text-emerald-200">
+              Your lessons and progress are following this course. To switch,
+              ask your teacher or an Academy admin.
+            </p>
+          </div>
+          <Link
+            to="/academy/lessons"
+            className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-lg bg-emerald-700 px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-emerald-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700 dark:bg-emerald-500 dark:text-slate-950 dark:hover:bg-emerald-400"
+          >
+            Continue learning
+          </Link>
+        </section>
+      )}
 
       {offline && (
         <p className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-200">
@@ -125,9 +150,9 @@ export default function AcademyCourses() {
               key={course.id}
               className={`rounded-2xl border border-l-4 bg-white p-6 shadow-sm dark:bg-slate-900 ${
                 isActive
-                  ? "border-slate-200 border-l-emerald-400 dark:border-slate-800 dark:border-l-emerald-500"
+                  ? "border-emerald-300 border-l-emerald-500 ring-1 ring-emerald-200 dark:border-emerald-900 dark:border-l-emerald-500 dark:ring-emerald-950"
                   : isLocked
-                    ? "border-slate-200 border-l-slate-300 opacity-60 dark:border-slate-800 dark:border-l-slate-700"
+                    ? "border-slate-200 border-l-slate-300 dark:border-slate-800 dark:border-l-slate-700"
                     : "border-slate-200 border-l-teal-400 dark:border-slate-800 dark:border-l-teal-500"
               }`}
             >
@@ -142,8 +167,8 @@ export default function AcademyCourses() {
                   </span>
                 )}
                 {isLocked && (
-                  <span className="rounded-full bg-slate-200 px-2 py-0.5 text-slate-600 dark:bg-slate-800 dark:text-slate-300">
-                    Locked
+                  <span className="rounded-full bg-slate-100 px-2 py-0.5 text-slate-700 dark:bg-slate-800 dark:text-slate-200">
+                    Not selected
                   </span>
                 )}
               </div>
@@ -162,16 +187,28 @@ export default function AcademyCourses() {
                   View lessons
                 </Link>
               </div>
+              {isLocked && (
+                <p className="mt-4 rounded-lg bg-slate-50 p-3 text-sm leading-5 text-slate-700 dark:bg-slate-800/70 dark:text-slate-200">
+                  You are currently on{" "}
+                  <strong className="font-semibold">{activeCourse.title}</strong>
+                  . Ask your teacher or an Academy admin if you need to switch
+                  courses.
+                </p>
+              )}
               <button
                 type="button"
-                className="mt-4 w-full rounded-lg bg-amber-500 px-4 py-2 text-sm font-bold text-slate-950 transition-colors hover:bg-amber-400 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-500 disabled:hover:bg-slate-200 dark:disabled:bg-slate-800 dark:disabled:text-slate-500 dark:disabled:hover:bg-slate-800"
+                className={`mt-4 min-h-11 w-full rounded-lg px-4 py-2 text-sm font-bold transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 ${
+                  isLocked
+                    ? "cursor-not-allowed border border-slate-300 bg-slate-100 text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
+                    : "bg-amber-500 text-slate-950 hover:bg-amber-400 focus-visible:outline-amber-600 disabled:cursor-wait disabled:opacity-70"
+                }`}
                 disabled={selecting === course.id || isActive || isLocked}
                 onClick={() => selectCourse(course.id)}
               >
                 {isActive
-                  ? "This is your current path"
+                  ? "Your current course"
                   : isLocked
-                    ? "Locked. Contact your teacher"
+                    ? `Unavailable while you’re on ${activeCourse.title}`
                     : selecting === course.id
                       ? "Selecting..."
                       : "Select this course"}
