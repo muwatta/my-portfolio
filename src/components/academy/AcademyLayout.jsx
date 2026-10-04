@@ -57,6 +57,7 @@ const ADMIN_LINKS = [
   { label: "Classes", to: "/academy/admin/schedule" },
   { label: "Submissions", to: "/academy/admin/submissions" },
   { label: "Analytics", to: "/academy/admin/analytics" },
+  { label: "Leaderboard", to: "/academy/admin/leaderboard" },
   { label: "Settings", to: "/academy/admin/settings" },
 ];
 

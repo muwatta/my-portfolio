@@ -12,7 +12,8 @@ export default function AcademyLeaderboard() {
   const [rows, setRows] = useState([]);
   const [state, setState] = useState("loading");
   const [offline, setOffline] = useState(false);
-  const { user } = useAcademyAuth();
+  const { user, isAdmin, isTeacher } = useAcademyAuth();
+  const isStaff = Boolean(isAdmin || isTeacher);
 
   useEffect(() => {
     let mounted = true;
@@ -73,13 +74,21 @@ export default function AcademyLeaderboard() {
           Points come from recorded lessons and practice, not manual client
           updates.
         </p>
-        {currentUserRow && (
+        {currentUserRow ? (
           <p className="mt-4 inline-flex gap-3 rounded-lg bg-cyan-50 px-4 py-2 text-sm font-semibold text-cyan-800 dark:bg-cyan-950/50 dark:text-cyan-200">
             <span>Your rank: #{currentUserRow.rank}</span>
             <span>·</span>
             <span>{currentUserRow.points} pts this week</span>
           </p>
-        )}
+        ) : isStaff && rows.length > 0 ? (
+          // Staff are not ranked themselves, so the personal summary above never
+          // renders for them. Counting the cohort is the useful equivalent.
+          <p className="mt-4 inline-flex gap-3 rounded-lg bg-cyan-50 px-4 py-2 text-sm font-semibold text-cyan-800 dark:bg-cyan-950/50 dark:text-cyan-200">
+            <span>{rows.length} student{rows.length === 1 ? "" : "s"} ranked</span>
+            <span>·</span>
+            <span>this week</span>
+          </p>
+        ) : null}
       </header>
       {offline && (
         <p className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">
