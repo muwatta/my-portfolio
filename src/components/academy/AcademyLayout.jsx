@@ -5,11 +5,6 @@ import {
   FiSun,
   FiX,
   FiBell,
-  FiHome,
-  FiBookOpen,
-  FiEdit3,
-  FiCheckSquare,
-  FiUser,
 } from "react-icons/fi";
 import { NavLink, Outlet, Link, useLocation } from "react-router-dom";
 import { useAcademyAuth } from "../../hooks/useAcademyAuth";
@@ -31,11 +26,11 @@ const STUDENT_LINKS = [
 ];
 
 const QUICK_LINKS = [
-  { label: "Home", to: "/academy/dashboard", Icon: FiHome },
-  { label: "Learn", to: "/academy/lessons", Icon: FiBookOpen },
-  { label: "Practice", to: "/academy/practice", Icon: FiEdit3 },
-  { label: "Tasks", to: "/academy/assignments", Icon: FiCheckSquare },
-  { label: "Profile", to: "/academy/profile", Icon: FiUser },
+  { label: "Home", to: "/academy/dashboard" },
+  { label: "Learn", to: "/academy/lessons" },
+  { label: "Practice", to: "/academy/practice" },
+  { label: "Tasks", to: "/academy/assignments" },
+  { label: "Profile", to: "/academy/profile" },
 ];
 
 const TEACHER_LINKS = [
@@ -197,7 +192,7 @@ export default function AcademyLayout({
   return (
     <div className="flex min-h-screen flex-col bg-[#F2F4F8] text-[#101425] dark:bg-[#0B0F1A] dark:text-slate-100">
       <header className="border-b border-slate-200 bg-white/95 dark:border-slate-800 dark:bg-slate-950/95">
-        <div className="mx-auto flex min-h-20 max-w-7xl items-center gap-2 px-4 py-3 sm:gap-4 sm:px-6">
+        <div className="mx-auto flex min-h-16 max-w-7xl items-center gap-2 px-3 py-2 sm:min-h-20 sm:gap-4 sm:px-6 sm:py-3">
           <button
             type="button"
             className="grid h-10 w-10 shrink-0 place-items-center rounded-lg border border-slate-200 text-slate-700 hover:border-amber-400 hover:text-amber-600 lg:hidden dark:border-slate-700 dark:text-slate-200"
@@ -282,7 +277,13 @@ export default function AcademyLayout({
         />
       )}
 
-      <div className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-6 px-4 py-6 pb-24 sm:px-6 lg:flex-row lg:pb-6">
+      <div
+        className={`mx-auto flex w-full max-w-7xl flex-1 flex-col px-4 sm:px-6 lg:flex-row ${
+          workspace === "student"
+            ? "gap-5 py-4 pb-24 lg:pb-4"
+            : "gap-6 py-6 pb-24 lg:pb-6"
+        }`}
+      >
         <nav
           id="academy-navigation"
           aria-label="Academy navigation"
@@ -334,7 +335,11 @@ export default function AcademyLayout({
           </div>
         </nav>
 
-        <main className="min-w-0 flex-1">
+        <main
+          className={`min-w-0 flex-1 ${
+            workspace === "student" ? "academy-student-content" : ""
+          }`}
+        >
           {aboveOutlet}
           <Outlet />
         </main>
@@ -345,19 +350,18 @@ export default function AcademyLayout({
           aria-label="Quick navigation"
           className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-5 border-t border-slate-200 bg-white/95 px-1 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-1 backdrop-blur lg:hidden dark:border-slate-800 dark:bg-slate-950/95"
         >
-          {QUICK_LINKS.map(({ label, to, Icon }) => (
+          {QUICK_LINKS.map(({ label, to }) => (
             <NavLink
               key={to}
               to={to}
               className={({ isActive }) =>
-                `flex min-h-12 flex-col items-center justify-center gap-0.5 rounded-lg text-[0.68rem] font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 ${
+                `flex min-h-11 flex-col items-center justify-center rounded-lg px-1 text-xs font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 ${
                   isActive
                     ? "text-amber-600 dark:text-amber-400"
                     : "text-slate-500 dark:text-slate-400"
                 }`
               }
             >
-              <Icon className="text-base" aria-hidden="true" />
               <span>{label}</span>
             </NavLink>
           ))}

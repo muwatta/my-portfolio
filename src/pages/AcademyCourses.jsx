@@ -70,8 +70,10 @@ export default function AcademyCourses() {
     );
     setSelecting("");
     if (!error) {
+      const selectedCourse = courses.find((course) => course.id === courseId);
+      if (selectedCourse) setActiveCourse(selectedCourse);
       const active = await getActiveCourseForStudent(user.id);
-      setActiveCourse(active?.data ?? null);
+      if (active?.data) setActiveCourse(active.data);
     }
   }
 
@@ -200,9 +202,9 @@ export default function AcademyCourses() {
                 type="button"
                 className={`mt-4 min-h-11 w-full rounded-lg px-4 py-2 text-sm font-bold transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 ${
                   isLocked
-                    ? "cursor-not-allowed border border-slate-300 bg-slate-100 text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
+                    ? "cursor-not-allowed border border-slate-300 bg-slate-100 text-slate-500 opacity-70 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400"
                     : isActive
-                      ? "cursor-not-allowed border border-emerald-300 bg-emerald-50 text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-200"
+                      ? "cursor-not-allowed border border-emerald-300 bg-emerald-50 text-emerald-800 opacity-80 dark:border-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-200"
                       : "bg-amber-500 text-slate-950 hover:bg-amber-400 focus-visible:outline-amber-600 disabled:cursor-wait disabled:opacity-70"
                 }`}
                 disabled={
@@ -212,6 +214,7 @@ export default function AcademyCourses() {
                   isLocked ||
                   offline
                 }
+                aria-pressed={isActive}
                 onClick={() => selectCourse(course.id)}
               >
                 {isActive

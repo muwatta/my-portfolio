@@ -7,7 +7,7 @@ export default function ProgressBar({ value = 0, label = "Progress" }) {
         <span>{safeValue}%</span>
       </div>
       <div
-        className="mt-2 h-3 overflow-hidden rounded-full bg-slate-200 shadow-inner dark:bg-slate-800"
+        className="mt-1.5 h-2.5 overflow-hidden rounded-full bg-slate-200 shadow-inner dark:bg-slate-800"
         role="progressbar"
         aria-label={label}
         aria-valuemin="0"

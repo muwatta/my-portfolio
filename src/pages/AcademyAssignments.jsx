@@ -71,15 +71,30 @@ export default function AcademyAssignments() {
           }
           description={
             network.online
-              ? "Nothing is due right now. Your teacher will publish new assignments here."
-              : "Reconnect once to download your assignments, then you can keep working offline."
+              ? "No assignments have been published for your course yet. Keep building your skills with lessons and practice."
+              : "Reconnect once to download your assignments. Your saved lessons remain available offline."
           }
           onRetry={
             network.online
               ? undefined
               : () => setReloadToken((value) => value + 1)
           }
-        />
+        >
+          <div className="mt-4 flex flex-wrap gap-2">
+            <Link
+              to="/academy/lessons"
+              className="inline-flex min-h-10 items-center justify-center rounded-lg bg-amber-400 px-4 py-2 text-sm font-bold text-slate-950 hover:bg-amber-300"
+            >
+              Review lessons
+            </Link>
+            <Link
+              to="/academy/practice"
+              className="inline-flex min-h-10 items-center justify-center rounded-lg border border-amber-300 px-4 py-2 text-sm font-semibold text-amber-950 hover:bg-amber-100 dark:border-amber-800 dark:text-amber-100 dark:hover:bg-amber-900/40"
+            >
+              Open practice
+            </Link>
+          </div>
+        </AcademyConnectionState>
       )}
       <div className="grid gap-4 sm:grid-cols-2">
         {assignments.map((assignment) => (

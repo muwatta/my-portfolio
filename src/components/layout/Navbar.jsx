@@ -116,7 +116,7 @@ function NavBar() {
 
   return (
     <motion.nav
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+      className={`site-navbar fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
         scrolled
           ? "border-b border-slate-200/50 bg-white/90 shadow-sm backdrop-blur-md dark:border-slate-800/50 dark:bg-slate-950/90"
           : "bg-transparent"
@@ -127,7 +127,7 @@ function NavBar() {
     >
       {/* Navbar container */}
       <div className="mx-auto w-full px-4 sm:px-6 lg:px-8">
-        <div className="flex h-20 items-center justify-between">
+        <div className="site-navbar-inner flex h-20 items-center justify-between">
           {/* Logo */}
           <MotionLink
             to="/"
@@ -246,7 +246,7 @@ function NavBar() {
           <motion.div
             id="mobile-menu"
             ref={menuRef}
-            className="absolute left-0 right-0 top-full border-b border-slate-200/50 bg-white/95 backdrop-blur-xl dark:border-slate-800/50 dark:bg-slate-950/95 md:hidden"
+            className="site-mobile-menu absolute left-0 right-0 top-full border-b border-slate-200/50 bg-white/95 backdrop-blur-xl dark:border-slate-800/50 dark:bg-slate-950/95 md:hidden"
             initial="closed"
             animate="open"
             exit="closed"

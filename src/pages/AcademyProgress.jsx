@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { FiAward, FiCheckCircle, FiClipboard, FiFlag } from "react-icons/fi";
 import {
   getAcademyExamHistory,
   getAcademyProgress,
@@ -96,8 +95,7 @@ export default function AcademyProgress() {
   return (
     <div className="space-y-6">
       <header className="rounded-3xl bg-gradient-to-br from-indigo-950 via-slate-900 to-cyan-950 p-6 text-white shadow-lg sm:p-8">
-        <p className="inline-flex items-center gap-2 rounded-full border border-cyan-200/20 bg-cyan-100/10 px-3 py-1 text-xs font-bold uppercase tracking-[0.16em] text-cyan-200">
-          <FiFlag aria-hidden="true" />
+        <p className="inline-flex items-center rounded-full border border-cyan-200/20 bg-cyan-100/10 px-3 py-1 text-xs font-bold uppercase tracking-[0.16em] text-cyan-200">
           Your journey so far
         </p>
         <h1 className="mt-4 text-3xl font-bold tracking-tight">Progress</h1>
@@ -121,9 +119,6 @@ export default function AcademyProgress() {
             </p>
             <h2 className="mt-1 text-xl font-bold">Course checkpoint</h2>
           </div>
-          <span className="rounded-2xl bg-cyan-50 p-3 text-xl text-cyan-700 dark:bg-cyan-950/60 dark:text-cyan-300">
-            <FiTarget aria-hidden="true" />
-          </span>
         </div>
         <ProgressBar value={progress?.completionPercent} label="Course completion" />
       </section>
@@ -131,28 +126,26 @@ export default function AcademyProgress() {
       <section className="grid gap-4 sm:grid-cols-3">
         {[
           {
-            Icon: FiCheckCircle,
             label: "Lessons completed",
             value: `${progress?.completedLessons} / ${progress?.lessonCount}`,
           },
-          { Icon: FiClipboard, label: "Assignments submitted", value: progress?.submissions ?? 0 },
           {
-            Icon: FiFlag,
+            label: "Assignments submitted",
+            value: progress?.submissions ?? 0,
+          },
+          {
             label: "Current week",
             value: `${progress?.currentWeek} / ${progress?.activeCourse?.duration_weeks ?? 11}`,
           },
         ].map((item) => (
           <div
             key={item.label}
-            className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900"
+            className="rounded-2xl border border-t-2 border-t-cyan-400 border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:border-t-cyan-500 dark:bg-slate-900"
           >
-            <div className="flex items-center justify-between gap-2">
-              <p className="text-sm font-semibold text-slate-500 dark:text-slate-400">
-                {item.label}
-              </p>
-              <item.Icon aria-hidden="true" className="text-cyan-600 dark:text-cyan-300" />
-            </div>
-            <p className="mt-3 text-2xl font-extrabold tabular-nums">{item.value}</p>
+            <p className="text-sm font-semibold text-slate-500 dark:text-slate-400">
+              {item.label}
+            </p>
+            <p className="mt-2 text-2xl font-extrabold tabular-nums">{item.value}</p>
           </div>
         ))}
       </section>
@@ -261,7 +254,6 @@ export default function AcademyProgress() {
                 className="rounded-2xl border border-amber-200 bg-gradient-to-br from-amber-50 to-orange-50 p-4 shadow-sm dark:border-amber-900 dark:from-amber-950/40 dark:to-orange-950/30"
               >
                 <p className="flex items-center gap-2 font-bold">
-                  <FiAward aria-hidden="true" className="shrink-0 text-amber-600 dark:text-amber-300" />
                   {badge.academy_badges?.name}
                 </p>
                 {badge.academy_badges?.description && (

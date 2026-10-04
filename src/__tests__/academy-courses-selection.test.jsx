@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { MemoryRouter } from "react-router-dom";
 import AcademyCourses from "../pages/AcademyCourses";
@@ -94,5 +94,48 @@ describe("course selection guidance", () => {
       screen.getByRole("button", { name: "Your current course" }),
     ).toBeDisabled();
     expect(selectAcademyCourse).not.toHaveBeenCalled();
+  });
+
+  it("disables both selection controls immediately after a course is selected", async () => {
+    getAcademyCourses.mockResolvedValue({
+      data: [
+        {
+          id: "python-course",
+          title: "Python for AI and ML",
+          duration_weeks: 11,
+        },
+        {
+          id: "cpp-course",
+          title: "C++ for Embedded Systems",
+          duration_weeks: 24,
+        },
+      ],
+      configured: true,
+    });
+    getActiveCourseForStudent.mockResolvedValue({ data: null });
+    selectAcademyCourse.mockResolvedValue({ error: null });
+
+    render(
+      <MemoryRouter>
+        <AcademyCourses />
+      </MemoryRouter>,
+    );
+
+    const pythonButton = await screen.findByRole("button", {
+      name: "Select this course",
+    });
+    fireEvent.click(pythonButton);
+
+    expect(await screen.findByRole("region", { name: "Your current course" }))
+      .toHaveTextContent("Python for AI and ML");
+    expect(
+      screen.getByRole("button", { name: "Your current course" }),
+    ).toBeDisabled();
+    expect(
+      screen.getByRole("button", {
+        name: "Locked while you’re on Python for AI and ML",
+      }),
+    ).toBeDisabled();
+    expect(selectAcademyCourse).toHaveBeenCalledTimes(1);
   });
 });

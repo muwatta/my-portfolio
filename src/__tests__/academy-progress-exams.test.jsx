@@ -91,6 +91,11 @@ describe("examinations on the progress page", () => {
     expect(sat.textContent).toContain("3");
   });
 
+  it("renders the course checkpoint without crashing", async () => {
+    renderPage();
+    expect(await screen.findByText("Course checkpoint")).toBeInTheDocument();
+  });
+
   it("counts only released results", async () => {
     renderPage();
     const released = await screen.findByText("Results released");

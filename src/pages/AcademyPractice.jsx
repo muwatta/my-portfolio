@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { getAcademyExercises, submitObjectiveAnswer } from "../lib/academy";
 import CppEditor from "../components/academy/CppEditor";
 import PythonEditor from "../components/academy/PythonEditor";
@@ -116,15 +117,30 @@ export default function AcademyPractice() {
           }
           description={
             network.online
-              ? "Your teacher has not added practice for this course yet. Reconnect later or review the lessons you already have."
-              : "Reconnect once to download practice exercises, then you can practise without a connection."
+              ? "Your teacher has not added practice for this course yet. Keep moving through your lessons while new exercises are prepared."
+              : "Reconnect once to download practice exercises. Your saved lessons remain available offline."
           }
           onRetry={
             network.online
               ? undefined
               : () => setReloadToken((value) => value + 1)
           }
-        />
+        >
+          <div className="mt-4 flex flex-wrap gap-2">
+            <Link
+              to="/academy/lessons"
+              className="inline-flex min-h-10 items-center justify-center rounded-lg bg-amber-400 px-4 py-2 text-sm font-bold text-slate-950 hover:bg-amber-300"
+            >
+              Continue lessons
+            </Link>
+            <Link
+              to="/academy/materials"
+              className="inline-flex min-h-10 items-center justify-center rounded-lg border border-amber-300 px-4 py-2 text-sm font-semibold text-amber-950 hover:bg-amber-100 dark:border-amber-800 dark:text-amber-100 dark:hover:bg-amber-900/40"
+            >
+              Browse materials
+            </Link>
+          </div>
+        </AcademyConnectionState>
       )}
       {exercises.map((exercise) => (
         <article

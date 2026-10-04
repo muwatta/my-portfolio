@@ -105,26 +105,19 @@ export default function AcademyConnectionState({
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, ease: "easeOut" }}
-      className="rounded-2xl border border-amber-200 bg-amber-50/70 p-6 dark:border-amber-900/60 dark:bg-amber-950/20"
+      className="rounded-2xl border border-amber-200 bg-amber-50/70 p-4 dark:border-amber-900/60 dark:bg-amber-950/20"
       aria-live="polite"
     >
-      <div className="flex items-start gap-3">
-        <motion.span
-          className="mt-0.5 text-xl"
-          animate={online ? { rotate: [0, 12, -12, 0] } : { scale: [1, 1.15, 1] }}
-          transition={{ duration: online ? 2.2 : 1.6, repeat: Infinity, ease: "easeInOut" }}
-          aria-hidden="true"
-        >
-          {online ? "📶" : "📴"}
-        </motion.span>
-        <div className="min-w-0 flex-1">
-          <h2 className="text-lg font-bold text-amber-900 dark:text-amber-100">
-            {heading}
-          </h2>
-          <p className="mt-1 text-sm text-amber-800 dark:text-amber-200">
-            {body}
-          </p>
-        </div>
+      <div className="min-w-0">
+        <p className="text-xs font-bold uppercase tracking-wide text-amber-700 dark:text-amber-300">
+          {online ? (slow ? "Slow connection" : "Online") : "Offline"}
+        </p>
+        <h2 className="mt-1 text-lg font-bold text-amber-950 dark:text-amber-100">
+          {heading}
+        </h2>
+        <p className="mt-1 text-sm text-amber-900 dark:text-amber-200">
+          {body}
+        </p>
       </div>
 
       {onRetry && (
@@ -140,7 +133,7 @@ export default function AcademyConnectionState({
       {children}
 
       {showChallenge && (
-        <div className="mt-5 rounded-xl border border-amber-300/70 bg-white/70 p-4 dark:border-amber-800/70 dark:bg-slate-900/60">
+        <div className="mt-4 rounded-xl border border-amber-300/70 bg-white/70 p-3 dark:border-amber-800/70 dark:bg-slate-900/60">
           <p className="text-xs font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-300">
             While you wait
           </p>

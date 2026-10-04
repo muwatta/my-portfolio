@@ -39,7 +39,7 @@ export default function StudentSectionNav() {
   return (
     <nav
       aria-label="Academy sections"
-      className="mb-6 flex flex-wrap gap-2 border-b border-slate-200 pb-3 dark:border-slate-800"
+      className="mb-4 flex flex-wrap gap-1.5 border-b border-slate-200 pb-2.5 dark:border-slate-800"
     >
       {SECTIONS.flatMap((section) => [
         <NavLink
@@ -48,7 +48,7 @@ export default function StudentSectionNav() {
           className={({ isActive }) =>
             `rounded-lg px-3 py-2 text-sm font-semibold transition-colors ${
               isActive
-                ? "bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-sm shadow-cyan-900/15"
+                ? "bg-amber-400 text-slate-950 shadow-sm shadow-amber-900/15"
                 : "bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
             }`
           }
@@ -60,7 +60,7 @@ export default function StudentSectionNav() {
             key={`${section.id}-${link.to}`}
             to={link.to}
             className={({ isActive }) =>
-              `rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+              `rounded-lg px-2.5 py-1.5 text-sm font-medium transition-colors ${
                 isActive
                   ? "bg-cyan-100 font-semibold text-cyan-900 dark:bg-cyan-950 dark:text-cyan-100"
                   : "text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"

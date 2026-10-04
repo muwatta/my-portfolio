@@ -185,6 +185,102 @@ pre {
   animation: slideUp 0.3s ease-out;
 }
 
+.academy-student-content .space-y-8 > :not([hidden]) ~ :not([hidden]) {
+  margin-top: 1rem;
+}
+
+.academy-student-content .space-y-6 > :not([hidden]) ~ :not([hidden]) {
+  margin-top: 0.875rem;
+}
+
+.academy-student-content :is(section, article, header)[class~="p-8"] {
+  padding: 1.25rem;
+}
+
+.academy-student-content :is(section, article, header)[class~="p-6"] {
+  padding: 1rem;
+}
+
+.academy-student-content :is(section, article, header)[class~="p-5"] {
+  padding: 0.875rem;
+}
+
+.academy-student-content h1 {
+  letter-spacing: -0.035em;
+  text-wrap: balance;
+}
+
+.academy-student-content article[class~="bg-white"] {
+  box-shadow: 0 1px 2px rgb(15 23 42 / 0.06);
+}
+
+.dark .academy-student-content article[class~="bg-white"] {
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.18);
+}
+
+@media (max-width: 639px) {
+  html {
+    scroll-padding-top: 4.5rem;
+  }
+
+  .site-navbar-inner {
+    height: 4rem;
+  }
+
+  .site-mobile-menu {
+    max-height: calc(100vh - 4rem);
+    max-height: calc(100dvh - 4rem);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  .home-page h1 {
+    font-size: clamp(2rem, 9vw, 3rem);
+    line-height: 1.1;
+  }
+
+  .academy-student-content h1 {
+    font-size: clamp(1.75rem, 7vw, 2.25rem);
+    line-height: 1.15;
+  }
+
+  .academy-student-content :is(input, select, textarea) {
+    font-size: 16px;
+  }
+
+  .academy-student-content table th,
+  .academy-student-content table td {
+    padding-inline: 0.625rem;
+  }
+
+  .academy-student-content pre {
+    max-width: calc(100vw - 2rem);
+  }
+}
+
+@media (min-width: 640px) and (max-width: 1023px) {
+  .site-mobile-menu {
+    max-height: calc(100vh - 5rem);
+    max-height: calc(100dvh - 5rem);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  .academy-student-content {
+    min-width: 0;
+  }
+}
+
+@media (max-width: 359px) {
+  .academy-student-content :is(section, article, header)[class~="p-4"] {
+    padding: 0.75rem;
+  }
+
+  .academy-student-content .grid {
+    gap: 0.625rem;
+  }
+}
+
 /* Service Worker Update Toast */
 .sw-update-toast {
   animation: slideUp 0.3s ease-out;

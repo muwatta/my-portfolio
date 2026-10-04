@@ -5,6 +5,41 @@ import { HelmetProvider } from "react-helmet-async";
 import App from "./App";
 import "./index.css";
 
+const PRELOAD_RELOAD_KEY = "vite-preload-reload";
+
+function wasPreloadReloaded() {
+  try {
+    return sessionStorage.getItem(PRELOAD_RELOAD_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+function markPreloadReload() {
+  try {
+    sessionStorage.setItem(PRELOAD_RELOAD_KEY, "1");
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+window.addEventListener("vite:preloadError", (event) => {
+  event.preventDefault();
+  if (wasPreloadReloaded() || !markPreloadReload()) return;
+  window.location.reload();
+});
+
+if (wasPreloadReloaded()) {
+  window.setTimeout(() => {
+    try {
+      sessionStorage.removeItem(PRELOAD_RELOAD_KEY);
+    } catch {
+      // Storage can be disabled; the preload handler remains guarded in memory.
+    }
+  }, 10000);
+}
+
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
     <HelmetProvider>

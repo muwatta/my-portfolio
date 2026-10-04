@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 const sw = readFileSync("public/sw.js", "utf8");
 const hook = readFileSync("src/hooks/useAutoRefresh.js", "utf8");
 const main = readFileSync("src/main.jsx", "utf8");
+const vercel = JSON.parse(readFileSync("vercel.json", "utf8"));
 
 const page = (name) => readFileSync(`src/pages/${name}.jsx`, "utf8");
 
@@ -96,6 +97,22 @@ describe("the service worker hands back a fresh app", () => {
   it("does not poll for updates every minute", () => {
     expect(main).not.toMatch(/registration\.update\(\)/);
     expect(main).not.toMatch(/setInterval/);
+  });
+
+  it("recovers once when a deploy leaves the page with a stale lazy chunk", () => {
+    expect(main).toMatch(/vite:preloadError/);
+    expect(main).toMatch(/wasPreloadReloaded\(\) \|\| !markPreloadReload\(\)/);
+    expect(main).toMatch(/window\.location\.reload\(\)/);
+  });
+
+  it("does not cache the app shell or service worker, but keeps hashed assets immutable", () => {
+    const headerValue = (source) =>
+      vercel.headers.find((entry) => entry.source === source)?.headers[0]?.value;
+
+    expect(headerValue("/")).toContain("no-store");
+    expect(headerValue("/index.html")).toContain("no-store");
+    expect(headerValue("/sw.js")).toContain("no-store");
+    expect(headerValue("/assets/(.*)")).toContain("immutable");
   });
 
   it("does not precache the oversized 1024px app icon", () => {
