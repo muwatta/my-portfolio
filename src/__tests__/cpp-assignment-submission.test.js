@@ -56,15 +56,15 @@ describe("C++ files are accepted by the shared validator", () => {
         size: 4 * 1024,
         type: "text/plain",
       });
-
-      it("caps all supported file types at 5 MB", () => {
-        for (const rule of Object.values(FILE_RULES)) {
-          expect(rule.maxBytes).toBe(5 * 1024 * 1024);
-        }
-      });
       expect(result.valid).toBe(true);
     });
   }
+
+  it("caps all supported file types at 5 MB", () => {
+    for (const rule of Object.values(FILE_RULES)) {
+      expect(rule.maxBytes).toBe(5 * 1024 * 1024);
+    }
+  });
 
   it("rejects a C++ file larger than 5 MB", () => {
     const result = validateAcademyFile({
