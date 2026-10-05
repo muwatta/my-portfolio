@@ -112,7 +112,7 @@ export const ProjectGrid = ({ projects = legacyProjects }) => {
             rel="noopener noreferrer"
             className="inline-flex items-center gap-2 px-6 py-3 rounded-lg border border-slate-300 dark:border-slate-700 hover:border-blue-500/50 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white text-sm font-bold transition-all"
           >
-            View GitHub Profile →
+            View GitHub Profile
           </a>
         </motion.div>
       </Container>

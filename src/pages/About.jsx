@@ -224,13 +224,13 @@ const About = () => {
             </div>
             <div className="mt-5 flex flex-wrap justify-center gap-x-5 gap-y-2 text-sm lg:justify-start">
               <Link className="font-semibold text-cyan-500 hover:text-cyan-400" to="/portfolio">
-                Explore my work →
+                Explore my work
               </Link>
               <Link className="font-semibold text-cyan-500 hover:text-cyan-400" to="/academy">
-                Visit the Academy →
+                Visit the Academy
               </Link>
               <Link className="font-semibold text-cyan-500 hover:text-cyan-400" to="/blog">
-                Read my writing →
+                Read my writing
               </Link>
             </div>
           </motion.div>

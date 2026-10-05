@@ -5,7 +5,7 @@ import {
 } from "../lib/academy";
 import { motion, useReducedMotion } from "framer-motion";
 import { Link } from "react-router-dom";
-import { FiAward, FiBookOpen, FiZap } from "react-icons/fi";
+import { FiActivity, FiAward, FiBookOpen } from "react-icons/fi";
 import { useAcademyAuth } from "../hooks/useAcademyAuth";
 import { supabase } from "../lib/supabase";
 import { fetchWithOfflineFallback } from "../lib/academyOffline";
@@ -117,7 +117,7 @@ export default function AcademyLeaderboard() {
         <div className="relative flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <p className="inline-flex items-center gap-2 rounded-full border border-cyan-100/15 bg-white/10 px-3 py-1 text-xs font-bold uppercase tracking-[0.16em] text-cyan-100">
-              <FiZap aria-hidden="true" />
+              <FiActivity aria-hidden="true" />
               Verified activity · this week
             </p>
             <h1 className="mt-4 text-3xl font-extrabold tracking-tight sm:text-4xl">
@@ -390,7 +390,7 @@ export default function AcademyLeaderboard() {
                     )}
                   </span>
                   <span className="inline-flex items-center justify-end gap-1.5 whitespace-nowrap font-extrabold tabular-nums text-slate-800 dark:text-slate-100">
-                    <FiZap
+                    <FiAward
                       aria-hidden="true"
                       className="text-amber-500"
                     />

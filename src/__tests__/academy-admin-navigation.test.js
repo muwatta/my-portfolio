@@ -29,9 +29,7 @@ describe("an administrator can reach the leaderboard", () => {
   });
 });
 
-// The leaderboard page existed and was guarded, but nothing linked to it, so an
-// admin could only reach it by typing the URL. Checking every admin entry against
-// the declared routes catches that class of gap for all current and future links.
+
 describe("every navigation entry points at a real route", () => {
   for (const constantName of [
     "STUDENT_LINKS",
@@ -45,6 +43,41 @@ describe("every navigation entry points at a real route", () => {
       expect(dead).toEqual([]);
     });
   }
+});
+
+describe("the Academy mobile header and navigation", () => {
+  it("places the Academy logo before the right-aligned menu button", () => {
+    expect(layout.indexOf('src="/images/ate-logo.jpg"')).toBeLessThan(
+      layout.indexOf('aria-label={navigationOpen ? "Close navigation" : "Open navigation"}'),
+    );
+  });
+
+  it("puts help in the mobile sidebar and keeps connection status visible", () => {
+    expect(layout).toMatch(/to="\/academy\/faq"[\s\S]*?Help and FAQ/);
+    expect(layout).toMatch(/hidden h-10 w-10[\s\S]*?lg:grid/);
+    const offlineStatus = readFileSync(
+      "src/components/academy/OfflineStatus.jsx",
+      "utf8",
+    );
+    expect(offlineStatus).toMatch(/inline sm:hidden/);
+    expect(offlineStatus).toMatch(/hidden sm:inline/);
+  });
+});
+
+describe("student tests navigation", () => {
+  it("renders the tests route inside the student dashboard layout", () => {
+    const studentLayoutStart = app.indexOf(
+      "element={<AcademyStudentLayout />}",
+    );
+    const teacherRoutesStart = app.indexOf(
+      "element={<AcademyTeacherGuard />}",
+    );
+    const studentRoutes = app.slice(studentLayoutStart, teacherRoutesStart);
+
+    expect(studentRoutes).toMatch(
+      /path="\/academy\/exams"\s+element=\{<AcademyExams \/>\}/,
+    );
+  });
 });
 
 describe("the admin leaderboard stays behind the administrator guard", () => {

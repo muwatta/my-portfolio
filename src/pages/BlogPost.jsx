@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Helmet } from "react-helmet-async";
 import { HiArrowLeft, HiArrowRight } from "react-icons/hi";
+import { FiExternalLink } from "react-icons/fi";
 import { FaShareAlt, FaClock } from "react-icons/fa";
 import Seo from "../components/seo/Seo";
 import { fetchPosts, fetchPost } from "../lib/blog";
@@ -246,7 +247,7 @@ const BlogPost = () => {
                   rel="noopener noreferrer"
                   className="flex items-center gap-1.5 text-xs font-bold text-blue-400 hover:text-blue-300 transition-colors"
                 >
-                  Medium <HiArrowRight className="text-xs" />
+                  Medium <FiExternalLink aria-hidden="true" className="text-xs" />
                 </a>
               )}
             </div>
@@ -296,7 +297,7 @@ const BlogPost = () => {
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-sm font-bold transition-colors"
               >
-                Read full article <HiArrowRight />
+                Read full article <FiExternalLink aria-hidden="true" />
               </a>
             </div>
           )}

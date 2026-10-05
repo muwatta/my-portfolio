@@ -39,7 +39,7 @@ export const CoursePreview = () => {
             to="/courses"
             className="font-semibold text-blue-600 dark:text-blue-400"
           >
-            Browse courses at Algorise Tech Explorers →
+            Browse courses at Algorise Tech Explorers
           </Link>
         </div>
         <div className="mt-8 grid gap-4 sm:grid-cols-2">

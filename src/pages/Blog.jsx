@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { FaSearch, FaShareAlt, FaClock } from "react-icons/fa";
-import { HiArrowRight } from "react-icons/hi";
 import { fetchPosts } from "../lib/blog";
 import Seo from "../components/seo/Seo";
 import { PAGE_SEO } from "../data/pageSeo";
@@ -269,10 +268,9 @@ const Blog = () => {
                   <div className="flex flex-wrap items-center gap-4 mt-6 pt-5 border-t border-slate-200 dark:border-slate-800">
                     <Link
                       to={`/blog/${featured.id}`}
-                      className="flex items-center gap-2 text-sm font-bold text-blue-700 dark:text-blue-400 hover:text-blue-600 dark:hover:text-blue-300 transition-colors group/link"
+                      className="text-sm font-bold text-blue-700 dark:text-blue-400 hover:text-blue-600 dark:hover:text-blue-300 transition-colors"
                     >
-                      Read article{" "}
-                      <HiArrowRight className="transition-transform group-hover/link:translate-x-1" />
+                      Read article
                     </Link>
                     {featured.medium_link && (
                       <a
@@ -365,10 +363,9 @@ const Blog = () => {
                     <div className="flex flex-wrap items-center gap-3 mt-4 pt-4 border-t border-slate-200 dark:border-slate-800/80">
                       <Link
                         to={`/blog/${blog.id}`}
-                        className="flex items-center gap-1 text-xs font-bold text-blue-700 dark:text-blue-400 hover:text-blue-600 dark:hover:text-blue-300 transition-colors group/link"
+                        className="text-xs font-bold text-blue-700 dark:text-blue-400 hover:text-blue-600 dark:hover:text-blue-300 transition-colors"
                       >
-                        Read{" "}
-                        <HiArrowRight className="text-[11px] transition-transform group-hover/link:translate-x-0.5" />
+                        Read
                       </Link>
                       <button
                         onClick={() => share(blog)}

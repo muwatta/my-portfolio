@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
-import { FiGithub, FiExternalLink, FiArrowRight } from "react-icons/fi";
+import { FiGithub, FiExternalLink } from "react-icons/fi";
 
 const CATEGORY_COLORS = {
   Backend: { bg: "#3b82f620", text: "#60a5fa", border: "#3b82f640" },
@@ -145,7 +145,7 @@ export const PortfolioCard = ({ project, index }) => {
             to={detailPath}
             className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold text-blue-400 hover:text-blue-300 border border-blue-500/30 hover:border-blue-500/60 transition-colors ml-auto whitespace-nowrap"
           >
-            Case Study <FiArrowRight size={14} />
+            Case Study
           </Link>
         </div>
       </div>

@@ -3,10 +3,10 @@ import { useEffect, useState } from "react";
 import {
   FiCheck,
   FiCloud,
+  FiHash,
   FiMapPin,
   FiShield,
   FiUser,
-  FiZap,
 } from "react-icons/fi";
 import { getAcademySchools, updateAcademyStudentProfile } from "../lib/academy";
 import { friendlyError } from "../lib/utils";
@@ -250,7 +250,7 @@ export default function AcademyProfile() {
               </span>
               {profile?.academy_registration_codes?.registration_number && (
                 <span className="inline-flex min-h-8 items-center gap-1.5 rounded-full border border-cyan-300/20 bg-cyan-300/10 px-3 text-xs font-semibold text-cyan-100">
-                  <FiZap aria-hidden="true" />
+                  <FiHash aria-hidden="true" />
                   {profile.academy_registration_codes.registration_number}
                 </span>
               )}

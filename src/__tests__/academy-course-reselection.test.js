@@ -32,3 +32,17 @@ describe("students cannot reselect or switch an active course", () => {
     expect(selection).toMatch(/role = 'student'/);
   });
 });
+
+describe("active course lookup", () => {
+  it("reads the active enrollment without invoking course selection", () => {
+    const library = readFileSync("src/lib/academy.js", "utf8");
+    const lookup = library.slice(
+      library.indexOf("export async function getActiveCourseForStudent"),
+      library.indexOf("export async function selectAcademyCourse"),
+    );
+
+    expect(lookup).toContain('.from("academy_enrollments")');
+    expect(lookup).toContain('.eq("status", "active")');
+    expect(lookup).not.toContain('rpc("academy_select_course"');
+  });
+});

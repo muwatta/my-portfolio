@@ -316,6 +316,10 @@ function AppShell() {
                               path="/academy/materials"
                               element={<AcademyMaterials />}
                             />
+                            <Route
+                              path="/academy/exams"
+                              element={<AcademyExams />}
+                            />
                             </Route>
                           </Route>
                         </Route>
@@ -437,14 +441,6 @@ function AppShell() {
                               path="/academy/admin/submissions/:submissionId"
                               element={<AcademyTeacherSubmissions />}
                             />
-              <Route
-                path="/academy/exams"
-                element={
-                  <AcademyStudentGuard>
-                    <AcademyExams />
-                  </AcademyStudentGuard>
-                }
-              />
               <Route
                 path="/academy/admin/exams"
                 element={

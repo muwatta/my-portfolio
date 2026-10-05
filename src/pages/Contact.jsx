@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import emailjs from "emailjs-com";
-import { HiArrowRight } from "react-icons/hi";
+import { FiExternalLink } from "react-icons/fi";
 import { FaGithub, FaLinkedin, FaTwitter, FaEnvelope } from "react-icons/fa";
 import Seo from "../components/seo/Seo";
 import { PAGE_SEO } from "../data/pageSeo";
@@ -260,7 +260,6 @@ const Contact = () => {
                   ) : (
                     <>
                       Send Message
-                      <HiArrowRight className="transition-transform group-hover:translate-x-1" />
                     </>
                   )}
                 </motion.button>
@@ -319,7 +318,10 @@ const Contact = () => {
                         {link.value}
                       </p>
                     </div>
-                    <HiArrowRight className="ml-auto text-slate-700 group-hover:text-slate-400 text-xs flex-shrink-0 transition-all group-hover:translate-x-0.5" />
+                    <FiExternalLink
+                      aria-hidden="true"
+                      className="ml-auto text-slate-500 text-sm flex-shrink-0"
+                    />
                   </a>
                 ))}
               </div>

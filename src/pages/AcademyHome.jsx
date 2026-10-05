@@ -1,5 +1,5 @@
 import { Link, Navigate } from "react-router-dom";
-import { FiArrowRight, FiBookOpen, FiCpu, FiZap } from "react-icons/fi";
+import { FiBookOpen, FiCode, FiCpu } from "react-icons/fi";
 import { useTheme } from "../context/useTheme";
 import { useAcademyAuth } from "../hooks/useAcademyAuth";
 import AcademyFooter from "../components/academy/AcademyFooter";
@@ -12,7 +12,7 @@ const tracks = [
     name: "Python for AI/ML",
     detail: "Explore data, machine learning, and the ideas behind intelligent systems.",
     label: "Code & intelligence",
-    icon: FiZap,
+    icon: FiCode,
     accent:
       "border-teal-200 bg-teal-50 text-teal-800 dark:border-teal-900 dark:bg-teal-950/50 dark:text-teal-200",
   },

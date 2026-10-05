@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
-import { FiGithub, FiExternalLink, FiArrowRight } from "react-icons/fi";
+import { FiGithub, FiExternalLink } from "react-icons/fi";
 import { Badge } from "../../../../components/ui/Badge";
 
 const CoverFallback = ({ title }) => (
@@ -115,7 +115,7 @@ export const ProjectCard = ({ project, index, isActive, onClick }) => {
             className="flex items-center gap-1 text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-300 hover:text-blue-400 transition-colors"
             onClick={(e) => e.stopPropagation()}
           >
-            Case Study <FiArrowRight size={14} />
+            Case Study
           </Link>
         </div>
       </div>

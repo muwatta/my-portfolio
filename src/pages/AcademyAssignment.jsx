@@ -89,13 +89,26 @@ export default function AcademyAssignment() {
       if (!mounted) return;
       setAttempts(countResult.count);
       setHistory(historyResult.data ?? []);
-      setState(
-        assignmentResult.error || countResult.error
-          ? "error"
-          : assignmentResult.configured
-            ? "ready"
-            : "unconfigured",
-      );
+      if (assignmentResult.error) {
+        setState("error");
+        setNotice(
+          friendlyError(
+            assignmentResult.error,
+            "The assignment could not be loaded.",
+          ),
+        );
+        return;
+      }
+      setState(assignmentResult.configured ? "ready" : "unconfigured");
+      const secondaryError = countResult.error || historyResult.error;
+      if (secondaryError) {
+        setNotice(
+          friendlyError(
+            secondaryError,
+            "Submission history could not be loaded. You can still review the assignment.",
+          ),
+        );
+      }
     }
     void load();
     return () => {
@@ -241,16 +254,26 @@ export default function AcademyAssignment() {
         Connect Supabase to load this assignment.
       </p>
     );
-  if (state === "error" || !assignment)
+  if (state === "error")
+    return (
+      <p
+        role="alert"
+        className="rounded-xl border border-red-300 bg-red-50 p-4 text-sm text-red-700"
+      >
+        {notice || "The assignment could not be loaded. Please try again."}
+      </p>
+    );
+  if (!assignment)
     return (
       <div className="space-y-4">
         <p
-          role="alert"
-          className="rounded-xl border border-red-300 bg-red-50 p-4 text-sm text-red-700"
+          role="status"
+          className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900"
         >
-          This assignment is not available on your learning path yet. It may still
-          be a draft, or your course enrolment may not be active. Ask your
-          teacher to publish it, then try again.
+          This assignment is not available for your active course. It may still
+          be a draft, may belong to another course, or your course enrolment may
+          need attention. Ask your teacher to check the assignment and your
+          enrolment.
         </p>
         <div className="flex flex-wrap gap-3">
           <button
@@ -323,6 +346,14 @@ export default function AcademyAssignment() {
           Allowed:           {(assignment.allowed_submission_types || []).join(", ") || "Code or file"}
         </p>
       </div>
+      {notice && (
+        <p
+          role="status"
+          className="rounded-lg bg-amber-50 p-3 text-sm text-amber-900"
+        >
+          {notice}
+        </p>
+      )}
       <CodeEditorForAssignment
         assignment={assignment}
         onCaptureSource={setSourceCode}

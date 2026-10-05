@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
 import {
-  FiArrowUpRight,
   FiBookOpen,
   FiCheck,
   FiClock,
@@ -117,7 +116,7 @@ export default function Courses() {
                 A practical learning model
               </p>
               <h2 className="mt-2 text-3xl font-bold text-slate-900 dark:text-white">
-                Learn → Build → Practice → Apply
+                Learn, build, practice, and apply
               </h2>
               <p className="mt-3 text-slate-600 dark:text-slate-300">
                 Each path connects clear explanations with hands-on work so you
@@ -247,7 +246,7 @@ export default function Courses() {
                           to={`/courses/${course.slug}`}
                           className="inline-flex flex-1 items-center justify-center gap-2 rounded-full bg-slate-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-blue-600 dark:bg-blue-500 dark:text-slate-950 dark:hover:bg-blue-400"
                         >
-                          View course <FiArrowUpRight aria-hidden="true" />
+                          View course
                         </Link>
                         {course.youtubeUrl && (
                           <a

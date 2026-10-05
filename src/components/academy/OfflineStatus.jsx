@@ -122,7 +122,7 @@ export default function OfflineStatus() {
 
   return (
     <div
-      className="flex min-h-11 items-center gap-2 rounded-full border border-slate-200 bg-white px-2 text-xs font-semibold text-slate-600 sm:px-3 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300"
+      className="flex min-h-10 shrink-0 items-center gap-1.5 rounded-full border border-slate-200 bg-white px-2 text-[0.68rem] font-semibold text-slate-600 sm:min-h-11 sm:gap-2 sm:px-3 sm:text-xs dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300"
       role="status"
       aria-live="polite"
     >
@@ -132,6 +132,15 @@ export default function OfflineStatus() {
         }`}
         aria-hidden="true"
       />
+      <span className="inline sm:hidden">
+        {!state.online
+          ? "Offline"
+          : state.status === "syncing"
+            ? "Syncing"
+            : state.pending
+              ? `${state.pending} queued`
+              : "Online"}
+      </span>
       <span className="hidden sm:inline">{label}</span>
     </div>
   );

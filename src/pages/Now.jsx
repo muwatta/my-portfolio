@@ -1,6 +1,5 @@
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
-import { HiArrowRight } from "react-icons/hi";
 import { Container } from "../components/layout/Container";
 import { SectionHeader } from "../components/ui/SectionHeader";
 import { nowContent } from "../data/now";
@@ -78,7 +77,6 @@ export const Now = () => {
                 transition={{ delay: idx * 0.1 }}
                 className="flex items-start gap-4 p-4 rounded-lg border border-slate-200 dark:border-slate-800"
               >
-                <div className="text-blue-500 mt-1">→</div>
                 <div className="flex-1">
                   <p className="font-semibold text-slate-900 dark:text-white">
                     {work.project}
@@ -127,10 +125,9 @@ export const Now = () => {
           </p>
           <Link
             to="/contact"
-            className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-semibold transition-colors group"
+            className="inline-flex items-center px-6 py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-semibold transition-colors"
           >
             Work Together
-            <HiArrowRight className="transition-transform group-hover:translate-x-1" />
           </Link>
         </section>
       </Container>

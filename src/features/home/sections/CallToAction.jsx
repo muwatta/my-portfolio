@@ -2,7 +2,6 @@ import { motion } from "framer-motion";
 import { useInView } from "../../../hooks/useInView";
 import { Container } from "../../../components/layout/Container";
 import { Link } from "react-router-dom";
-import { HiArrowRight } from "react-icons/hi";
 import { FaGithub, FaLinkedin } from "react-icons/fa";
 
 const AVAILABLE_FOR = [
@@ -108,10 +107,9 @@ export const CallToAction = () => {
           >
             <Link
               to="/contact"
-              className="group inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-sm transition-all shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 hover:-translate-y-0.5"
+              className="inline-flex items-center justify-center px-8 py-3.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-sm transition-all shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 hover:-translate-y-0.5"
             >
               Work With Me
-              <HiArrowRight className="transition-transform group-hover:translate-x-1" />
             </Link>
             <a
               href="https://github.com/Muwatta"

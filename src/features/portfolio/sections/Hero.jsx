@@ -2,7 +2,6 @@ import { motion } from "framer-motion";
 import { Container } from "../../../components/layout/Container";
 import { socialLinks } from "../../../data";
 import { FaGithub, FaLinkedin, FaTwitter } from "react-icons/fa";
-import { HiArrowRight } from "react-icons/hi";
 import { Link } from "react-router-dom";
 
 const ICON_MAP = {
@@ -89,10 +88,9 @@ export const Hero = () => {
             >
               <Link
                 to="/contact"
-                className="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-sm font-bold transition-colors group"
+                className="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-sm font-bold transition-colors"
               >
                 Hire Me
-                <HiArrowRight className="transition-transform group-hover:translate-x-1" />
               </Link>
               <a
                 href="https://github.com/Muwatta"

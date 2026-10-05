@@ -195,17 +195,6 @@ export default function AcademyLayout({
     <div className="flex min-h-screen flex-col bg-[#F2F4F8] text-[#101425] dark:bg-[#0B0F1A] dark:text-slate-100">
       <header className="border-b border-slate-200 bg-white/95 dark:border-slate-800 dark:bg-slate-950/95">
         <div className="mx-auto flex min-h-16 max-w-7xl items-center gap-2 px-3 py-2 sm:min-h-20 sm:gap-4 sm:px-6 sm:py-3">
-          <button
-            type="button"
-            className="grid h-10 w-10 shrink-0 place-items-center rounded-lg border border-slate-200 text-slate-700 hover:border-amber-400 hover:text-amber-600 lg:hidden dark:border-slate-700 dark:text-slate-200"
-            onClick={() => setNavigationOpen((open) => !open)}
-            aria-label={navigationOpen ? "Close navigation" : "Open navigation"}
-            aria-expanded={navigationOpen}
-            aria-controls="academy-navigation"
-          >
-            {navigationOpen ? <FiX /> : <FiMenu />}
-          </button>
-
           <Link
             to={dashboardPath}
             className="flex shrink-0 items-center rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-950"
@@ -214,7 +203,7 @@ export default function AcademyLayout({
             <img
               src="/images/ate-logo.jpg"
               alt="Academy"
-              className="h-11 w-11 rounded-lg object-cover"
+              className="h-10 w-10 rounded-lg object-cover sm:h-12 sm:w-12"
             />
           </Link>
 
@@ -225,7 +214,7 @@ export default function AcademyLayout({
               state={{ returnTo: pathname }}
               title="Course navigation help"
               aria-label="Course navigation help"
-              className="grid h-10 w-10 shrink-0 place-items-center rounded-lg border border-slate-200 text-slate-700 transition hover:border-cyan-400 hover:text-cyan-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 dark:border-slate-700 dark:text-slate-200 dark:hover:text-cyan-300"
+              className="hidden h-10 w-10 shrink-0 place-items-center rounded-lg border border-slate-200 text-slate-700 transition hover:border-cyan-400 hover:text-cyan-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 dark:border-slate-700 dark:text-slate-200 dark:hover:text-cyan-300 lg:grid"
             >
               <FiHelpCircle aria-hidden="true" className="text-lg" />
             </Link>
@@ -268,6 +257,16 @@ export default function AcademyLayout({
               <FiBell />
             </Link>
           </div>
+          <button
+            type="button"
+            className="grid h-10 w-10 shrink-0 place-items-center rounded-lg border border-slate-200 text-slate-700 hover:border-amber-400 hover:text-amber-600 lg:hidden dark:border-slate-700 dark:text-slate-200"
+            onClick={() => setNavigationOpen((open) => !open)}
+            aria-label={navigationOpen ? "Close navigation" : "Open navigation"}
+            aria-expanded={navigationOpen}
+            aria-controls="academy-navigation"
+          >
+            {navigationOpen ? <FiX /> : <FiMenu />}
+          </button>
         </div>
       </header>
 
@@ -316,6 +315,14 @@ export default function AcademyLayout({
               </NavLink>
             ))}
           </div>
+          <Link
+            to="/academy/faq"
+            state={{ returnTo: pathname }}
+            className="mt-4 flex min-h-11 items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-cyan-50 hover:text-cyan-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 dark:text-slate-200 dark:hover:bg-slate-800 dark:hover:text-cyan-300 lg:hidden"
+          >
+            <FiHelpCircle aria-hidden="true" />
+            Help and FAQ
+          </Link>
           <div className="mt-6 border-t border-slate-200 pt-4 dark:border-slate-800 lg:hidden">
             <div className="mb-3 flex items-center justify-between gap-3">
               <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">

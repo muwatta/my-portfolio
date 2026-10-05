@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { FiAward, FiBookOpen, FiClock, FiTarget, FiZap } from "react-icons/fi";
+import { FiAward, FiBookOpen, FiCalendar, FiClock, FiTarget } from "react-icons/fi";
 import { useAcademyAuth } from "../hooks/useAcademyAuth";
 import {
   getAcademyAvailableExams,
@@ -153,7 +153,7 @@ export default function AcademyDashboard() {
           </h1>
           {profile?.academy_registration_codes?.registration_number && (
             <p className="mt-3 text-sm font-semibold uppercase tracking-[0.18em] text-cyan-300">
-              Academy Registration No.{" "}
+              Reg. No.{" "}
               {profile.academy_registration_codes.registration_number}
             </p>
           )}
@@ -173,7 +173,7 @@ export default function AcademyDashboard() {
               }
               className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-cyan-300 px-5 py-2 text-sm font-bold text-slate-950 shadow-lg shadow-cyan-950/20 transition hover:-translate-y-0.5 hover:bg-cyan-200 sm:w-auto"
             >
-              <FiZap aria-hidden="true" />
+              <FiBookOpen aria-hidden="true" />
               {resumeLesson
                 ? home?.continueLesson
                   ? "Continue your quest"
@@ -283,7 +283,7 @@ export default function AcademyDashboard() {
           },
           {
             label: "Current week",
-            icon: FiZap,
+            icon: FiCalendar,
             value:
               progress?.currentWeek == null || course?.duration_weeks == null
                 ? "Loading"

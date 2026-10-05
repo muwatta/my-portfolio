@@ -3,7 +3,6 @@ import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import {
   FiActivity,
-  FiArrowUpRight,
   FiAward,
   FiBookOpen,
   FiClock,
@@ -178,16 +177,12 @@ export default function AcademyAdminDashboard() {
               <Link
                 key={to}
                 to={to}
-                className="group flex min-h-16 items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 font-semibold shadow-sm transition hover:-translate-y-0.5 hover:border-cyan-300 hover:shadow-md dark:border-slate-800 dark:bg-slate-900 dark:hover:border-cyan-800"
+                className="flex min-h-16 items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 font-semibold shadow-sm transition hover:-translate-y-0.5 hover:border-cyan-300 hover:shadow-md dark:border-slate-800 dark:bg-slate-900 dark:hover:border-cyan-800"
               >
                 <span className="flex items-center gap-3">
                   <Icon aria-hidden="true" className="text-cyan-700 dark:text-cyan-300" />
                   {label}
                 </span>
-                <FiArrowUpRight
-                  aria-hidden="true"
-                  className="text-slate-400 transition group-hover:-translate-y-0.5 group-hover:translate-x-0.5"
-                />
               </Link>
             ))}
           </section>

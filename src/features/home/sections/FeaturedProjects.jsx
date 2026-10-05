@@ -95,12 +95,9 @@ export const FeaturedProjects = () => {
           </div>
           <Link
             to="/portfolio"
-            className="text-blue-400 hover:text-blue-300 font-medium flex items-center gap-2 group"
+            className="text-blue-400 hover:text-blue-300 font-medium"
           >
             View all projects
-            <span className="group-hover:translate-x-1 transition-transform">
-              →
-            </span>
           </Link>
         </div>
 
@@ -183,7 +180,7 @@ export const FeaturedProjects = () => {
                     rel="noreferrer"
                     className="mt-3 inline-block text-xs font-semibold text-blue-600 hover:text-blue-500 dark:text-blue-400"
                   >
-                    View project →
+                    View project
                   </a>
                 )}
               </article>

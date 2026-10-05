@@ -1,6 +1,5 @@
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
-import { HiArrowRight } from "react-icons/hi";
 import { Container } from "../components/layout/Container";
 import { SectionHeader } from "../components/ui/SectionHeader";
 import { engineeringExperience } from "../data/experience";
@@ -186,10 +185,9 @@ export const EngineeringExperience = () => {
         >
           <Link
             to="/contact"
-            className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-semibold transition-colors group"
+            className="inline-flex items-center px-6 py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-semibold transition-colors"
           >
             Need a Software Developer?
-            <HiArrowRight className="transition-transform group-hover:translate-x-1" />
           </Link>
         </motion.div>
       </Container>

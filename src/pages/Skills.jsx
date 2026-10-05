@@ -1,6 +1,7 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import { FiExternalLink } from "react-icons/fi";
 import { skillCategories } from "../data";
 import Seo from "../components/seo/Seo";
 import { PAGE_SEO } from "../data/pageSeo";
@@ -235,7 +236,7 @@ export default function Skills() {
                 rel="noopener noreferrer"
                 className="px-5 py-2.5 rounded-lg border border-slate-300 dark:border-slate-700 hover:border-slate-500 text-slate-700 dark:text-slate-300 text-sm font-semibold transition-colors"
               >
-                LinkedIn ↗
+                LinkedIn <FiExternalLink className="ml-1 inline" aria-hidden="true" />
               </a>
               <a
                 href="https://x.com/MusliudeenAbdu1"
@@ -243,7 +244,7 @@ export default function Skills() {
                 rel="noopener noreferrer"
                 className="px-5 py-2.5 rounded-lg border border-slate-300 dark:border-slate-700 hover:border-slate-500 text-slate-700 dark:text-slate-300 text-sm font-semibold transition-colors"
               >
-                X ↗
+                X <FiExternalLink className="ml-1 inline" aria-hidden="true" />
               </a>
             </motion.div>
           </div>
