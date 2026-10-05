@@ -13,7 +13,7 @@ import { MemoryRouter } from "react-router-dom";
 import StudentSectionNav from "../components/academy/StudentSectionNav";
 
 describe("student navigation", () => {
-  it("groups the portal into a small number of destinations", () => {
+  it("shows only supplementary destinations already absent from the main navigation", () => {
     const { container } = render(
       <MemoryRouter>
         <StudentSectionNav />
@@ -25,12 +25,9 @@ describe("student navigation", () => {
     );
 
     expect(labels).toEqual([
-      "Learn",
       "Materials",
       "Course",
-      "My work",
       "Projects",
-      "Progress",
       "Examinations",
       "Leaderboard",
     ]);

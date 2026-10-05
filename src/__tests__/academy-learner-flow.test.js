@@ -123,10 +123,13 @@ describe("the learner pages use the server answer", () => {
     );
   });
 
-  it("shows continue, due soon and next topic", () => {
-    expect(dashboard).toMatch(/Continue where you left off/);
+  it("shows a direct quest action, due soon tasks and the next topic", () => {
+    expect(dashboard).toMatch(/Continue your quest/);
+    expect(dashboard).toMatch(/resumeLesson\.lesson_id/);
     expect(dashboard).toMatch(/Due soon/);
     expect(dashboard).toMatch(/home\?\.nextLesson/);
+    expect(dashboard).not.toMatch(/All topics/);
+    expect(dashboard).not.toMatch(/Open lesson/);
   });
 
   it("uses existing progress and earned badges for the student journey UI", () => {

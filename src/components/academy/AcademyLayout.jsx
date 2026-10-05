@@ -206,24 +206,14 @@ export default function AcademyLayout({
 
           <Link
             to={dashboardPath}
-            className="flex min-w-0 shrink-0 items-center gap-3 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-950"
+            className="flex shrink-0 items-center rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-950"
             aria-label="Academy"
           >
             <img
               src="/images/ate-logo.jpg"
-              alt=""
-              className="h-9 w-9 shrink-0 rounded-lg object-cover"
+              alt="Academy"
+              className="h-9 w-9 rounded-lg object-cover"
             />
-            <span className="min-w-0">
-              <span className="block truncate text-sm font-bold tracking-wide">
-                {workspace === "admin"
-                    ? "ATE Admin"
-                    : "ATE"}
-              </span>
-              <span className="hidden max-w-[13rem] truncate text-xs text-slate-500 sm:block dark:text-slate-400">
-                Learn, practice, and keep moving
-              </span>
-            </span>
           </Link>
 
           <div className="ml-auto flex min-w-0 items-center gap-2">

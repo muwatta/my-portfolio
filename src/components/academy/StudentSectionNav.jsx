@@ -1,76 +1,42 @@
 import { NavLink } from "react-router-dom";
+import {
+  FiAward,
+  FiBookOpen,
+  FiBriefcase,
+  FiFileText,
+  FiLayers,
+} from "react-icons/fi";
 
 const SECTIONS = [
-  {
-    id: "learn",
-    label: "Learn",
-    to: "/academy/lessons",
-    links: [
-      { label: "Lessons", to: "/academy/lessons" },
-      { label: "Materials", to: "/academy/materials" },
-      { label: "Course", to: "/academy/courses" },
-    ],
-  },
-  {
-    id: "work",
-    label: "My work",
-    to: "/academy/assignments",
-    links: [
-      { label: "Assignments", to: "/academy/assignments" },
-      { label: "Projects", to: "/academy/projects" },
-    ],
-  },
-  {
-    id: "progress",
-    label: "Progress",
-    to: "/academy/progress",
-    // The first link is the section's own primary destination and is rendered
-    // as the section button itself, so Examinations sits after it to actually
-    // appear in the row.
-    links: [
-      { label: "My progress", to: "/academy/progress" },
-      { label: "Examinations", to: "/academy/exams" },
-      { label: "Leaderboard", to: "/academy/leaderboard" },
-    ],
-  },
+  { label: "Materials", to: "/academy/materials", icon: FiBookOpen },
+  { label: "Course", to: "/academy/courses", icon: FiLayers },
+  { label: "Projects", to: "/academy/projects", icon: FiBriefcase },
+  { label: "Examinations", to: "/academy/exams", icon: FiFileText },
+  { label: "Leaderboard", to: "/academy/leaderboard", icon: FiAward },
 ];
 
 export default function StudentSectionNav() {
   return (
     <nav
       aria-label="Academy sections"
-      className="mb-4 flex flex-wrap gap-1.5 border-b border-slate-200 pb-2.5 dark:border-slate-800"
+      className="mb-4 flex gap-2 overflow-x-auto border-b border-slate-200 pb-2.5 dark:border-slate-800"
     >
-      {SECTIONS.flatMap((section) => [
+      {SECTIONS.map(({ label, to, icon: Icon }) => (
         <NavLink
-          key={`${section.id}-primary`}
-          to={section.to}
+          key={to}
+          to={to}
           className={({ isActive }) =>
-            `rounded-lg px-3 py-2 text-sm font-semibold transition-colors ${
+            `inline-flex min-h-10 shrink-0 items-center gap-2 rounded-full border px-3 text-sm font-semibold transition-colors ${
               isActive
-                ? "bg-amber-400 text-slate-950 shadow-sm shadow-amber-900/15"
-                : "bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+                ? "border-amber-400 bg-amber-300 text-slate-950 shadow-sm shadow-amber-900/15"
+                : "border-slate-200 bg-white text-slate-700 hover:border-amber-300 hover:bg-amber-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
             }`
           }
         >
-          {section.label}
-        </NavLink>,
-        ...section.links.slice(1).map((link) => (
-          <NavLink
-            key={`${section.id}-${link.to}`}
-            to={link.to}
-            className={({ isActive }) =>
-              `rounded-lg px-2.5 py-1.5 text-sm font-medium transition-colors ${
-                isActive
-                  ? "bg-cyan-100 font-semibold text-cyan-900 dark:bg-cyan-950 dark:text-cyan-100"
-                  : "text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
-              }`
-            }
-          >
-            {link.label}
-          </NavLink>
-        )),
-      ])}
+          <Icon aria-hidden="true" />
+          {label}
+        </NavLink>
+      ))}
     </nav>
   );
 }
