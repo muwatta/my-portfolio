@@ -138,10 +138,7 @@ export default function Skills() {
 
   return (
     <div className="min-h-screen bg-white dark:bg-[#080c14] text-slate-800 dark:text-slate-200 relative overflow-hidden">
-      <Seo
-        {...PAGE_SEO["/skills"]}
-        path="/skills"
-      >
+      <Seo {...PAGE_SEO["/skills"]} path="/skills">
         <link
           href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@300;400;500&display=swap"
           rel="stylesheet"
@@ -233,7 +230,7 @@ export default function Skills() {
                 View Resume
               </Link>
               <a
-                href="https://www.linkedin.com/in/abdullahi-musliudeen-166b751b6"
+                href="https://www.linkedin.com/in/muwatta"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="px-5 py-2.5 rounded-lg border border-slate-300 dark:border-slate-700 hover:border-slate-500 text-slate-700 dark:text-slate-300 text-sm font-semibold transition-colors"

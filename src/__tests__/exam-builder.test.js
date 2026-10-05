@@ -23,6 +23,19 @@ const publishedRead = readFileSync(
   "supabase/migrations/20261298000000_exam_student_published_read.sql",
   "utf8",
 );
+const scheduling = readFileSync(
+  "supabase/migrations/20261339000000_exam_scheduling_and_result_release.sql",
+  "utf8",
+);
+const studentDashboard = readFileSync("src/pages/AcademyDashboard.jsx", "utf8");
+const studentRunner = readFileSync(
+  "src/components/academy/AcademyExamRunner.jsx",
+  "utf8",
+);
+const studentNav = readFileSync(
+  "src/components/academy/StudentSectionNav.jsx",
+  "utf8",
+);
 
 describe("options are re-lettered so a student's answer letter is always right", () => {
   // This is the specific risk: a question authored with keys 1/2/3/4 and an
@@ -76,6 +89,18 @@ describe("an exam can be built by hand or automatically", () => {
   it("asks for a difficulty and type mix, not a single number", () => {
     expect(lib).toMatch(/difficulty_counts: mix\.difficulties/);
     expect(lib).toMatch(/type_counts: mix\.types/);
+  });
+
+  it("provides an easy CSV upload path from the builder and back", () => {
+    const questionBank = readFileSync(
+      "src/pages/AcademyAdminQuestionBank.jsx",
+      "utf8",
+    );
+    expect(page).toMatch(/Upload a test CSV in the question bank/);
+    expect(page).toMatch(/automatically select up to 50 questions/);
+    expect(questionBank).toMatch(/accept="\.csv,text\/csv"/);
+    expect(questionBank).toMatch(/Download CSV template/);
+    expect(questionBank).toMatch(/Back to exam builder/);
   });
 
   it("reports a pool it could not fill rather than filling it from elsewhere", () => {
@@ -183,5 +208,37 @@ describe("a draft paper is not readable by a student", () => {
     expect(lib).toMatch(
       /\.in\("status", \[\s*"scheduled",\s*"active",\s*"closed",\s*"graded",\s*"results_published"/,
     );
+  });
+});
+
+describe("tests are scheduled and delivered to the assigned class", () => {
+  it("requires a class and a valid availability window when creating a test", () => {
+    expect(page).toMatch(/Student class/);
+    expect(page).toMatch(/Choose the class that will take this test/);
+    expect(page).toMatch(/Closes at/);
+    expect(scheduling).toMatch(/Choose the class that will take this examination/);
+    expect(scheduling).toMatch(/Set a valid start and close time/);
+  });
+
+  it("shows published scheduled or active tests on the student dashboard", () => {
+    expect(studentDashboard).toContain("getAcademyAvailableExams");
+    expect(studentDashboard).toMatch(/scheduledExams\.map/);
+    expect(studentDashboard).toMatch(/\/academy\/exams\?exam=/);
+    expect(studentNav).toMatch(/\{ label: "Tests", to: "\/academy\/exams"/);
+  });
+
+  it("supports immediate or staff-controlled score release", () => {
+    expect(page).toMatch(/Release each score immediately after submission/);
+    expect(page).toMatch(/Hold scores until staff release them/);
+    expect(scheduling).toMatch(/results_release_mode = 'immediate'/);
+    expect(scheduling).toMatch(/academy_exam_sync_leaderboard\(new\.exam_id\)/);
+    expect(page).toMatch(/getAcademyTeacherClasses/);
+  });
+
+  it("discourages copying during the test without exposing answer keys", () => {
+    expect(studentRunner).toMatch(/onCopy=\{blockCopy\}/);
+    expect(studentRunner).toMatch(/onContextMenu=\{blockCopy\}/);
+    expect(studentRunner).toMatch(/className="select-none space-y-4 print:hidden"/);
+    expect(studentRunner).toMatch(/visibilitychange/);
   });
 });

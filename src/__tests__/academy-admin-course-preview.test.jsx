@@ -1,5 +1,4 @@
-import { render, screen, within } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import AcademyAdminCoursePreview from "../pages/AcademyAdminCoursePreview";
@@ -88,20 +87,25 @@ describe("admin student-facing course preview", () => {
       screen.getByRole("heading", { name: "Session 1: Your First Python" }),
     ).toBeInTheDocument();
     expect(screen.getByText("Programs give computers instructions.")).toBeInTheDocument();
-    expect(screen.getByText("My First Welcome Card")).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        (_, element) =>
+          element?.tagName === "P" &&
+          element.textContent.includes("My First Welcome Card"),
+      ),
+    ).toBeInTheDocument();
     expect(getAcademyCoursePreview).toHaveBeenCalledWith(
       "python-for-ai-machine-learning",
     );
   });
 
   it("lets the admin switch lessons in the outline", async () => {
-    const user = userEvent.setup();
     renderPreview();
     const lessonButton = await screen.findByRole("button", {
       name: "Session 2: Comments",
     });
 
-    await user.click(lessonButton);
+    fireEvent.click(lessonButton);
 
     expect(
       screen.getByRole("heading", { name: "Session 2: Comments" }),

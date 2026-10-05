@@ -354,7 +354,7 @@ describe("results are reachable and the runner is linked", () => {
     const nav = readFileSync("src/components/academy/StudentSectionNav.jsx", "utf8");
     // The first link of a section is its primary button, so Examinations has to
     // sit after it or it never renders.
-    expect(nav).toMatch(/\{ label: "Examinations", to: "\/academy\/exams" \}/);
+    expect(nav).toMatch(/\{ label: "Tests", to: "\/academy\/exams"/);
   });
 
   it("uses the results RPC, not the one that publishes the paper", () => {

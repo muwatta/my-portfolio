@@ -226,7 +226,7 @@ function ChatBubble({ message, isMine, isAdmin, onDelete }) {
       {isAdmin && (
         <button
           type="button"
-          className="rounded-lg px-2 py-1 text-xs font-semibold text-red-600 hover:bg-red-50 dark:text-red-300 dark:hover:bg-red-950/40"
+          className="min-h-11 rounded-lg px-3 py-2 text-xs font-semibold text-red-600 hover:bg-red-50 dark:text-red-300 dark:hover:bg-red-950/40"
           aria-label={`Delete message: ${message.body.slice(0, 40)}`}
           onClick={() => onDelete(message.id)}
         >

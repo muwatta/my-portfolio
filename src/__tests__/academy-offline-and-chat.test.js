@@ -154,7 +154,8 @@ describe("students can hand in a screenshot, and the limit holds server side", (
 
   it("keeps images under 5 MB in the browser", () => {
     const png = files.slice(files.indexOf('".png"'));
-    expect(png).toMatch(/maxBytes: 5 \* 1024 \* 1024/);
+    expect(files).toMatch(/const MAX_FILE_BYTES = 5 \* 1024 \* 1024/);
+    expect(png).toMatch(/maxBytes: MAX_FILE_BYTES/);
   });
 
   it("enforces 5 MB on the server, not just the browser", () => {

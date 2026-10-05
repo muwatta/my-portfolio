@@ -8,10 +8,7 @@ import { PAGE_SEO } from "../data/pageSeo";
 export const Resume = () => {
   return (
     <div className="min-h-screen bg-white dark:bg-[#06090f] text-slate-800 dark:text-slate-200">
-      <Seo
-        {...PAGE_SEO["/resume"]}
-        path="/resume"
-      />
+      <Seo {...PAGE_SEO["/resume"]} path="/resume" />
 
       {/* Background */}
       <div
@@ -51,7 +48,7 @@ export const Resume = () => {
               💻 GitHub
             </a>
             <a
-              href="https://www.linkedin.com/in/abdullahi-musliudeen-166b751b6"
+              href="https://www.linkedin.com/in/muwatta"
               target="_blank"
               rel="noopener noreferrer"
               className="hover:text-blue-600"
@@ -91,14 +88,14 @@ export const Resume = () => {
             </h2>
             <p className="text-slate-700 dark:text-slate-300 leading-relaxed">
               Backend engineer and full-stack developer specializing in Django,
-              Django REST Framework, React, and production APIs.
-              I design and build production-grade systems handling complex
-              business logic: role-based authorization, financial workflows,
-              multi-tenant architectures, and real-time data processing. Founded
-              Algorise Tech Explorers, mentoring 150+ learners. 100+ users on
-              production platforms built end-to-end. Delivered 10+ production
-              projects and technology services for six schools across Lagos,
-              Jos, and Kwara, including DGHIA, CIMAI, and MMS.
+              Django REST Framework, React, and production APIs. I design and
+              build production-grade systems handling complex business logic:
+              role-based authorization, financial workflows, multi-tenant
+              architectures, and real-time data processing. Founded Algorise
+              Tech Explorers, mentoring 150+ learners. 100+ users on production
+              platforms built end-to-end. Delivered 10+ production projects and
+              technology services for six schools across Lagos, Jos, and Kwara,
+              including DGHIA, CIMAI, and MMS.
             </p>
           </motion.section>
 

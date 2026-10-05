@@ -65,7 +65,7 @@ export default function AcademyAssignment() {
           userId: user.id,
           store: OFFLINE_STORES.assignments,
           id,
-          fetcher: () => getAcademyAssignment(id),
+          fetcher: () => getAcademyAssignment(id, user.id),
         }),
         getOfflineRecord(
           OFFLINE_STORES.drafts,

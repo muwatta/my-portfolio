@@ -291,24 +291,32 @@ export default function AcademyAdminExamResults() {
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
                   <p className="font-semibold">
-                    {published
-                      ? "Results are released to students."
-                      : "Results are hidden from students."}
+                    {exam.results_release_mode === "immediate"
+                      ? published
+                        ? "Results are being released as students finish."
+                        : "Results will release automatically after each student submits."
+                      : published
+                        ? "Results are released to students."
+                        : "Results are hidden from students."}
                   </p>
                   <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
-                    {blockReason
-                      ? blockReason
-                      : "Students see a confirmed submitted state either way; releasing adds the score."}
+                    {exam.results_release_mode === "immediate"
+                      ? "This release policy was selected when the test was created."
+                      : blockReason
+                        ? blockReason
+                        : "Students see a confirmed submitted state either way; releasing adds the score."}
                   </p>
                 </div>
-                <button
-                  type="button"
-                  className={published ? "button-secondary" : "button-primary"}
-                  onClick={togglePublish}
-                  disabled={busy || blockReason !== null}
-                >
-                  {published ? "Withhold results" : "Release results"}
-                </button>
+                {exam.results_release_mode !== "immediate" && (
+                  <button
+                    type="button"
+                    className={published ? "button-secondary" : "button-primary"}
+                    onClick={togglePublish}
+                    disabled={busy || blockReason !== null}
+                  >
+                    {published ? "Withhold results" : "Release results"}
+                  </button>
+                )}
               </div>
             </section>
           )}

@@ -112,6 +112,27 @@ describe("AcademyFaq", () => {
     );
   });
 
+  it("returns signed-in staff to the page they opened help from", () => {
+    render(
+      <HelmetProvider>
+        <MemoryRouter
+          initialEntries={[
+            {
+              pathname: "/academy/faq",
+              state: { returnTo: "/academy/admin" },
+            },
+          ]}
+        >
+          <AcademyFaq />
+        </MemoryRouter>
+      </HelmetProvider>,
+    );
+
+    expect(
+      screen.getByRole("link", { name: /back to academy/i }),
+    ).toHaveAttribute("href", "/academy/admin");
+  });
+
   it("never presents the retired Academy name", () => {
     const { container } = renderFaq();
     expect(container.textContent).not.toMatch(/Muwatta Academy/i);

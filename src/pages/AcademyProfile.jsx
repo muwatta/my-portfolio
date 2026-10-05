@@ -143,6 +143,18 @@ export default function AcademyProfile() {
     setMessage("");
     setError("");
   };
+  const selectSchool = (schoolId) => {
+    const selectedSchool = schools.find((school) => school.id === schoolId);
+    setForm((current) => ({
+      ...current,
+      schoolId,
+      ...(selectedSchool
+        ? { state: selectedSchool.state, city: selectedSchool.city }
+        : {}),
+    }));
+    setMessage("");
+    setError("");
+  };
 
   async function clearDownloads() {
     if (!user?.id || downloads.length === 0) return;
@@ -301,7 +313,7 @@ export default function AcademyProfile() {
             <select
               className="field"
               value={form.schoolId}
-              onChange={(event) => updateField("schoolId", event.target.value)}
+              onChange={(event) => selectSchool(event.target.value)}
             >
               <option value="">Other or not listed</option>
               {schools.map((school) => (

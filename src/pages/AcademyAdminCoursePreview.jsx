@@ -15,11 +15,15 @@ export default function AcademyAdminCoursePreview() {
     setState("loading");
     setCourse(null);
     setSelectedLessonId(null);
-    getAcademyCoursePreview(courseSlug).then(({ data, error }) => {
-      if (cancelled) return;
-      setCourse(data);
-      setState(error ? "error" : data ? "ready" : "not-found");
-    });
+    getAcademyCoursePreview(courseSlug)
+      .then(({ data, error }) => {
+        if (cancelled) return;
+        setCourse(data);
+        setState(error ? "error" : data ? "ready" : "not-found");
+      })
+      .catch(() => {
+        if (!cancelled) setState("error");
+      });
     return () => {
       cancelled = true;
     };

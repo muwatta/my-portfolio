@@ -1,15 +1,13 @@
 export const SITE = {
   name: "Muwatta",
-  title:
-    "Muwatta | Abdullahi Musliudeen: Software Developer",
+  title: "Muwatta | Abdullahi Musliudeen: Software Developer",
   description:
     "Portfolio of Abdullahi Musliudeen, a Nigerian backend engineer and full-stack developer building production APIs, Django systems, React applications, and data-driven platforms.",
   url: "https://www.muwatta.com.ng",
   canonical: "https://www.muwatta.com.ng/",
   twitter: "@MusliudeenAbdu1",
   locale: "en_NG",
-  image:
-    "https://www.muwatta.com.ng/images/profile_pics.jpg",
+  image: "https://www.muwatta.com.ng/images/profile_pics.jpg",
 };
 
 export const PERSON_ID = `${SITE.url}/#person`;
@@ -49,10 +47,7 @@ export const personSchema = {
     "IoT",
     "Arabic Education",
   ],
-  sameAs: [
-    "https://github.com/muwatta",
-    "https://www.linkedin.com/in/abdullahi-musliudeen-166b751b6",
-  ],
+  sameAs: ["https://github.com/muwatta", "https://www.linkedin.com/in/muwatta"],
   address: {
     "@type": "PostalAddress",
     addressCountry: "NG",

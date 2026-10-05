@@ -39,6 +39,8 @@ export default function AcademyExamRunner({ exam }) {
   const [offline, setOffline] = useState(!navigator.onLine);
   const [stalePaper, setStalePaper] = useState(false);
   const [result, setResult] = useState(null);
+  const [focusNotice, setFocusNotice] = useState("");
+  const [clientNow, setClientNow] = useState(Date.now());
 
   const timers = useRef({});
   const submitting = useRef(false);
@@ -53,6 +55,26 @@ export default function AcademyExamRunner({ exam }) {
       window.removeEventListener("offline", off);
     };
   }, []);
+
+  useEffect(() => {
+    if (phase !== "running") return undefined;
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "hidden") {
+        setFocusNotice(
+          "Keep this test open and stay on this tab until you submit.",
+        );
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () =>
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+  }, [phase]);
+
+  useEffect(() => {
+    if (phase !== "intro") return undefined;
+    const timer = window.setInterval(() => setClientNow(Date.now()), 1000);
+    return () => window.clearInterval(timer);
+  }, [phase]);
 
   const queueAnswer = useCallback(
     async (attemptId, questionId, key, answeredAt) => {
@@ -237,6 +259,14 @@ export default function AcademyExamRunner({ exam }) {
   async function start() {
     setError("");
     setNotice("");
+    if (exam.starts_at && clientNow < Date.parse(exam.starts_at)) {
+      setError(`This test opens ${new Date(exam.starts_at).toLocaleString()}.`);
+      return;
+    }
+    if (exam.ends_at && clientNow > Date.parse(exam.ends_at)) {
+      setError("The availability window for this test has ended.");
+      return;
+    }
     const result = await startAcademyExamAttempt(exam.id);
     if (result.error) {
       setError(friendlyError(result.error, "The examination could not be started."));
@@ -368,6 +398,20 @@ export default function AcademyExamRunner({ exam }) {
           The timer starts the moment you begin and does not stop for a lost
           connection. Answers save as you go, so you can refresh safely.
         </p>
+        <p className="text-sm text-slate-600 dark:text-slate-300">
+          Text selection, copying, and the right-click menu are disabled while
+          you take the test. Keep this tab open until you submit.
+        </p>
+        {exam.starts_at && clientNow < Date.parse(exam.starts_at) && (
+          <p className="text-sm font-semibold text-amber-700 dark:text-amber-300">
+            This test opens {new Date(exam.starts_at).toLocaleString()}.
+          </p>
+        )}
+        {exam.ends_at && clientNow > Date.parse(exam.ends_at) && (
+          <p className="text-sm font-semibold text-amber-700 dark:text-amber-300">
+            The availability window for this test has ended.
+          </p>
+        )}
         {notice && (
           <p
             role="status"
@@ -384,8 +428,16 @@ export default function AcademyExamRunner({ exam }) {
             {error}
           </p>
         )}
-        <button className="button-primary" type="button" onClick={start}>
-          Start examination
+        <button
+          className="button-primary"
+          type="button"
+          onClick={start}
+          disabled={
+            (exam.starts_at && clientNow < Date.parse(exam.starts_at)) ||
+            (exam.ends_at && clientNow > Date.parse(exam.ends_at))
+          }
+        >
+          Start test
         </button>
       </section>
     );
@@ -418,9 +470,27 @@ export default function AcademyExamRunner({ exam }) {
 
   const chosen = answers[current.question_id]?.key;
   const urgent = remaining !== null && remaining < 60000;
+  const blockCopy = (event) => event.preventDefault();
+  const blockCopyShortcut = (event) => {
+    if (
+      (event.ctrlKey || event.metaKey) &&
+      ["c", "x", "p"].includes(event.key.toLowerCase())
+    ) {
+      event.preventDefault();
+      setNotice("Copying and printing are disabled while taking this test.");
+    }
+  };
 
   return (
-    <div className="space-y-4">
+    <div
+      className="select-none space-y-4 print:hidden"
+      onCopy={blockCopy}
+      onCut={blockCopy}
+      onContextMenu={blockCopy}
+      onDragStart={blockCopy}
+      onKeyDown={blockCopyShortcut}
+      onSelectStart={blockCopy}
+    >
       <header
         className={`sticky top-0 z-10 rounded-2xl p-4 text-white shadow-lg ${
           urgent ? "bg-rose-600" : "bg-slate-900"
@@ -453,6 +523,11 @@ export default function AcademyExamRunner({ exam }) {
           <p className="mt-2 text-xs text-amber-200">
             Working from a saved copy of this paper. The time left is still set
             by the server, so it is accurate.
+          </p>
+        )}
+        {focusNotice && (
+          <p role="status" className="mt-2 text-xs font-semibold text-amber-200">
+            {focusNotice}
           </p>
         )}
       </header>

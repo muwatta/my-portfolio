@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { FiAward, FiBookOpen, FiClock, FiTarget, FiZap } from "react-icons/fi";
 import { useAcademyAuth } from "../hooks/useAcademyAuth";
 import {
+  getAcademyAvailableExams,
   getAcademyAssignments,
   getAcademyProgress,
   getAcademyStudentHome,
@@ -18,8 +19,8 @@ export default function AcademyDashboard() {
   const { profile, user } = useAcademyAuth();
   const name = profile?.display_name || user?.email?.split("@")[0] || "Student";
   const [progress, setProgress] = useState(null);
-  const [assignmentCount, setAssignmentCount] = useState(0);
   const [assignments, setAssignments] = useState([]);
+  const [exams, setExams] = useState([]);
   const [overview, setOverview] = useState(null);
   const [home, setHome] = useState(null);
   const [homeOffline, setHomeOffline] = useState(false);
@@ -27,6 +28,7 @@ export default function AcademyDashboard() {
   const [sectionState, setSectionState] = useState({
     progress: "loading",
     assignments: "loading",
+    exams: "loading",
     overview: "loading",
     home: "loading",
   });
@@ -64,11 +66,15 @@ export default function AcademyDashboard() {
     loadSection(
       "assignments",
       () => getAcademyAssignments(user.id),
-      (data) => {
-        setAssignments(data ?? []);
-        setAssignmentCount(data?.length ?? 0);
-      },
+      (data) => setAssignments(data ?? []),
       OFFLINE_STORES.assignments,
+    );
+    loadSection(
+      "exams",
+      getAcademyAvailableExams,
+      (data) => setExams(data ?? []),
+      OFFLINE_STORES.metadata,
+      "available-exams",
     );
     loadSection(
       "overview",
@@ -115,6 +121,11 @@ export default function AcademyDashboard() {
     ...dueSoon,
     ...assignments.filter((assignment) => !dueSoonIds.has(assignment.id)),
   ].slice(0, 4);
+  const scheduledExams = exams.filter(
+    (exam) =>
+      ["scheduled", "active"].includes(exam.status) &&
+      (!exam.ends_at || Date.parse(exam.ends_at) >= Date.now()),
+  );
 
   return (
     <div className="space-y-8">
@@ -189,6 +200,61 @@ export default function AcademyDashboard() {
         </p>
       )}
       <PasswordPolicyNotice userId={user.id} />
+      {scheduledExams.length > 0 && (
+        <section
+          aria-labelledby="scheduled-tests-heading"
+          className="rounded-2xl border border-indigo-200 bg-gradient-to-br from-indigo-50 via-white to-cyan-50 p-5 shadow-sm dark:border-indigo-900 dark:from-indigo-950/50 dark:via-slate-900 dark:to-cyan-950/30 sm:p-6"
+        >
+          <div className="flex flex-wrap items-end justify-between gap-3">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.16em] text-indigo-700 dark:text-indigo-300">
+                Ready when you are
+              </p>
+              <h2
+                id="scheduled-tests-heading"
+                className="mt-1 text-xl font-extrabold"
+              >
+                Tests
+              </h2>
+            </div>
+            <Link
+              className="text-sm font-bold text-indigo-700 hover:underline dark:text-indigo-300"
+              to="/academy/exams"
+            >
+              All tests
+            </Link>
+          </div>
+          <ul className="mt-4 grid gap-3 sm:grid-cols-2">
+            {scheduledExams.map((exam) => {
+              const startsAt = Date.parse(exam.starts_at);
+              const isOpen = startsAt <= Date.now();
+              return (
+                <li
+                  key={exam.id}
+                  className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-white/80 bg-white/80 p-4 dark:border-slate-700 dark:bg-slate-900/80"
+                >
+                  <div className="min-w-0">
+                    <h3 className="truncate font-bold">{exam.title}</h3>
+                    <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
+                      {isOpen
+                        ? "Open now"
+                        : `Starts ${new Date(exam.starts_at).toLocaleString()}`}
+                      {" · "}
+                      {exam.duration_minutes} min
+                    </p>
+                  </div>
+                  <Link
+                    className="button-primary min-h-10 shrink-0"
+                    to={`/academy/exams?exam=${encodeURIComponent(exam.id)}`}
+                  >
+                    {isOpen ? "Open test" : "View test"}
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+      )}
       <section className="grid grid-cols-2 gap-2.5 sm:gap-4 xl:grid-cols-5">
         {[
           {
@@ -207,11 +273,11 @@ export default function AcademyDashboard() {
             value:
               sectionState.assignments === "error"
                 ? "Unavailable"
-                : assignmentCount,
+                : assignments.length,
             detail:
               sectionState.assignments === "error"
                 ? "Assignments are unavailable."
-                : assignmentCount
+                : assignments.length
                   ? "Keep your next deadline in sight."
                   : "No assignments yet.",
           },

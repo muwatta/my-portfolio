@@ -8,6 +8,7 @@ import {
   getAcademyExamQuestionsInExam,
   getAcademyExamSubjects,
   getAcademyExams,
+  getAcademyTeacherClasses,
   publishAcademyExam,
   removeAcademyExamQuestion,
   validateAcademyExam,
@@ -24,7 +25,9 @@ const emptyExam = {
   instructions: "",
   duration_minutes: 20,
   starts_at: "",
+  ends_at: "",
   pass_mark: "",
+  results_release_mode: "manual",
   randomize_questions: false,
   randomize_options: false,
   allow_early_submit: true,
@@ -42,6 +45,7 @@ const emptyMix = {
 
 export default function AcademyAdminExamBuilder() {
   const [subjects, setSubjects] = useState([]);
+  const [classes, setClasses] = useState([]);
   const [exams, setExams] = useState([]);
   const [selectedId, setSelectedId] = useState("");
   const [form, setForm] = useState(emptyExam);
@@ -77,7 +81,28 @@ export default function AcademyAdminExamBuilder() {
   }, []);
 
   useEffect(() => {
-    getAcademyExamSubjects().then(({ data }) => setSubjects(data ?? []));
+    getAcademyExamSubjects()
+      .then(({ data, error: loadError }) => {
+        if (loadError) {
+          setError(friendlyError(loadError, "Subjects could not be loaded."));
+          return;
+        }
+        setSubjects(data ?? []);
+      })
+      .catch((loadError) =>
+        setError(friendlyError(loadError, "Subjects could not be loaded.")),
+      );
+    getAcademyTeacherClasses()
+      .then(({ data, error: loadError }) => {
+        if (loadError) {
+          setError(friendlyError(loadError, "Classes could not be loaded."));
+          return;
+        }
+        setClasses(data ?? []);
+      })
+      .catch((loadError) =>
+        setError(friendlyError(loadError, "Classes could not be loaded.")),
+      );
     loadExams();
   }, [loadExams]);
 
@@ -199,6 +224,16 @@ export default function AcademyAdminExamBuilder() {
           One engine for every subject. The difference between a Python paper and
           a Robotics paper is the configuration here, not a different page.
         </p>
+        <Link
+          to="/academy/admin/question-bank"
+          className="button-secondary mt-4 inline-flex"
+        >
+          Upload a test CSV in the question bank
+        </Link>
+        <p className="mt-2 max-w-2xl text-sm text-slate-600 dark:text-slate-300">
+          Import a spreadsheet of MCQ and True/False questions there, then return
+          here to add or automatically select up to 50 questions for this paper.
+        </p>
       </header>
 
       {message && (
@@ -257,6 +292,30 @@ export default function AcademyAdminExamBuilder() {
             </select>
           </label>
           <label className="label">
+            Student class
+            <select
+              className="field"
+              value={form.class_id}
+              onChange={(event) => update("class_id", event.target.value)}
+              required
+            >
+              <option value="">Choose the class that will take this test</option>
+              {classes.map((classroom) => (
+                <option key={classroom.id} value={classroom.id}>
+                  {classroom.name}
+                  {classroom.academy_courses?.title
+                    ? ` · ${classroom.academy_courses.title}`
+                    : ""}
+                </option>
+              ))}
+            </select>
+            {classes.length === 0 && (
+              <span className="mt-1 block text-xs text-amber-700 dark:text-amber-300">
+                Create a class and enrol its students before publishing a test.
+              </span>
+            )}
+          </label>
+          <label className="label">
             Duration in minutes
             <input
               className="field"
@@ -275,6 +334,17 @@ export default function AcademyAdminExamBuilder() {
               type="datetime-local"
               value={form.starts_at}
               onChange={(event) => update("starts_at", event.target.value)}
+              required
+            />
+          </label>
+          <label className="label">
+            Closes at
+            <input
+              className="field"
+              type="datetime-local"
+              value={form.ends_at}
+              onChange={(event) => update("ends_at", event.target.value)}
+              required
             />
           </label>
           <label className="label">
@@ -296,6 +366,23 @@ export default function AcademyAdminExamBuilder() {
             value={form.instructions}
             onChange={(event) => update("instructions", event.target.value)}
           />
+        </label>
+        <label className="label max-w-xl">
+          Results release
+          <select
+            className="field"
+            value={form.results_release_mode}
+            onChange={(event) =>
+              update("results_release_mode", event.target.value)
+            }
+          >
+            <option value="manual">
+              Hold scores until staff release them
+            </option>
+            <option value="immediate">
+              Release each score immediately after submission
+            </option>
+          </select>
         </label>
         <div className="flex flex-wrap gap-4 text-sm">
           {[

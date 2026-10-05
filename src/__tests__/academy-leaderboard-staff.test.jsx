@@ -88,6 +88,55 @@ describe("an administrator reading the leaderboard", () => {
     );
   });
 
+  it("highlights the top finishers with a podium and point progress", async () => {
+    useAcademyAuth.mockReturnValue({
+      user: { id: "admin-1" },
+      isAdmin: true,
+      isTeacher: false,
+    });
+    getAcademyWeeklyLeaderboard.mockResolvedValue([
+      ...ROWS,
+      { student_id: "s3", display_name: "Cy", points: 250, rank: 3 },
+      { student_id: "s4", display_name: "Dee", points: 120, rank: 4 },
+    ]);
+    renderPage();
+
+    expect(
+      await screen.findByRole("heading", { name: /top explorers/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("list", { name: /top three students this week/i }),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Weekly rankings")).toBeInTheDocument();
+    expect(screen.getByRole("progressbar", { name: /ada points/i })).toHaveAttribute(
+      "aria-valuenow",
+      "900",
+    );
+    expect(screen.getByText(/dee/i)).toBeInTheDocument();
+  });
+
+  it("links students from the empty state to lessons and practice", async () => {
+    getAcademyWeeklyLeaderboard.mockResolvedValue([]);
+    useAcademyAuth.mockReturnValue({
+      user: { id: "s-new" },
+      isAdmin: false,
+      isTeacher: false,
+    });
+    renderPage();
+
+    expect(
+      await screen.findByRole("heading", { name: /your first win is waiting/i }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /go to lessons/i })).toHaveAttribute(
+      "href",
+      "/academy/lessons",
+    );
+    expect(screen.getByRole("link", { name: /start practice/i })).toHaveAttribute(
+      "href",
+      "/academy/practice",
+    );
+  });
+
   it("does not claim a cohort size before the rows arrive", async () => {
     getAcademyWeeklyLeaderboard.mockResolvedValue([]);
     fetchWithOfflineFallback.mockImplementation(async ({ fetcher }) => ({
@@ -106,6 +155,11 @@ describe("an administrator reading the leaderboard", () => {
     await waitFor(() =>
       expect(screen.getByText(/no verified activity yet/i)).toBeInTheDocument(),
     );
+    expect(
+      screen.getByRole("heading", { name: /no student points yet/i }),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /go to lessons/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /start practice/i })).not.toBeInTheDocument();
     expect(screen.queryByText(/students ranked/i)).not.toBeInTheDocument();
   });
 });

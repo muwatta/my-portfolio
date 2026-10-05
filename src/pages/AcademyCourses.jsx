@@ -100,8 +100,8 @@ export default function AcademyCourses() {
               {activeCourse.title}
             </h2>
             <p className="mt-1 text-sm text-emerald-900 dark:text-emerald-200">
-              Your lessons and progress are following this course. To switch,
-              ask your teacher or an Academy admin.
+              Your lessons and progress follow this course. Ask your teacher or
+              an Academy admin if you need to switch courses.
             </p>
           </div>
           <Link
@@ -195,7 +195,7 @@ export default function AcademyCourses() {
                   This course is locked while you are on{" "}
                   <strong className="font-semibold">{activeCourse.title}</strong>
                   . You cannot select another course yourself. Ask your teacher
-                  or an Academy admin if you need to switch.
+                  or an Academy admin if you need to switch courses.
                 </p>
               )}
               <button
@@ -215,6 +215,17 @@ export default function AcademyCourses() {
                   offline
                 }
                 aria-pressed={isActive}
+                aria-label={
+                  isActive
+                    ? `Your current course: ${course.title}`
+                    : isLocked
+                      ? `Locked while you’re on ${activeCourse.title}`
+                      : selecting === course.id
+                        ? `Selecting ${course.title}`
+                        : offline
+                          ? `Connect to select ${course.title}`
+                          : `Select course: ${course.title}`
+                }
                 onClick={() => selectCourse(course.id)}
               >
                 {isActive

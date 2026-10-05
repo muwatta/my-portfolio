@@ -69,7 +69,7 @@ export default function DownloadedCourseManager({ course, week }) {
         : lessonsResult.data ?? [];
       const assignmentDetails = await Promise.allSettled(
         (assignmentsResult.data ?? []).map((assignment) =>
-          getAcademyAssignment(assignment.id),
+          getAcademyAssignment(assignment.id, user.id),
         ),
       );
       const assignments = assignmentDetails

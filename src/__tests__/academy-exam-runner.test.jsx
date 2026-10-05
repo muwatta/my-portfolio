@@ -75,7 +75,7 @@ function inMinutes(minutes) {
 
 async function startPaper() {
   render(<AcademyExamRunner exam={EXAM} />);
-  fireEvent.click(await screen.findByRole("button", { name: /start examination/i }));
+  fireEvent.click(await screen.findByRole("button", { name: /start test/i }));
   await screen.findByText("Which keyword declares a class?");
 }
 
@@ -194,7 +194,7 @@ describe("AcademyExamRunner", () => {
       error: { message: "Examination has ended." },
     });
     render(<AcademyExamRunner exam={EXAM} />);
-    fireEvent.click(await screen.findByRole("button", { name: /start examination/i }));
+    fireEvent.click(await screen.findByRole("button", { name: /start test/i }));
     expect(
       await screen.findByText(/Examination has ended/),
     ).toBeInTheDocument();
@@ -318,7 +318,7 @@ describe("AcademyExamRunner offline and timeout behaviour", () => {
       },
     });
     render(<AcademyExamRunner exam={EXAM} />);
-    fireEvent.click(await screen.findByRole("button", { name: /start examination/i }));
+    fireEvent.click(await screen.findByRole("button", { name: /start test/i }));
 
     // The deadline is already behind us, so this happens without any waiting on
     // a countdown, which is the point: the browser never decides when time is up.
@@ -343,7 +343,7 @@ describe("AcademyExamRunner offline and timeout behaviour", () => {
     });
     api.submitAcademyExamAttempt.mockRejectedValue(new Error("offline"));
     render(<AcademyExamRunner exam={EXAM} />);
-    fireEvent.click(await screen.findByRole("button", { name: /start examination/i }));
+    fireEvent.click(await screen.findByRole("button", { name: /start test/i }));
 
     await waitFor(() =>
       expect(store.queue.some((o) => o.type === "exam_submit")).toBe(true),
@@ -370,7 +370,7 @@ describe("AcademyExamRunner offline and timeout behaviour", () => {
       },
     });
     render(<AcademyExamRunner exam={EXAM} />);
-    fireEvent.click(await screen.findByRole("button", { name: /start examination/i }));
+    fireEvent.click(await screen.findByRole("button", { name: /start test/i }));
     await screen.findByText("Which keyword declares a class?");
 
     expect(api.getAcademyExamPaper).toHaveBeenCalledWith("attempt-from-server-9f2");
@@ -410,7 +410,7 @@ describe("AcademyExamRunner offline paper", () => {
   async function cacheThenReopen() {
     const first = render(<AcademyExamRunner exam={EXAM} />);
     fireEvent.click(
-      await screen.findByRole("button", { name: /start examination/i }),
+      await screen.findByRole("button", { name: /start test/i }),
     );
     await screen.findByText("Which keyword declares a class?");
     await waitFor(() =>
@@ -425,7 +425,7 @@ describe("AcademyExamRunner offline paper", () => {
     });
     render(<AcademyExamRunner exam={EXAM} />);
     fireEvent.click(
-      await screen.findByRole("button", { name: /start examination/i }),
+      await screen.findByRole("button", { name: /start test/i }),
     );
   }
 
@@ -465,7 +465,7 @@ describe("AcademyExamRunner offline paper", () => {
     // on an exam the student is no longer entitled to take.
     render(<AcademyExamRunner exam={EXAM} />);
     fireEvent.click(
-      await screen.findByRole("button", { name: /start examination/i }),
+      await screen.findByRole("button", { name: /start test/i }),
     );
     await screen.findByText("Which keyword declares a class?");
     store.records["examPapers:attempt-1"] = { questions: PAPER };
@@ -476,7 +476,7 @@ describe("AcademyExamRunner offline paper", () => {
     });
     const again = render(<AcademyExamRunner exam={EXAM} />);
     fireEvent.click(
-      await screen.findByRole("button", { name: /start examination/i }),
+      await screen.findByRole("button", { name: /start test/i }),
     );
 
     expect(await screen.findByText(/examination has ended/i)).toBeInTheDocument();
@@ -491,7 +491,7 @@ describe("AcademyExamRunner offline paper", () => {
     });
     render(<AcademyExamRunner exam={EXAM} />);
     fireEvent.click(
-      await screen.findByRole("button", { name: /start examination/i }),
+      await screen.findByRole("button", { name: /start test/i }),
     );
     expect(
       await screen.findByText(/not been saved to this device/i),

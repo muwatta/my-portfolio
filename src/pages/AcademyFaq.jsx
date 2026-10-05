@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import Seo from "../components/seo/Seo";
 import { ACADEMY } from "../data/academy";
 
@@ -155,6 +155,13 @@ function FaqItem({ question, answer }) {
 export default function AcademyFaq() {
   const [query, setQuery] = useState("");
   const searchRef = useRef(null);
+  const { state: navigationState } = useLocation();
+  const returnTo =
+    typeof navigationState?.returnTo === "string" &&
+    navigationState.returnTo.startsWith("/academy/") &&
+    navigationState.returnTo !== "/academy/faq"
+      ? navigationState.returnTo
+      : null;
 
   useEffect(() => {
     searchRef.current?.focus();
@@ -205,10 +212,10 @@ export default function AcademyFaq() {
             </span>
           </Link>
           <Link
-            to="/academy/login"
+            to={returnTo ?? "/academy/login"}
             className="inline-flex min-h-11 items-center rounded-lg px-3 text-sm font-semibold text-slate-600 hover:text-cyan-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 dark:text-slate-300 dark:hover:text-cyan-300"
           >
-            Sign in
+            {returnTo ? "Back to Academy" : "Sign in"}
           </Link>
         </div>
       </header>

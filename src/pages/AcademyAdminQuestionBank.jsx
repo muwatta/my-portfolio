@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Link } from "react-router-dom";
 import {
   academyExamCsvTemplate,
   archiveAcademyExamQuestion,
@@ -221,7 +222,15 @@ export default function AcademyAdminQuestionBank() {
   return (
     <div className="space-y-8">
       <header>
-        <h1 className="text-2xl font-bold">Question bank</h1>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h1 className="text-2xl font-bold">Question bank</h1>
+          <Link
+            to="/academy/admin/exams"
+            className="button-secondary inline-flex"
+          >
+            Back to exam builder
+          </Link>
+        </div>
         <p className="mt-2 max-w-2xl text-sm text-slate-600 dark:text-slate-300">
           Every examination is built from these questions, so they are kept
           separate from lesson practice. Editing a question here never changes a

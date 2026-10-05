@@ -31,7 +31,7 @@ describe("the account owner is always an administrator", () => {
     // match. An id is deterministic and has no case or collation question.
     expect(primary).toMatch(/select '[0-9a-f-]{36}'::uuid/);
     expect(guard).toMatch(
-      /target_user_id = public\.academy_primary_admin_id\(\) and not should_be_admin/,
+      /target_user_id = public\.academy_primary_admin_id\(\)\s+and not should_be_admin/,
     );
   });
 
@@ -57,7 +57,7 @@ describe("other teachers and colleagues keep their access", () => {
     expect(guard).toMatch(/if should_be_admin then/);
     expect(guard).toMatch(/insert into public\.academy_admins/);
     expect(guard).toMatch(
-      /delete from public\.academy_admins where user_id = target_user_id/,
+      /delete from public\.academy_admins\s+where\s+user_id = target_user_id/,
     );
   });
 

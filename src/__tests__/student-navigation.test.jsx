@@ -28,7 +28,7 @@ describe("student navigation", () => {
       "Materials",
       "Course",
       "Projects",
-      "Examinations",
+      "Tests",
       "Leaderboard",
     ]);
   });

@@ -19,8 +19,8 @@ const LINKS = [
   {
     icon: <FaLinkedin />,
     label: "LinkedIn",
-    value: "abdullahi-musliudeen-166b751b6",
-    href: "https://www.linkedin.com/in/abdullahi-musliudeen-166b751b6",
+    value: "muwatta",
+    href: "https://www.linkedin.com/in/muwatta",
     color: "#0ea5e9",
   },
   {
@@ -83,10 +83,7 @@ const Contact = () => {
       className="min-h-screen bg-white dark:bg-[#06090f] text-slate-800 dark:text-slate-200 relative overflow-hidden"
       style={{ fontFamily: "'Syne', sans-serif" }}
     >
-      <Seo
-        {...PAGE_SEO["/contact"]}
-        path="/contact"
-      >
+      <Seo {...PAGE_SEO["/contact"]} path="/contact">
         <link
           href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Lora:ital,wght@0,400;1,400&display=swap"
           rel="stylesheet"

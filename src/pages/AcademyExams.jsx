@@ -1,4 +1,5 @@
 import { useCallback, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import AcademyExamRunner from "../components/academy/AcademyExamRunner";
 import {
   getAcademyAvailableExams,
@@ -28,6 +29,7 @@ function windowState(exam) {
 }
 
 export default function AcademyExams() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [exams, setExams] = useState([]);
   const [active, setActive] = useState(null);
   const [live, setLive] = useState({});
@@ -53,7 +55,7 @@ export default function AcademyExams() {
     // saying, but it is not the page, and turning it into an error state would
     // blank a perfectly good list of papers over a secondary panel.
     const failed = result.error || past.error;
-    setError(failed ? friendlyError(failed, "Examinations could not be loaded.") : "");
+    setError(failed ? friendlyError(failed, "Tests could not be loaded.") : "");
     setState(result.error ? "error" : "ready");
 
     // A refresh mid exam should come back to the same paper, not a new attempt.
@@ -69,7 +71,17 @@ export default function AcademyExams() {
       ),
     );
     setLive(Object.fromEntries(entries));
-  }, []);
+    const requestedExamId = searchParams.get("exam");
+    if (requestedExamId) {
+      const requestedExam = exams.find((exam) => exam.id === requestedExamId);
+      if (requestedExam) {
+        setActive(requestedExam);
+        const nextParams = new URLSearchParams(searchParams);
+        nextParams.delete("exam");
+        setSearchParams(nextParams, { replace: true });
+      }
+    }
+  }, [searchParams, setSearchParams]);
 
   // Replaced the bare useEffect. An exam's state changes constantly: an attempt
   // is finished in another tab, a teacher releases results, the window reopens.
@@ -85,7 +97,7 @@ export default function AcademyExams() {
           type="button"
           onClick={() => setActive(null)}
         >
-          &larr; All examinations
+          &larr; All tests
         </button>
         <AcademyExamRunner exam={active} />
       </div>
@@ -95,7 +107,7 @@ export default function AcademyExams() {
   return (
     <div className="space-y-6">
       <header>
-        <h1 className="text-3xl font-bold tracking-tight">Examinations</h1>
+        <h1 className="text-3xl font-bold tracking-tight">Tests</h1>
         <p className="mt-2 max-w-2xl text-slate-600 dark:text-slate-300">
           Papers open at their scheduled time. The timer starts when you begin
           and is checked on the server, so refreshing or losing signal will not
@@ -111,12 +123,12 @@ export default function AcademyExams() {
       )}
 
       {state === "loading" && (
-        <p className="text-sm text-slate-500">Loading examinations...</p>
+        <p className="text-sm text-slate-500">Loading tests...</p>
       )}
       {error && <p className="text-sm text-rose-600">{error}</p>}
 
       {state === "ready" && exams.length === 0 && (
-        <p className="text-sm text-slate-500">No examinations have been set yet.</p>
+        <p className="text-sm text-slate-500">No tests have been set yet.</p>
       )}
 
       {/*

@@ -88,10 +88,21 @@ describe("course selection guidance", () => {
       }),
     ).toBeDisabled();
     expect(
-      screen.getByText(/Ask your teacher or an Academy admin if you need to switch courses/),
+      screen.getByText(
+        (_, element) =>
+          element?.tagName === "P" &&
+          element.textContent.includes(
+            "This course is locked while you are on",
+          ) &&
+          element.textContent.includes(
+            "Ask your teacher or an Academy admin if you need to switch courses",
+          ),
+      ),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: "Your current course" }),
+      screen.getByRole("button", {
+        name: "Your current course: Python for AI and ML",
+      }),
     ).toBeDisabled();
     expect(selectAcademyCourse).not.toHaveBeenCalled();
   });
@@ -122,14 +133,16 @@ describe("course selection guidance", () => {
     );
 
     const pythonButton = await screen.findByRole("button", {
-      name: "Select this course",
+      name: "Select course: Python for AI and ML",
     });
     fireEvent.click(pythonButton);
 
     expect(await screen.findByRole("region", { name: "Your current course" }))
       .toHaveTextContent("Python for AI and ML");
     expect(
-      screen.getByRole("button", { name: "Your current course" }),
+      screen.getByRole("button", {
+        name: "Your current course: Python for AI and ML",
+      }),
     ).toBeDisabled();
     expect(
       screen.getByRole("button", {

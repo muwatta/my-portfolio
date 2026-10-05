@@ -26,7 +26,7 @@ const SOCIAL_LINKS = [
   },
   {
     icon: FaLinkedin,
-    href: "https://www.linkedin.com/in/abdullahi-musliudeen-166b751b6",
+    href: "https://www.linkedin.com/in/muwatta",
     label: "LinkedIn",
     color: "#0077B5",
     hoverBg: "rgba(0,119,181,0.15)",

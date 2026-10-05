@@ -11,7 +11,7 @@ const SECTIONS = [
   { label: "Materials", to: "/academy/materials", icon: FiBookOpen },
   { label: "Course", to: "/academy/courses", icon: FiLayers },
   { label: "Projects", to: "/academy/projects", icon: FiBriefcase },
-  { label: "Examinations", to: "/academy/exams", icon: FiFileText },
+  { label: "Tests", to: "/academy/exams", icon: FiFileText },
   { label: "Leaderboard", to: "/academy/leaderboard", icon: FiAward },
 ];
 

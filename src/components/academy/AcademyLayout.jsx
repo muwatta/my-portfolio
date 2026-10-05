@@ -57,12 +57,13 @@ const ADMIN_LINKS = [
   { label: "Settings", to: "/academy/admin/settings" },
 ];
 
-function useSessionHeartbeat(isStudent, userId) {
+function useSessionHeartbeat(isStudent, userId, pathname) {
   const learningSession = useRef(null);
   const heartbeatInFlight = useRef(false);
   const lastHiddenSession = useRef(null);
   const lastActivity = useRef(Date.now());
-  const routeRef = useRef("");
+  const routeRef = useRef(pathname);
+  routeRef.current = pathname;
 
   useEffect(() => {
     if (!isStudent) return;
@@ -152,7 +153,7 @@ export default function AcademyLayout({
   const { pathname } = useLocation();
   const [navigationOpen, setNavigationOpen] = useState(false);
 
-  useSessionHeartbeat(isStudent, user.id);
+  useSessionHeartbeat(isStudent && workspace === "student", user.id, pathname);
 
   useEffect(() => {
     setNavigationOpen(false);
@@ -213,7 +214,7 @@ export default function AcademyLayout({
             <img
               src="/images/ate-logo.jpg"
               alt="Academy"
-              className="h-9 w-9 rounded-lg object-cover"
+              className="h-11 w-11 rounded-lg object-cover"
             />
           </Link>
 
@@ -221,6 +222,7 @@ export default function AcademyLayout({
             <OfflineStatus />
             <Link
               to="/academy/faq"
+              state={{ returnTo: pathname }}
               title="Course navigation help"
               aria-label="Course navigation help"
               className="grid h-10 w-10 shrink-0 place-items-center rounded-lg border border-slate-200 text-slate-700 transition hover:border-cyan-400 hover:text-cyan-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 dark:border-slate-700 dark:text-slate-200 dark:hover:text-cyan-300"
@@ -259,7 +261,9 @@ export default function AcademyLayout({
                   : "/academy/notifications"
               }
               className="grid h-10 w-10 shrink-0 place-items-center rounded-lg border border-slate-200 text-slate-700 hover:border-amber-400 hover:text-amber-600 lg:hidden dark:border-slate-700 dark:text-slate-200"
-              aria-label="Notifications"
+              aria-label={
+                workspace === "admin" ? "Admin dashboard" : "Notifications"
+              }
             >
               <FiBell />
             </Link>
@@ -287,8 +291,10 @@ export default function AcademyLayout({
           id="academy-navigation"
           aria-label="Academy navigation"
           className={`${
-            navigationOpen ? "translate-x-0" : "-translate-x-full"
-          } fixed inset-y-0 left-0 z-40 w-72 overflow-y-auto bg-white px-4 pb-6 pt-20 shadow-2xl transition-transform dark:bg-slate-950 lg:static lg:z-auto lg:block lg:w-52 lg:translate-x-0 lg:overflow-visible lg:bg-transparent lg:p-0 lg:shadow-none lg:transition-none`}
+            navigationOpen
+              ? "visible translate-x-0"
+              : "invisible -translate-x-full"
+          } fixed inset-y-0 left-0 z-40 w-72 overflow-y-auto bg-white px-4 pb-6 pt-20 shadow-2xl transition-[transform,visibility] dark:bg-slate-950 lg:visible lg:static lg:z-auto lg:block lg:w-52 lg:translate-x-0 lg:overflow-visible lg:bg-transparent lg:p-0 lg:shadow-none lg:transition-none`}
         >
           <div className="mb-4 border-b border-slate-200 pb-4 text-xs font-semibold uppercase tracking-[0.16em] text-slate-500 dark:border-slate-800 dark:text-slate-400 lg:hidden">
             Menu

@@ -15,7 +15,7 @@ export const socialLinks = [
   { name: "GitHub", href: "https://github.com/Muwatta", icon: "github" },
   {
     name: "LinkedIn",
-    href: "https://www.linkedin.com/in/abdullahi-musliudeen-166b751b6",
+    href: "https://www.linkedin.com/in/muwatta",
     icon: "linkedin",
   },
   { name: "X", href: "https://x.com/MusliudeenAbdu1", icon: "twitter" },

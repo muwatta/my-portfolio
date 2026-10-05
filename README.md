@@ -1,13 +1,13 @@
 # Abdullahi Musliudeen — Software Developer
 
-[![Live Portfolio](https://img.shields.io/badge/Live-muwatta.com.ng-000000?style=flat-square\&logo=vercel)](https://www.muwatta.com.ng/)
-[![React](https://img.shields.io/badge/React-18-61DAFB?style=flat-square\&logo=react)](https://react.dev/)
-[![Python](https://img.shields.io/badge/Python-3-3776AB?style=flat-square\&logo=python\&logoColor=white)](https://www.python.org/)
-[![Django](https://img.shields.io/badge/Django-Backend-092E20?style=flat-square\&logo=django\&logoColor=white)](https://www.djangoproject.com/)
-[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Database-4169E1?style=flat-square\&logo=postgresql\&logoColor=white)](https://www.postgresql.org/)
-[![Supabase](https://img.shields.io/badge/Supabase-Academy-3ECF8E?style=flat-square\&logo=supabase)](https://supabase.com/)
-[![Vite](https://img.shields.io/badge/Vite-5-646CFF?style=flat-square\&logo=vite)](https://vitejs.dev/)
-[![Tailwind CSS](https://img.shields.io/badge/Tailwind-3-38BDF8?style=flat-square\&logo=tailwindcss)](https://tailwindcss.com/)
+[![Live Portfolio](https://img.shields.io/badge/Live-muwatta.com.ng-000000?style=flat-square&logo=vercel)](https://www.muwatta.com.ng/)
+[![React](https://img.shields.io/badge/React-18-61DAFB?style=flat-square&logo=react)](https://react.dev/)
+[![Python](https://img.shields.io/badge/Python-3-3776AB?style=flat-square&logo=python&logoColor=white)](https://www.python.org/)
+[![Django](https://img.shields.io/badge/Django-Backend-092E20?style=flat-square&logo=django&logoColor=white)](https://www.djangoproject.com/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Database-4169E1?style=flat-square&logo=postgresql&logoColor=white)](https://www.postgresql.org/)
+[![Supabase](https://img.shields.io/badge/Supabase-Academy-3ECF8E?style=flat-square&logo=supabase)](https://supabase.com/)
+[![Vite](https://img.shields.io/badge/Vite-5-646CFF?style=flat-square&logo=vite)](https://vitejs.dev/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind-3-38BDF8?style=flat-square&logo=tailwindcss)](https://tailwindcss.com/)
 
 I am a **Software Developer** focused on backend and full-stack delivery, working primarily with **Python, Django, Django REST Framework, PostgreSQL, React, and TypeScript**.
 
@@ -51,62 +51,62 @@ I am particularly interested in backend systems that have real users, real data,
 
 ### Backend Engineering
 
-* Python
-* Django
-* Django REST Framework
-* PostgreSQL
-* REST API design
-* Authentication and authorization
-* JWT
-* Role-based access control
-* Database design
-* Query optimization
-* Caching
-* Background processing
-* Redis
-* Celery / task queues
+- Python
+- Django
+- Django REST Framework
+- PostgreSQL
+- REST API design
+- Authentication and authorization
+- JWT
+- Role-based access control
+- Database design
+- Query optimization
+- Caching
+- Background processing
+- Redis
+- Celery / task queues
 
 ### Full-Stack Development
 
-* React
-* TypeScript
-* JavaScript
-* React Router
-* Tailwind CSS
-* Vite
-* API integration
-* Responsive interfaces
+- React
+- TypeScript
+- JavaScript
+- React Router
+- Tailwind CSS
+- Vite
+- API integration
+- Responsive interfaces
 
 ### Systems & Infrastructure
 
-* Git / GitHub
-* Linux / CLI
-* HTTP / REST
-* JSON
-* Networking fundamentals
-* Environment configuration
-* Deployment
-* Supabase
-* Firebase
+- Git / GitHub
+- Linux / CLI
+- HTTP / REST
+- JSON
+- Networking fundamentals
+- Environment configuration
+- Deployment
+- Supabase
+- Firebase
 
 ### AI / ML / Computer Vision
 
-* Python-based AI applications
-* Computer vision
-* OpenCV
-* TensorFlow Lite
-* Machine-learning workflows
-* AI-integrated web applications
+- Python-based AI applications
+- Computer vision
+- OpenCV
+- TensorFlow Lite
+- Machine-learning workflows
+- AI-integrated web applications
 
 ### IoT & Embedded Systems
 
-* Arduino
-* ESP32
-* Raspberry Pi
-* Sensors
-* Embedded programming
-* Python/C++ integration
-* Robotics education
+- Arduino
+- ESP32
+- Raspberry Pi
+- Sensors
+- Embedded programming
+- Python/C++ integration
+- Robotics education
 
 ---
 
@@ -146,14 +146,14 @@ Projects
 
 ### Current architecture
 
-* React
-* Vite
-* Tailwind CSS
-* Supabase Auth
-* PostgreSQL
-* Supabase Storage
-* Supabase Row Level Security
-* Supabase Realtime where required
+- React
+- Vite
+- Tailwind CSS
+- Supabase Auth
+- PostgreSQL
+- Supabase Storage
+- Supabase Row Level Security
+- Supabase Realtime where required
 
 The Academy is an **additive part of the existing portfolio**, not a separate frontend application.
 
@@ -161,23 +161,23 @@ The Academy is an **additive part of the existing portfolio**, not a separate fr
 
 The platform is designed to support:
 
-* student accounts
-* administrator/teacher management
-* student levels
-* courses
-* lessons
-* exercises
-* assignments
-* submissions
-* automated practice scoring
-* learning-time tracking
-* projects
-* progress tracking
-* badges
-* leaderboard
-* scheduling
-* learning materials
-* live classroom functionality
+- student accounts
+- administrator/teacher management
+- student levels
+- courses
+- lessons
+- exercises
+- assignments
+- submissions
+- automated practice scoring
+- learning-time tracking
+- projects
+- progress tracking
+- badges
+- leaderboard
+- scheduling
+- learning materials
+- live classroom functionality
 
 The currently available technical curriculum includes **Python for AI and ML** and **C++ for embedded systems**, with the architecture designed to support additional subjects later.
 
@@ -193,21 +193,21 @@ A production cooperative management system built for a staff cooperative environ
 
 The system supports more than a simple CRUD workflow and includes role-based business operations for:
 
-* administrators
-* committee members
-* heads of section
-* staff members
+- administrators
+- committee members
+- heads of section
+- staff members
 
 Key areas include:
 
-* member management
-* contributions
-* cooperative records
-* loan-related workflows
-* authorization
-* financial rules
-* database-backed business logic
-* auditability
+- member management
+- contributions
+- cooperative records
+- loan-related workflows
+- authorization
+- financial rules
+- database-backed business logic
+- auditability
 
 The application has been used by **100+ regular users**, making it one of my practical examples of building software around real operational requirements.
 
@@ -223,14 +223,14 @@ The system uses computer vision to identify selected crop pests and integrates t
 
 Technologies include:
 
-* Python
-* Flask
-* OpenCV
-* TensorFlow Lite
-* MobileNetV2
-* Arduino
-* image classification
-* sensor/actuator integration
+- Python
+- Flask
+- OpenCV
+- TensorFlow Lite
+- MobileNetV2
+- Arduino
+- image classification
+- sensor/actuator integration
 
 The project explored the practical connection between:
 
@@ -254,13 +254,13 @@ A computer-vision-based chess interaction project exploring gesture-controlled b
 
 The project combines:
 
-* Python
-* OpenCV
-* MediaPipe
-* `python-chess`
-* computer vision
-* gesture recognition
-* chess rules/state management
+- Python
+- OpenCV
+- MediaPipe
+- `python-chess`
+- computer vision
+- gesture recognition
+- chess rules/state management
 
 The goal is to explore how vision-based human-computer interaction can be connected to a deterministic software engine.
 
@@ -270,15 +270,15 @@ The goal is to explore how vision-based human-computer interaction can be connec
 
 I have also worked on learning-management systems and education-focused software using technologies such as:
 
-* Django
-* PostgreSQL
-* React
-* authentication
-* role-based access
-* course management
-* assignments
-* student progress
-* educational workflows
+- Django
+- PostgreSQL
+- React
+- authentication
+- role-based access
+- course management
+- assignments
+- student progress
+- educational workflows
 
 These projects complement my practical work in technology education.
 
@@ -292,16 +292,16 @@ ATE works particularly with young learners and schools where access to practical
 
 Programmes have included:
 
-* Python programming
-* Web development
-* Artificial Intelligence
-* Robotics
-* Arduino
-* Raspberry Pi
-* PictoBlox
-* digital productivity
-* embedded systems
-* project-based learning
+- Python programming
+- Web development
+- Artificial Intelligence
+- Robotics
+- Arduino
+- Raspberry Pi
+- PictoBlox
+- digital productivity
+- embedded systems
+- project-based learning
 
 ATE programmes have reached **150+ learners**, with activities across multiple schools and locations.
 
@@ -317,13 +317,13 @@ This repository contains my personal portfolio and the integrated Academy platfo
 
 The portfolio showcases:
 
-* software engineering projects
-* backend/full-stack work
-* AI/ML projects
-* IoT projects
-* education technology
-* technical writing
-* professional experience
+- software engineering projects
+- backend/full-stack work
+- AI/ML projects
+- IoT projects
+- education technology
+- technical writing
+- professional experience
 
 The site is built as one application so that the public portfolio and Academy can coexist without requiring a separate student-facing website.
 
@@ -452,9 +452,9 @@ The exact Academy structure continues to evolve as the LMS is developed.
 
 ## Prerequisites
 
-* Node.js 18+
-* npm
-* Git
+- Node.js 18+
+- npm
+- Git
 
 ## Installation
 
@@ -511,10 +511,10 @@ Other integrations may require their own environment variables.
 
 Never commit:
 
-* Supabase service-role keys
-* AI provider secret keys
-* GitHub OAuth client secrets
-* private API credentials
+- Supabase service-role keys
+- AI provider secret keys
+- GitHub OAuth client secrets
+- private API credentials
 
 Secrets required by server-side functionality must never be exposed through the Vite frontend.
 
@@ -526,10 +526,10 @@ Some Auth settings are GoTrue configuration rather than database state, so no
 file in `supabase/migrations/` can set them. Applying every migration will not
 produce the settings below; they have to be applied per project.
 
-| Setting | Value | Why |
-| --- | --- | --- |
-| `password_min_length` | `8` | The signup and reset pages already reject anything shorter, but the server used to accept 6, so anything calling `auth/v1/signup` directly could bypass the UI check. |
-| `password_hibp_enabled` | `true` | Rejects passwords already known to be breached. **Pro plan and above only.** A free-plan project gets `HTTP 402`, so this cannot be enabled there. |
+| Setting                 | Value  | Why                                                                                                                                                                   |
+| ----------------------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `password_min_length`   | `8`    | The signup and reset pages already reject anything shorter, but the server used to accept 6, so anything calling `auth/v1/signup` directly could bypass the UI check. |
+| `password_hibp_enabled` | `true` | Rejects passwords already known to be breached. **Pro plan and above only.** A free-plan project gets `HTTP 402`, so this cannot be enabled there.                    |
 
 Apply them with the Management API rather than by hand in the dashboard:
 
@@ -558,12 +558,12 @@ supabase/migrations/
 
 The database uses:
 
-* foreign keys
-* indexes
-* constraints
-* database functions
-* Row Level Security
-* timestamped migrations
+- foreign keys
+- indexes
+- constraints
+- database functions
+- Row Level Security
+- timestamped migrations
 
 Production migrations should be reviewed against the existing remote migration history before deployment.
 
@@ -592,7 +592,6 @@ A production database should not be reset simply because a migration needs corre
    and version secrets. The executor must be an isolated, no-network Python
    sandbox; the Edge Function deliberately does not execute student code.
    The function's failure reporting is deliberate and worth preserving:
-
    - `grading_unavailable` (503, retryable) means the executor was genuinely
      unreachable, timed out, or returned 5xx. Nothing is wrong with the code.
    - `grading_failed` (422, terminal) means the executor gave a verdict the
@@ -606,6 +605,7 @@ A production database should not be reset simply because a migration needs corre
    obvious mistakes, **not** a security boundary. It is trivially bypassed. The
    boundary is that student code is never executed in the Edge Function at all.
    Do not describe that filter as sandboxing.
+
 7. Confirm the `academy-live-retention` scheduled job exists. It retains text
    chat until an administrator removes it, while voice notes and inactive
    learning telemetry keep their 14-day retention window.
@@ -746,7 +746,7 @@ Software engineering • Education Technology • AI/ML • IoT
 
 💻 [github.com/Muwatta](https://github.com/Muwatta)
 
-🔗 [LinkedIn](https://www.linkedin.com/in/abdullahi-musliudeen-166b751b6)
+🔗 [LinkedIn](https://www.linkedin.com/in/muwatta)
 
 🐦 [@MusliudeenAbdu1](https://x.com/MusliudeenAbdu1)
 
@@ -803,7 +803,6 @@ individual column**, so removing a column needs its own
 hidden tests readable by every signed in student; see the header comment in
 `supabase/migrations/20261033000000_academy_exercise_column_grants.sql`.
 
-
 ## Assessment engine
 
 One engine covers every subject. A Python paper and a Robotics paper differ by
@@ -838,7 +837,7 @@ IndexedDB with an operation id built from the answer's own client timestamp, so
 replaying one is a no-op rather than a second write, and the sync conflict is
 resolved on arrival using that timestamp. A paper already served to the device
 is cached, so an exam reopened with no signal still shows its questions. What
-is *not* cached is a refusal: if the server rejects the paper while the student
+is _not_ cached is a refusal: if the server rejects the paper while the student
 is online, that is final, because a saved copy must not become a way to keep
 working on an exam whose window has closed.
 
@@ -851,7 +850,6 @@ a draft, unsat, fully in progress, or still open.
 Attempt history and the engine's own activity log are both server functions
 (`academy_exam_student_history`, `academy_exam_event_log`) rather than table
 reads, so the scoping and the publication check are in the database.
-
 
 ## Known gaps
 
@@ -879,7 +877,7 @@ Two things that script refuses to skip, because both fail silently otherwise:
 Until then, code runs in the browser, so a student could report any score they
 liked. Browser runs are therefore stored as `client_reported`, marked
 `manual_review`, and shown to the teacher as a hint, never as a mark. Objective
-questions, meaning multiple choice and short answer, *are* graded server side
+questions, meaning multiple choice and short answer, _are_ graded server side
 today and cost nothing. The edge function deliberately does not execute student
 code itself, and neither does the app host.
 
@@ -893,11 +891,11 @@ an executor can judge a photograph, so it is marked by a teacher.
 
 The rest is still ungraded. Audited against the live database:
 
-| Exercices | Count | `correct_answer` | Auto gradable today |
-| --- | --- | --- | --- |
-| `multiple_choice` | 70 | 70 | yes, no executor needed |
-| `true_false` | 35 | 35 | yes, no executor needed |
-| `programming` | 15 | 0 | no, and still no `tests` array |
+| Exercices         | Count | `correct_answer` | Auto gradable today            |
+| ----------------- | ----- | ---------------- | ------------------------------ |
+| `multiple_choice` | 70    | 70               | yes, no executor needed        |
+| `true_false`      | 35    | 35               | yes, no executor needed        |
+| `programming`     | 15    | 0                | no, and still no `tests` array |
 
 - **Zero of 120 exercises have a `tests` array.** One assignment has
   `automated_tests`; the other example does not and is teacher-marked.
@@ -925,7 +923,6 @@ real `g++` (25 tests, all four verdicts, partial marks, auth rejection, crash
 recovery). Build the image and check the isolation actually applies before
 pointing real traffic at it — the flags are the security, so an unbuilt
 `docker-compose.yml` is an untested security control, not a finished one.
-
 
 **All three edge functions are deployed. The grading executor is not.** As of the
 last check `supabase functions list` shows `academy-admin-manage-user`,

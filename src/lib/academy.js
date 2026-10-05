@@ -6,6 +6,9 @@ const lessonSelect =
   "id, title, slug, lesson_number, sort_order, objectives, content, prerequisite_lesson_id, completion_requirement, completion_mode, preview_allowed, academy_weeks!inner(id, week_number, title, academy_courses!inner(id, slug, title, duration_weeks, language))";
 
 const unavailable = (data = null) => ({ data, error: null, configured: false });
+const isReleased = (item) =>
+  item.status === "published" &&
+  (!item.release_at || Date.parse(item.release_at) <= Date.now());
 const createClientOperationId = () =>
   globalThis.crypto?.randomUUID?.() ||
   `academy-${Date.now()}-${Math.random().toString(36).slice(2)}`;
@@ -851,6 +854,7 @@ export async function getAcademyCoursePreview(courseSlug) {
         .from("academy_courses")
         .select("id, slug, title, description, duration_weeks, language")
         .eq("slug", courseSlug)
+        .eq("published", true)
         .maybeSingle();
       if (courseError || !course) {
         return { data: null, error: courseError, configured: true };
@@ -859,7 +863,7 @@ export async function getAcademyCoursePreview(courseSlug) {
       const { data: weeks, error: weeksError } = await supabase
         .from("academy_weeks")
         .select(
-          "id, week_number, title, description, published, academy_lessons(id, title, slug, lesson_number, sort_order, objectives, content, published)",
+          "id, week_number, title, description, published, academy_lessons(id, title, slug, lesson_number, sort_order, objectives, content, published, status, release_at)",
         )
         .eq("course_id", course.id)
         .eq("published", true)
@@ -872,7 +876,7 @@ export async function getAcademyCoursePreview(courseSlug) {
         .map((week) => ({
           ...week,
           lessons: (week.academy_lessons ?? [])
-            .filter((lesson) => lesson.published)
+            .filter((lesson) => lesson.published && isReleased(lesson))
             .sort(
               (left, right) =>
                 (left.sort_order ?? 0) - (right.sort_order ?? 0) ||
@@ -894,42 +898,56 @@ export async function getAcademyCoursePreview(courseSlug) {
 
       const [
         { data: exercises, error: exerciseError },
-        { data: assignments, error: assignmentError },
+        { data: activities, error: activityError },
       ] = await Promise.all([
         supabase
           .from("academy_exercises")
-          .select("id, lesson_id, title, instructions, difficulty")
+          .select("id, lesson_id, title, instructions, difficulty, status, release_at")
           .in("lesson_id", lessonIds)
           .eq("published", true)
           .order("title", { ascending: true }),
         supabase
-          .from("academy_assignments")
-          .select("id, lesson_id, title, instructions, points, due_at")
+          .from("academy_lesson_activities")
+          .select(
+            "id, lesson_id, kind, status, release_at, academy_assignments!inner(id, title, instructions, points, due_at, published, is_draft, status, release_at)",
+          )
           .in("lesson_id", lessonIds)
-          .eq("published", true)
-          .eq("is_draft", false)
-          .order("title", { ascending: true }),
+          .eq("kind", "assignment")
+          .eq("status", "published")
+          .order("sort_order", { ascending: true }),
       ]);
-      if (exerciseError || assignmentError) {
+      if (exerciseError || activityError) {
         return {
           data: null,
-          error: exerciseError || assignmentError,
+          error: exerciseError || activityError,
           configured: true,
         };
       }
 
       const exercisesByLesson = new Map();
-      (exercises ?? []).forEach((exercise) => {
+      (exercises ?? []).filter(isReleased).forEach((exercise) => {
         const list = exercisesByLesson.get(exercise.lesson_id) ?? [];
         list.push(exercise);
         exercisesByLesson.set(exercise.lesson_id, list);
       });
       const assignmentsByLesson = new Map();
-      (assignments ?? []).forEach((assignment) => {
-        const list = assignmentsByLesson.get(assignment.lesson_id) ?? [];
-        list.push(assignment);
-        assignmentsByLesson.set(assignment.lesson_id, list);
-      });
+      (activities ?? [])
+        .filter((activity) => isReleased(activity))
+        .forEach((activity) => {
+          const assignment = Array.isArray(activity.academy_assignments)
+            ? activity.academy_assignments[0]
+            : activity.academy_assignments;
+          if (
+            !assignment?.published ||
+            assignment.is_draft ||
+            !isReleased(assignment)
+          ) {
+            return;
+          }
+          const list = assignmentsByLesson.get(activity.lesson_id) ?? [];
+          list.push(assignment);
+          assignmentsByLesson.set(activity.lesson_id, list);
+        });
 
       return {
         data: {
@@ -1706,15 +1724,38 @@ export async function getAcademyAssignments(studentId) {
   return withAcademyCache(`assignments:${studentId}`, 2 * 60 * 1000, async () => {
     const activeCourse = await getActiveCourseForStudent(studentId);
     if (!activeCourse) return { data: [], error: null, configured: true };
-    const { data, error } = await supabase
-      .from("academy_assignments")
-      .select(
-        "id, course_id, lesson_id, title, due_at, points, retry_limit, published, created_at",
-      )
-      .eq("is_draft", false)
-      .eq("course_id", activeCourse.id)
-      .order("due_at", { ascending: true, nullsFirst: false });
-    return { data: data ?? [], error, configured: true };
+    const [
+      { data: assignments, error: assignmentError },
+      { data: submissions, error: submissionError },
+    ] = await Promise.all([
+      supabase
+        .from("academy_assignments")
+        .select(
+          "id, course_id, lesson_id, title, due_at, points, retry_limit, published, created_at",
+        )
+        .eq("is_draft", false)
+        .eq("published", true)
+        .eq("course_id", activeCourse.id)
+        .or(`release_at.is.null,release_at.lte.${new Date().toISOString()}`)
+        .order("due_at", { ascending: true, nullsFirst: false }),
+      supabase
+        .from("academy_submissions")
+        .select("assignment_id")
+        .eq("student_id", studentId),
+    ]);
+    const error = assignmentError || submissionError;
+    if (error) return { data: [], error, configured: true };
+
+    const submittedAssignmentIds = new Set(
+      (submissions ?? []).map((submission) => submission.assignment_id),
+    );
+    return {
+      data: (assignments ?? []).filter(
+        (assignment) => !submittedAssignmentIds.has(assignment.id),
+      ),
+      error: null,
+      configured: true,
+    };
   });
 }
 
@@ -1766,9 +1807,15 @@ export async function submitObjectiveAnswer(
   return { data, error };
 }
 
-export async function getAcademyAssignment(id) {
+export async function getAcademyAssignment(id, studentId = null) {
   if (!supabase) return unavailable(null);
-  const { data, error } = await supabase
+  const activeCourse = studentId
+    ? await getActiveCourseForStudent(studentId)
+    : null;
+  if (studentId && !activeCourse) {
+    return { data: null, error: null, configured: true };
+  }
+  let query = supabase
     .from("academy_assignments")
     .select(
       // academy_courses!inner because the page has to know which language the
@@ -1777,8 +1824,9 @@ export async function getAcademyAssignment(id) {
       "id, course_id, lesson_id, title, instructions, due_at, points, allowed_submission_types, starter_code, hints, retry_limit, published, is_draft, created_at, academy_courses!inner(id, slug, title, language)",
     )
     .eq("id", id)
-    .eq("is_draft", false)
-    .maybeSingle();
+    .eq("is_draft", false);
+  if (activeCourse) query = query.eq("course_id", activeCourse.id);
+  const { data, error } = await query.maybeSingle();
   return { data, error, configured: true };
 }
 
@@ -2676,7 +2724,7 @@ export async function getAcademyExams() {
   const { data, error } = await supabase
     .from("academy_exams")
     .select(
-      "id, title, subject_id, class_id, level_id, instructions, duration_minutes, starts_at, ends_at, pass_mark, randomize_questions, randomize_options, allow_review, allow_early_submit, max_attempts, results_published, status, academy_subjects(name), academy_classes(name)",
+      "id, title, subject_id, class_id, level_id, instructions, duration_minutes, starts_at, ends_at, pass_mark, randomize_questions, randomize_options, allow_review, allow_early_submit, max_attempts, results_release_mode, results_published, status, academy_subjects(name), academy_classes(name)",
     )
     .order("starts_at", { ascending: false });
   return { data: data ?? [], error };
@@ -2693,8 +2741,12 @@ export async function createAcademyExam(details) {
     // Per exam, because a Python paper and a Robotics paper are not the same
     // length. Never a global default.
     p_duration_minutes: Number(details.duration_minutes) || 20,
-    p_starts_at: details.starts_at || null,
-    p_ends_at: details.ends_at || null,
+    p_starts_at: details.starts_at
+      ? new Date(details.starts_at).toISOString()
+      : null,
+    p_ends_at: details.ends_at
+      ? new Date(details.ends_at).toISOString()
+      : null,
     p_pass_mark: details.pass_mark === "" || details.pass_mark == null
       ? null
       : Number(details.pass_mark),
@@ -2703,6 +2755,7 @@ export async function createAcademyExam(details) {
     p_allow_review: details.allow_allow_review ?? true,
     p_allow_early_submit: Boolean(details.allow_early_submit),
     p_max_attempts: Number(details.max_attempts) || 1,
+    p_results_release_mode: details.results_release_mode || "manual",
   });
   return { data, error };
 }

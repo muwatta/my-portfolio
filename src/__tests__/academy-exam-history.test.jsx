@@ -104,7 +104,7 @@ describe("student exam history", () => {
   it("hides the history section entirely when there is no history", async () => {
     api.getAcademyExamHistory.mockResolvedValue({ data: [], error: null });
     renderPage();
-    expect(await screen.findByText(/no examinations have been set/i)).toBeInTheDocument();
+    expect(await screen.findByText(/no tests have been set/i)).toBeInTheDocument();
     expect(screen.queryByText("Your attempts")).toBeNull();
   });
 
@@ -116,7 +116,7 @@ describe("student exam history", () => {
     renderPage();
     // The paper list is the primary job; history failing must not blank it.
     expect(
-      await screen.findByText(/no examinations have been set/i),
+      await screen.findByText(/no tests have been set/i),
     ).toBeInTheDocument();
   });
 });
