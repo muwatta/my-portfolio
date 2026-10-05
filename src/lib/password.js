@@ -23,7 +23,7 @@ export const ACADEMY_PASSWORD_RULES = [
   },
   {
     id: "symbol",
-    label: "A symbol, for example ! @ # $",
+    label: "A symbol, for example !, @, or $",
     test: (value) => /[^A-Za-z0-9]/.test(value),
   },
 ];

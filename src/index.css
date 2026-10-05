@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=Lora:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&family=Syne:wght@400;500;600;700;800&display=swap");
 
 @tailwind base;
 @tailwind components;
@@ -6,6 +6,9 @@
 
 /* ── LIGHT THEME (default) */
 :root {
+  --font-sans: "DM Sans";
+  --font-display: "Space Grotesk";
+  --font-mono: "IBM Plex Mono";
   --bg-primary: #f1f5f9;
   --bg-secondary: #e8eef5;
   --bg-card: #f8fafc;
@@ -47,9 +50,54 @@ body {
   overflow-wrap: break-word;
   background: var(--bg-primary);
   color: var(--text-primary);
-  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+  font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+  line-height: 1.5;
   text-rendering: optimizeLegibility;
   -webkit-text-size-adjust: 100%;
+}
+
+.min-h-screen[data-font-section="portfolio"] {
+  --font-sans: "Syne";
+  --font-display: "Space Grotesk";
+}
+
+.min-h-screen[data-font-section="academy"] {
+  --font-sans: "Inter";
+  --font-display: "Plus Jakarta Sans";
+}
+
+.min-h-screen[data-font-section="blog"] {
+  --font-sans: "DM Sans";
+  --font-display: "Lora";
+}
+
+.min-h-screen[data-font-section="admin"] {
+  --font-sans: "IBM Plex Sans";
+  --font-display: "IBM Plex Sans";
+}
+
+[data-font-section] h1,
+[data-font-section] h2,
+[data-font-section] h3 {
+  font-family: var(--font-display), var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+  letter-spacing: -0.025em;
+  text-wrap: balance;
+}
+
+[data-font-section="blog"] article p {
+  text-wrap: pretty;
+}
+
+[data-font-section="admin"] table {
+  font-variant-numeric: tabular-nums;
+}
+
+.font-sans {
+  font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+}
+
+.font-mono {
+  font-family: var(--font-mono), ui-monospace, monospace;
 }
 
 .home-page {

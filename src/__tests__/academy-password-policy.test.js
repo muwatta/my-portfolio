@@ -24,7 +24,7 @@ describe("academy password policy", () => {
     expect(getAcademyPasswordProblems("ABCDEFG1!")).toContain("A lowercase letter");
     expect(getAcademyPasswordProblems("Abcdefgh!")).toContain("A number");
     expect(getAcademyPasswordProblems("Abcdefg123")).toContain(
-      "A symbol, for example ! @ # $",
+      "A symbol, for example !, @, or $",
     );
   });
 
@@ -35,7 +35,7 @@ describe("academy password policy", () => {
         "At least 8 characters",
         "An uppercase letter",
         "A number",
-        "A symbol, for example ! @ # $",
+        "A symbol, for example !, @, or $",
       ]),
     );
   });

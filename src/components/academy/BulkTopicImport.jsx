@@ -26,7 +26,7 @@ export default function BulkTopicImport({ week, onImported, onCancel }) {
           className="flex flex-col gap-1 rounded-lg border border-slate-200 px-3 py-2 sm:flex-row sm:items-center sm:justify-between dark:border-slate-800"
         >
           <span className="text-sm font-medium">
-            <span className="text-slate-400">#{row.row_index}</span>{" "}
+            <span className="text-slate-400">Row {row.row_index}</span>{" "}
             {row.title || (
               <em className="text-slate-500">No title</em>
             )}

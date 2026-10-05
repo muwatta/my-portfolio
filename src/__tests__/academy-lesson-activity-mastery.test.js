@@ -18,7 +18,7 @@ describe("lesson activity provisioning", () => {
     expect(migration).toMatch(/missing\.correct_answer/);
     expect(migration).toMatch(/99,\s+true,\s+'published'/);
     expect(migration).toMatch(/lessons_below_activity_target > 0/);
-    expect(migration).toMatch(/fewer than three scored practice questions/);
+    expect(migration).toMatch(/raise warning[\s\S]*fewer than three scored practice questions/);
   });
 
   it("makes scored practice and published assignment submission prerequisites", () => {

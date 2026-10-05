@@ -1,4 +1,7 @@
 import { useEffect, useRef, useState } from "react";
+import ProtectedContent from "./ProtectedContent";
+import TerminalFrame from "./TerminalFrame";
+import { separateTerminalInstructions } from "../../lib/academyTerminalContent";
 
 const MAX_SOURCE_LENGTH = 100000;
 const EXECUTION_TIMEOUT = 5000;
@@ -63,18 +66,22 @@ function runCpp(code) {
 }
 
 export default function CppEditor({ starterCode = "", onSubmit }) {
-  const [code, setCode] = useState(starterCode);
+  const [code, setCode] = useState(
+    () => separateTerminalInstructions(starterCode).code,
+  );
   const [output, setOutput] = useState("");
   const [error, setError] = useState("");
   const [running, setRunning] = useState(false);
   const runId = useRef(0);
+  const { code: editableStarterCode, instructions } =
+    separateTerminalInstructions(starterCode);
 
   useEffect(() => {
     runId.current += 1;
-    setCode(starterCode);
+    setCode(editableStarterCode);
     setOutput("");
     setError("");
-  }, [starterCode]);
+  }, [editableStarterCode]);
 
   useEffect(() => () => {
     runId.current += 1;
@@ -97,11 +104,19 @@ export default function CppEditor({ starterCode = "", onSubmit }) {
   }
 
   return (
-    <section className="overflow-hidden rounded-xl border border-slate-800 bg-slate-950 text-slate-100">
-      <div className="flex items-center justify-between border-b border-slate-800 px-4 py-3 text-xs font-semibold uppercase tracking-[0.18em] text-cyan-300">
-        <span>C++ Practice Terminal</span>
-        <span>Beginner subset</span>
-      </div>
+    <TerminalFrame title="C++ Practice Terminal" variant="cpp" meta="Embedded lab">
+      {instructions.length > 0 && (
+        <ProtectedContent className="border-b border-cyan-900/70 bg-cyan-950/40 px-4 py-3 text-sm leading-6 text-cyan-100">
+          <p className="mb-1 text-[11px] font-bold uppercase tracking-[0.16em] text-cyan-300">
+            Lesson prompt
+          </p>
+          <ul className="space-y-1">
+            {instructions.map((instruction, index) => (
+              <li key={`${instruction}-${index}`}>{instruction}</li>
+            ))}
+          </ul>
+        </ProtectedContent>
+      )}
       <textarea
         aria-label="C++ code editor"
         value={code}
@@ -118,7 +133,7 @@ export default function CppEditor({ starterCode = "", onSubmit }) {
           className="button-secondary border-slate-700 text-slate-200"
           onClick={() => {
             runId.current += 1;
-            setCode(starterCode);
+            setCode(editableStarterCode);
             setOutput("");
             setError("");
           }}
@@ -147,6 +162,6 @@ export default function CppEditor({ starterCode = "", onSubmit }) {
           {error || output}
         </pre>
       )}
-    </section>
+    </TerminalFrame>
   );
 }

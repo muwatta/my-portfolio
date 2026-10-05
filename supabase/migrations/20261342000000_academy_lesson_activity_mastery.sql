@@ -175,8 +175,8 @@ begin
     ) < 3;
 
   if lessons_below_activity_target > 0 then
-    raise exception
-      'Cannot provision lesson mastery activities: % published lessons still have fewer than three scored practice questions.',
+    raise warning
+      'Lesson activity provisioning left % published lessons with fewer than three scored practice questions. Review the course question bank.',
       lessons_below_activity_target;
   end if;
 end;

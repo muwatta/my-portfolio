@@ -104,7 +104,6 @@ const BlogPost = () => {
   return (
     <div
       className="min-h-screen bg-white dark:bg-[#06090f] text-slate-800 dark:text-slate-200 relative overflow-hidden"
-      style={{ fontFamily: "'Syne', sans-serif" }}
     >
       <Seo
         title={`${post.title} | Abdullahi Musliudeen`}
@@ -136,12 +135,7 @@ const BlogPost = () => {
             { name: post.title, path: `/blog/${post.id}` },
           ]),
         ]}
-      >
-        <link
-          href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Lora:ital,wght@0,400;0,600;1,400&display=swap"
-          rel="stylesheet"
-        />
-      </Seo>
+      />
 
       {/* BG */}
       <div

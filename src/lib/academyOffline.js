@@ -6,7 +6,7 @@ import {
 
 const listId = (name) => `list:${name}`;
 
-async function getOfflineResult(userId, store, id, allowEmpty) {
+async function getOfflineResult(userId, store, id, allowEmpty, fetchError = null) {
   const cached = await getOfflineRecord(store, userId, id ?? listId(store));
   if (cached !== null && (allowEmpty || cached.length)) {
     return {
@@ -18,9 +18,11 @@ async function getOfflineResult(userId, store, id, allowEmpty) {
   }
   return {
     data: null,
-    error: new Error("This content has not been downloaded for offline use."),
+    error:
+      fetchError ??
+      new Error("This content has not been downloaded for offline use."),
     configured: true,
-    offline: true,
+    offline: !fetchError,
   };
 }
 
@@ -44,8 +46,9 @@ export async function fetchWithOfflineFallback({
         return { ...result, offline: false };
       }
       if (!result?.error) return { ...result, offline: false };
-    } catch {
-      return getOfflineResult(userId, store, id, allowEmpty);
+      return getOfflineResult(userId, store, id, allowEmpty, result.error);
+    } catch (error) {
+      return getOfflineResult(userId, store, id, allowEmpty, error);
     }
   }
 

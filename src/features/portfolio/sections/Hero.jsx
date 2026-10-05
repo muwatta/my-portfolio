@@ -23,9 +23,6 @@ export const Hero = () => {
       className="relative pt-28 pb-16 sm:pt-32 sm:pb-20 overflow-hidden"
       style={{ fontFamily: "'Syne', sans-serif" }}
     >
-      {/* font import */}
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=Lora:ital@0;1&display=swap');`}</style>
-
       <Container>
         <div className="flex flex-col items-center text-center gap-6">
           {/* avatar */}

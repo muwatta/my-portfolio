@@ -9,6 +9,7 @@ import { fetchWithOfflineFallback } from "../lib/academyOffline";
 import { OFFLINE_STORES } from "../lib/offlineStore";
 import { enqueueAcademyOperation } from "../lib/academySync";
 import AcademyConnectionState from "../components/academy/AcademyConnectionState";
+import ProtectedContent from "../components/academy/ProtectedContent";
 import { useNetworkStatus } from "../hooks/useNetworkStatus";
 
 export default function AcademyPractice() {
@@ -156,7 +157,7 @@ export default function AcademyPractice() {
           key={exercise.id}
           className="space-y-4 rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900"
         >
-          <div>
+          <ProtectedContent>
             <p className="text-xs font-semibold uppercase tracking-wider text-blue-600">
               {exercise.academy_lessons?.title} · {exercise.difficulty}
             </p>
@@ -164,7 +165,7 @@ export default function AcademyPractice() {
             <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
               {exercise.instructions}
             </p>
-          </div>
+          </ProtectedContent>
            {exercise.question_type === "programming" ? (
              exercise.language === "cpp" ? (
                <CppEditor starterCode={exercise.starter_code} />

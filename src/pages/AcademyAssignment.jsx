@@ -21,11 +21,8 @@ import { supabase } from "../lib/supabase";
 import { useAcademyAuth } from "../hooks/useAcademyAuth";
 import PythonEditor from "../components/academy/PythonEditor";
 import CppEditor from "../components/academy/CppEditor";
+import ProtectedContent from "../components/academy/ProtectedContent";
 
-// A C++ assignment is graded by compiling and running the source, so the editor
-// has to be the C++ one. Choosing by course language rather than by sniffing the
-// starter code means a lesson with no starter snippet still gets the right tool
-// instead of silently defaulting to Python.
 function CodeEditorForAssignment({ assignment, onCaptureSource }) {
   const isCpp = assignment?.academy_courses?.language === "cpp";
   if (isCpp) {
@@ -80,6 +77,16 @@ export default function AcademyAssignment() {
         setAttempts(0);
         setHistory([]);
         setState(assignmentResult.error ? "error" : "ready");
+        if (assignmentResult.error) {
+          setNotice(
+            navigator.onLine
+              ? friendlyError(
+                  assignmentResult.error,
+                  "The assignment could not be loaded.",
+                )
+              : "This assignment is not available offline. Reconnect to load it.",
+          );
+        }
         return;
       }
       const [countResult, historyResult] = await Promise.all([
@@ -133,9 +140,6 @@ export default function AcademyAssignment() {
     const result = validateAcademyFile(selected);
     setNotice(result.valid ? "" : result.error);
     setFile(result.valid ? selected : null);
-    // Load the source into whichever editor is showing, so uploading a file and
-    // typing it by hand are the same path. C++ sources have to be included here
-    // or the upload silently discards the code and submits an empty submission.
     const isSource =
       /\.(py|cpp|cc|cxx|h|hpp|ino)$/i.test(selected?.name || "");
     if (result.valid && selected && isSource) {
@@ -256,12 +260,28 @@ export default function AcademyAssignment() {
     );
   if (state === "error")
     return (
-      <p
+      <div
         role="alert"
-        className="rounded-xl border border-red-300 bg-red-50 p-4 text-sm text-red-700"
+        className="space-y-4 rounded-xl border border-red-300 bg-red-50 p-4 text-sm text-red-700"
       >
-        {notice || "The assignment could not be loaded. Please try again."}
-      </p>
+        <p>{notice || "The assignment could not be loaded. Please try again."}</p>
+        <div className="flex flex-wrap gap-3">
+          <button
+            type="button"
+            className="button-secondary"
+            onClick={() => {
+              setNotice("");
+              setState("loading");
+              setReloadToken((value) => value + 1);
+            }}
+          >
+            Try again
+          </button>
+          <Link to="/academy/assignments" className="button-secondary inline-flex">
+            Back to assignments
+          </Link>
+        </div>
+      </div>
     );
   if (!assignment)
     return (
@@ -293,8 +313,7 @@ export default function AcademyAssignment() {
       </div>
     );
   const attemptsRemaining = Math.max(0, assignment.retry_limit - attempts);
-  // C++ sources are only offered for a C++ assignment. Accepting .cpp on a
-  // Python assignment would let a student upload a file the grader cannot run.
+
   const acceptAttribute = [
     ".py",
     ".ipynb",
@@ -334,9 +353,9 @@ export default function AcademyAssignment() {
           {assignment.points} points
         </p>
         <h1 className="mt-2 text-3xl font-bold">{assignment.title}</h1>
-        <p className="mt-3 whitespace-pre-wrap text-slate-600 dark:text-slate-300">
+        <ProtectedContent className="mt-3 whitespace-pre-wrap text-slate-600 dark:text-slate-300">
           {assignment.instructions}
-        </p>
+        </ProtectedContent>
       </header>
       <div className="rounded-xl border border-slate-200 p-5 dark:border-slate-800">
         <p className="text-sm font-semibold">

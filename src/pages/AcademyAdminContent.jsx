@@ -214,8 +214,7 @@ export default function AcademyAdminContent() {
                       >
                         <div className="min-w-0">
                           <p className="text-xs font-semibold uppercase tracking-wide text-blue-600 dark:text-cyan-300">
-                            Lesson {index + 1}
-                            {lesson.lesson_number ? ` · #${lesson.lesson_number}` : ""}
+                            Lesson {lesson.lesson_number || index + 1}
                           </p>
                           <p className="mt-1 font-semibold">{lesson.title}</p>
                           <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">

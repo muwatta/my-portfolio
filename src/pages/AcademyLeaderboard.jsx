@@ -135,7 +135,7 @@ export default function AcademyLeaderboard() {
                 Your rank
               </p>
               <p className="mt-1 text-2xl font-extrabold">
-                #{currentUserRow.rank}
+                {currentUserRow.rank}
                 <span className="ml-2 text-sm font-semibold text-cyan-100">
                   · {currentUserRow.points} pts
                 </span>
@@ -280,7 +280,7 @@ export default function AcademyLeaderboard() {
                         <span
                           className={`inline-flex min-h-8 items-center rounded-full px-3 text-xs font-extrabold uppercase tracking-wide ${style.badge}`}
                         >
-                          #{rank}
+                          Rank {rank}
                           {isCurrentUser ? " · you" : ""}
                         </span>
                         <span className="text-xs font-bold text-slate-600 dark:text-slate-300">
@@ -379,7 +379,7 @@ export default function AcademyLeaderboard() {
                   <span
                     className="grid h-10 w-10 place-items-center rounded-xl bg-slate-100 text-sm font-extrabold text-slate-700 dark:bg-slate-800 dark:text-slate-200"
                   >
-                    #{rank}
+                    {rank}
                   </span>
                   <span className="min-w-0 truncate font-semibold">
                     {row.display_name || "Student"}

@@ -173,6 +173,13 @@ function AppShell() {
   const { pathname, search } = useLocation();
   const isAdminRoute = pathname.startsWith("/admin");
   const isAcademyRoute = pathname.startsWith("/academy");
+  const fontSection = isAdminRoute || /^\/academy\/(admin|teacher)(\/|$)/.test(pathname)
+    ? "admin"
+    : isAcademyRoute
+      ? "academy"
+      : pathname.startsWith("/blog")
+        ? "blog"
+        : "portfolio";
 
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: "auto" });
@@ -182,7 +189,10 @@ function AppShell() {
     <HelmetProvider>
       <ThemeProvider>
         <MotionConfig reducedMotion="user">
-              <div className="min-h-screen bg-white text-slate-900 dark:bg-slate-950 dark:text-slate-100 transition-colors duration-300">
+              <div
+                data-font-section={fontSection}
+                className="min-h-screen bg-white text-slate-900 dark:bg-slate-950 dark:text-slate-100 transition-colors duration-300"
+              >
                 <a
                   href="#main-content"
                   className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[100] focus:px-4 focus:py-2 focus:rounded-lg focus:bg-blue-600 focus:text-white focus:text-sm focus:font-semibold"

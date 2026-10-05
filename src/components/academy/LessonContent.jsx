@@ -1,4 +1,5 @@
 import { useState } from "react";
+import ProtectedContent from "./ProtectedContent";
 
 function CodeBlock({ code }) {
   return (
@@ -20,7 +21,7 @@ export default function LessonContent({ content = {} }) {
   const weeklyRemainder = weeklyMinutes % 60;
 
   return (
-    <div className="space-y-6 text-[15px] leading-7 text-slate-700 dark:text-slate-200">
+    <ProtectedContent className="space-y-6 text-[15px] leading-7 text-slate-700 dark:text-slate-200">
       {weeklyPlan.length > 0 && (
         <section className="rounded-xl border border-indigo-200 bg-indigo-50 p-5 dark:border-indigo-900 dark:bg-indigo-950/30">
           <div className="flex flex-wrap items-baseline justify-between gap-2">
@@ -147,6 +148,6 @@ export default function LessonContent({ content = {} }) {
           <p className="mt-2">{content.reflection}</p>
         </section>
       )}
-    </div>
+    </ProtectedContent>
   );
 }

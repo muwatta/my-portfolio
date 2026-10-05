@@ -28,7 +28,7 @@ describe("a C++ assignment offers the C++ editor", () => {
 
   it("fetches the course language with the assignment", () => {
     expect(academyLib).toMatch(
-      /getAcademyAssignment[\s\S]*?academy_courses!inner\(id, slug, title, language\)/,
+      /getAcademyAssignment[\s\S]*?academy_courses!academy_assignments_course_id_fkey!inner\(id, slug, title, language\)/,
     );
   });
 

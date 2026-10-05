@@ -1,21 +1,28 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createTerminal } from "../../lib/academyTerminal";
+import { separateTerminalInstructions } from "../../lib/academyTerminalContent";
+import ProtectedContent from "./ProtectedContent";
+import TerminalFrame from "./TerminalFrame";
 
 const BANNER =
   "Type help to see the commands. Everything here stays in this browser tab.";
 
 export default function TerminalEditor({ starterScript = "" }) {
+  const {
+    code: scriptCode,
+    instructions,
+  } = separateTerminalInstructions(starterScript);
   // The filesystem is seeded from the lesson, so a lesson about grep starts with
   // a file worth grepping rather than an empty prompt.
   const initialFiles = useMemo(() => {
     const files = {};
-    for (const line of starterScript.split("\n")) {
+    for (const line of scriptCode.split("\n")) {
       const match = line.match(/^#\s*(\S+)\s*(.*)$/);
       if (match) files[`/${match[1]}`] = match[2];
     }
     if (Object.keys(files).length === 0) files["/notes.txt"] = "hello\nsecond line\n";
     return files;
-  }, [starterScript]);
+  }, [scriptCode]);
 
   const terminal = useMemo(() => createTerminal(initialFiles), [initialFiles]);
   const [lines, setLines] = useState([]);
@@ -37,7 +44,13 @@ export default function TerminalEditor({ starterScript = "" }) {
   }, [terminal, initialFiles]);
 
   useEffect(() => {
-    outputRef.current?.scrollTo({ top: outputRef.current.scrollHeight });
+    const output = outputRef.current;
+    if (!output) return;
+    if (typeof output.scrollTo === "function") {
+      output.scrollTo({ top: output.scrollHeight });
+    } else {
+      output.scrollTop = output.scrollHeight;
+    }
   }, [lines]);
 
   function submit(event) {
@@ -72,12 +85,19 @@ export default function TerminalEditor({ starterScript = "" }) {
   }
 
   return (
-    <section className="overflow-hidden rounded-xl border border-slate-800 bg-slate-950 text-slate-100">
-      <div className="flex items-center justify-between border-b border-slate-800 px-4 py-3 text-xs font-semibold uppercase tracking-[0.18em] text-emerald-300">
-        <span>Terminal</span>
-        <span>Sandboxed, nothing leaves this tab</span>
-      </div>
-
+    <TerminalFrame title="Command-line practice terminal" variant="shell">
+      {instructions.length > 0 && (
+        <ProtectedContent className="border-b border-emerald-900/70 bg-emerald-950/40 px-4 py-3 text-sm leading-6 text-emerald-100">
+          <p className="mb-1 text-[11px] font-bold uppercase tracking-[0.16em] text-emerald-300">
+            Lesson prompt
+          </p>
+          <ul className="space-y-1">
+            {instructions.map((instruction, index) => (
+              <li key={`${instruction}-${index}`}>{instruction}</li>
+            ))}
+          </ul>
+        </ProtectedContent>
+      )}
       <div
         ref={outputRef}
         role="log"
@@ -136,6 +156,6 @@ export default function TerminalEditor({ starterScript = "" }) {
           Reset
         </button>
       </form>
-    </section>
+    </TerminalFrame>
   );
 }

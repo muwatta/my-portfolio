@@ -68,10 +68,12 @@ describe("an administrator reading the leaderboard", () => {
     renderPage();
 
     await waitFor(() => expect(screen.getByText(/your rank/i)).toBeInTheDocument());
-    // The rank cell is built from separate nodes ("#1" and " · you"), so assert
-    // on the marker rather than a single text node.
+    // Rank and the personal marker are separate nested text nodes.
     expect(
-      screen.getByText((_, node) => node?.textContent === "#1 · you"),
+      screen.getByText(
+        (_, node) =>
+          node?.textContent?.replace(/\s+/g, " ").trim() === "Rank 1 · you",
+      ),
     ).toBeInTheDocument();
     expect(screen.queryByText(/students ranked/i)).not.toBeInTheDocument();
   });

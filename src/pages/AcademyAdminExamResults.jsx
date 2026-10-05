@@ -374,7 +374,7 @@ export default function AcademyAdminExamResults() {
                         <td className="py-2 pr-3 font-medium">
                           {attempt.student_name}
                         </td>
-                        <td className="py-2 pr-3">#{attempt.attempt_number}</td>
+                        <td className="py-2 pr-3">Attempt {attempt.attempt_number}</td>
                         <td className="py-2 pr-3">
                           {STATUS_LABELS[attempt.status] ?? attempt.status}
                         </td>
@@ -429,7 +429,7 @@ export default function AcademyAdminExamResults() {
           {openAttempt && (
             <section className="rounded-xl border border-slate-200 p-4 dark:border-slate-800">
               <h2 className="font-semibold">
-                {openAttempt.student_name}, attempt #{openAttempt.attempt_number}
+                {openAttempt.student_name}, attempt {openAttempt.attempt_number}
               </h2>
               {!answers && (
                 <p className="mt-2 text-sm text-slate-500">Loading paper...</p>
