@@ -833,6 +833,123 @@ export async function getAcademyAdminPractice() {
   };
 }
 
+export async function getAcademyCoursePreview(courseSlug) {
+  if (!supabase) return unavailable(null);
+  if (!courseSlug) {
+    return {
+      data: null,
+      error: new Error("A course slug is required."),
+      configured: true,
+    };
+  }
+
+  return withAcademyCache(
+    `admin-course-preview:${courseSlug}`,
+    5 * 60 * 1000,
+    async () => {
+      const { data: course, error: courseError } = await supabase
+        .from("academy_courses")
+        .select("id, slug, title, description, duration_weeks, language")
+        .eq("slug", courseSlug)
+        .maybeSingle();
+      if (courseError || !course) {
+        return { data: null, error: courseError, configured: true };
+      }
+
+      const { data: weeks, error: weeksError } = await supabase
+        .from("academy_weeks")
+        .select(
+          "id, week_number, title, description, published, academy_lessons(id, title, slug, lesson_number, sort_order, objectives, content, published)",
+        )
+        .eq("course_id", course.id)
+        .eq("published", true)
+        .order("week_number", { ascending: true });
+      if (weeksError) {
+        return { data: null, error: weeksError, configured: true };
+      }
+
+      const visibleWeeks = (weeks ?? [])
+        .map((week) => ({
+          ...week,
+          lessons: (week.academy_lessons ?? [])
+            .filter((lesson) => lesson.published)
+            .sort(
+              (left, right) =>
+                (left.sort_order ?? 0) - (right.sort_order ?? 0) ||
+                (left.lesson_number ?? 0) - (right.lesson_number ?? 0),
+            ),
+        }))
+        .filter((week) => week.lessons.length > 0);
+      const lessonIds = visibleWeeks.flatMap((week) =>
+        week.lessons.map((lesson) => lesson.id),
+      );
+
+      if (lessonIds.length === 0) {
+        return {
+          data: { ...course, weeks: visibleWeeks },
+          error: null,
+          configured: true,
+        };
+      }
+
+      const [
+        { data: exercises, error: exerciseError },
+        { data: assignments, error: assignmentError },
+      ] = await Promise.all([
+        supabase
+          .from("academy_exercises")
+          .select("id, lesson_id, title, instructions, difficulty")
+          .in("lesson_id", lessonIds)
+          .eq("published", true)
+          .order("title", { ascending: true }),
+        supabase
+          .from("academy_assignments")
+          .select("id, lesson_id, title, instructions, points, due_at")
+          .in("lesson_id", lessonIds)
+          .eq("published", true)
+          .eq("is_draft", false)
+          .order("title", { ascending: true }),
+      ]);
+      if (exerciseError || assignmentError) {
+        return {
+          data: null,
+          error: exerciseError || assignmentError,
+          configured: true,
+        };
+      }
+
+      const exercisesByLesson = new Map();
+      (exercises ?? []).forEach((exercise) => {
+        const list = exercisesByLesson.get(exercise.lesson_id) ?? [];
+        list.push(exercise);
+        exercisesByLesson.set(exercise.lesson_id, list);
+      });
+      const assignmentsByLesson = new Map();
+      (assignments ?? []).forEach((assignment) => {
+        const list = assignmentsByLesson.get(assignment.lesson_id) ?? [];
+        list.push(assignment);
+        assignmentsByLesson.set(assignment.lesson_id, list);
+      });
+
+      return {
+        data: {
+          ...course,
+          weeks: visibleWeeks.map((week) => ({
+            ...week,
+            lessons: week.lessons.map((lesson) => ({
+              ...lesson,
+              exercises: exercisesByLesson.get(lesson.id) ?? [],
+              assignments: assignmentsByLesson.get(lesson.id) ?? [],
+            })),
+          })),
+        },
+        error: null,
+        configured: true,
+      };
+    },
+  );
+}
+
 export async function saveAcademyExercise(exercise) {
   if (!supabase)
     return { data: null, error: new Error("Academy is not configured.") };

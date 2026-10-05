@@ -5,6 +5,7 @@ import {
   FiSun,
   FiX,
   FiBell,
+  FiHelpCircle,
 } from "react-icons/fi";
 import { NavLink, Outlet, Link, useLocation } from "react-router-dom";
 import { useAcademyAuth } from "../../hooks/useAcademyAuth";
@@ -218,6 +219,14 @@ export default function AcademyLayout({
 
           <div className="ml-auto flex min-w-0 items-center gap-2">
             <OfflineStatus />
+            <Link
+              to="/academy/faq"
+              title="Course navigation help"
+              aria-label="Course navigation help"
+              className="grid h-10 w-10 shrink-0 place-items-center rounded-lg border border-slate-200 text-slate-700 transition hover:border-cyan-400 hover:text-cyan-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 dark:border-slate-700 dark:text-slate-200 dark:hover:text-cyan-300"
+            >
+              <FiHelpCircle aria-hidden="true" className="text-lg" />
+            </Link>
             <span className="hidden min-w-0 max-w-[12rem] text-right sm:block sm:max-w-[14rem]">
               <span className="hidden truncate text-sm text-slate-600 dark:text-slate-300 sm:block">
                 {displayName}

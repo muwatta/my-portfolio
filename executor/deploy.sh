@@ -1,18 +1,4 @@
-#!/usr/bin/env bash
-# Deploys the grading executor and points Supabase at it.
-#
-# Run this on the host that will run the executor, after copying executor/ there.
-# It refuses to continue until each step actually passes, because every failure
-# mode of this setup is silent:
-#
-#   - A container that cannot be reached returns grading_unavailable on every
-#     submission, which looks like a grader that is merely busy.
-#   - A token mismatch returns 401, which the edge function reports as
-#     grading_failed, a terminal verdict, on work that was never attempted.
-#   - Egress left open means a student program can reach the database.
-#
-# So it verifies reachability, authentication, a real grade, and egress, in that
-# order, and stops at the first thing that is not true.
+
 
 set -euo pipefail
 
@@ -20,7 +6,6 @@ EXECUTOR_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 TOKEN_NAME="${TOKEN_NAME:-c0ffee}"
 PUBLIC_HOST="${PUBLIC_HOST:?set PUBLIC_HOST to the public hostname of this host, e.g. executor.example.com}"
 PROXY_PORT="${PROXY_PORT:-8443}"
-# The port on the executor container that the proxy forwards to.
 UPSTREAM_PORT="${UPSTREAM_PORT:-8080}"
 
 say() { printf '\n=== %s ===\n' "$1"; }
@@ -29,9 +14,6 @@ fail() { printf '\nFAILED: %s\n' "$1" >&2; exit 1; }
 command -v docker >/dev/null || fail "docker is not installed"
 docker info >/dev/null 2>&1 || fail "the docker daemon is not running"
 
-# The token lives only in the executor's .env and in Supabase's secret store.
-# Generated here, never passed on a command line, so it does not land in the
-# shell history or in `ps` output for other users on the box.
 if [ ! -f "$EXECUTOR_DIR/.env" ]; then
   say "generating EXECUTOR_TOKEN"
   ( cd "$EXECUTOR_DIR" && umask 077 && printf 'EXECUTOR_TOKEN=%s\n' "$(openssl rand -hex 32)" > .env )

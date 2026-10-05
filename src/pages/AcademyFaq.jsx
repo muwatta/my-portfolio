@@ -43,6 +43,10 @@ const SECTIONS = [
         a: "Open Learn, then pick a week and a lesson from the overview. Lessons unlock in order, so a lesson stays locked until you complete the one before it. Instructors and admins can see every lesson, published or not.",
       },
       {
+        q: "What is a lesson session, and where do live sessions happen?",
+        a: "A lesson named Session 1 is a self-paced lesson in your course. Open it from Learn and follow its Learn, Practice and Task steps. A scheduled live class is separate; open Live from the Academy and choose the class your instructor shared.",
+      },
+      {
         q: "What is the difference between Practice and Assignments?",
         a: "Practice is for quick, low stakes checks on a single topic, and you can retry freely. Assignments are graded work with a due date and a limit on how many attempts you get.",
       },
@@ -214,9 +218,95 @@ export default function AcademyFaq() {
           How to use the Academy
         </h1>
         <p className="mx-auto mt-3 max-w-xl text-center text-sm leading-6 text-slate-600 dark:text-slate-400">
-          Answers to the questions students ask most. Search, or open a
-          question to read the answer.
+          Follow the steps below to find your course and lessons. Search or
+          open a question if you need more help.
         </p>
+
+        <section
+          aria-labelledby="navigation-guide"
+          className="mt-8 rounded-2xl border border-cyan-200 bg-gradient-to-br from-cyan-50 to-white p-5 dark:border-cyan-900 dark:from-cyan-950/40 dark:to-slate-900 sm:p-6"
+        >
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <h2
+                id="navigation-guide"
+                className="text-lg font-extrabold text-slate-900 dark:text-slate-50"
+              >
+                Find your way around
+              </h2>
+              <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
+                Course → week → lesson → practice or task.
+              </p>
+            </div>
+            <Link
+              to="/academy/dashboard"
+              className="inline-flex min-h-11 items-center rounded-lg px-3 text-sm font-bold text-cyan-800 hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-600 dark:text-cyan-200 dark:hover:bg-slate-800"
+            >
+              Resume from Home
+            </Link>
+          </div>
+          <ol className="mt-5 grid gap-3 sm:grid-cols-2">
+            <li className="rounded-xl border border-cyan-100 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
+              <p className="text-xs font-bold uppercase tracking-wide text-cyan-800 dark:text-cyan-300">
+                1 · Choose your course
+              </p>
+              <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
+                Open Courses to see your learning path.
+              </p>
+              <Link
+                to="/academy/courses"
+                className="mt-3 inline-flex min-h-11 items-center font-bold text-cyan-800 underline decoration-cyan-300 underline-offset-4 hover:text-cyan-950 dark:text-cyan-200 dark:hover:text-white"
+              >
+                Go to Courses
+              </Link>
+            </li>
+            <li className="rounded-xl border border-cyan-100 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
+              <p className="text-xs font-bold uppercase tracking-wide text-cyan-800 dark:text-cyan-300">
+                2 · Pick a week and lesson
+              </p>
+              <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
+                In Learn, open a week, then choose an available lesson. Finish
+                earlier lessons to unlock the next ones.
+              </p>
+              <Link
+                to="/academy/lessons"
+                className="mt-3 inline-flex min-h-11 items-center font-bold text-cyan-800 underline decoration-cyan-300 underline-offset-4 hover:text-cyan-950 dark:text-cyan-200 dark:hover:text-white"
+              >
+                Go to Learn
+              </Link>
+            </li>
+            <li className="rounded-xl border border-cyan-100 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
+              <p className="text-xs font-bold uppercase tracking-wide text-cyan-800 dark:text-cyan-300">
+                3 · Follow the lesson steps
+              </p>
+              <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
+                Inside a lesson, use Learn for the material, Practice to try
+                ideas, and Task to see work to hand in.
+              </p>
+              <Link
+                to="/academy/lessons"
+                className="mt-3 inline-flex min-h-11 items-center font-bold text-cyan-800 underline decoration-cyan-300 underline-offset-4 hover:text-cyan-950 dark:text-cyan-200 dark:hover:text-white"
+              >
+                Find a lesson
+              </Link>
+            </li>
+            <li className="rounded-xl border border-cyan-100 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
+              <p className="text-xs font-bold uppercase tracking-wide text-cyan-800 dark:text-cyan-300">
+                4 · Join a live class
+              </p>
+              <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
+                Live classes are separate from self-paced lessons. Open Live
+                when your instructor has scheduled or shared a session.
+              </p>
+              <Link
+                to="/academy/live"
+                className="mt-3 inline-flex min-h-11 items-center font-bold text-cyan-800 underline decoration-cyan-300 underline-offset-4 hover:text-cyan-950 dark:text-cyan-200 dark:hover:text-white"
+              >
+                Go to Live
+              </Link>
+            </li>
+          </ol>
+        </section>
 
         <div className="mt-8">
           <label htmlFor="faq-search" className="sr-only">

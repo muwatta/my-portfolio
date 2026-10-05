@@ -46,6 +46,29 @@ describe("AcademyFaq", () => {
     );
   });
 
+  it("puts direct course, lesson, practice, and live-session routes at the top", () => {
+    renderFaq();
+
+    expect(
+      screen.getByRole("heading", { name: /find your way around/i }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /go to courses/i })).toHaveAttribute(
+      "href",
+      "/academy/courses",
+    );
+    expect(screen.getByRole("link", { name: /go to learn/i })).toHaveAttribute(
+      "href",
+      "/academy/lessons",
+    );
+    expect(screen.getByRole("link", { name: /go to live/i })).toHaveAttribute(
+      "href",
+      "/academy/live",
+    );
+    expect(
+      screen.getByText(/inside a lesson, use learn for the material, practice/i),
+    ).toBeInTheDocument();
+  });
+
   it("filters answers with the search box", () => {
     renderFaq();
     const search = screen.getByLabelText(/search the help topics/i);

@@ -55,3 +55,15 @@ describe("the admin leaderboard stays behind the administrator guard", () => {
     expect(leaderboardIndex).toBeGreaterThan(guardIndex);
   });
 });
+
+describe("student-facing course previews", () => {
+  it("declares the course preview route inside the administrator guard", () => {
+    const guardIndex = app.indexOf("element={<AcademyAdminGuard />}");
+    const previewIndex = app.indexOf(
+      'path="/academy/admin/previews/:courseSlug"',
+    );
+    expect(guardIndex).toBeGreaterThan(-1);
+    expect(previewIndex).toBeGreaterThan(guardIndex);
+    expect(app).toContain("<AcademyAdminCoursePreview />");
+  });
+});
