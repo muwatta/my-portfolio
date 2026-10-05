@@ -57,38 +57,6 @@ export function invalidateAcademyCache(...prefixes) {
 export async function getActiveCourseForStudent(studentId) {
   if (!supabase || !studentId) return null;
   return withAcademyCache(`active-course:${studentId}`, 5 * 60 * 1000, async () => {
-    const { data: profileData } = await supabase
-      .from("academy_profiles")
-      .select("current_course_id")
-      .eq("id", studentId)
-      .maybeSingle();
-
-    if (profileData?.current_course_id) {
-      const { data: courseData } = await supabase
-        .from("academy_courses")
-        .select("id, slug, title, description, duration_weeks")
-        .eq("id", profileData.current_course_id)
-        .maybeSingle();
-
-      if (courseData) {
-        const { data: enrollment } = await supabase
-          .from("academy_enrollments")
-          .select("id")
-          .eq("student_id", studentId)
-          .eq("course_id", courseData.id)
-          .eq("status", "active")
-          .maybeSingle();
-        if (!enrollment) {
-          await supabase.rpc("academy_select_course", {
-            target_student_id: studentId,
-            target_course_id: courseData.id,
-          });
-        }
-      }
-
-      return courseData ?? null;
-    }
-
     const { data: enrollmentData } = await supabase
       .from("academy_enrollments")
       .select(
@@ -1606,11 +1574,12 @@ export async function getAcademyLesson(id, studentId) {
     if (error || !data) return { data, error, configured: true };
 
     const [
-      { data: exercises },
+      { data: exercises, error: exercisesError },
       { data: subtopics },
       { data: progress },
-      { data: activities },
-      { data: submissions },
+      { data: activities, error: activitiesError },
+      { data: submissions, error: submissionsError },
+      { data: exerciseAttempts, error: exerciseAttemptsError },
     ] = await Promise.all([
         supabase
           .from("academy_exercises")
@@ -1637,10 +1606,9 @@ export async function getAcademyLesson(id, studentId) {
         // alongside the practice, and the student's own attempt at it.
         supabase
           .from("academy_lesson_activities")
-          .select(
-            "id, kind, ref_id, title, points, status, release_at, due_at, sort_order, academy_assignments!inner(id, title, instructions, points, due_at, late_policy, retry_limit, allowed_submission_types, allowed_file_types, max_file_size_bytes, status, release_at)",
-          )
+          .select("id, kind, ref_id, title, points, status, release_at, due_at, sort_order")
           .eq("lesson_id", id)
+          .eq("kind", "assignment")
           .eq("status", "published")
           .order("sort_order"),
         studentId
@@ -1650,7 +1618,57 @@ export async function getAcademyLesson(id, studentId) {
               .eq("student_id", studentId)
               .order("submitted_at", { ascending: false })
           : Promise.resolve({ data: [] }),
+        studentId
+          ? supabase
+              .from("academy_exercise_attempts")
+              .select("exercise_id, passed, academy_exercises!inner(lesson_id)")
+              .eq("student_id", studentId)
+              .eq("academy_exercises.lesson_id", id)
+          : Promise.resolve({ data: [] }),
       ]);
+
+    if (
+      exercisesError ||
+      activitiesError ||
+      submissionsError ||
+      exerciseAttemptsError
+    ) {
+      return {
+        data: null,
+        error:
+          exercisesError ||
+          activitiesError ||
+          submissionsError ||
+          exerciseAttemptsError,
+        configured: true,
+      };
+    }
+
+    const assignmentIds = (activities ?? []).map((activity) => activity.ref_id);
+    const { data: assignments, error: assignmentsError } = assignmentIds.length
+      ? await supabase
+          .from("academy_assignments")
+          .select(
+            "id, title, instructions, points, due_at, late_policy, retry_limit, allowed_submission_types, allowed_file_types, max_file_size_bytes, status, release_at, published, is_draft",
+          )
+          .in("id", assignmentIds)
+          .eq("published", true)
+          .eq("is_draft", false)
+          .eq("status", "published")
+          .or(`release_at.is.null,release_at.lte.${new Date().toISOString()}`)
+      : { data: [], error: null };
+    if (assignmentsError) {
+      return { data: null, error: assignmentsError, configured: true };
+    }
+
+    const assignmentsById = new Map(
+      (assignments ?? []).map((assignment) => [assignment.id, assignment]),
+    );
+    const passedExerciseIds = new Set(
+      (exerciseAttempts ?? [])
+        .filter((attempt) => attempt.passed > 0)
+        .map((attempt) => attempt.exercise_id),
+    );
 
     // Latest attempt per assignment, which is the one the student cares about.
     const latestByAssignment = new Map();
@@ -1665,9 +1683,7 @@ export async function getAcademyLesson(id, studentId) {
 
     const tasks = (activities ?? [])
       .map((activity) => {
-        const assignment = Array.isArray(activity.academy_assignments)
-          ? activity.academy_assignments[0]
-          : activity.academy_assignments;
+        const assignment = assignmentsById.get(activity.ref_id);
         if (!assignment) return null;
         return {
           activityId: activity.id,
@@ -1690,7 +1706,10 @@ export async function getAcademyLesson(id, studentId) {
       data: {
         ...data,
         tasks,
-        exercises: exercises ?? [],
+        exercises: (exercises ?? []).map((exercise) => ({
+          ...exercise,
+          completed: passedExerciseIds.has(exercise.id),
+        })),
         subtopics: subtopics ?? [],
         progress: progress ?? null,
       },
@@ -1803,7 +1822,7 @@ export async function submitObjectiveAnswer(
     "academy_submit_objective_answer",
     args,
   );
-  if (!error) invalidateAcademyCache("leaderboard:");
+  if (!error) invalidateAcademyCache("leaderboard:", "lesson:");
   return { data, error };
 }
 

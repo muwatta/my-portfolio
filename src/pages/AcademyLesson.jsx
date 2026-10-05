@@ -12,6 +12,7 @@ import { enqueueAcademyOperation } from "../lib/academySync";
 import AcademyConnectionState from "../components/academy/AcademyConnectionState";
 import { useNetworkStatus } from "../hooks/useNetworkStatus";
 import { useAcademyAuth } from "../hooks/useAcademyAuth";
+import { friendlyError } from "../lib/utils";
 import LessonContent from "../components/academy/LessonContent";
 import TopicStepper from "../components/academy/TopicStepper";
 import CppEditor from "../components/academy/CppEditor";
@@ -95,7 +96,12 @@ export default function AcademyLesson() {
         setNotice("The connection dropped. Your lesson completion is waiting to sync.");
         return;
       }
-      setNotice("The server could not complete this lesson yet. Please try again.");
+      setNotice(
+        friendlyError(
+          error,
+          "The server could not complete this lesson yet. Please try again.",
+        ),
+      );
       return;
     }
     setNotice("");
@@ -157,7 +163,12 @@ export default function AcademyLesson() {
   const isCppCourse = courseLanguage === "cpp";
   const isTerminalCourse = courseLanguage === "shell";
   const practice = lesson.exercises ?? [];
+  const scoredPractice = practice.filter(
+    (exercise) => exercise.question_type !== "programming",
+  );
   const tasks = lesson.tasks ?? [];
+  const practiceDone = scoredPractice.every((exercise) => exercise.completed);
+  const taskDone = tasks.every((task) => Boolean(task.submission));
   const jumpTo = (target) => {
     setStep(target);
     document
@@ -185,10 +196,10 @@ export default function AcademyLesson() {
       <TopicStepper
         current={step}
         learnDone={completed}
-        practiceCount={practice.length}
+        practiceCount={scoredPractice.length}
         taskCount={tasks.length}
-        practiceDone={false}
-        taskDone={tasks.every((task) => task.submission)}
+        practiceDone={practiceDone}
+        taskDone={taskDone}
         onJump={jumpTo}
       />
       <section id="topic-step-learn">
@@ -258,9 +269,9 @@ export default function AcademyLesson() {
         >
           <h2 className="text-xl font-bold">Practice</h2>
           <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
-            {practice.length} low stakes question
-            {practice.length === 1 ? "" : "s"}. Unlimited attempts, with
-            feedback as soon as you answer.
+            {scoredPractice.filter((exercise) => exercise.completed).length} of{" "}
+            {scoredPractice.length} scored questions passed. Pass each one to
+            unlock the next lesson.
           </p>
           <ul className="mt-3 space-y-1 text-sm text-slate-700 dark:text-slate-300">
             {practice.slice(0, 6).map((exercise) => (
@@ -268,7 +279,12 @@ export default function AcademyLesson() {
                 <span aria-hidden="true" className="text-slate-400">
                   ·
                 </span>
-                <span>{exercise.title}</span>
+                <span className="min-w-0 flex-1">{exercise.title}</span>
+                {exercise.completed && (
+                  <span className="shrink-0 text-xs font-semibold text-emerald-700 dark:text-emerald-300">
+                    Passed
+                  </span>
+                )}
               </li>
             ))}
             {practice.length > 6 ? (
@@ -279,7 +295,7 @@ export default function AcademyLesson() {
           </ul>
           <Link
             className="button-primary mt-4 inline-flex"
-            to="/academy/practice"
+            to={`/academy/practice?lesson=${encodeURIComponent(id)}`}
           >
             Start practice
           </Link>
@@ -363,20 +379,32 @@ export default function AcademyLesson() {
       {notice && <p role="status" className="rounded-lg bg-amber-50 p-3 text-sm text-amber-900">{notice}</p>}
       <div className="rounded-xl border border-slate-200 p-5 dark:border-slate-800">
         <h2 className="text-xl font-bold">
-          {completed ? "Topic complete" : "Finished this topic?"}
+          {completed && practiceDone && taskDone
+            ? "Topic complete"
+            : completed
+              ? "Required activities remain"
+              : "Finished this topic?"}
         </h2>
         <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
           {completed
-            ? "Nice work. The next topic is now unlocked."
+            ? practiceDone && taskDone
+              ? "Nice work. The next topic is now unlocked."
+              : "Complete every scored practice question and submit each task to unlock the next topic."
             : "Mark it complete to unlock the next topic and add it to your progress."}
         </p>
         <button
           type="button"
           className="button-primary mt-4"
           onClick={completeLesson}
-          disabled={completed}
+          disabled={completed || !practiceDone || !taskDone}
         >
-          {completed ? "Topic completed" : "Mark topic complete"}
+          {completed
+            ? practiceDone && taskDone
+              ? "Topic completed"
+              : "Complete required activities above"
+            : practiceDone && taskDone
+              ? "Mark topic complete"
+              : "Complete required activities first"}
         </button>
       </div>
     </article>

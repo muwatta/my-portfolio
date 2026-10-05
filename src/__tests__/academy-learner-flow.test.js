@@ -152,8 +152,14 @@ describe("the learner pages use the server answer", () => {
   });
 
   it("loads the task step from the activities table", () => {
-    expect(academy).toMatch(/academy_lesson_activities/);
-    expect(academy).toMatch(/academy_assignments!inner/);
+    const lessonQuery = academy.slice(
+      academy.indexOf("export async function getAcademyLesson"),
+      academy.indexOf("export async function markLessonComplete"),
+    );
+    expect(lessonQuery).toMatch(/from\("academy_lesson_activities"\)/);
+    expect(lessonQuery).toMatch(/from\("academy_assignments"\)/);
+    expect(lessonQuery).toMatch(/\.in\("id", assignmentIds\)/);
+    expect(lessonQuery).not.toMatch(/academy_assignments!inner/);
   });
 
   it("keeps the three step flow in order", () => {

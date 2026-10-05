@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { getAcademyExercises, submitObjectiveAnswer } from "../lib/academy";
 import CppEditor from "../components/academy/CppEditor";
 import PythonEditor from "../components/academy/PythonEditor";
@@ -13,6 +13,8 @@ import { useNetworkStatus } from "../hooks/useNetworkStatus";
 
 export default function AcademyPractice() {
   const { user } = useAcademyAuth();
+  const [searchParams] = useSearchParams();
+  const selectedLessonId = searchParams.get("lesson");
   const [exercises, setExercises] = useState([]);
   const [state, setState] = useState("loading");
   const [offline, setOffline] = useState(false);
@@ -21,7 +23,10 @@ export default function AcademyPractice() {
   const [submitting, setSubmitting] = useState(null);
   const [reloadToken, setReloadToken] = useState(0);
   const network = useNetworkStatus();
-  const practiceLanguage = exercises[0]?.language || "python";
+  const visibleExercises = selectedLessonId
+    ? exercises.filter((exercise) => exercise.lesson_id === selectedLessonId)
+    : exercises;
+  const practiceLanguage = visibleExercises[0]?.language || "python";
 
   useEffect(() => {
     fetchWithOfflineFallback({
@@ -77,7 +82,11 @@ export default function AcademyPractice() {
           Practice lab
         </p>
         <h1 className="mt-2 text-3xl font-bold">
-          {practiceLanguage === "cpp" ? "Practice C++" : "Practice Python"}
+          {selectedLessonId
+            ? `Lesson practice · ${practiceLanguage === "cpp" ? "C++" : "Python"}`
+            : practiceLanguage === "cpp"
+              ? "Practice C++"
+              : "Practice Python"}
         </h1>
         <p className="mt-2 text-slate-600 dark:text-slate-300">
           {practiceLanguage === "cpp"
@@ -106,7 +115,7 @@ export default function AcademyPractice() {
           Practice exercises could not be loaded.
         </p>
       )}
-      {state === "ready" && exercises.length === 0 && (
+      {state === "ready" && visibleExercises.length === 0 && (
         <AcademyConnectionState
           online={network.online}
           slow={network.slow}
@@ -142,7 +151,7 @@ export default function AcademyPractice() {
           </div>
         </AcademyConnectionState>
       )}
-      {exercises.map((exercise) => (
+      {visibleExercises.map((exercise) => (
         <article
           key={exercise.id}
           className="space-y-4 rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900"
