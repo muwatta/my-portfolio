@@ -127,7 +127,7 @@ function NavBar() {
     >
       {/* Navbar container */}
       <div className="mx-auto w-full px-4 sm:px-6 lg:px-8">
-        <div className="site-navbar-inner flex h-20 items-center justify-between">
+        <div className="site-navbar-inner relative z-50 flex h-20 items-center justify-between">
           {/* Logo */}
           <MotionLink
             to="/"
@@ -246,7 +246,7 @@ function NavBar() {
           <motion.div
             id="mobile-menu"
             ref={menuRef}
-            className="site-mobile-menu absolute left-0 right-0 top-full border-b border-slate-200/50 bg-white/95 backdrop-blur-xl dark:border-slate-800/50 dark:bg-slate-950/95 md:hidden"
+            className="site-mobile-menu absolute left-0 right-0 top-full z-50 border-b border-slate-200/50 bg-white/95 backdrop-blur-xl dark:border-slate-800/50 dark:bg-slate-950/95 md:hidden"
             initial="closed"
             animate="open"
             exit="closed"

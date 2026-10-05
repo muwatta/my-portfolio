@@ -136,8 +136,36 @@ const AcademyAdminAccess = lazy(() => import("./pages/AcademyAdminAccess"));
 const AcademyProfile = lazy(() => import("./pages/AcademyProfile"));
 
 const PageLoader = () => (
-  <div className="min-h-screen flex items-center justify-center">
-    <div className="w-8 h-8 rounded-full border-2 border-blue-500 border-t-transparent animate-spin" />
+  <div
+    className="grid min-h-screen place-items-center bg-slate-50 px-6 dark:bg-slate-950"
+    role="status"
+    aria-live="polite"
+    aria-busy="true"
+  >
+    <div className="w-full max-w-sm">
+      <div className="flex items-center gap-3">
+        <div className="relative grid h-12 w-12 shrink-0 place-items-center">
+          <span className="absolute inset-0 animate-spin rounded-full border-2 border-blue-200 border-t-blue-600 motion-reduce:animate-none dark:border-slate-700 dark:border-t-cyan-400" />
+          <span
+            aria-hidden="true"
+            className="grid h-8 w-8 place-items-center rounded-lg bg-gradient-to-br from-blue-600 to-cyan-500 text-sm font-extrabold text-white"
+          >
+            M
+          </span>
+        </div>
+        <div>
+          <p className="text-sm font-bold text-slate-900 dark:text-slate-100">
+            Muwatta
+          </p>
+          <p className="text-sm text-slate-500 dark:text-slate-400">
+            Preparing your page…
+          </p>
+        </div>
+      </div>
+      <div className="mt-6 h-1.5 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800">
+        <div className="h-full w-1/3 animate-pulse rounded-full bg-gradient-to-r from-blue-500 to-cyan-400 motion-reduce:animate-none" />
+      </div>
+    </div>
   </div>
 );
 

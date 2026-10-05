@@ -18,8 +18,7 @@ const SOCIAL_CARD_TYPES = {
 
 function validateUrl(url) {
   try {
-    new URL(url);
-    return url;
+    return new URL(url, SITE.url).toString();
   } catch {
     console.warn(`Invalid URL: ${url}`);
     return null;
@@ -72,7 +71,7 @@ export default function Seo({
   }
 
   const canonical = canonicalUrl || url;
-  const validatedImage = validateUrl(image) ? image : SITE.image;
+  const validatedImage = validateUrl(image) || SITE.image;
   const twitterCard = SOCIAL_CARD_TYPES[type] || "summary_large_image";
 
   const structuredData =
