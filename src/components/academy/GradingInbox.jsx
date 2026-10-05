@@ -2,8 +2,10 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   getGradingFilters,
   getGradingQueue,
+  getSubmissionFileUrl,
   normaliseRubric,
   publishResult,
+  requestAiGradeSuggestion,
   reviewStateLabel,
   reviewSubmission,
 } from "../../lib/academyGrading";
@@ -29,6 +31,8 @@ export default function GradingInbox() {
   const [rubricMarks, setRubricMarks] = useState({});
   const [status, setStatus] = useState("");
   const [busy, setBusy] = useState(false);
+  const [aiBusy, setAiBusy] = useState(false);
+  const [fileUrl, setFileUrl] = useState("");
   const [loading, setLoading] = useState(true);
 
   const current = queue[index] ?? null;
@@ -70,6 +74,56 @@ export default function GradingInbox() {
       });
     }
     setRubricMarks(marks);
+  }, [current]);
+
+  useEffect(() => {
+    let cancelled = false;
+    setFileUrl("");
+    if (!current?.file_path) return undefined;
+    getSubmissionFileUrl(current.file_path)
+      .then(({ data, error }) => {
+        if (cancelled) return;
+        if (error) {
+          setStatus(friendlyError(error, "Could not open the submitted file."));
+          return;
+        }
+        setFileUrl(data ?? "");
+      })
+      .catch((error) => {
+        if (!cancelled)
+          setStatus(friendlyError(error, "Could not open the submitted file."));
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [current?.file_path]);
+
+  const suggestGrade = useCallback(async () => {
+    if (!current) return;
+    setAiBusy(true);
+    setStatus("");
+    try {
+      const { data, error } = await requestAiGradeSuggestion(
+        current.submission_id,
+      );
+      if (error) {
+        setStatus(
+          friendlyError(error, "Could not generate an AI grade suggestion."),
+        );
+        return;
+      }
+      setScore(String(data.score));
+      setFeedback(data.feedback);
+      setStatus(
+        `AI suggested ${data.score}/${current.max_score ?? 100}. Review the suggestion, then save and publish it when ready.`,
+      );
+    } catch (error) {
+      setStatus(
+        friendlyError(error, "Could not generate an AI grade suggestion."),
+      );
+    } finally {
+      setAiBusy(false);
+    }
   }, [current]);
 
   const move = useCallback(
@@ -296,14 +350,29 @@ export default function GradingInbox() {
                   {current.source_code}
                 </pre>
               </details>
-            ) : current.original_filename ? (
-              <p className="mt-3 text-sm text-slate-600 dark:text-slate-300">
-                They uploaded {current.original_filename}
-                {current.file_size_bytes
-                  ? ` (${Math.round(current.file_size_bytes / 1024)} KB)`
-                  : ""}
-                .
-              </p>
+            ) : null}
+            {current.original_filename ? (
+              <div className="mt-3 flex flex-wrap items-center gap-3 text-sm text-slate-600 dark:text-slate-300">
+                <span>
+                  Uploaded {current.original_filename}
+                  {current.file_size_bytes
+                    ? ` (${Math.round(current.file_size_bytes / 1024)} KB)`
+                    : ""}
+                  .
+                </span>
+                {fileUrl ? (
+                  <a
+                    className="font-semibold text-blue-600 underline dark:text-blue-400"
+                    href={fileUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    Open submitted file
+                  </a>
+                ) : current.file_path ? (
+                  <span aria-live="polite">Preparing secure file link…</span>
+                ) : null}
+              </div>
             ) : null}
           </div>
 
@@ -368,6 +437,14 @@ export default function GradingInbox() {
           </div>
 
           <div className="flex flex-wrap gap-3">
+            <button
+              type="button"
+              className="button-secondary"
+              onClick={suggestGrade}
+              disabled={busy || aiBusy}
+            >
+              {aiBusy ? "Generating AI suggestion…" : "Get AI grade suggestion"}
+            </button>
             <button
               type="button"
               className="button-primary"

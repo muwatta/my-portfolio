@@ -19,6 +19,42 @@ export async function getGradingQueue(filters = {}) {
   return { data: data ?? [], error };
 }
 
+export async function getSubmissionFileUrl(path) {
+  if (!supabase) return notConfigured(null);
+  if (!path)
+    return {
+      data: null,
+      error: new Error("No submitted file is available."),
+    };
+  const { data, error } = await supabase.storage
+    .from("assignment-submissions")
+    .createSignedUrl(path, 60 * 5);
+  return { data: data?.signedUrl ?? null, error };
+}
+
+export async function requestAiGradeSuggestion(submissionId) {
+  if (!supabase) return notConfigured(null);
+  const { data, error } = await supabase.functions.invoke(
+    "academy-ai-grade-submission",
+    { body: { submission_id: submissionId } },
+  );
+  if (error) {
+    const context = error.context;
+    if (context && typeof context.json === "function") {
+      try {
+        const body = await context.json();
+        return {
+          data: null,
+          error: new Error(body?.error ?? error.message),
+        };
+      } catch {
+        return { data: null, error };
+      }
+    }
+  }
+  return { data, error };
+}
+
 // Filter options for the inbox. Topics and students come from the same teacher
 // scoped reads the rest of the admin uses.
 export async function getGradingFilters() {

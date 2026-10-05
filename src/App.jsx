@@ -506,7 +506,7 @@ function AppShell() {
   );
 }
 
-const PUBLIC_ACADEMY_ROUTES = new Set(["/academy", "/academy/faq"]);
+const PUBLIC_ACADEMY_ROUTES = new Set(["/academy/faq"]);
 
 const isPublicAcademyPage = (pathname) =>
   PUBLIC_ACADEMY_ROUTES.has(pathname.replace(/\/+$/, "") || "/academy");

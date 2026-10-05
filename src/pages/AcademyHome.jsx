@@ -1,7 +1,9 @@
-import { Link } from "react-router-dom";
+import { Link, Navigate } from "react-router-dom";
 import { FiArrowRight, FiBookOpen, FiCpu, FiZap } from "react-icons/fi";
 import { useTheme } from "../context/useTheme";
+import { useAcademyAuth } from "../hooks/useAcademyAuth";
 import AcademyFooter from "../components/academy/AcademyFooter";
+import AcademyLoadingScreen from "../components/academy/AcademyLoadingScreen";
 import Seo from "../components/seo/Seo";
 import { ACADEMY } from "../data/academy";
 
@@ -60,6 +62,25 @@ const focusRing =
 
 export default function AcademyHome() {
   const { theme, toggle } = useTheme();
+  const { initializing, user, isAdmin, isTeacher } = useAcademyAuth();
+
+  if (initializing) {
+    return (
+      <AcademyLoadingScreen
+        title="Loading Academy"
+        subtitle="Checking your account"
+      />
+    );
+  }
+
+  if (user) {
+    const dashboard = isAdmin
+      ? "/academy/admin"
+      : isTeacher
+        ? "/academy/teacher"
+        : "/academy/dashboard";
+    return <Navigate to={dashboard} replace />;
+  }
 
   return (
     <div className="min-h-screen overflow-hidden bg-slate-50 text-slate-950 dark:bg-slate-950 dark:text-slate-100">
@@ -140,7 +161,6 @@ export default function AcademyHome() {
                   className={`inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-amber-400 px-5 py-3 text-sm font-extrabold text-slate-950 shadow-sm transition hover:bg-amber-300 ${focusRing}`}
                 >
                   Apply to Academy
-                  <FiArrowRight aria-hidden="true" />
                 </Link>
                 <Link
                   to="/academy/login"
@@ -240,7 +260,6 @@ export default function AcademyHome() {
               className={`mt-6 inline-flex min-h-12 w-full shrink-0 items-center justify-center gap-2 rounded-xl bg-amber-400 px-5 py-3 text-sm font-extrabold text-slate-950 transition hover:bg-amber-300 sm:w-auto lg:mt-0 ${focusRing}`}
             >
               Start your application
-              <FiArrowRight aria-hidden="true" />
             </Link>
           </div>
         </section>

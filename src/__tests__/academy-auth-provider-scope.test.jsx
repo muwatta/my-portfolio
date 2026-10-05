@@ -6,9 +6,8 @@
 // test written that way passes both before and after the fix. It did.
 //
 // This asserts the thing that actually matters: which routes mount the academy
-// auth provider. It is a lazy import of a module that pulls in Supabase, 216 KiB
-// of it, and it used to wrap every academy route including the two public
-// marketing pages that read nothing from the session.
+// auth provider. The landing page needs session state so signed-in users can
+// continue straight to their dashboard; the public FAQ does not.
 
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
@@ -28,6 +27,17 @@ vi.mock("../context/AcademyAuthContext", () => ({
   },
 }));
 
+vi.mock("../hooks/useAcademyAuth", () => ({
+  useAcademyAuth: () => ({
+    initializing: false,
+    user: null,
+    isAdmin: false,
+    isTeacher: false,
+    loading: false,
+    isConfigured: false,
+  }),
+}));
+
 import App from "../App";
 
 const renderAt = (path) =>
@@ -41,9 +51,8 @@ beforeEach(() => {
   providerCalls.count = 0;
 });
 
-describe("the academy's public pages do not mount the auth provider", () => {
-  // 216 KiB of Supabase behind a spinner, for a page that needs no session.
-  it.each(["/academy", "/academy/", "/academy/faq"])(
+describe("the public FAQ does not mount the auth provider", () => {
+  it.each(["/academy/faq"])(
     "%s skips it",
     async (path) => {
       renderAt(path);
@@ -71,9 +80,9 @@ describe("the academy's public pages do not mount the auth provider", () => {
 });
 
 describe("routes that read a session still mount the auth provider", () => {
-  // The obvious way to break the optimisation is to over-apply it and strip the
-  // provider from a page that genuinely needs one.
   it.each([
+    "/academy",
+    "/academy/",
     "/academy/login",
     "/academy/signup",
     "/academy/forgot-password",
