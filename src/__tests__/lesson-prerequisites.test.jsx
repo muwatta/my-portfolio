@@ -7,6 +7,14 @@ const chain = readFileSync(
   "supabase/migrations/20261305000000_lesson_prerequisite_chain.sql",
   "utf8",
 );
+const publishedChain = readFileSync(
+  "supabase/migrations/20261343000000_published_lesson_prerequisite_chain.sql",
+  "utf8",
+);
+const publishPython = readFileSync(
+  "supabase/migrations/20261344000000_python_publish_course_content.sql",
+  "utf8",
+);
 
 const authState = vi.hoisted(() => ({
   current: { user: { id: "student-1" } },
@@ -102,6 +110,33 @@ describe("the prerequisite chain in the database", () => {
     expect(chain).toMatch(
       /revoke execute on function public\.academy_lesson_is_unlocked_for_student\(uuid, uuid\) from public, anon/,
     );
+  });
+
+  it("does not let hidden lessons block the next published lesson", () => {
+    expect(publishedChain).toMatch(/lesson\.published\s+and lesson\.status = 'published'/);
+    expect(publishedChain).toMatch(/lag\(lesson\.id\) over/);
+  });
+
+  it("rebuilds prerequisites when lesson visibility or ordering changes", () => {
+    expect(publishedChain).toMatch(
+      /after insert or delete or update of\s+week_id, lesson_number, sort_order, published, status/,
+    );
+    expect(publishedChain).toMatch(/academy_rechain_course_lessons\(new_course_id\)/);
+    expect(publishedChain).toMatch(
+      /after insert or delete or update of course_id, week_number\s+on public\.academy_weeks/,
+    );
+    expect(publishedChain).toMatch(/select public\.academy_rechain_course_lessons\(course\.id\)/);
+  });
+
+  it("publishes Python lessons and their linked learning activities", () => {
+    expect(publishPython.match(/slug = 'python-for-ai-machine-learning'/g)).toHaveLength(4);
+    expect(publishPython.match(/set status = 'published'/g)).toHaveLength(4);
+    expect(publishPython).toMatch(/update public\.academy_lessons/);
+    expect(publishPython).toMatch(/update public\.academy_exercises/);
+    expect(publishPython).toMatch(/update public\.academy_assignments/);
+    expect(publishPython).toMatch(/update public\.academy_lesson_activities/);
+    expect(publishPython).toMatch(/status <> 'archived'/);
+    expect(publishPython).toMatch(/release_at = now\(\)/);
   });
 });
 

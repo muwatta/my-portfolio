@@ -101,14 +101,14 @@ describe("retention removes the audio, not just the row", () => {
     expect(cleanup).toMatch(/bucket_id = 'live-voice-notes'/);
   });
 
-  it("keeps the fourteen day window across messages, sessions and heartbeats", () => {
+  it("keeps the fourteen day window for expiring media and heartbeat events", () => {
     expect(cleanup).toMatch(/academy_live_messages[\s\S]*'14 days'/);
-    expect(cleanup).toMatch(/academy_learning_sessions[\s\S]*'14 days'/);
     expect(cleanup).toMatch(/academy_learning_session_events[\s\S]*'14 days'/);
+    expect(cleanup).not.toMatch(/delete from public\.academy_learning_sessions/i);
   });
 
-  it("never touches an active learning session", () => {
-    expect(cleanup).toMatch(/where is_active is false/);
+  it("preserves session rows because they are the source of cumulative time", () => {
+    expect(cleanup).not.toMatch(/delete from public\.academy_learning_sessions/i);
   });
 });
 

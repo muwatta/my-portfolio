@@ -158,9 +158,7 @@ export async function getAcademyStudentOverview(studentId) {
       supabase
         .from("academy_learning_sessions")
         .select("active_seconds, started_at, last_heartbeat_at")
-        .eq("student_id", studentId)
-        .order("started_at", { ascending: false })
-        .limit(100),
+        .eq("student_id", studentId),
     ]);
 
     const errors = enrollmentError || scheduleError || badgeError || sessionError;
