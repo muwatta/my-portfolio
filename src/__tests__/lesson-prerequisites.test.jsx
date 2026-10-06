@@ -11,10 +11,6 @@ const publishedChain = readFileSync(
   "supabase/migrations/20261343000000_published_lesson_prerequisite_chain.sql",
   "utf8",
 );
-const publishPython = readFileSync(
-  "supabase/migrations/20261344000000_python_publish_course_content.sql",
-  "utf8",
-);
 
 const authState = vi.hoisted(() => ({
   current: { user: { id: "student-1" } },
@@ -126,17 +122,6 @@ describe("the prerequisite chain in the database", () => {
       /after insert or delete or update of course_id, week_number\s+on public\.academy_weeks/,
     );
     expect(publishedChain).toMatch(/select public\.academy_rechain_course_lessons\(course\.id\)/);
-  });
-
-  it("publishes Python lessons and their linked learning activities", () => {
-    expect(publishPython.match(/slug = 'python-for-ai-machine-learning'/g)).toHaveLength(4);
-    expect(publishPython.match(/set status = 'published'/g)).toHaveLength(4);
-    expect(publishPython).toMatch(/update public\.academy_lessons/);
-    expect(publishPython).toMatch(/update public\.academy_exercises/);
-    expect(publishPython).toMatch(/update public\.academy_assignments/);
-    expect(publishPython).toMatch(/update public\.academy_lesson_activities/);
-    expect(publishPython).toMatch(/status <> 'archived'/);
-    expect(publishPython).toMatch(/release_at = now\(\)/);
   });
 });
 

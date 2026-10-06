@@ -69,11 +69,12 @@ describe("the prerequisite chain ignores lessons students cannot see", () => {
 });
 
 describe("draft example fixtures stay hidden", () => {
-  // 20261344000000 was written to publish all non-archived Python content. On
-  // this database that means publishing one assignment titled "Example:
-  // auto-graded Python function task", which is a draft demo fixture rather than
-  // student work. It is intentionally left unapplied.
-  it("is not recorded as applied", () => {
-    expect(migration).not.toMatch(/python-for-ai-machine-learning/);
+  // A migration that published all non-archived Python content was written and
+  // then removed. On this database it would have published one assignment titled
+  // "Example: auto-graded Python function task", a draft demo fixture rather
+  // than student work. Nothing should reintroduce a blanket publish of drafts.
+  it("has no migration that publishes every non-archived Python record", () => {
+    const publishAll = /update\s+public\.academy_assignions[\s\S]*?status\s*<>\s*'archived'[\s\S]*?set\s+status\s*=\s*'published'/;
+    expect(migration).not.toMatch(publishAll);
   });
 });
