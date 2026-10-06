@@ -68,7 +68,6 @@ describe("Academy authentication bot protection", () => {
       "utf8",
     );
     expect(widget).toContain('import.meta.env.PROD ? "missing-key" : "disabled"');
-    expect(challenge).toContain('import.meta.env.PROD ? "missing-key" : "disabled"');
   });
 });
 

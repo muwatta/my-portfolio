@@ -112,7 +112,7 @@ describe("the forgot password flow helps someone who is actually stuck", () => {
 
   it("rate limits the send button", () => {
     expect(forgot).toMatch(/const RESEND_SECONDS = 45/);
-    expect(forgot).toMatch(/disabled=\{submitting \|\| cooldown > 0\}/);
+    expect(forgot).toMatch(/disabled=\{\s*submitting\s*\|\|\s*cooldown > 0\s*\|\|/);
   });
 
   it("validates the address before calling the server", () => {

@@ -1976,12 +1976,44 @@ export async function getAcademyTeacherClasses() {
 export async function saveAcademyClass(classroom) {
   if (!supabase)
     return { data: null, error: new Error("Academy is not configured.") };
+
+  const courseId = classroom.course_id;
+  const name = String(classroom.name ?? "").replace(/\s+/g, " ").trim();
+  const description = String(classroom.description ?? "").trim();
+  if (!courseId || !name) {
+    return {
+      data: null,
+      error: new Error("Course and class name are required."),
+    };
+  }
+
+  const { data: existingClasses, error: duplicateError } = await supabase
+    .from("academy_classes")
+    .select("id, name")
+    .eq("course_id", courseId);
+  if (duplicateError) return { data: null, error: duplicateError };
+
+  const duplicate = (existingClasses ?? []).some((row) => {
+    const existingName = String(row.name ?? "").replace(/\s+/g, " ").trim();
+    return (
+      existingName.toLowerCase() === name.toLowerCase() &&
+      (!classroom.id || row.id !== classroom.id)
+    );
+  });
+
+  if (duplicate) {
+    return {
+      data: null,
+      error: new Error("A class with this name already exists in this course."),
+    };
+  }
+
   const { data: userResult } = await supabase.auth.getUser();
   const payload = {
-    course_id: classroom.course_id,
-    name: classroom.name.trim(),
-    description: classroom.description.trim(),
-    created_by: userResult.user ?.id,
+    course_id: courseId,
+    name,
+    description,
+    created_by: userResult.user?.id,
   };
   const query = classroom.id
      ?  supabase.from("academy_classes").update(payload).eq("id", classroom.id)
@@ -2465,7 +2497,7 @@ export async function adminUpdateAcademyUser(targetUserId, changes) {
     "academy-admin-manage-user",
     { body: { action: "update", target_user_id: targetUserId, ...changes } },
   );
-  if (error) return { data: null, error: friendlyFunctionError(error) };
+  if (error) return { data: null, error: await friendlyFunctionError(error) };
   return { data, error: null };
 }
 
@@ -2482,7 +2514,7 @@ export async function adminDeleteAcademyUser(targetUserId, reason) {
       },
     },
   );
-  if (error) return { data: null, error: friendlyFunctionError(error) };
+  if (error) return { data: null, error: await friendlyFunctionError(error) };
   return { data, error: null };
 }
 
@@ -2496,20 +2528,26 @@ export async function adminCheckAcademyEmail(email) {
     "academy-admin-manage-user",
     { body: { action: "check_email", email: String(email ?? "").trim() } },
   );
-  if (error) return { data: null, error: friendlyFunctionError(error) };
+  if (error) return { data: null, error: await friendlyFunctionError(error) };
   return { data, error: null };
 }
 
-function friendlyFunctionError(error) {
+async function friendlyFunctionError(error) {
   // Edge functions return their message inside the response context rather than
   // as the error, so surface the real reason instead of "Edge Function Error".
+  if (!error) {
+    return new Error("The request could not be completed.");
+  }
   const context = error?.context;
   if (context && typeof context.json === "function") {
-    return context.json().then((body) =>
-      new Error(body?.error ?? "The request could not be completed."),
-    );
+    try {
+      const body = await context.json();
+      return new Error(body?.error ?? "The request could not be completed.");
+    } catch {
+      return error instanceof Error ? error : new Error(String(error));
+    }
   }
-  return error;
+  return error instanceof Error ? error : new Error(String(error));
 }
 
 // Course reviews and ratings. A student can write one review per course, edit

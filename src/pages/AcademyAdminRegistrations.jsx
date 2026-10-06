@@ -21,6 +21,8 @@ const emptyForm = {
   reason: "",
 };
 
+const REGISTRATION_PAGE_SIZE = 25;
+
 export default function AcademyAdminRegistrations() {
   const [searchParams] = useSearchParams();
   const [rows, setRows] = useState([]);
@@ -28,6 +30,8 @@ export default function AcademyAdminRegistrations() {
   const [form, setForm] = useState(emptyForm);
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("");
+  const [showUnused, setShowUnused] = useState(false);
+  const [directoryPage, setDirectoryPage] = useState(0);
   const [generated, setGenerated] = useState([]);
   const [suspendTarget, setSuspendTarget] = useState(null);
   const [message, setMessage] = useState("");
@@ -104,9 +108,32 @@ export default function AcademyAdminRegistrations() {
     }),
     [rows],
   );
+  const directoryRows = useMemo(
+    () =>
+      showUnused || status === "available" || search.trim()
+        ? rows
+        : rows.filter((row) => row.status !== "available"),
+    [rows, search, showUnused, status],
+  );
+  const directoryPageCount = Math.max(
+    1,
+    Math.ceil(directoryRows.length / REGISTRATION_PAGE_SIZE),
+  );
+  const pageRows = directoryRows.slice(
+    directoryPage * REGISTRATION_PAGE_SIZE,
+    (directoryPage + 1) * REGISTRATION_PAGE_SIZE,
+  );
+  const hiddenUnusedCount = rows.filter(
+    (row) => row.status === "available",
+  ).length;
 
   function updateForm(field, value) {
     setForm((current) => ({ ...current, [field]: value }));
+  }
+
+  function updateDirectoryFilter(update) {
+    setDirectoryPage(0);
+    update();
   }
 
   async function handleGenerate(event) {
@@ -343,15 +370,40 @@ export default function AcademyAdminRegistrations() {
             <p className="mt-1 text-sm text-slate-500">Search by registration number, student name, or email.</p>
           </div>
           <div className="flex flex-wrap gap-3">
-            <input className="field min-w-64" aria-label="Search registration numbers" placeholder="Search registration numbers..." value={search} onChange={(event) => setSearch(event.target.value)} />
-            <select className="field" aria-label="Filter registration status" value={status} onChange={(event) => setStatus(event.target.value)}>
+            <input className="field min-w-64" aria-label="Search registration numbers" placeholder="Search registration numbers..." value={search} onChange={(event) => updateDirectoryFilter(() => setSearch(event.target.value))} />
+            <select className="field" aria-label="Filter registration status" value={status} onChange={(event) => updateDirectoryFilter(() => setStatus(event.target.value))}>
               <option value="">All statuses</option>
               <option value="available">Available</option>
               <option value="claimed">Claimed</option>
               <option value="suspended">Suspended</option>
             </select>
+            {hiddenUnusedCount > 0 && (
+              <button
+                className="button-secondary whitespace-nowrap"
+                type="button"
+                aria-pressed={showUnused}
+                onClick={() =>
+                  updateDirectoryFilter(() => setShowUnused((current) => !current))
+                }
+              >
+                {showUnused
+                  ? "Hide unused"
+                  : `Show unused (${hiddenUnusedCount})`}
+              </button>
+            )}
           </div>
         </div>
+        <p className="mt-3 text-sm text-slate-500" aria-live="polite">
+          {directoryRows.length
+            ? `Showing ${directoryPage * REGISTRATION_PAGE_SIZE + 1}–${Math.min(
+                (directoryPage + 1) * REGISTRATION_PAGE_SIZE,
+                directoryRows.length,
+              )} of ${directoryRows.length} registration numbers.`
+            : "No registration numbers to show."}
+          {!showUnused && status !== "available" && !search.trim() && hiddenUnusedCount > 0
+            ? ` ${hiddenUnusedCount} unused numbers are hidden.`
+            : ""}
+        </p>
         {loading ? <p className="mt-5 text-sm text-slate-500">Loading registration numbers...</p> : (
           <div className="mt-5 overflow-x-auto">
             <table className="min-w-full text-left text-sm">
@@ -367,7 +419,7 @@ export default function AcademyAdminRegistrations() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                {rows.map((row) => (
+                {pageRows.map((row) => (
                   <tr key={row.registration_number}>
                     <td className="px-4 py-3 font-semibold tracking-[0.1em]">{row.registration_number}</td>
                     <td className="px-4 py-3"><span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${row.status === "available" ? "bg-emerald-100 text-emerald-800" : row.status === "provisional" ? "bg-violet-100 text-violet-800" : row.status === "claimed" ? "bg-blue-100 text-blue-800" : row.status === "voided" ? "bg-slate-200 text-slate-700" : "bg-amber-100 text-amber-800"}`}>{row.status === "provisional" ? "awaiting acceptance" : row.status}</span></td>
@@ -418,7 +470,37 @@ export default function AcademyAdminRegistrations() {
                 ))}
               </tbody>
             </table>
-            {!rows.length && <p className="mt-5 text-sm text-slate-500">No registration numbers match these filters.</p>}
+            {!directoryRows.length && <p className="mt-5 text-sm text-slate-500">No registration numbers match these filters.</p>}
+            {directoryPageCount > 1 && (
+              <nav
+                className="mt-4 flex items-center justify-between gap-3"
+                aria-label="Registration directory pages"
+              >
+                <button
+                  className="button-secondary"
+                  type="button"
+                  disabled={directoryPage === 0}
+                  onClick={() => setDirectoryPage((page) => Math.max(0, page - 1))}
+                >
+                  Previous
+                </button>
+                <span className="text-sm text-slate-500">
+                  Page {directoryPage + 1} of {directoryPageCount}
+                </span>
+                <button
+                  className="button-secondary"
+                  type="button"
+                  disabled={directoryPage + 1 >= directoryPageCount}
+                  onClick={() =>
+                    setDirectoryPage((page) =>
+                      Math.min(directoryPageCount - 1, page + 1),
+                    )
+                  }
+                >
+                  Next
+                </button>
+              </nav>
+            )}
           </div>
         )}
       </section>
