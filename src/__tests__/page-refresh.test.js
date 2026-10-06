@@ -8,21 +8,20 @@ const vercel = JSON.parse(readFileSync("vercel.json", "utf8"));
 
 const page = (name) => readFileSync(`src/pages/${name}.jsx`, "utf8");
 
-const REFRESHING_PAGES = [
+const POLLING_PAGES = [
   "AcademyLessons",
   "AcademyExams",
   "AcademyProgress",
   "AcademyTeacherDashboard",
   "AcademyAdminAccess",
   "AcademyAdminDashboard",
+  "AcademyAdminStudents",
 ];
 
-describe("pages refetch when a student comes back to the tab", () => {
-  // The specific case that made this matter: the prerequisite chain. A student
-  // finishes a lesson, comes back to the list, and the next one is still marked
-  // locked because nothing asked again. That reads as a broken unlock.
-  it.each(REFRESHING_PAGES)("%s refreshes on focus", (name) => {
-    expect(page(name)).toMatch(/refreshOnFocus: true/);
+describe("Academy pages do not reload just because the app regains focus", () => {
+  it.each(POLLING_PAGES)("%s polls without a focus-triggered reload", (name) => {
+    expect(page(name)).not.toMatch(/refreshOnFocus:\s*true/);
+    expect(page(name)).toMatch(/useAutoRefresh|interval: 30000/);
   });
 
   it("the lesson list can be reloaded, because a completion changes it", () => {

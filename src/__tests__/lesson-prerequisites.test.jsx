@@ -151,6 +151,12 @@ describe("a locked lesson is not a link", () => {
     expect(link).toHaveAttribute("href", "/academy/lessons/l2");
   });
 
+  it("keeps the lessons introduction readable in light mode", async () => {
+    renderList();
+    const intro = await screen.findByText(/Follow your course week by week/);
+    expect(intro.closest("header")).toHaveClass("always-dark");
+  });
+
   it("does not link the locked one", async () => {
     renderList();
     await screen.findByText("Your First Program");

@@ -90,11 +90,8 @@ export default function AcademyLessons() {
     setState("ready");
   }, [user.id]);
 
-  // refreshOnFocus so coming back to the tab shows the current unlock state
-  // rather than whatever was true when the page was opened. The hook already
-  // skips a hidden tab, an offline tab, and a background refresh while the
-  // reader is typing, and it collapses the focus and visibility events into one.
-  useAutoRefresh(load, { interval: 120000, refreshOnFocus: true });
+  // Poll while visible without disrupting students who briefly switch apps.
+  useAutoRefresh(load, { interval: 120000 });
 
   const totalLessons = weeks.reduce(
     (sum, week) => sum + week.lessons.length,
@@ -116,7 +113,7 @@ export default function AcademyLessons() {
 
   return (
     <div className="space-y-5 sm:space-y-6">
-      <header className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 p-5 text-white shadow-lg sm:p-6">
+      <header className="always-dark relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 p-5 text-white shadow-lg sm:p-6">
         <div className="pointer-events-none absolute -right-10 -top-16 h-48 w-48 rounded-full border-[22px] border-cyan-300/10" />
         <div className="relative">
           <p className="inline-flex items-center gap-2 rounded-full border border-cyan-300/20 bg-cyan-300/10 px-3 py-1 text-xs font-bold uppercase tracking-[0.15em] text-cyan-200">

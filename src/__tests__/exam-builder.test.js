@@ -3,6 +3,10 @@ import { describe, expect, it } from "vitest";
 
 const page = readFileSync("src/pages/AcademyAdminExamBuilder.jsx", "utf8");
 const lib = readFileSync("src/lib/academy.js", "utf8");
+const accessRepair = readFileSync(
+  "supabase/migrations/20261350000000_assessment_staff_read_grants.sql",
+  "utf8",
+);
 const sql = readFileSync(
   "supabase/migrations/20261292000000_exam_builder.sql",
   "utf8",
@@ -84,6 +88,29 @@ describe("an exam can be built by hand or automatically", () => {
     expect(page).toMatch(/addAcademyExamQuestion/);
     expect(page).toMatch(/fillAcademyExamFromMix/);
     expect(page).toMatch(/Build it automatically/);
+  });
+
+  describe("assessment data failures are recoverable", () => {
+    it("shows a retry action instead of treating a failed exam query as empty", () => {
+      expect(page).toMatch(/title="Examinations could not be loaded"/);
+      expect(page).toMatch(/onRetry={loadExams}/);
+      expect(page).toMatch(/examLoadError/);
+    });
+
+    it("keeps the question list and publishing disabled until exam contents load", () => {
+      expect(page).toMatch(/title="Questions for this examination could not be loaded"/);
+      expect(page).toMatch(/onRetry=\{\(\) => loadExamContents\(selectedId\)\}/);
+      expect(page).toMatch(/contentsLoading \|\| Boolean\(contentsLoadError\)/);
+    });
+
+    it("restores staff-only RLS-backed table access for assessment reads", () => {
+      expect(accessRepair).toMatch(
+        /grant select, insert, update, delete\s+on public\.academy_exam_questions to authenticated/,
+      );
+      expect(accessRepair).toMatch(
+        /grant select on public\.academy_exams to authenticated/,
+      );
+    });
   });
 
   it("asks for a difficulty and type mix, not a single number", () => {

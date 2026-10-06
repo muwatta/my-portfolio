@@ -40,6 +40,7 @@ export function useAutoRefresh(load, options = {}) {
     let timer = null;
     let stopped = false;
     let lastFocusRun = 0;
+    let windowBlurred = false;
 
     const restoreScroll = (from) => {
       if (!preserveScroll || from == null) return;
@@ -77,13 +78,15 @@ export function useAutoRefresh(load, options = {}) {
     const startTimer = () => {
       stopTimer();
       if (document.visibilityState === "hidden") return;
+      if (windowBlurred) return;
       if (typeof navigator !== "undefined" && !navigator.onLine) return;
       timer = window.setInterval(() => run(true), interval);
     };
 
     // Both visibilitychange and focus fire when you come back to a tab. Without
     // the cooldown that is two refetches for one return.
-    const onReturn = () => {
+    const onReturn = (event) => {
+      if (event.type === "focus") windowBlurred = false;
       if (document.visibilityState === "hidden") {
         stopTimer();
         return;
@@ -96,9 +99,15 @@ export function useAutoRefresh(load, options = {}) {
       void run(true);
     };
 
+    const onBlur = () => {
+      windowBlurred = true;
+      stopTimer();
+    };
+
     void run(false);
     startTimer();
     window.addEventListener("focus", onReturn);
+    window.addEventListener("blur", onBlur);
     window.addEventListener("online", startTimer);
     document.addEventListener("visibilitychange", onReturn);
 
@@ -106,6 +115,7 @@ export function useAutoRefresh(load, options = {}) {
       stopped = true;
       stopTimer();
       window.removeEventListener("focus", onReturn);
+      window.removeEventListener("blur", onBlur);
       window.removeEventListener("online", startTimer);
       document.removeEventListener("visibilitychange", onReturn);
     };

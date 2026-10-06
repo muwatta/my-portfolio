@@ -586,7 +586,8 @@ substitute for provider-side controls. Before launch, configure Vercel Firewall
 managed rules, bot protection, and rate limits for auth and application routes;
 enable MFA for every Academy administrator in Supabase; review Supabase Auth
 rate limits and usage alerts; and verify backups and incident access. Apply and
-verify database migrations in the hosted Supabase project. A CDN/WAF and
+verify database migrations in the hosted Supabase project, including the
+assessment staff-read grant repair before using the exam builder. A CDN/WAF and
 provider-level rate limits are required for meaningful DDoS mitigation; frontend
 code alone cannot absorb volumetric attacks.
 

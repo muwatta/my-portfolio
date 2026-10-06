@@ -83,11 +83,8 @@ export default function AcademyExams() {
     }
   }, [searchParams, setSearchParams]);
 
-  // Replaced the bare useEffect. An exam's state changes constantly: an attempt
-  // is finished in another tab, a teacher releases results, the window reopens.
-  // Refetching on return means the list says what is true now rather than what
-  // was true when the page opened.
-  useAutoRefresh(load, { interval: 120000, refreshOnFocus: true });
+  // Poll while visible; a brief app switch should not reset the student's view.
+  useAutoRefresh(load, { interval: 120000 });
 
   if (active) {
     return (

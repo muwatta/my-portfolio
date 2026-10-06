@@ -62,6 +62,48 @@ describe("useAutoRefresh", () => {
     expect(load.mock.calls.length).toBe(initial);
   });
 
+  it("does not reload a page after a brief app switch", () => {
+    const load = vi.fn();
+    render(<Harness load={load} />);
+    const initial = load.mock.calls.length;
+
+    act(() => {
+      Object.defineProperty(document, "visibilityState", {
+        configurable: true,
+        value: "hidden",
+      });
+      document.dispatchEvent(new Event("visibilitychange"));
+      vi.advanceTimersByTime(1500);
+      Object.defineProperty(document, "visibilityState", {
+        configurable: true,
+        value: "visible",
+      });
+      document.dispatchEvent(new Event("visibilitychange"));
+      window.dispatchEvent(new Event("focus"));
+      vi.advanceTimersByTime(500);
+    });
+
+    expect(load.mock.calls.length).toBe(initial);
+  });
+
+  it("pauses polling while the app window is blurred and resumes without an immediate load", () => {
+    const load = vi.fn();
+    render(<Harness load={load} />);
+    const initial = load.mock.calls.length;
+
+    act(() => {
+      window.dispatchEvent(new Event("blur"));
+      vi.advanceTimersByTime(1500);
+    });
+    expect(load.mock.calls.length).toBe(initial);
+
+    act(() => {
+      window.dispatchEvent(new Event("focus"));
+      vi.advanceTimersByTime(500);
+    });
+    expect(load.mock.calls.length).toBe(initial);
+  });
+
   it("refreshes at most once when focus and visibility both fire", () => {
     const load = vi.fn();
     render(<Harness load={load} refreshOnFocus />);

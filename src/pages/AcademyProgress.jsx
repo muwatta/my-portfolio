@@ -66,7 +66,7 @@ export default function AcademyProgress() {
     };
   }, [user.id]);
 
-  useAutoRefresh(load, { interval: 120000, refreshOnFocus: true });
+  useAutoRefresh(load, { interval: 120000 });
 
 
 

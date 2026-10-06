@@ -1,4 +1,10 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { readFileSync } from "node:fs";
@@ -88,6 +94,23 @@ describe("AcademyAdminExamResults", () => {
     expect(screen.getByText("Bola Adeyemi")).toBeInTheDocument();
     expect(screen.getByText("80% (8/10)")).toBeInTheDocument();
     expect(screen.getByText("40% (4/10)")).toBeInTheDocument();
+  });
+
+  it("offers a retry when examinations cannot be loaded", async () => {
+    api.getAcademyExams
+      .mockResolvedValueOnce({
+        data: null,
+        error: new Error("The request failed."),
+      })
+      .mockResolvedValueOnce({ data: [EXAM], error: null });
+
+    renderPage();
+    const alert = await screen.findByRole("alert");
+    expect(alert).toHaveTextContent("Examinations could not be loaded");
+    expect(screen.queryByLabelText("Examination")).not.toBeInTheDocument();
+
+    fireEvent.click(within(alert).getByRole("button", { name: "Try again" }));
+    expect(await screen.findByLabelText("Examination")).toBeInTheDocument();
   });
 
   it("summarises the class without re-grading anything", async () => {

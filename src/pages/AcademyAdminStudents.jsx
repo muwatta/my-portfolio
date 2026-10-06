@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { Link } from "react-router-dom";
+import { useAutoRefresh } from "../hooks/useAutoRefresh";
 import {
   assignAcademyStudentLevel,
   getAcademyTeacherStudents,
@@ -31,16 +32,7 @@ export default function AcademyAdminStudents() {
       setRefreshing(false);
     }
   }, []);
-  useEffect(() => {
-    load();
-    const refresh = () => load(true);
-    const interval = window.setInterval(refresh, 30000);
-    window.addEventListener("focus", refresh);
-    return () => {
-      window.clearInterval(interval);
-      window.removeEventListener("focus", refresh);
-    };
-  }, [load]);
+  useAutoRefresh(load, { interval: 30000 });
   async function changeCourse(studentId, courseId) {
     const { error } = await assignAcademyStudentLevel(studentId, courseId);
     setMessage(friendlyError(error, "Student course updated."));

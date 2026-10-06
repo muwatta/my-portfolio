@@ -14,6 +14,7 @@ import {
   validateAcademyExam,
 } from "../lib/academy";
 import { friendlyError } from "../lib/utils";
+import AdminLoadError from "../components/academy/AdminLoadError";
 
 const DIFFICULTIES = ["easy", "medium", "hard"];
 const TYPES = ["mcq", "true_false"];
@@ -56,28 +57,81 @@ export default function AcademyAdminExamBuilder() {
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const [examLoading, setExamLoading] = useState(true);
+  const [examLoadError, setExamLoadError] = useState("");
+  const [contentsLoading, setContentsLoading] = useState(false);
+  const [contentsLoadError, setContentsLoadError] = useState("");
+  const [bankLoading, setBankLoading] = useState(true);
+  const [bankLoadError, setBankLoadError] = useState("");
 
   const selected = exams.find((exam) => exam.id === selectedId) ?? null;
   const isDraft = selected?.status === "draft";
+  const examContentsReady = !contentsLoading && !contentsLoadError;
 
   const loadExams = useCallback(async () => {
-    const result = await getAcademyExams();
-    setExams(result.data ?? []);
-    setError(friendlyError(result.error, "Examinations could not be loaded."));
+    setExamLoading(true);
+    setExamLoadError("");
+    try {
+      const result = await getAcademyExams();
+      if (result.error) {
+        setExams([]);
+        setExamLoadError(
+          friendlyError(result.error, "Examinations could not be loaded."),
+        );
+        return;
+      }
+      setExams(result.data ?? []);
+    } catch (loadError) {
+      setExams([]);
+      setExamLoadError(
+        friendlyError(loadError, "Examinations could not be loaded."),
+      );
+    } finally {
+      setExamLoading(false);
+    }
   }, []);
 
   const loadExamContents = useCallback(async (examId) => {
     if (!examId) {
       setInExam([]);
       setProblems([]);
+      setContentsLoadError("");
+      setContentsLoading(false);
       return;
     }
-    const [paper, issues] = await Promise.all([
-      getAcademyExamQuestionsInExam(examId),
-      validateAcademyExam(examId),
-    ]);
-    setInExam(paper.data ?? []);
-    setProblems(issues.data ?? []);
+    setContentsLoading(true);
+    setContentsLoadError("");
+    try {
+      const [paper, issues] = await Promise.all([
+        getAcademyExamQuestionsInExam(examId),
+        validateAcademyExam(examId),
+      ]);
+      const failure = paper.error || issues.error;
+      if (failure) {
+        setInExam([]);
+        setProblems([]);
+        setContentsLoadError(
+          friendlyError(
+            failure,
+            "Questions for this examination could not be loaded.",
+          ),
+        );
+        return;
+      }
+      setInExam(paper.data ?? []);
+      setProblems(issues.data ?? []);
+    } catch (loadError) {
+      setInExam([]);
+      setProblems([]);
+      setContentsLoadError(
+        friendlyError(
+          loadError,
+          "Questions for this examination could not be loaded.",
+        ),
+      );
+    } finally {
+      setContentsLoading(false);
+    }
   }, []);
 
   useEffect(() => {
@@ -110,11 +164,35 @@ export default function AcademyAdminExamBuilder() {
     loadExamContents(selectedId);
   }, [selectedId, loadExamContents]);
 
-  useEffect(() => {
-    getAcademyExamQuestions({ pageSize: 50, search: "" }).then(({ data }) =>
-      setBank(data ?? []),
-    );
+  const loadBank = useCallback(async () => {
+    setBankLoading(true);
+    setBankLoadError("");
+    try {
+      const result = await getAcademyExamQuestions({
+        pageSize: 50,
+        search: "",
+      });
+      if (result.error) {
+        setBank([]);
+        setBankLoadError(
+          friendlyError(result.error, "Questions could not be loaded."),
+        );
+        return;
+      }
+      setBank(result.data ?? []);
+    } catch (loadError) {
+      setBank([]);
+      setBankLoadError(
+        friendlyError(loadError, "Questions could not be loaded."),
+      );
+    } finally {
+      setBankLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    loadBank();
+  }, [loadBank]);
 
   function update(field, value) {
     setForm((current) => ({ ...current, [field]: value }));
@@ -258,6 +336,14 @@ export default function AcademyAdminExamBuilder() {
         <p className="rounded-xl border border-rose-300 bg-rose-50 p-3 text-sm font-semibold text-rose-900 dark:border-rose-800 dark:bg-rose-950/40 dark:text-rose-200">
           {error}
         </p>
+      )}
+      {examLoadError && (
+        <AdminLoadError
+          title="Examinations could not be loaded"
+          message={examLoadError}
+          onRetry={loadExams}
+          retrying={examLoading}
+        />
       )}
 
       {/* ------------------------------------------------------------ create */}
@@ -411,15 +497,33 @@ export default function AcademyAdminExamBuilder() {
             />
           </label>
         </div>
-        <button className="button-primary" type="submit" disabled={busy}>
+        <button
+          className="button-primary"
+          type="submit"
+          disabled={busy || examLoading || Boolean(examLoadError)}
+        >
           Create draft
         </button>
+        {examLoadError && (
+          <p className="text-sm text-slate-600 dark:text-slate-300">
+            Load the examination list before creating a draft, so existing
+            papers are not accidentally duplicated.
+          </p>
+        )}
       </form>
 
       {/* ------------------------------------------------------------- list */}
       <section className="space-y-3">
         <h2 className="text-xl font-bold">Examinations</h2>
-        {exams.length === 0 ? (
+        {examLoading ? (
+          <p className="text-sm text-slate-500" role="status" aria-live="polite">
+            Loading examinations...
+          </p>
+        ) : examLoadError ? (
+          <p className="text-sm text-slate-500">
+            The examination list is unavailable until it can be loaded.
+          </p>
+        ) : exams.length === 0 ? (
           <p className="text-sm text-slate-500">No examinations yet.</p>
         ) : (
           <ul className="space-y-2">
@@ -530,7 +634,7 @@ export default function AcademyAdminExamBuilder() {
                 className="button-primary"
                 type="button"
                 onClick={autoFill}
-                disabled={busy}
+                disabled={busy || bankLoading || Boolean(bankLoadError)}
               >
                 {busy ? "Working..." : "Add matching questions"}
               </button>
@@ -541,21 +645,40 @@ export default function AcademyAdminExamBuilder() {
           <section className="space-y-3">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <h2 className="text-xl font-bold">
-                Questions in this exam ({inExam.length})
+                Questions in this exam
+                {examContentsReady ? ` (${inExam.length})` : ""}
               </h2>
               {isDraft && (
                 <button
                   className="button-primary"
                   type="button"
                   onClick={publish}
-                  disabled={busy}
+                  disabled={busy || contentsLoading || Boolean(contentsLoadError)}
                 >
                   Validate and publish
                 </button>
               )}
             </div>
 
-            {problems.length > 0 && (
+            {contentsLoading && (
+              <p
+                className="text-sm text-slate-500"
+                role="status"
+                aria-live="polite"
+              >
+                Loading this examination's questions...
+              </p>
+            )}
+            {contentsLoadError && (
+              <AdminLoadError
+                title="Questions for this examination could not be loaded"
+                message={contentsLoadError}
+                onRetry={() => loadExamContents(selectedId)}
+                retrying={contentsLoading}
+              />
+            )}
+
+            {examContentsReady && problems.length > 0 && (
               <ul className="space-y-1 rounded-xl border border-rose-300 bg-rose-50 p-4 text-sm text-rose-800 dark:border-rose-800 dark:bg-rose-950/30 dark:text-rose-200">
                 {problems.map((problem, index) => (
                   <li key={`${problem.problem}-${index}`}>
@@ -564,13 +687,16 @@ export default function AcademyAdminExamBuilder() {
                 ))}
               </ul>
             )}
-            {problems.length === 0 && inExam.length > 0 && (
+            {examContentsReady &&
+              problems.length === 0 &&
+              inExam.length > 0 && (
               <p className="rounded-xl border border-emerald-300 bg-emerald-50 p-3 text-sm text-emerald-900 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-200">
                 Everything checks out. This exam is ready to publish.
               </p>
             )}
 
-            {inExam.length === 0 ? (
+            {examContentsReady &&
+              (inExam.length === 0 ? (
               <p className="text-sm text-slate-500">
                 No questions yet. Add them from the bank below, or use the
                 automatic builder.
@@ -607,9 +733,9 @@ export default function AcademyAdminExamBuilder() {
                       )}
                     </div>
                   </li>
-                ))}
+                  ))}
               </ol>
-            )}
+            ))}
           </section>
 
           {/* --------------------------------------------------------- bank */}
@@ -622,40 +748,67 @@ export default function AcademyAdminExamBuilder() {
                 was written with, the answer follows the option rather than
                 staying on the old letter.
               </p>
-              <ul className="space-y-2">
-                {bank.map((question) => {
-                  const already = inExam.some(
-                    (item) => item.question_id === question.id,
-                  );
-                  return (
-                    <li
-                      key={question.id}
-                      className="flex flex-wrap items-center justify-between gap-3 border-l-4 border-slate-300 bg-white p-4 dark:border-slate-700 dark:bg-slate-900"
-                    >
-                      <div className="min-w-0">
-                        <p className="font-semibold text-slate-800 dark:text-slate-100">
-                          {question.prompt}
-                        </p>
-                        <p className="mt-1 text-xs text-slate-500">
-                          {question.academy_subjects?.name || "No subject"} ·{" "}
-                          {question.difficulty} ·{" "}
-                          {question.question_type === "true_false"
-                            ? "True/False"
-                            : "MCQ"}
-                        </p>
-                      </div>
-                      <button
-                        className="button-secondary shrink-0"
-                        type="button"
-                        disabled={already}
-                        onClick={() => addOne(question.id)}
+              {bankLoading && (
+                <p className="text-sm text-slate-500" role="status">
+                  Loading the question bank...
+                </p>
+              )}
+              {bankLoadError && (
+                <AdminLoadError
+                  title="Questions could not be loaded"
+                  message={bankLoadError}
+                  onRetry={loadBank}
+                  retrying={bankLoading}
+                />
+              )}
+              {!bankLoading && !bankLoadError && bank.length === 0 && (
+                <p className="text-sm text-slate-500">
+                  The question bank is empty. Add questions in the{" "}
+                  <Link
+                    to="/academy/admin/question-bank"
+                    className="font-semibold text-blue-700 underline dark:text-cyan-300"
+                  >
+                    question bank
+                  </Link>{" "}
+                  or import a CSV.
+                </p>
+              )}
+              {!bankLoading && !bankLoadError && bank.length > 0 && (
+                <ul className="space-y-2">
+                  {bank.map((question) => {
+                    const already = inExam.some(
+                      (item) => item.question_id === question.id,
+                    );
+                    return (
+                      <li
+                        key={question.id}
+                        className="flex flex-wrap items-center justify-between gap-3 border-l-4 border-slate-300 bg-white p-4 dark:border-slate-700 dark:bg-slate-900"
                       >
-                        {already ? "Already in" : "Add"}
-                      </button>
-                    </li>
-                  );
-                })}
-              </ul>
+                        <div className="min-w-0">
+                          <p className="font-semibold text-slate-800 dark:text-slate-100">
+                            {question.prompt}
+                          </p>
+                          <p className="mt-1 text-xs text-slate-500">
+                            {question.academy_subjects?.name || "No subject"} ·{" "}
+                            {question.difficulty} ·{" "}
+                            {question.question_type === "true_false"
+                              ? "True/False"
+                              : "MCQ"}
+                          </p>
+                        </div>
+                        <button
+                          className="button-secondary shrink-0"
+                          type="button"
+                          disabled={already}
+                          onClick={() => addOne(question.id)}
+                        >
+                          {already ? "Already in" : "Add"}
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
             </section>
           )}
         </>

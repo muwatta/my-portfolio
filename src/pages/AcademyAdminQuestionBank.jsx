@@ -10,6 +10,7 @@ import {
   saveAcademyExamQuestion,
 } from "../lib/academy";
 import { friendlyError } from "../lib/utils";
+import AdminLoadError from "../components/academy/AdminLoadError";
 
 const PAGE_SIZE = 25;
 const DIFFICULTIES = ["easy", "medium", "hard"];
@@ -48,6 +49,7 @@ export default function AcademyAdminQuestionBank() {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [loadError, setLoadError] = useState("");
 
   // import
   const [csv, setCsv] = useState("");
@@ -59,17 +61,32 @@ export default function AcademyAdminQuestionBank() {
 
   const load = useCallback(async () => {
     setLoading(true);
-    const result = await getAcademyExamQuestions({
-      ...filters,
-      page,
-      pageSize: PAGE_SIZE,
-    });
-    setRows(result.data ?? []);
-    setTotal(result.total ?? 0);
-    setError(
-      friendlyError(result.error, "Questions could not be loaded."),
-    );
-    setLoading(false);
+    setLoadError("");
+    try {
+      const result = await getAcademyExamQuestions({
+        ...filters,
+        page,
+        pageSize: PAGE_SIZE,
+      });
+      if (result.error) {
+        setRows([]);
+        setTotal(0);
+        setLoadError(
+          friendlyError(result.error, "Questions could not be loaded."),
+        );
+        return;
+      }
+      setRows(result.data ?? []);
+      setTotal(result.total ?? 0);
+    } catch (loadFailure) {
+      setRows([]);
+      setTotal(0);
+      setLoadError(
+        friendlyError(loadFailure, "Questions could not be loaded."),
+      );
+    } finally {
+      setLoading(false);
+    }
   }, [filters, page]);
 
   useEffect(() => {
@@ -247,6 +264,14 @@ export default function AcademyAdminQuestionBank() {
         <p className="rounded-xl border border-rose-300 bg-rose-50 p-3 text-sm font-semibold text-rose-900 dark:border-rose-800 dark:bg-rose-950/40 dark:text-rose-200">
           {error}
         </p>
+      )}
+      {loadError && (
+        <AdminLoadError
+          title="Questions could not be loaded"
+          message={loadError}
+          onRetry={load}
+          retrying={loading}
+        />
       )}
 
       {/* ------------------------------------------------------------- editor */}
@@ -569,6 +594,10 @@ export default function AcademyAdminQuestionBank() {
 
         {loading ? (
           <p className="text-sm text-slate-500">Loading questions...</p>
+        ) : loadError ? (
+          <p className="text-sm text-slate-500">
+            The question list is unavailable until it can be loaded.
+          </p>
         ) : rows.length === 0 ? (
           <p className="text-sm text-slate-500">
             No questions match these filters yet.

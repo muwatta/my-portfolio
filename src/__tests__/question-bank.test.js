@@ -62,6 +62,12 @@ describe("the question bank is a real, usable surface", () => {
     expect(page).toMatch(/const PAGE_SIZE = 25/);
   });
 
+  it("shows a retryable load error instead of an empty question bank", () => {
+    expect(page).toMatch(/title="Questions could not be loaded"/);
+    expect(page).toMatch(/onRetry={load}/);
+    expect(page).toMatch(/loadError && \(/);
+  });
+
   it("refuses to save a question with no answer", () => {
     expect(page).toMatch(/A question needs at least two options/);
     expect(page).toMatch(/Choose which option is correct/);

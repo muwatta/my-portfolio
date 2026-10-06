@@ -8,6 +8,7 @@ import {
   publishAcademyExamResults,
 } from "../lib/academy";
 import { friendlyError } from "../lib/utils";
+import AdminLoadError from "../components/academy/AdminLoadError";
 
 // Taken from the action values the engine actually writes, rather than invented
 // here. An action the engine adds later still shows its raw name instead of
@@ -93,15 +94,29 @@ export default function AcademyAdminExamResults() {
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
+  const [examLoadError, setExamLoadError] = useState("");
   const [busy, setBusy] = useState(false);
 
   const loadExams = useCallback(async () => {
     setLoading(true);
-    const result = await getAcademyExams();
-    setExams(result.data ?? []);
-    setLoading(false);
-    if (result.error) {
-      setError(friendlyError(result.error, "Examinations could not be loaded."));
+    setExamLoadError("");
+    try {
+      const result = await getAcademyExams();
+      if (result.error) {
+        setExams([]);
+        setExamLoadError(
+          friendlyError(result.error, "Examinations could not be loaded."),
+        );
+        return;
+      }
+      setExams(result.data ?? []);
+    } catch (loadError) {
+      setExams([]);
+      setExamLoadError(
+        friendlyError(loadError, "Examinations could not be loaded."),
+      );
+    } finally {
+      setLoading(false);
     }
   }, []);
 
@@ -215,7 +230,19 @@ export default function AcademyAdminExamResults() {
         </p>
       </header>
 
-      {loading && <p className="text-sm text-slate-500">Loading examinations...</p>}
+      {loading && (
+        <p className="text-sm text-slate-500" role="status" aria-live="polite">
+          Loading examinations...
+        </p>
+      )}
+      {!loading && examLoadError && (
+        <AdminLoadError
+          title="Examinations could not be loaded"
+          message={examLoadError}
+          onRetry={loadExams}
+          retrying={loading}
+        />
+      )}
 
       {!loading && exams.length === 0 && (
         <p className="text-sm text-slate-500">
