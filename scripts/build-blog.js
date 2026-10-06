@@ -1,7 +1,7 @@
 import { readdirSync, readFileSync, writeFileSync, existsSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
-import matter from "gray-matter";
+import { load as parseYaml } from "js-yaml";
 
 const rootDir = join(fileURLToPath(new URL(".", import.meta.url)), "..");
 const postsDir = join(rootDir, "public", "blog", "posts");
@@ -14,12 +14,26 @@ const legacyPosts = existsSync(postsDir)
       .map((f) => JSON.parse(readFileSync(join(postsDir, f), "utf8")))
   : [];
 
+function parseMarkdownPost(source, fileName) {
+  const frontMatter = /^---\r?\n([\s\S]*?)\r?\n---(?:\r?\n|$)/.exec(source);
+  if (!frontMatter) {
+    return { data: {}, content: source };
+  }
+
+  const data = parseYaml(frontMatter[1], { maxAliasCount: 20 }) ?? {};
+  if (typeof data !== "object" || Array.isArray(data)) {
+    throw new Error(`Expected YAML front matter to be an object in ${fileName}`);
+  }
+
+  return { data, content: source.slice(frontMatter[0].length) };
+}
+
 const markdownPosts = existsSync(markdownDir)
   ? readdirSync(markdownDir)
       .filter((f) => f.endsWith(".md"))
       .map((f) => {
         const source = readFileSync(join(markdownDir, f), "utf8");
-        const { data, content } = matter(source);
+        const { data, content } = parseMarkdownPost(source, f);
         return {
           ...data,
           medium_link: data.medium_link || data.mediumLink,

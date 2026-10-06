@@ -577,6 +577,10 @@ validate identifiers, and mark sensitive JSON responses as non-cacheable.
 The service-worker update prompt uses text DOM APIs rather than an HTML
 injection sink.
 
+CI audits production dependencies on every change, and Dependabot checks npm
+packages and GitHub Actions weekly. Keep dependency-audit findings resolved
+before deploying.
+
 These source changes are defense in depth, not an OWASP certification or a
 substitute for provider-side controls. Before launch, configure Vercel Firewall
 managed rules, bot protection, and rate limits for auth and application routes;

@@ -21,7 +21,7 @@
     "emailjs-com": "^3.2.0",
     "firebase": "^12.18.0",
     "framer-motion": "^12.42.0",
-    "gray-matter": "^4.0.3",
+    "js-yaml": "^4.3.2",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-helmet-async": "^2.0.5",
@@ -30,6 +30,9 @@
     "remark": "^15.0.1",
     "remark-html": "^16.0.1",
     "tailwind-merge": "^3.5.0"
+  },
+  "overrides": {
+    "@grpc/grpc-js": "^1.14.5"
   },
   "devDependencies": {
     "@babel/eslint-parser": "^8.0.1",
