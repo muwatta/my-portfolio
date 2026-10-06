@@ -31,7 +31,12 @@ function dispatchJob() {
     () => rejectJobs("Execution stopped. Check the loop condition or reduce the program size."),
     EXECUTION_TIMEOUT,
   );
-  sharedWorker.postMessage({ type: "run", id: activeJob.id, code: activeJob.code });
+  sharedWorker.postMessage({
+      type: "run",
+      id: activeJob.id,
+      code: activeJob.code,
+      stdin: activeJob.stdin,
+    });
 }
 
 function getWorker() {
@@ -50,12 +55,12 @@ function getWorker() {
   return sharedWorker;
 }
 
-function runCpp(code) {
+function runCpp(code, stdin = "") {
   if (code.length > MAX_SOURCE_LENGTH) {
     return Promise.reject(new Error("This program is too large for the beginner console lab."));
   }
   return new Promise((resolve, reject) => {
-    jobQueue.push({ id: `${Date.now()}-${Math.random()}`, code, resolve, reject });
+    jobQueue.push({ id: `${Date.now()}-${Math.random()}`, code, stdin, resolve, reject });
     try {
       getWorker();
       dispatchJob();
@@ -65,7 +70,7 @@ function runCpp(code) {
   });
 }
 
-export default function CppEditor({ starterCode = "", onSubmit }) {
+export default function CppEditor({ starterCode = "", onSubmit, stdin = "" }) {
   const [code, setCode] = useState(
     () => separateTerminalInstructions(starterCode).code,
   );
@@ -94,7 +99,7 @@ export default function CppEditor({ starterCode = "", onSubmit }) {
     setOutput("");
     setError("");
     try {
-      const result = await runCpp(code);
+      const result = await runCpp(code, stdin);
       if (currentRun === runId.current) setOutput(result);
     } catch (runError) {
       if (currentRun === runId.current) setError(runError.message);

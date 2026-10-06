@@ -133,7 +133,7 @@ function parseArrayAccess(expression) {
 }
 
 class BeginnerCpp {
-  constructor() {
+  constructor(stdin = "") {
     this.variables = new Map();
     this.arrays = new Map();
     this.functions = new Map();
@@ -143,6 +143,39 @@ class BeginnerCpp {
     this.outputLength = 0;
     this.steps = 0;
     this.index = 0;
+    // Standard input for `cin >> x`. Ten of the fifteen C++ exercises read from
+    // it, so without this two thirds of them cannot be run at all. Values are
+    // consumed in order and each `>>` takes the next whitespace-separated token,
+    // which is what a real cin does.
+    this.stdinTokens = String(stdin ?? "")
+      .split(/\s+/)
+      .filter((token) => token.length > 0);
+    this.stdinIndex = 0;
+  }
+
+  nextStdinToken() {
+    if (this.stdinIndex >= this.stdinTokens.length) {
+      throw new Error("This program read more input than was supplied.");
+    }
+    const token = this.stdinTokens[this.stdinIndex];
+    this.stdinIndex += 1;
+    return token;
+  }
+
+  // `cin >> x` and chained reads such as `cin >> a >> b`, with or without the
+  // `std::` prefix and with or without a trailing semicolon.
+  readCinInto(statement) {
+    const chain = statement
+      .replace(/^(?:std::)?cin\s*>>\s*/, "")
+      .replace(/;\s*$/, "")
+      .trim();
+    const targets = chain.split(">>").map((part) => part.trim()).filter(Boolean);
+    if (targets.length === 0 || !targets.every((name) => /^[A-Za-z_]\w*$/.test(name))) {
+      throw new Error(unsupportedMessage("cin"));
+    }
+    for (const name of targets) {
+      this.variables.set(name, this.evaluate(this.nextStdinToken()));
+    }
   }
 
   tick() {
@@ -390,7 +423,15 @@ class BeginnerCpp {
       this.returnValue = value ? this.evaluate(value) : null;
       return;
     }
-    if (text.startsWith("cin")) throw new Error("Input is not available in this first console lab yet.");
+    if (/^(?:std::)?cin\s*>>/.test(text)) {
+        this.readCinInto(text);
+        return;
+      }
+      if (/^(?:std::)?cin\b/.test(text)) {
+        // getline and formatted input we do not model. Saying so is better than
+        // silently doing nothing, which would look like a passing run.
+        throw new Error(unsupportedMessage("cin"));
+      }
     const statementCall = text.match(/^([A-Za-z_]\w*)\s*\((.*)\)$/);
     if (statementCall && this.functions.has(statementCall[1])) {
       this.callFunction(statementCall[1], statementCall[2]);
@@ -654,7 +695,7 @@ class BeginnerCpp {
 self.onmessage = (event) => {
   if (event.data?.type !== "run") return;
   try {
-    const result = new BeginnerCpp().run(event.data.code);
+    const result = new BeginnerCpp(event.data.stdin ?? "").run(event.data.code);
     self.postMessage({ type: "result", id: event.data.id, output: result });
   } catch (error) {
     self.postMessage({ type: "error", id: event.data.id, message: error?.message || "C++ program failed." });

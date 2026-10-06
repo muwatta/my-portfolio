@@ -10,7 +10,8 @@ const { BeginnerCpp } = new Function(
   `${source}; return { BeginnerCpp };`,
 )();
 
-const run = (code) => new BeginnerCpp().run(code);
+// stdin mirrors the editor: a run is given whatever input the exercise supplies.
+const run = (code, stdin = "") => new BeginnerCpp(stdin).run(code);
 const main = (body) => `#include <iostream>\nusing namespace std;\n\nint main() {\n${body}\n  return 0;\n}`;
 
 describe("decisions", () => {
@@ -161,8 +162,46 @@ describe("honest failures", () => {
     );
   });
 
-  it("still refuses input, which needs a real console", () => {
-    expect(() => run(main("  int n;\n  cin >> n;"))).toThrow(/Input is not available/);
+  it("reads standard input, which ten of the course's exercises need", () => {
+    // This used to throw "Input is not available in this first console lab yet",
+    // which meant two thirds of the C++ exercises could not be run at all. Every
+    // reference test for them supplies input, so refusing to read it made the lab
+    // unusable for its own content.
+    expect(run(main("  int n;\n  cin >> n;\n  cout << n * 2 << endl;"), "21")).toBe(
+      "42\n",
+    );
+  });
+
+  it("reads chained values in order", () => {
+    expect(
+      run(main("  int a;\n  int b;\n  cin >> a >> b;\n  cout << a + b << endl;"), "3 4"),
+    ).toBe("7\n");
+  });
+
+  it("accepts the std:: qualified form", () => {
+    expect(
+      run(
+        "#include <iostream>\nint main() {\n  int x;\n  std::cin >> x;\n  std::cout << x << endl;\n  return 0;\n}",
+        "9",
+      ),
+    ).toBe("9\n");
+  });
+
+  it("says so when the program reads more input than it was given", () => {
+    // A real cin would block or hit EOF. Failing loudly beats silently reading
+    // nothing, which would look like a passing run with a wrong answer.
+    expect(() => run(main("  int n;\n  cin >> n;\n  cout << n;"), "")).toThrow(
+      /more input than was supplied/,
+    );
+  });
+
+  it("still refuses getline, which it does not model", () => {
+    // Fails loudly rather than quietly reading nothing, which would look like a
+    // passing run with an empty answer. The exact wording comes from the generic
+    // unknown-identifier path, so assert that it throws at all.
+    expect(() =>
+      run(main("  string line;\n  getline(cin, line);\n  cout << line;"), "hi"),
+    ).toThrow(/getline/);
   });
 });
 
