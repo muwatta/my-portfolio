@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 const migration = readFileSync(
-  "supabase/migrations/20261349000000_python_weekly_assignments.sql",
+  "supabase/migrations/20261351000000_python_weekly_assignments.sql",
   "utf8",
 );
 const worker = readFileSync("src/workers/pythonWorker.js", "utf8");
