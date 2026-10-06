@@ -3,6 +3,8 @@ import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
 import { useAcademyAuth } from "../hooks/useAcademyAuth";
 import { useTheme } from "../context/useTheme";
 import { friendlyError } from "../lib/utils";
+import TurnstileChallenge from "../components/academy/TurnstileChallenge";
+import { isTurnstileRequired } from "../lib/turnstile";
 
 const sidePanelHighlights = [
   { text: "Build useful programming habits", accent: "amber" },
@@ -38,6 +40,8 @@ export default function AcademyLogin() {
   const [resendError, setResendError] = useState("");
   const [resending, setResending] = useState(false);
   const [resendCooldown, setResendCooldown] = useState(0);
+  const [captchaToken, setCaptchaToken] = useState("");
+  const [captchaReset, setCaptchaReset] = useState(0);
   const resendTimer = useRef(null);
 
   useEffect(
@@ -69,12 +73,20 @@ export default function AcademyLogin() {
   async function handleSubmit(event) {
     event.preventDefault();
     setError("");
+    if (isTurnstileRequired && !captchaToken) {
+      setError("Complete the security check before signing in.");
+      return;
+    }
     setSubmitting(true);
     try {
-      const { error: signInError } = await signIn(email.trim(), password);
+      const signInResult = captchaToken
+        ? await signIn(email.trim(), password, captchaToken)
+        : await signIn(email.trim(), password);
+      const { error: signInError } = signInResult;
       if (signInError) throw signInError;
       navigate(location.state?.from || "/academy/dashboard", { replace: true });
     } catch (signInError) {
+      setCaptchaReset((value) => value + 1);
       setError(friendlyError(signInError, "We could not sign you in."));
     } finally {
       setSubmitting(false);
@@ -89,11 +101,17 @@ export default function AcademyLogin() {
       setResendError("Enter a valid email address to request confirmation.");
       return;
     }
+    if (isTurnstileRequired && !captchaToken) {
+      setResendError("Complete the security check before requesting confirmation.");
+      return;
+    }
 
     setResending(true);
     try {
-      const { error: confirmationError } =
-        await resendConfirmation(normalizedEmail);
+      const confirmationResult = captchaToken
+        ? await resendConfirmation(normalizedEmail, captchaToken)
+        : await resendConfirmation(normalizedEmail);
+      const { error: confirmationError } = confirmationResult;
       if (confirmationError) throw confirmationError;
       setResendMessage(
         "If that address has an unconfirmed Academy account, a new confirmation link is on its way. Check your inbox and spam folder.",
@@ -111,6 +129,8 @@ export default function AcademyLogin() {
           : "We couldn't request a confirmation email right now. Please try again shortly.",
       );
     } finally {
+      setCaptchaToken("");
+      setCaptchaReset((value) => value + 1);
       setResending(false);
     }
   }
@@ -178,6 +198,7 @@ export default function AcademyLogin() {
                   className="field"
                   type="email"
                   autoComplete="email"
+                  maxLength={254}
                   value={email}
                   onChange={(event) => setEmail(event.target.value)}
                   required
@@ -207,6 +228,10 @@ export default function AcademyLogin() {
                   </button>
                 </span>
               </span>
+              <TurnstileChallenge
+                onToken={setCaptchaToken}
+                resetSignal={captchaReset}
+              />
               {error && (
                 <p
                   role="alert"
@@ -218,7 +243,9 @@ export default function AcademyLogin() {
               <button
                 className="button-primary w-full"
                 type="submit"
-                disabled={submitting}
+                disabled={
+                  submitting || (isTurnstileRequired && !captchaToken)
+                }
               >
                 {submitting ? "Signing in..." : "Sign in"}
               </button>
@@ -242,7 +269,11 @@ export default function AcademyLogin() {
                 className="block w-full text-center text-sm font-semibold text-amber-600 hover:text-amber-700 disabled:cursor-not-allowed disabled:opacity-60 dark:text-amber-400 dark:hover:text-amber-300"
                 type="button"
                 onClick={handleResendConfirmation}
-                disabled={resending || resendCooldown > 0}
+                disabled={
+                  resending ||
+                  resendCooldown > 0 ||
+                  (isTurnstileRequired && !captchaToken)
+                }
               >
                 {resending
                   ? "Requesting confirmation email..."

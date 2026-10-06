@@ -85,21 +85,30 @@ function showUpdatePrompt(registration) {
   const message = document.createElement("div");
   message.className =
     "fixed bottom-4 left-4 right-4 max-w-sm bg-blue-600 text-white rounded-lg shadow-lg p-4 flex items-center justify-between gap-4 z-50";
-  message.innerHTML = `
-    <span>New version available!</span>
-    <div class="flex gap-2">
-      <button id="update-dismiss" class="text-sm px-3 py-1 rounded hover:bg-blue-700 transition-colors">Dismiss</button>
-      <button id="update-accept" class="text-sm px-3 py-1 bg-white text-blue-600 rounded font-bold hover:bg-gray-100 transition-colors">Update</button>
-    </div>
-  `;
+  const label = document.createElement("span");
+  label.textContent = "New version available!";
+  const actions = document.createElement("div");
+  actions.className = "flex gap-2";
+  const dismissButton = document.createElement("button");
+  dismissButton.type = "button";
+  dismissButton.className =
+    "text-sm px-3 py-1 rounded hover:bg-blue-700 transition-colors";
+  dismissButton.textContent = "Dismiss";
+  const updateButton = document.createElement("button");
+  updateButton.type = "button";
+  updateButton.className =
+    "text-sm px-3 py-1 bg-white text-blue-600 rounded font-bold hover:bg-gray-100 transition-colors";
+  updateButton.textContent = "Update";
+  actions.append(dismissButton, updateButton);
+  message.append(label, actions);
 
   document.body.appendChild(message);
 
-  document.getElementById("update-dismiss").onclick = () => {
+  dismissButton.onclick = () => {
     message.remove();
   };
 
-  document.getElementById("update-accept").onclick = () => {
+  updateButton.onclick = () => {
     // Tell the new SW to take over
     registration.waiting.postMessage({ type: "SKIP_WAITING" });
     message.remove();

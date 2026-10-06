@@ -3,6 +3,8 @@ import { Link } from "react-router-dom";
 import { useAcademyAuth } from "../hooks/useAcademyAuth";
 import { friendlyError } from "../lib/utils";
 import ContactAdmin from "../components/academy/ContactAdmin";
+import TurnstileChallenge from "../components/academy/TurnstileChallenge";
+import { isTurnstileRequired } from "../lib/turnstile";
 
 const RESEND_SECONDS = 45;
 
@@ -13,6 +15,8 @@ export default function AcademyForgotPassword() {
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [cooldown, setCooldown] = useState(0);
+  const [captchaToken, setCaptchaToken] = useState("");
+  const [captchaReset, setCaptchaReset] = useState(0);
   const timer = useRef(null);
 
   useEffect(() => () => clearInterval(timer.current), []);
@@ -36,20 +40,31 @@ export default function AcademyForgotPassword() {
       setError("Enter a valid email address, including the @ and the domain.");
       return;
     }
-    setSubmitting(true);
-    const { error: resetError } = await sendPasswordReset(normalized);
-    setSubmitting(false);
-    if (resetError) {
-      setError(friendlyError(resetError, "The reset email could not be sent."));
+    if (isTurnstileRequired && !captchaToken) {
+      setError("Complete the security check before requesting a reset link.");
       return;
     }
-    // Deliberately does not say whether the address exists. Saying so would let
-    // anyone test which students are enrolled. The "can't get in" route below
-    // is how a genuine blocked student gets help.
-    setMessage(
-      "If that address has an Academy account, a reset link is on its way. It expires after a short time, so use it soon.",
-    );
-    setCooldown(RESEND_SECONDS);
+    setSubmitting(true);
+    try {
+      const resetResult = captchaToken
+        ? await sendPasswordReset(normalized, captchaToken)
+        : await sendPasswordReset(normalized);
+      const { error: resetError } = resetResult;
+      if (resetError) throw resetError;
+      // Deliberately does not say whether the address exists. Saying so would let
+      // anyone test which students are enrolled. The "can't get in" route below
+      // is how a genuine blocked student gets help.
+      setMessage(
+        "If that address has an Academy account, a reset link is on its way. It expires after a short time, so use it soon.",
+      );
+      setCooldown(RESEND_SECONDS);
+    } catch (resetError) {
+      setError(friendlyError(resetError, "The reset email could not be sent."));
+    } finally {
+      setCaptchaToken("");
+      setCaptchaReset((value) => value + 1);
+      setSubmitting(false);
+    }
   }
 
   return (
@@ -75,11 +90,16 @@ export default function AcademyForgotPassword() {
                 type="email"
                 autoComplete="email"
                 inputMode="email"
+                maxLength={254}
                 value={email}
                 onChange={(event) => setEmail(event.target.value)}
                 required
               />
             </label>
+            <TurnstileChallenge
+              onToken={setCaptchaToken}
+              resetSignal={captchaReset}
+            />
             {error && (
               <p
                 role="alert"
@@ -99,7 +119,11 @@ export default function AcademyForgotPassword() {
             <button
               className="button-primary w-full"
               type="submit"
-              disabled={submitting || cooldown > 0}
+              disabled={
+                submitting ||
+                cooldown > 0 ||
+                (isTurnstileRequired && !captchaToken)
+              }
             >
               {submitting
                 ? "Sending..."

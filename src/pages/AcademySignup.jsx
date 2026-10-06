@@ -10,6 +10,8 @@ import {
   getAcademyPasswordProblems,
 } from "../lib/password";
 import PasswordField from "../components/academy/PasswordField";
+import TurnstileChallenge from "../components/academy/TurnstileChallenge";
+import { isTurnstileRequired } from "../lib/turnstile";
 
 const sidePanelHighlights = [
   { text: "Paths across software, embedded, and AI/ML", accent: "teal" },
@@ -45,6 +47,8 @@ export default function AcademySignup() {
   const [resendingConfirmation, setResendingConfirmation] = useState(false);
   const [confirmationMessage, setConfirmationMessage] = useState("");
   const [confirmationError, setConfirmationError] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState("");
+  const [captchaReset, setCaptchaReset] = useState(0);
   const signupRequestStarted = useRef(false);
 
   if (loading) {
@@ -75,6 +79,8 @@ export default function AcademySignup() {
     }
     if (password !== confirmPassword)
       return setError("Passwords do not match.");
+    if (isTurnstileRequired && !captchaToken)
+      return setError("Complete the security check before creating your account.");
 
     signupRequestStarted.current = true;
     setSubmitting(true);
@@ -82,15 +88,21 @@ export default function AcademySignup() {
     setError("");
     let completed = false;
     try {
-      const { error: signUpError } = await signUp(
-        normalizedEmail,
-        password,
-        name,
-      );
+      const signupResult = captchaToken
+        ? await signUp(
+            normalizedEmail,
+            password,
+            name,
+            undefined,
+            captchaToken,
+          )
+        : await signUp(normalizedEmail, password, name);
+      const { error: signUpError } = signupResult;
       if (signUpError) throw signUpError;
       setCreated(true);
       completed = true;
     } catch (signUpError) {
+      setCaptchaReset((value) => value + 1);
       // A password the server refuses must say which rule was missed, or the
       // student is left guessing why a form they filled in correctly failed.
       const isPasswordProblem =
@@ -110,13 +122,19 @@ export default function AcademySignup() {
   }
 
   async function handleResendConfirmation() {
+    if (isTurnstileRequired && !captchaToken) {
+      setConfirmationError(true);
+      setConfirmationMessage("Complete the security check before requesting another email.");
+      return;
+    }
     setResendingConfirmation(true);
     setConfirmationMessage("");
     setConfirmationError(false);
     try {
-      const { error: resendError } = await resendConfirmation(
-        email.trim().toLowerCase(),
-      );
+      const resendResult = captchaToken
+        ? await resendConfirmation(email.trim().toLowerCase(), captchaToken)
+        : await resendConfirmation(email.trim().toLowerCase());
+      const { error: resendError } = resendResult;
       if (resendError) throw resendError;
       setConfirmationMessage(
         "A new confirmation email has been requested. Check your inbox and spam folder.",
@@ -134,6 +152,8 @@ export default function AcademySignup() {
           : "We couldn't send another confirmation email. Please try again shortly or contact Academy support.",
       );
     } finally {
+      setCaptchaToken("");
+      setCaptchaReset((value) => value + 1);
       setResendingConfirmation(false);
     }
   }
@@ -228,6 +248,10 @@ export default function AcademySignup() {
                   {confirmationMessage}
                 </p>
               )}
+              <TurnstileChallenge
+                onToken={setCaptchaToken}
+                resetSignal={captchaReset}
+              />
               <p className="mt-4 text-sm leading-6 text-slate-600 dark:text-slate-300">
                 Your registration number is issued for you automatically once you
                 confirm your email, and you will see it on your dashboard. It
@@ -245,7 +269,10 @@ export default function AcademySignup() {
                   type="button"
                   className="button-secondary"
                   onClick={handleResendConfirmation}
-                  disabled={resendingConfirmation}
+                  disabled={
+                    resendingConfirmation ||
+                    (isTurnstileRequired && !captchaToken)
+                  }
                 >
                   {resendingConfirmation
                     ? "Requesting email..."
@@ -273,6 +300,7 @@ export default function AcademySignup() {
                   className="field"
                   type="text"
                   autoComplete="name"
+                  maxLength={120}
                   value={displayName}
                   onChange={(event) => setDisplayName(event.target.value)}
                   required
@@ -284,6 +312,7 @@ export default function AcademySignup() {
                   className="field"
                   type="email"
                   autoComplete="email"
+                  maxLength={254}
                   value={email}
                   onChange={(event) => setEmail(event.target.value)}
                   required
@@ -306,6 +335,10 @@ export default function AcademySignup() {
                 onChange={setConfirmPassword}
                 showToggle={false}
               />
+              <TurnstileChallenge
+                onToken={setCaptchaToken}
+                resetSignal={captchaReset}
+              />
               {error && (
                 <p
                   role="alert"
@@ -317,7 +350,9 @@ export default function AcademySignup() {
               <button
                 className="button-primary w-full"
                 type="submit"
-                disabled={submitting}
+                disabled={
+                  submitting || (isTurnstileRequired && !captchaToken)
+                }
               >
                 {submitting
                   ? "Creating your Academy account..."

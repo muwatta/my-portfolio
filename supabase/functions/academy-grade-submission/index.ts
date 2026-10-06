@@ -1,4 +1,8 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import {
+  readTextBodyLimited,
+  RequestBodyTooLargeError,
+} from "../_shared/http.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -6,11 +10,19 @@ const corsHeaders = {
 };
 const MAX_SOURCE_LENGTH = 50_000;
 const MAX_TESTS = 50;
+const MAX_REQUEST_BYTES = 4096;
+const UUID_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 const json = (body: Record<string, unknown>, status = 200) =>
   new Response(JSON.stringify(body), {
     status,
-    headers: { ...corsHeaders, "Content-Type": "application/json" },
+    headers: {
+      ...corsHeaders,
+      "Cache-Control": "no-store",
+      "Content-Type": "application/json",
+      "X-Content-Type-Options": "nosniff",
+    },
   });
 
 /** Executor replies we treat as the student's problem, not ours. */
@@ -48,12 +60,19 @@ Deno.serve(async (request) => {
 
   let input: { submission_id?: string };
   try {
-    input = JSON.parse(await request.text());
-  } catch {
+    input = JSON.parse(await readTextBodyLimited(request, MAX_REQUEST_BYTES));
+  } catch (error) {
+    if (error instanceof RequestBodyTooLargeError)
+      return json({ error: error.message }, 413);
     return json({ error: "Malformed JSON" }, 400);
   }
-  if (typeof input.submission_id !== "string")
-    return json({ error: "submission_id is required" }, 400);
+  if (
+    !input ||
+    typeof input !== "object" ||
+    Array.isArray(input) ||
+    typeof input.submission_id !== "string" ||
+    !UUID_PATTERN.test(input.submission_id)
+  ) return json({ error: "A valid submission_id is required." }, 400);
 
   const serviceClient = createClient(supabaseUrl, serviceKey);
   const { data: submission, error: submissionError } = await serviceClient

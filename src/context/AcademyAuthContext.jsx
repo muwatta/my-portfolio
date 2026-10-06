@@ -195,14 +195,24 @@ export function AcademyAuthProvider({ children }) {
     };
   }, [session]);
 
-  const signIn = (email, password) => {
+  const signIn = (email, password, captchaToken) => {
     if (!supabase) {
       throw new Error("Academy authentication is not configured yet.");
     }
-    return supabase.auth.signInWithPassword({ email, password });
+    return supabase.auth.signInWithPassword({
+      email,
+      password,
+      ...(captchaToken ? { options: { captchaToken } } : {}),
+    });
   };
 
-  const signUp = (email, password, displayName, registrationNumber) => {
+  const signUp = (
+    email,
+    password,
+    displayName,
+    registrationNumber,
+    captchaToken,
+  ) => {
     if (!supabase) {
       throw new Error("Academy authentication is not configured yet.");
     }
@@ -211,6 +221,7 @@ export function AcademyAuthProvider({ children }) {
       password,
       options: {
         emailRedirectTo: `${window.location.origin}/academy/dashboard`,
+        ...(captchaToken ? { captchaToken } : {}),
         data: {
           display_name: displayName,
           first_name: displayName.trim().split(/\s+/)[0] ?? "",
@@ -225,7 +236,7 @@ export function AcademyAuthProvider({ children }) {
     });
   };
 
-  const resendConfirmation = (email) => {
+  const resendConfirmation = (email, captchaToken) => {
     if (!supabase) {
       return Promise.resolve({
         error: new Error("Academy authentication is not configured yet."),
@@ -236,11 +247,12 @@ export function AcademyAuthProvider({ children }) {
       email,
       options: {
         emailRedirectTo: `${window.location.origin}/academy/dashboard`,
+        ...(captchaToken ? { captchaToken } : {}),
       },
     });
   };
 
-  const sendPasswordReset = (email) => {
+  const sendPasswordReset = (email, captchaToken) => {
     if (!supabase) {
       return Promise.resolve({
         error: new Error("Academy authentication is not configured yet."),
@@ -248,6 +260,7 @@ export function AcademyAuthProvider({ children }) {
     }
     return supabase.auth.resetPasswordForEmail(email, {
       redirectTo: `${window.location.origin}/academy/reset-password`,
+      ...(captchaToken ? { captchaToken } : {}),
     });
   };
 

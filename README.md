@@ -529,6 +529,8 @@ produce the settings below; they have to be applied per project.
 | Setting                 | Value  | Why                                                                                                                                                                   |
 | ----------------------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `password_min_length`   | `8`    | The signup and reset pages already reject anything shorter, but the server used to accept 6, so anything calling `auth/v1/signup` directly could bypass the UI check. |
+| `password_requirements` | Strong | Enforces uppercase, lowercase, a digit, and a symbol at the Auth server, matching the Academy password policy.                                                        |
+| `secure_password_change` | `true` | Requires recent authentication before password changes. Recovery links remain the supported way to reset a forgotten password.                                        |
 | `password_hibp_enabled` | `true` | Rejects passwords already known to be breached. **Pro plan and above only.** A free-plan project gets `HTTP 402`, so this cannot be enabled there.                    |
 
 ## Academy confirmation email delivery
@@ -556,6 +558,33 @@ shows the public ATE logo and RC No. RC-8665201, and links to the WhatsApp
 community, Facebook page, and LinkedIn profile. After changing the repository
 template, copy its latest contents into the hosted project's **Confirm signup**
 email template; the hosted email template is not synced automatically.
+
+## Academy security baseline
+
+The Academy auth forms use Cloudflare Turnstile for sign-in, signup, confirmation
+resend, and password-reset requests. Production builds intentionally block these
+actions until `VITE_TURNSTILE_SITE_KEY` is configured. The matching Turnstile
+secret belongs only in Supabase Auth's CAPTCHA settings; never put it in a
+`VITE_` variable or commit it. Configure the allowed hostnames in Turnstile,
+enable the Turnstile provider under **Supabase → Authentication → Protection →
+CAPTCHA**, and set the secret there before deploying the frontend. Local
+development without a site key remains usable.
+
+Vercel responses also set baseline security headers, including HSTS,
+`X-Content-Type-Options`, a restrictive framing policy, referrer policy, and
+Permissions Policy. Privileged Academy Edge Functions bound request bodies,
+validate identifiers, and mark sensitive JSON responses as non-cacheable.
+The service-worker update prompt uses text DOM APIs rather than an HTML
+injection sink.
+
+These source changes are defense in depth, not an OWASP certification or a
+substitute for provider-side controls. Before launch, configure Vercel Firewall
+managed rules, bot protection, and rate limits for auth and application routes;
+enable MFA for every Academy administrator in Supabase; review Supabase Auth
+rate limits and usage alerts; and verify backups and incident access. Apply and
+verify database migrations in the hosted Supabase project. A CDN/WAF and
+provider-level rate limits are required for meaningful DDoS mitigation; frontend
+code alone cannot absorb volumetric attacks.
 
 Academy Auth and the `academy_profiles` unique index enforce one account per
 email address, case-insensitively. Registration numbers are also unique and a

@@ -1,4 +1,8 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import {
+  readTextBodyLimited,
+  RequestBodyTooLargeError,
+} from "../_shared/http.ts";
 
 // Administrator account management.
 //
@@ -23,10 +27,18 @@ const corsHeaders = {
 const json = (body: Record<string, unknown>, status = 200) =>
   new Response(JSON.stringify(body), {
     status,
-    headers: { ...corsHeaders, "Content-Type": "application/json" },
+    headers: {
+      ...corsHeaders,
+      "Cache-Control": "no-store",
+      "Content-Type": "application/json",
+      "X-Content-Type-Options": "nosniff",
+    },
   });
 
 type Action = "update" | "delete";
+const MAX_REQUEST_BYTES = 16_384;
+const UUID_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 Deno.serve(async (request) => {
   if (request.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
@@ -65,10 +77,15 @@ Deno.serve(async (request) => {
     reason?: string;
   };
   try {
-    input = JSON.parse(await request.text());
-  } catch {
+    input = JSON.parse(await readTextBodyLimited(request, MAX_REQUEST_BYTES));
+  } catch (error) {
+    if (error instanceof RequestBodyTooLargeError) {
+      return json({ error: error.message }, 413);
+    }
     return json({ error: "Malformed JSON" }, 400);
   }
+  if (!input || typeof input !== "object" || Array.isArray(input))
+    return json({ error: "A JSON object is required." }, 400);
 
   const action = input.action;
   const target = input.target_user_id;
@@ -80,7 +97,10 @@ Deno.serve(async (request) => {
   // disclosing who holds the account.
   if (action === "check_email") {
     const email = String(input.email ?? "").trim().toLowerCase();
-    if (!email) return json({ error: "An email address is required." }, 400);
+    if (
+      email.length > 254 ||
+      !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)
+    ) return json({ error: "A valid email address is required." }, 400);
 
     const { data: adminRow } = await service
       .from("academy_profiles")
@@ -107,8 +127,8 @@ Deno.serve(async (request) => {
 
   if (action !== "update" && action !== "delete")
     return json({ error: "action must be update or delete" }, 400);
-  if (!target || typeof target !== "string")
-    return json({ error: "target_user_id is required" }, 400);
+  if (typeof target !== "string" || !UUID_PATTERN.test(target))
+    return json({ error: "A valid target_user_id is required." }, 400);
 
   // Lockout protection. An administrator who removes the owner, or themselves,
   // leaves nobody able to administer the Academy or undo the deletion.
@@ -192,7 +212,8 @@ Deno.serve(async (request) => {
   const patch: Record<string, unknown> = {};
   if (typeof input.display_name === "string") {
     const name = input.display_name.trim();
-    if (!name) return json({ error: "A name is required." }, 400);
+    if (!name || name.length > 120)
+      return json({ error: "A name between 1 and 120 characters is required." }, 400);
     patch.display_name = name;
   }
   if (input.role !== undefined) {

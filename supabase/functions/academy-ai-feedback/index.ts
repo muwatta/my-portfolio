@@ -1,15 +1,27 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import {
+  readTextBodyLimited,
+  RequestBodyTooLargeError,
+} from "../_shared/http.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type",
 };
+const MAX_REQUEST_BYTES = 4096;
+const UUID_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 const json = (body: Record<string, unknown>, status = 200) =>
   new Response(JSON.stringify(body), {
     status,
-    headers: { ...corsHeaders, "Content-Type": "application/json" },
+    headers: {
+      ...corsHeaders,
+      "Cache-Control": "no-store",
+      "Content-Type": "application/json",
+      "X-Content-Type-Options": "nosniff",
+    },
   });
 
 Deno.serve(async (request) => {
@@ -44,19 +56,19 @@ Deno.serve(async (request) => {
 
   let input: { submission_id?: string };
   try {
-    const body = await request.text();
-    if (body.length > 16_384) {
-      return json({ error: "Request body is too large" }, 413);
-    }
+    const body = await readTextBodyLimited(request, MAX_REQUEST_BYTES);
     input = JSON.parse(body);
-  } catch {
+  } catch (error) {
+    if (error instanceof RequestBodyTooLargeError)
+      return json({ error: error.message }, 413);
     return json({ error: "Malformed JSON" }, 400);
   }
   if (
+    !input ||
+    typeof input !== "object" ||
+    Array.isArray(input) ||
     typeof input.submission_id !== "string" ||
-    !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
-      input.submission_id,
-    )
+    !UUID_PATTERN.test(input.submission_id)
   ) {
     return json({ error: "submission_id is required" }, 400);
   }
