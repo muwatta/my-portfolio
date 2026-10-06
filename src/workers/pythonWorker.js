@@ -1,8 +1,42 @@
 const PYODIDE_VERSION = "v0.27.2";
 const PYODIDE_URL = `https://cdn.jsdelivr.net/pyodide/${PYODIDE_VERSION}/full/pyodide.js`;
-let runtimePromise;
 
-function getRuntime() {
+// Packages the AI/ML weeks need. Not passed to loadPyodide up front: the data and
+// machine-learning weeks would then pay a multi-megabyte download on the very
+// first lesson, which is `print`. They are fetched only when a program actually
+// imports one, and remembered for the rest of the session.
+const IMPORTABLE_PACKAGES = [
+  "numpy",
+  "pandas",
+  "scikit-learn",
+  "matplotlib",
+];
+const IMPORT_PATTERN = new RegExp(
+  `^\\s*(?:import|from)\\s+(${IMPORTABLE_PACKAGES.join("|")})\\b`,
+  "gm",
+);
+
+let runtimePromise;
+const loadedPackages = new Set();
+
+// Imported modules the runtime does not ship, so the student gets a real
+// ModuleNotFoundError naming the module rather than a vague failure.
+//
+// This deliberately does not try to enumerate the Python standard library. A
+// hand-maintained allowlist is wrong twice over: it rejects perfectly ordinary
+// imports the moment someone forgets one, which is exactly what happened with
+// math and os here. Instead, an import is only rejected once we have positively
+// identified it as something the runtime cannot provide.
+const UNKNOWN_IMPORT_PATTERN = new RegExp(
+  "^\\s*(?:import|from)\\s+([A-Za-z_][A-Za-z0-9_]*)",
+  "gm",
+);
+
+// Aliases students habitually use. Pyodide ships the module under the package
+// name, so these resolve once the package is loaded.
+const IMPORT_ALIASES = { pyplot: "matplotlib", plt: "matplotlib", mpl: "matplotlib" };
+
+async function getRuntime() {
   if (!runtimePromise) {
     runtimePromise = (async () => {
       if (typeof globalThis.importScripts !== "function") {
@@ -21,6 +55,29 @@ function getRuntime() {
     });
   }
   return runtimePromise;
+}
+
+async function ensurePackages(runtime, code) {
+  const wanted = new Set();
+  for (const match of code.matchAll(IMPORT_PATTERN)) wanted.add(match[1]);
+  // `from sklearn.linear_model import ...` names the module, not the package.
+  for (const match of code.matchAll(UNKNOWN_IMPORT_PATTERN)) {
+    const name = match[1];
+    if (name === "sklearn" || name.startsWith("sklearn.")) wanted.add("scikit-learn");
+    if (name in IMPORT_ALIASES) wanted.add(IMPORT_ALIASES[name]);
+  }
+  if (wanted.size === 0) return [];
+
+  const missing = [...wanted].filter((name) => !loadedPackages.has(name));
+  if (missing.length === 0) return [];
+
+  for (const name of missing) {
+    // loadPackage resolves or rejects on its own, so a package that cannot be
+    // fetched surfaces as a normal Python ImportError rather than a crash.
+    await runtime.loadPackage(name);
+    loadedPackages.add(name);
+  }
+  return missing;
 }
 
 const runner = `
@@ -90,6 +147,18 @@ self.onmessage = async (event) => {
     self.postMessage({ type: "loading", id });
     const runtime = await getRuntime();
     self.postMessage({ type: "ready", id });
+
+    const needed = await ensurePackages(runtime, code);
+    if (needed.length > 0) {
+      // Fetching pandas and friends takes several seconds. Say so, or the student
+      // watches a blank terminal and assumes it has hung.
+      self.postMessage({
+        type: "loading-packages",
+        id,
+        packages: needed,
+      });
+    }
+
     const wrapped = runner.replace("__ACADEMY_SOURCE__", () => JSON.stringify(code));
     await runtime.runPythonAsync(wrapped);
     const result = await runtime.runPython("__academy_result__");
@@ -100,11 +169,19 @@ self.onmessage = async (event) => {
       output: output || "Program finished with no output.",
     });
   } catch (error) {
+    const message = String(error?.message || "");
+    // Guided from Python's own ModuleNotFoundError rather than from a hand-kept
+    // list of standard library modules. Any such guess is wrong the first time
+    // someone imports something it forgot, and it would then refuse valid code.
+    const guided =
+      /ModuleNotFoundError|No module named/i.test(message)
+        ? `${message} This practice terminal runs in your browser. It can use the Python standard library, plus numpy, pandas, scikit-learn and matplotlib, which are downloaded the first time you import one.`
+        : message;
     self.postMessage({
       type: "error",
       id,
       message:
-        error?.message ||
+        guided ||
         "Python execution failed. Check your internet connection and try again.",
     });
   }

@@ -5,6 +5,9 @@ import { separateTerminalInstructions } from "../../lib/academyTerminalContent";
 
 const MAX_SOURCE_LENGTH = 100000;
 const EXECUTION_TIMEOUT = 15000;
+// Fetching pandas, numpy and the rest is a multi-megabyte CDN download on a
+// first run, so it gets its own budget rather than competing with the run timer.
+const PACKAGE_DOWNLOAD_TIMEOUT = 120000;
 const RUNTIME_LOAD_TIMEOUT = 180000;
 let sharedWorker;
 let activeJob;
@@ -51,7 +54,20 @@ function getWorker() {
       }, EXECUTION_TIMEOUT);
       job.onLoading?.(false);
     }
-    if (event.data.type === "result") {
+    if (event.data.type === "loading-packages") {
+        // The data and machine-learning weeks fetch pandas and friends on first
+        // use. That is a download, not execution, so the run timeout must not be
+        // counting it or a slow connection would look like an infinite loop.
+        job.loadingPackages = true;
+        window.clearTimeout(job.timeout);
+        job.timeout = window.setTimeout(() => {
+          rejectJobs(
+            "Downloading the Python packages took too long. Check your connection and try again.",
+          );
+        }, PACKAGE_DOWNLOAD_TIMEOUT);
+        job.onLoadingPackages?.(event.data.packages);
+      }
+      if (event.data.type === "result") {
       window.clearTimeout(job.timeout);
       activeJob = null;
       job.resolve(event.data.output);
@@ -119,6 +135,7 @@ export default function PythonEditor({ starterCode = "", onSubmit }) {
   const [error, setError] = useState("");
   const [running, setRunning] = useState(false);
   const [loadingRuntime, setLoadingRuntime] = useState(false);
+  const [loadingPackages, setLoadingPackages] = useState([]);
   const runId = useRef(0);
   const { code: editableStarterCode, instructions } =
     separateTerminalInstructions(starterCode);
@@ -144,9 +161,15 @@ export default function PythonEditor({ starterCode = "", onSubmit }) {
     setOutput("");
     setError("");
     try {
-      const result = await runPython(code, (loading) => {
-        if (currentRun === runId.current) setLoadingRuntime(loading);
-      });
+      const result = await runPython(
+        code,
+        (loading) => {
+          if (currentRun === runId.current) setLoadingRuntime(loading);
+        },
+        (packages) => {
+          if (currentRun === runId.current) setLoadingPackages(packages);
+        },
+      );
       if (currentRun === runId.current) setOutput(result);
     } catch (runError) {
       if (currentRun === runId.current) {
@@ -188,11 +211,13 @@ export default function PythonEditor({ starterCode = "", onSubmit }) {
           onClick={run}
           disabled={running || loadingRuntime}
         >
-          {loadingRuntime
-            ? "Preparing Python..."
-            : running
-              ? "Running..."
-              : "Run Python"}
+          {loadingPackages.length > 0
+            ? `Downloading ${loadingPackages.join(", ")}...`
+            : loadingRuntime
+              ? "Preparing Python..."
+              : running
+                ? "Running..."
+                : "Run Python"}
         </button>
         <button
           type="button"
