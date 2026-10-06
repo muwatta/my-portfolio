@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 const page = readFileSync("src/pages/AcademyAdminExamBuilder.jsx", "utf8");
 const lib = readFileSync("src/lib/academy.js", "utf8");
 const accessRepair = readFileSync(
-  "supabase/migrations/20261350000000_assessment_staff_read_grants.sql",
+  "supabase/migrations/20261361000000_assessment_staff_read_grants.sql",
   "utf8",
 );
 const sql = readFileSync(
