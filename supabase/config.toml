@@ -238,6 +238,9 @@ subject = "Confirm your ATE Academy account"
 content_path = "./supabase/templates/confirmation.html"
 
 # Use a production-ready SMTP server
+# Configure the SMTP values in the hosted Supabase project's Auth settings.
+# The hosted project's default mailer is rate-limited and is not intended for
+# reliable production delivery; the custom template below only changes the copy.
 # [auth.email.smtp]
 # enabled = true
 # host = "smtp.sendgrid.net"

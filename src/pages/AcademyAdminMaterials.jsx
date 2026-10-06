@@ -47,9 +47,18 @@ export default function AcademyAdminMaterials() {
   const replaceRef = useRef(null);
 
   async function load() {
-    const result = await getAcademyAdminMaterials();
-    setData(result.data ?? { courses: [], lessons: [], materials: [] });
-    setState(result.error ? "error" : "ready");
+    try {
+      const result = await getAcademyAdminMaterials();
+      setData(result.data ?? { courses: [], lessons: [], materials: [] });
+      setState(result.error ? "error" : "ready");
+      if (result.error) {
+        setError(friendlyError(result.error, "Course materials could not be loaded."));
+      }
+    } catch (thrown) {
+      setData({ courses: [], lessons: [], materials: [] });
+      setState("error");
+      setError(friendlyError(thrown, "Course materials could not be loaded."));
+    }
   }
 
   useEffect(() => {
@@ -76,35 +85,41 @@ export default function AcademyAdminMaterials() {
     event.preventDefault();
     setMessage("");
     setError("");
-
-    if (!file) {
-      const { error: saveError } = await saveAcademyMaterial(form);
-      if (saveError) {
-        setError(friendlyError(saveError, "Material could not be saved."));
+    setBusy(true);
+    try {
+      if (!file) {
+        const { error: saveError } = await saveAcademyMaterial(form);
+        if (saveError) {
+          setError(friendlyError(saveError, "Material could not be saved."));
+          return;
+        }
+        setMessage("Material details saved.");
+        resetForm();
+        await load();
         return;
       }
-      setMessage("Material details saved.");
+
+      const result = await uploadAcademyMaterial({
+        file,
+        course_id: form.course_id,
+        lesson_id: form.lesson_id,
+        title: form.title,
+        published: form.published,
+      });
+      if (result.error) {
+        setError(friendlyError(result.error, "The file could not be uploaded."));
+        return;
+      }
+      setMessage("Material uploaded.");
       resetForm();
       await load();
-      return;
+    } catch (thrown) {
+      setError(
+        friendlyError(thrown, file ? "The file could not be uploaded." : "Material could not be saved."),
+      );
+    } finally {
+      setBusy(false);
     }
-
-    setBusy(true);
-    const result = await uploadAcademyMaterial({
-      file,
-      course_id: form.course_id,
-      lesson_id: form.lesson_id,
-      title: form.title,
-      published: form.published,
-    });
-    setBusy(false);
-    if (result.error) {
-      setError(friendlyError(result.error, "The file could not be uploaded."));
-      return;
-    }
-    setMessage("Material uploaded.");
-    resetForm();
-    await load();
   }
 
   function editMaterial(material) {
@@ -130,17 +145,22 @@ export default function AcademyAdminMaterials() {
     setMessage("");
     setError("");
     setBusy(true);
-    const result = await replaceAcademyMaterialFile(replaceTarget.id, file);
-    setBusy(false);
-    setReplaceTarget(null);
-    setFile(null);
-    if (replaceRef.current) replaceRef.current.value = "";
-    if (result.error) {
-      setError(friendlyError(result.error, "The file could not be replaced."));
-      return;
+    try {
+      const result = await replaceAcademyMaterialFile(replaceTarget.id, file);
+      setReplaceTarget(null);
+      setFile(null);
+      if (replaceRef.current) replaceRef.current.value = "";
+      if (result.error) {
+        setError(friendlyError(result.error, "The file could not be replaced."));
+        return;
+      }
+      setMessage("File replaced. The material kept its original link.");
+      await load();
+    } catch (thrown) {
+      setError(friendlyError(thrown, "The file could not be replaced."));
+    } finally {
+      setBusy(false);
     }
-    setMessage("File replaced. The material kept its original link.");
-    await load();
   }
 
   async function confirmDelete() {
@@ -317,6 +337,12 @@ export default function AcademyAdminMaterials() {
                 {material.academy_courses?.title || "No course"} ·{" "}
                 {material.academy_lessons?.title || "No lesson"}
               </p>
+              <p className="mt-1 text-sm font-medium text-cyan-700 dark:text-cyan-300">
+                {Number(material.download_count ?? 0)}{" "}
+                {Number(material.download_count ?? 0) === 1
+                  ? "download"
+                  : "downloads"}
+              </p>
               <p className="mt-1 truncate text-xs text-slate-400">
                 {material.original_filename || material.storage_path} ·{" "}
                 {formatBytes(material.file_size_bytes)}
@@ -332,15 +358,21 @@ export default function AcademyAdminMaterials() {
                 href="#"
                 onClick={async (event) => {
                   event.preventDefault();
-                  const { data: signed, error: urlError } =
-                    await getAcademyMaterialUrl(material);
-                  if (urlError) {
+                  try {
+                    const { data: signed, error: urlError } =
+                      await getAcademyMaterialUrl(material);
+                    if (urlError || !signed?.url) {
+                      setError(
+                        friendlyError(urlError, "The file could not be opened."),
+                      );
+                      return;
+                    }
+                    window.open(signed.url, "_blank", "noopener");
+                  } catch (thrown) {
                     setError(
-                      friendlyError(urlError, "The file could not be opened."),
+                      friendlyError(thrown, "The file could not be opened."),
                     );
-                    return;
                   }
-                  window.open(signed.url, "_blank", "noopener");
                 }}
               >
                 Open

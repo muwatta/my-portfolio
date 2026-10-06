@@ -531,6 +531,43 @@ produce the settings below; they have to be applied per project.
 | `password_min_length`   | `8`    | The signup and reset pages already reject anything shorter, but the server used to accept 6, so anything calling `auth/v1/signup` directly could bypass the UI check. |
 | `password_hibp_enabled` | `true` | Rejects passwords already known to be breached. **Pro plan and above only.** A free-plan project gets `HTTP 402`, so this cannot be enabled there.                    |
 
+## Academy confirmation email delivery
+
+The signup confirmation message is customized in
+[`supabase/templates/confirmation.html`](./supabase/templates/confirmation.html)
+and selected by `supabase/config.toml` for local Supabase. For a hosted project,
+copy the subject and HTML into **Authentication → Email Templates → Confirm
+signup**. Set up a verified SMTP provider in **Authentication → SMTP Settings**
+and verify the sender domain. Supabase's built-in mailer is rate-limited and is
+intended for testing, so changing the email template alone does not guarantee
+delivery. Keep SMTP credentials in Supabase's settings or secrets; never add
+them to the frontend or commit them to this repository.
+
+The confirmation link returns students to `/academy/dashboard`. If an email is
+delayed, students can request another confirmation email from the signup
+confirmation screen. Add the deployed dashboard URL (and the local development
+URL, if needed) to **Authentication → URL Configuration → Redirect URLs**;
+Supabase will reject a confirmation redirect that is not allowlisted.
+Applicants who have left the signup screen can request a fresh confirmation
+email from the Academy sign-in page without disclosing their email address to
+an administrator.
+The confirmation template greets new signups using their `first_name` metadata,
+shows the public ATE logo and RC No. RC-8665201, and links to the WhatsApp
+community, Facebook page, and LinkedIn profile. After changing the repository
+template, copy its latest contents into the hosted project's **Confirm signup**
+email template; the hosted email template is not synced automatically.
+
+Academy Auth and the `academy_profiles` unique index enforce one account per
+email address, case-insensitively. Registration numbers are also unique and a
+pre-issued number can only be claimed once; when signup uses automatic number
+assignment, the number identifies that account rather than independently
+verifying a person's identity. Admins can manually delete an account from its
+student profile; deletion is audited and makes the email available again.
+Unconfirmed student signups are automatically removed three hours after their
+most recent confirmation email, by a five-minute scheduled cleanup. Confirmed
+students and staff are never removed by that cleanup. Apply the new
+`20261349000000_academy_unconfirmed_signup_expiry.sql` migration to enable it.
+
 Apply them with the Management API rather than by hand in the dashboard:
 
 ```bash
@@ -569,9 +606,22 @@ Production migrations should be reviewed against the existing remote migration h
 
 A production database should not be reset simply because a migration needs correction.
 
+Static course PDFs must exist under `public/course_material_assets/` and have a
+published `academy_materials` row with `storage_kind = 'static'`. The migration
+`20261350000000_academy_cpp_material_registration.sql` registers the C++ book;
+deploy that migration as well as the frontend so it appears in the student
+materials list.
+
+Google Fonts are loaded asynchronously from `index.html`; keep the local
+critical styling there so a slow font request cannot delay or expose the
+prerendered page as unstyled text.
+
 ## Academy production checklist
 
 1. Apply every file in `supabase/migrations/` to the target Supabase project.
+   In an existing deployment, verify that
+   `20261350000000_academy_cpp_material_registration.sql` has been applied so
+   the C++ course PDF is published in its materials list.
    In an existing deployment, confirm
    `20261015000000_academy_course_schema_repair.sql` has been applied before
    loading Academy dashboards; it restores the profile/course/school foreign

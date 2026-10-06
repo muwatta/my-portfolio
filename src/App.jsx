@@ -451,30 +451,18 @@ function AppShell() {
                               path="/academy/admin/submissions/:submissionId"
                               element={<AcademyTeacherSubmissions />}
                             />
-              <Route
-                path="/academy/admin/exams"
-                element={
-                  <AcademyAdminGuard>
-                    <AcademyAdminExamBuilder />
-                  </AcademyAdminGuard>
-                }
-              />
-              <Route
-                path="/academy/admin/exam-results"
-                element={
-                  <AcademyAdminGuard>
-                    <AcademyAdminExamResults />
-                  </AcademyAdminGuard>
-                }
-              />
-              <Route
-                path="/academy/admin/question-bank"
-                element={
-                  <AcademyAdminGuard>
-                    <AcademyAdminQuestionBank />
-                  </AcademyAdminGuard>
-                }
-              />
+                            <Route
+                              path="/academy/admin/exams"
+                              element={<AcademyAdminExamBuilder />}
+                            />
+                            <Route
+                              path="/academy/admin/exam-results"
+                              element={<AcademyAdminExamResults />}
+                            />
+                            <Route
+                              path="/academy/admin/question-bank"
+                              element={<AcademyAdminQuestionBank />}
+                            />
                             <Route
                               path="/academy/admin/materials"
                               element={<AcademyAdminMaterials />}

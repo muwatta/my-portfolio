@@ -394,7 +394,7 @@ export async function getAcademyTeacherStudents() {
     supabase
       .from("academy_profiles")
       .select(
-        "id, display_name, role, current_course_id, school_id, state, city, student_level, registration_code_id, updated_at, academy_registration_codes!academy_profiles_registration_code_id_fkey(registration_number, status), academy_courses!academy_profiles_current_course_id_fkey(id, slug, title), academy_schools!academy_profiles_school_id_fkey(id, name, code, state, city)",
+        "id, display_name, email, role, current_course_id, school_id, state, city, student_level, registration_code_id, updated_at, academy_registration_codes!academy_profiles_registration_code_id_fkey(registration_number, status), academy_courses!academy_profiles_current_course_id_fkey(id, slug, title), academy_schools!academy_profiles_school_id_fkey(id, name, code, state, city)",
       )
       .eq("role", "student")
       .order("display_name"),
@@ -874,9 +874,7 @@ export async function getAcademyCoursePreview(courseSlug) {
           .order("title", { ascending: true }),
         supabase
           .from("academy_lesson_activities")
-          .select(
-            "id, lesson_id, kind, status, release_at, academy_assignments!inner(id, title, instructions, points, due_at, published, is_draft, status, release_at)",
-          )
+          .select("id, lesson_id, ref_id, kind, status, release_at, sort_order")
           .in("lesson_id", lessonIds)
           .eq("kind", "assignment")
           .eq("status", "published")
@@ -890,19 +888,46 @@ export async function getAcademyCoursePreview(courseSlug) {
         };
       }
 
+      const assignmentIds = [
+        ...new Set(
+          (activities ?? [])
+            .map((activity) => activity.ref_id)
+            .filter(Boolean),
+        ),
+      ];
+      // ref_id is polymorphic and intentionally has no FK to assignments, so
+      // PostgREST cannot embed academy_assignments through this relation.
+      const { data: assignments, error: assignmentError } = assignmentIds.length
+        ? await supabase
+            .from("academy_assignments")
+            .select(
+              "id, title, instructions, points, due_at, published, is_draft, status, release_at",
+            )
+            .in("id", assignmentIds)
+            .eq("published", true)
+        : { data: [], error: null };
+      if (assignmentError) {
+        return {
+          data: null,
+          error: assignmentError,
+          configured: true,
+        };
+      }
+
       const exercisesByLesson = new Map();
       (exercises ?? []).filter(isReleased).forEach((exercise) => {
         const list = exercisesByLesson.get(exercise.lesson_id) ?? [];
         list.push(exercise);
         exercisesByLesson.set(exercise.lesson_id, list);
       });
+      const assignmentsById = new Map(
+        (assignments ?? []).map((assignment) => [assignment.id, assignment]),
+      );
       const assignmentsByLesson = new Map();
       (activities ?? [])
         .filter((activity) => isReleased(activity))
         .forEach((activity) => {
-          const assignment = Array.isArray(activity.academy_assignments)
-            ? activity.academy_assignments[0]
-            : activity.academy_assignments;
+          const assignment = assignmentsById.get(activity.ref_id);
           if (
             !assignment?.published ||
             assignment.is_draft ||
@@ -1031,7 +1056,7 @@ export async function getAcademyAdminMaterials() {
     supabase
       .from("academy_materials")
       .select(
-        "id, course_id, lesson_id, title, storage_path, mime_type, file_size_bytes, published, created_at, academy_courses!academy_materials_course_id_fkey(id, title), academy_lessons!academy_materials_lesson_id_fkey(id, title)",
+        "id, course_id, lesson_id, title, storage_path, storage_kind, original_filename, mime_type, file_size_bytes, download_count, published, created_at, academy_courses!academy_materials_course_id_fkey(id, title), academy_lessons!academy_materials_lesson_id_fkey(id, title)",
       )
       .order("created_at", { ascending: false }),
   ]);
@@ -1048,7 +1073,7 @@ export async function getAcademyCourseMaterials(courseId) {
     let query = supabase
       .from("academy_materials")
       .select(
-        "id, course_id, lesson_id, title, storage_path, mime_type, file_size_bytes, created_at, academy_courses!academy_materials_course_id_fkey(title)",
+        "id, course_id, lesson_id, title, storage_path, storage_kind, original_filename, mime_type, file_size_bytes, created_at, academy_courses!academy_materials_course_id_fkey(title)",
       )
       .eq("published", true)
       .order("created_at", { ascending: false });
@@ -2294,7 +2319,7 @@ export async function uploadAcademyMaterial({ file, ...details }) {
     p_lesson_id: details.lesson_id || null,
     p_title: String(details.title ?? "").trim(),
     p_storage_path: uploaded.data.path,
-    p_mime_type: file.type || "application/pdf",
+    p_mime_type: materialContentType(materialExtension(file.name)),
     p_file_size_bytes: file.size,
     p_published: Boolean(details.published),
     p_material_id: null,
@@ -2335,7 +2360,7 @@ export async function replaceAcademyMaterialFile(materialId, file) {
     p_lesson_id: current.lesson_id,
     p_title: current.title,
     p_storage_path: uploaded.data.path,
-    p_mime_type: file.type || "application/pdf",
+    p_mime_type: materialContentType(materialExtension(file.name)),
     p_file_size_bytes: file.size,
     p_published: current.published,
     p_material_id: materialId,
@@ -2415,6 +2440,18 @@ export async function getAcademyMaterialUrl(material, { offline = false } = {}) 
   // Supabase calls it signedUrl. Returning the raw object is why the admin
   // Open button passed undefined to window.open and showed a blank tab.
   return { data: { url: data?.signedUrl ?? null, path: data?.path ?? null }, error: null };
+}
+
+export async function recordAcademyMaterialDownload(materialId) {
+  if (!supabase)
+    return { data: null, error: new Error("Academy is not configured.") };
+  if (!materialId)
+    return { data: null, error: new Error("A material is required.") };
+  const { data, error } = await supabase.rpc(
+    "academy_record_material_download",
+    { p_material_id: materialId },
+  );
+  return { data, error };
 }
 
 // Administrator account management. Deleting or editing an account needs the

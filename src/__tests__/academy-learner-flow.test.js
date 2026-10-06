@@ -198,6 +198,28 @@ describe("the learner pages use the server answer", () => {
   });
 });
 
+describe("the course preview loads lesson assignments without a missing relationship embed", () => {
+  const academy = readFileSync("src/lib/academy.js", "utf8");
+  const preview = academy.slice(
+    academy.indexOf("export async function getAcademyCoursePreview"),
+    academy.indexOf("export async function saveAcademyExercise"),
+  );
+
+  it("loads activity references and assignments in separate queries", () => {
+    expect(preview).toMatch(/from\("academy_lesson_activities"\)/);
+    expect(preview).toMatch(/select\("id, lesson_id, ref_id, kind,/);
+    expect(preview).toMatch(/from\("academy_assignments"\)/);
+    expect(preview).toMatch(/\.in\("id", assignmentIds\)/);
+    expect(preview).not.toMatch(/academy_assignments!inner/);
+  });
+
+  it("preserves assignment order and excludes missing or unreleased assignments", () => {
+    expect(preview).toMatch(/assignmentsById\.get\(activity\.ref_id\)/);
+    expect(preview).toMatch(/assignmentsByLesson\.set\(activity\.lesson_id, list\)/);
+    expect(preview).toMatch(/!isReleased\(assignment\)/);
+  });
+});
+
 describe("the learner home survives a bad connection", () => {
   const academy = readFileSync("src/lib/academy.js", "utf8");
   const home = academy.slice(

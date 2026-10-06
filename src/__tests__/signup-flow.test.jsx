@@ -3,6 +3,7 @@ import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const signUp = vi.fn();
+const resendConfirmation = vi.fn();
 
 vi.mock("../hooks/useAcademyAuth", () => ({
   useAcademyAuth: () => ({
@@ -10,6 +11,7 @@ vi.mock("../hooks/useAcademyAuth", () => ({
     loading: false,
     isConfigured: true,
     signUp,
+    resendConfirmation,
   }),
 }));
 
@@ -22,6 +24,7 @@ import AcademySignup from "../pages/AcademySignup";
 describe("Academy signup submission", () => {
   beforeEach(() => {
     signUp.mockReset();
+    resendConfirmation.mockReset();
   });
 
   it("calls Supabase signUp once when the submit button is double-clicked", async () => {
@@ -69,5 +72,44 @@ describe("Academy signup submission", () => {
     await waitFor(() =>
       expect(screen.getByText("Welcome to Algorise Tech Explorers!")).toBeInTheDocument(),
     );
+  });
+
+  it("lets a student request another confirmation email", async () => {
+    signUp.mockResolvedValue({ data: { user: { id: "user-id" } }, error: null });
+    resendConfirmation.mockResolvedValue({ error: null });
+
+    render(
+      <MemoryRouter>
+        <AcademySignup />
+      </MemoryRouter>,
+    );
+
+    fireEvent.change(screen.getByLabelText("Full name"), {
+      target: { value: "Test Student" },
+    });
+    fireEvent.change(screen.getByLabelText("Email"), {
+      target: { value: " Student@Example.com " },
+    });
+    fireEvent.change(screen.getByLabelText("Password"), {
+      target: { value: "Cplusplus2026!" },
+    });
+    fireEvent.change(screen.getByLabelText("Confirm password"), {
+      target: { value: "Cplusplus2026!" },
+    });
+    fireEvent.click(
+      screen.getByRole("button", { name: "Create student account" }),
+    );
+
+    const resendButton = await screen.findByRole("button", {
+      name: "Resend confirmation email",
+    });
+    fireEvent.click(resendButton);
+
+    await waitFor(() => {
+      expect(resendConfirmation).toHaveBeenCalledWith("student@example.com");
+      expect(
+        screen.getByText(/A new confirmation email has been requested/),
+      ).toBeInTheDocument();
+    });
   });
 });

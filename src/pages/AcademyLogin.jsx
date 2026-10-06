@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
 import { useAcademyAuth } from "../hooks/useAcademyAuth";
 import { useTheme } from "../context/useTheme";
@@ -16,8 +16,16 @@ const accentDot = {
   amber: "bg-amber-400",
 };
 
+const RESEND_SECONDS = 45;
+
 export default function AcademyLogin() {
-  const { user, loading, signIn, isConfigured } = useAcademyAuth();
+  const {
+    user,
+    loading,
+    signIn,
+    resendConfirmation,
+    isConfigured,
+  } = useAcademyAuth();
   const { theme, toggle } = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
@@ -26,6 +34,26 @@ export default function AcademyLogin() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [resendMessage, setResendMessage] = useState("");
+  const [resendError, setResendError] = useState("");
+  const [resending, setResending] = useState(false);
+  const [resendCooldown, setResendCooldown] = useState(0);
+  const resendTimer = useRef(null);
+
+  useEffect(
+    () => () => {
+      clearInterval(resendTimer.current);
+    },
+    [],
+  );
+
+  useEffect(() => {
+    if (resendCooldown <= 0) return undefined;
+    resendTimer.current = setInterval(() => {
+      setResendCooldown((value) => (value <= 1 ? 0 : value - 1));
+    }, 1000);
+    return () => clearInterval(resendTimer.current);
+  }, [resendCooldown]);
 
   if (loading)
     return (
@@ -50,6 +78,40 @@ export default function AcademyLogin() {
       setError(friendlyError(signInError, "We could not sign you in."));
     } finally {
       setSubmitting(false);
+    }
+  }
+
+  async function handleResendConfirmation() {
+    setResendMessage("");
+    setResendError("");
+    const normalizedEmail = email.trim().toLowerCase();
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(normalizedEmail)) {
+      setResendError("Enter a valid email address to request confirmation.");
+      return;
+    }
+
+    setResending(true);
+    try {
+      const { error: confirmationError } =
+        await resendConfirmation(normalizedEmail);
+      if (confirmationError) throw confirmationError;
+      setResendMessage(
+        "If that address has an unconfirmed Academy account, a new confirmation link is on its way. Check your inbox and spam folder.",
+      );
+      setResendCooldown(RESEND_SECONDS);
+    } catch (confirmationError) {
+      const message = String(
+        confirmationError?.message ?? confirmationError?.msg ?? "",
+      ).toLowerCase();
+      setResendError(
+        confirmationError?.status === 429 ||
+          message.includes("rate limit") ||
+          message.includes("too many requests")
+          ? "Too many requests. Please wait a few minutes before trying again."
+          : "We couldn't request a confirmation email right now. Please try again shortly.",
+      );
+    } finally {
+      setResending(false);
     }
   }
 
@@ -166,6 +228,28 @@ export default function AcademyLogin() {
               >
                 Forgot password?
               </Link>
+              {resendError && (
+                <p role="alert" className="rounded-lg bg-red-50 p-3 text-sm text-red-700 dark:bg-red-950/40 dark:text-red-300">
+                  {resendError}
+                </p>
+              )}
+              {resendMessage && (
+                <p role="status" className="rounded-lg bg-green-50 p-3 text-sm text-green-700 dark:bg-green-950/40 dark:text-green-300">
+                  {resendMessage}
+                </p>
+              )}
+              <button
+                className="block w-full text-center text-sm font-semibold text-amber-600 hover:text-amber-700 disabled:cursor-not-allowed disabled:opacity-60 dark:text-amber-400 dark:hover:text-amber-300"
+                type="button"
+                onClick={handleResendConfirmation}
+                disabled={resending || resendCooldown > 0}
+              >
+                {resending
+                  ? "Requesting confirmation email..."
+                  : resendCooldown > 0
+                    ? `Request another in ${resendCooldown}s`
+                    : "Resend confirmation email"}
+              </button>
             </form>
           )}
           {isConfigured && (

@@ -11,6 +11,9 @@ import { describe, expect, it } from "vitest";
 const MIGRATIONS = "supabase/migrations";
 const files = readdirSync(MIGRATIONS).filter((name) => name.endsWith(".sql"));
 const read = (name) => readFileSync(`${MIGRATIONS}/${name}`, "utf8");
+const cppPdfPath =
+  "public/course_material_assets/Cpp_for_Embedded_Systems_and_Robotics.pdf";
+const cppPdf = readFileSync(cppPdfPath);
 
 // The newest migration that actually *defines* the function, not merely names
 // it. A later migration that only revokes EXECUTE or pins search_path mentions the
@@ -148,5 +151,26 @@ describe("the electronics handout is registered, not just committed", () => {
     expect(sql).toMatch(
       /storage_kind = 'static'[\s\S]*?storage_path not in \([\s\S]*?\)/,
     );
+  });
+});
+
+describe("the C++ course book is a valid published static material", () => {
+  const sql = read(
+    "20261350000000_academy_cpp_material_registration.sql",
+  );
+
+  it("registers and publishes the committed PDF for the C++ course", () => {
+    expect(sql).toMatch(
+      /'course_material_assets\/Cpp_for_Embedded_Systems_and_Robotics\.pdf'/,
+    );
+    expect(sql).toMatch(/where c\.slug = 'cpp-embedded-robotics'/);
+    expect(sql).toMatch(/'static'[\s\S]*?'application\/pdf'/);
+    expect(sql).toMatch(/published = true/);
+    expect(sql).toMatch(/on conflict \(storage_path\) do update/);
+  });
+
+  it("matches the registered size and contains actual PDF bytes", () => {
+    expect(cppPdf.length).toBe(249406);
+    expect(cppPdf.subarray(0, 5).toString("ascii")).toBe("%PDF-");
   });
 });

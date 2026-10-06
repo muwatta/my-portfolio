@@ -24,7 +24,13 @@ const accentDot = {
 };
 
 export default function AcademySignup() {
-  const { user, loading, signUp, isConfigured } = useAcademyAuth();
+  const {
+    user,
+    loading,
+    signUp,
+    resendConfirmation,
+    isConfigured,
+  } = useAcademyAuth();
   const { theme, toggle } = useTheme();
   const navigate = useNavigate();
   const [displayName, setDisplayName] = useState("");
@@ -36,6 +42,9 @@ export default function AcademySignup() {
   const [submitting, setSubmitting] = useState(false);
   const [signupStarted, setSignupStarted] = useState(false);
   const [created, setCreated] = useState(false);
+  const [resendingConfirmation, setResendingConfirmation] = useState(false);
+  const [confirmationMessage, setConfirmationMessage] = useState("");
+  const [confirmationError, setConfirmationError] = useState(false);
   const signupRequestStarted = useRef(false);
 
   if (loading) {
@@ -97,6 +106,35 @@ export default function AcademySignup() {
         setSignupStarted(false);
       }
       setSubmitting(false);
+    }
+  }
+
+  async function handleResendConfirmation() {
+    setResendingConfirmation(true);
+    setConfirmationMessage("");
+    setConfirmationError(false);
+    try {
+      const { error: resendError } = await resendConfirmation(
+        email.trim().toLowerCase(),
+      );
+      if (resendError) throw resendError;
+      setConfirmationMessage(
+        "A new confirmation email has been requested. Check your inbox and spam folder.",
+      );
+    } catch (resendError) {
+      setConfirmationError(true);
+      const message = String(resendError?.message ?? "").toLowerCase();
+      const isRateLimited =
+        resendError?.status === 429 ||
+        message.includes("rate limit") ||
+        message.includes("too many requests");
+      setConfirmationMessage(
+        isRateLimited
+          ? "Too many confirmation emails were requested. Please wait a few minutes before trying again."
+          : "We couldn't send another confirmation email. Please try again shortly or contact Academy support.",
+      );
+    } finally {
+      setResendingConfirmation(false);
     }
   }
 
@@ -169,13 +207,27 @@ export default function AcademySignup() {
                 Welcome to Algorise Tech Explorers!
               </h3>
               <p className="mt-3 text-sm leading-6 text-slate-600 dark:text-slate-300">
-                We sent a confirmation link to{" "}
+                A confirmation link should arrive at{" "}
                 <span className="break-all font-semibold text-slate-800 dark:text-slate-100">
                   {email.trim().toLowerCase()}
                 </span>
-                . If this email already has an Academy account, sign in instead;
-                we will not create a duplicate account.
+                . Confirm your email to activate your account and access the
+                dashboard. If you do not see it shortly, check your spam folder
+                or request another email below.
               </p>
+              {confirmationMessage && (
+                <p
+                  role={confirmationError ? "alert" : "status"}
+                  aria-live="polite"
+                  className={`mt-3 text-sm ${
+                    confirmationError
+                      ? "text-red-700 dark:text-red-300"
+                      : "text-slate-600 dark:text-slate-300"
+                  }`}
+                >
+                  {confirmationMessage}
+                </p>
+              )}
               <p className="mt-4 text-sm leading-6 text-slate-600 dark:text-slate-300">
                 Your registration number is issued for you automatically once you
                 confirm your email, and you will see it on your dashboard. It
@@ -192,10 +244,21 @@ export default function AcademySignup() {
                 <button
                   type="button"
                   className="button-secondary"
+                  onClick={handleResendConfirmation}
+                  disabled={resendingConfirmation}
+                >
+                  {resendingConfirmation
+                    ? "Requesting email..."
+                    : "Resend confirmation email"}
+                </button>
+                <button
+                  type="button"
+                  className="button-secondary"
                   onClick={() => {
                     signupRequestStarted.current = false;
                     setSignupStarted(false);
                     setCreated(false);
+                    setConfirmationMessage("");
                   }}
                 >
                   Not the right email?

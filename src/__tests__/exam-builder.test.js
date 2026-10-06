@@ -175,8 +175,18 @@ describe("the builder is reachable", () => {
       "src/components/academy/AdminContentNav.jsx",
       "utf8",
     );
-    expect(app).toMatch(/path="\/academy\/admin\/exams"/);
-    expect(app).toMatch(/AcademyAdminExamBuilder/);
+    expect(app).toMatch(
+      /<Route\s+path="\/academy\/admin\/exams"\s+element=\{<AcademyAdminExamBuilder \/>\}/,
+    );
+    expect(app).toMatch(
+      /<Route\s+path="\/academy\/admin\/exam-results"\s+element=\{<AcademyAdminExamResults \/>\}/,
+    );
+    expect(app).toMatch(
+      /<Route\s+path="\/academy\/admin\/question-bank"\s+element=\{<AcademyAdminQuestionBank \/>\}/,
+    );
+    expect(app).not.toMatch(
+      /<AcademyAdminGuard>\s*<AcademyAdminExamBuilder \/>/,
+    );
     expect(nav).toMatch(/Exam builder/);
   });
 });

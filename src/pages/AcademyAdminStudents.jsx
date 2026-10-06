@@ -48,7 +48,7 @@ export default function AcademyAdminStudents() {
   }
   const students = data.students.filter((student) => {
     if (!student) return false;
-    const searchText = `${student.display_name || ""} ${student.academy_registration_codes?.registration_number || ""} ${student.academy_schools?.name || ""} ${student.academy_schools?.code || ""}`;
+    const searchText = `${student.display_name || ""} ${student.email || ""} ${student.academy_registration_codes?.registration_number || ""} ${student.academy_schools?.name || ""} ${student.academy_schools?.code || ""}`;
     return (
       searchText.toLowerCase().includes(search.toLowerCase()) &&
       (!stateFilter || student.state === stateFilter) &&
@@ -102,7 +102,7 @@ export default function AcademyAdminStudents() {
         <input
           className="field"
           aria-label="Search students"
-          placeholder="Search by name, registration number, or school..."
+          placeholder="Search by name, email, registration number, or school..."
           value={search}
           onChange={(event) => setSearch(event.target.value)}
         />
@@ -171,6 +171,9 @@ export default function AcademyAdminStudents() {
                     <h2 className="font-semibold">
                       {student.display_name || "Unnamed student"}
                     </h2>
+                    <p className="mt-1 break-all text-xs text-slate-500">
+                      {student.email || "No email on file"}
+                    </p>
                     <p className="mt-1 text-sm font-medium text-cyan-700 dark:text-cyan-300">
                       {student.academy_registration_codes?.registration_number || "Registration not assigned"}
                     </p>
@@ -238,8 +241,13 @@ export default function AcademyAdminStudents() {
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                 {students.map((student) => (
                   <tr key={student.id}>
-                    <td className="px-5 py-4 font-semibold">
-                      {student.display_name || "Unnamed student"}
+                    <td className="px-5 py-4">
+                      <span className="font-semibold">
+                        {student.display_name || "Unnamed student"}
+                      </span>
+                      <span className="mt-1 block text-xs text-slate-500">
+                        {student.email || "No email on file"}
+                      </span>
                     </td>
                     <td className="px-5 py-4">
                       <select

@@ -5,8 +5,13 @@ import {
   getAcademyCourseMaterials,
   getAcademyMaterialUrl,
   getActiveCourseForStudent,
+  recordAcademyMaterialDownload,
 } from "../lib/academy";
-import { cacheOfflineAsset, removeOfflineAsset, OFFLINE_STORES } from "../lib/offlineStore";
+import {
+  OFFLINE_MATERIAL_CACHE,
+  OFFLINE_STORES,
+  removeOfflineAsset,
+} from "../lib/offlineStore";
 import { fetchWithOfflineFallback } from "../lib/academyOffline";
 import AcademyConnectionState from "../components/academy/AcademyConnectionState";
 import { useNetworkStatus } from "../hooks/useNetworkStatus";
@@ -19,7 +24,8 @@ function formatBytes(bytes) {
   return `${(value / 1024 / 1024).toFixed(1)} MB`;
 }
 
-const fileName = (storagePath) => (storagePath ?? "").split("/").pop();
+const fileName = (material) =>
+  material.original_filename || (material.storage_path ?? "").split("/").pop();
 
 export default function AcademyMaterials() {
   const { user } = useAcademyAuth();
@@ -28,6 +34,8 @@ export default function AcademyMaterials() {
   const [downloaded, setDownloaded] = useState({});
   const [urls, setUrls] = useState({});
   const [downloading, setDownloading] = useState("");
+  const [downloadError, setDownloadError] = useState("");
+  const [downloadMessage, setDownloadMessage] = useState("");
   const network = useNetworkStatus();
   const [reloadToken, setReloadToken] = useState(0);
   useEffect(() => {
@@ -93,6 +101,83 @@ export default function AcademyMaterials() {
     ).then((entries) => setDownloaded(Object.fromEntries(entries)));
   }, [materials, urls]);
 
+  async function downloadMaterial(material) {
+    const url = urls[material.id];
+    setDownloadError("");
+    setDownloadMessage("");
+    if (!url) {
+      setDownloadError("The file is not ready yet. Please try again.");
+      return;
+    }
+    setDownloading(material.id);
+    try {
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error("The material could not be downloaded. Please try again.");
+      }
+      const cacheResponse = response.clone();
+      const blob = await response.blob();
+      if (!blob.size) {
+        throw new Error("The downloaded file was empty. Please try again.");
+      }
+
+      const objectUrl = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = objectUrl;
+      link.download = fileName(material);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
+
+      let savedOffline = false;
+      if ("caches" in window) {
+        try {
+          const cache = await caches.open(OFFLINE_MATERIAL_CACHE);
+          await cache.put(url, cacheResponse);
+          savedOffline = true;
+        } catch {
+          setDownloadError(
+            "The file was downloaded, but could not be saved for offline use on this device.",
+          );
+        }
+      }
+
+      const { error } = await recordAcademyMaterialDownload(material.id);
+      if (error) {
+        setDownloadError(
+          "The file was downloaded, but its download count could not be recorded. Please tell your administrator.",
+        );
+      } else if (savedOffline) {
+        setDownloadMessage("Downloaded and saved for offline use.");
+      } else {
+        setDownloadMessage("Download complete.");
+      }
+      setDownloaded((current) => ({ ...current, [material.id]: savedOffline }));
+    } catch (error) {
+      setDownloadError(
+        error instanceof Error
+          ? error.message
+          : "The material could not be downloaded. Please try again.",
+      );
+    } finally {
+      setDownloading("");
+    }
+  }
+
+  async function removeMaterial(material) {
+    const url = urls[material.id];
+    if (!url) return;
+    try {
+      await removeOfflineAsset(url);
+      setDownloaded((current) => ({ ...current, [material.id]: false }));
+      setDownloadError("");
+      setDownloadMessage("");
+    } catch {
+      setDownloadError("The offline copy could not be removed. Please try again.");
+    }
+  }
+
   return (
     <div className="space-y-8">
       <header>
@@ -108,6 +193,19 @@ export default function AcademyMaterials() {
       {!navigator.onLine && (
         <p className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">
           Offline learning mode. Downloaded materials remain available from this device.
+        </p>
+      )}
+      {downloadError && (
+        <p role="alert" className="rounded-xl bg-red-50 p-4 text-sm text-red-700">
+          {downloadError}
+        </p>
+      )}
+      {downloadMessage && (
+        <p
+          role="status"
+          className="rounded-xl bg-emerald-50 p-4 text-sm text-emerald-800"
+        >
+          {downloadMessage}
         </p>
       )}
       {state === "loading" && (
@@ -146,26 +244,7 @@ export default function AcademyMaterials() {
         <ul className="grid gap-4 md:grid-cols-2">
           {materials.map((material) => {
             const url = urls[material.id];
-  async function downloadMaterial(material) {
-    const url = urls[material.id];
-    if (!url) return;
-    setDownloading(material.id);
-    try {
-      await cacheOfflineAsset(url);
-      setDownloaded((current) => ({ ...current, [material.id]: true }));
-    } finally {
-      setDownloading("");
-    }
-  }
-
-  async function removeMaterial(material) {
-    const url = urls[material.id];
-    if (!url) return;
-    await removeOfflineAsset(url);
-    setDownloaded((current) => ({ ...current, [material.id]: false }));
-  }
-
-  return (
+            return (
               <li
                 key={material.id}
                 className="flex flex-col justify-between gap-4 border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900"
@@ -181,37 +260,38 @@ export default function AcademyMaterials() {
                     · {formatBytes(material.file_size_bytes)}
                   </p>
                 </div>
-                {url && (
+                {url ? (
                   <div className="flex flex-wrap gap-2">
                     <a
                       className="button-primary w-fit"
                       href={url}
-                      download={fileName(material.storage_path)}
+                      target="_blank"
                       rel="noreferrer"
                     >
                       Open
                     </a>
-                    {downloaded[material.id] ? (
+                    <button
+                      type="button"
+                      className="button-secondary"
+                      onClick={() => downloadMaterial(material)}
+                      disabled={downloading === material.id}
+                    >
+                      {downloading === material.id ? "Downloading..." : "Download"}
+                    </button>
+                    {downloaded[material.id] && (
                       <button
                         type="button"
                         className="button-secondary"
                         onClick={() => removeMaterial(material)}
                       >
-                        Remove download
-                      </button>
-                    ) : (
-                      <button
-                        type="button"
-                        className="button-secondary"
-                        onClick={() => downloadMaterial(material)}
-                        disabled={downloading === material.id}
-                      >
-                        {downloading === material.id
-                          ? "Downloading..."
-                          : "Download for Offline"}
+                        Remove offline copy
                       </button>
                     )}
                   </div>
+                ) : (
+                  <p className="text-sm text-slate-500" role="status">
+                    Preparing download link...
+                  </p>
                 )}
               </li>
             );

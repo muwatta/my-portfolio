@@ -210,8 +210,10 @@ export function AcademyAuthProvider({ children }) {
       email,
       password,
       options: {
+        emailRedirectTo: `${window.location.origin}/academy/dashboard`,
         data: {
           display_name: displayName,
+          first_name: displayName.trim().split(/\s+/)[0] ?? "",
           // Optional. A student is issued a number automatically now. Schools
           // that hand numbers out on paper can still pass one, and the trigger
           // honours it when it is a real unused code.
@@ -219,6 +221,21 @@ export function AcademyAuthProvider({ children }) {
             ? { registration_number: registrationNumber }
             : {}),
         },
+      },
+    });
+  };
+
+  const resendConfirmation = (email) => {
+    if (!supabase) {
+      return Promise.resolve({
+        error: new Error("Academy authentication is not configured yet."),
+      });
+    }
+    return supabase.auth.resend({
+      type: "signup",
+      email,
+      options: {
+        emailRedirectTo: `${window.location.origin}/academy/dashboard`,
       },
     });
   };
@@ -273,6 +290,7 @@ export function AcademyAuthProvider({ children }) {
         isStudent: profile?.role === "student",
         signIn,
         signUp,
+        resendConfirmation,
         sendPasswordReset,
         updatePassword,
         signOut,

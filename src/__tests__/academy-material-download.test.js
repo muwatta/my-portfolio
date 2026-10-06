@@ -4,6 +4,10 @@ import { describe, expect, it } from "vitest";
 const lib = readFileSync("src/lib/academy.js", "utf8");
 const page = readFileSync("src/pages/AcademyMaterials.jsx", "utf8");
 const admin = readFileSync("src/pages/AcademyAdminMaterials.jsx", "utf8");
+const migration = readFileSync(
+  "supabase/migrations/20261348000000_academy_material_download_counts.sql",
+  "utf8",
+);
 
 // The reported symptom: a material of several megabytes arrived as a few
 // kilobytes. Verified live against the real bucket, where a 6.00 MB PDF uploaded
@@ -19,6 +23,11 @@ describe("an uploaded material is served through a signed url", () => {
 
   it("resolves a url per material rather than per render", () => {
     expect(page).toMatch(/const \[urls, setUrls\] = useState/);
+  });
+
+  it("selects storage_kind so uploads resolve through their private signed URLs", () => {
+    expect(lib).toMatch(/getAcademyCourseMaterials[\s\S]*?storage_kind/);
+    expect(lib).toMatch(/getAcademyAdminMaterials[\s\S]*?storage_kind/);
   });
 
   it("returns { url } for a stored object, not Supabase's signedUrl", () => {
@@ -78,5 +87,33 @@ describe("the administrator can open an uploaded file too", () => {
   it("reads the same { url } shape the student page does", () => {
     expect(admin).toMatch(/window\.open\(signed\.url/);
     expect(lib).toMatch(/data: \{ url: data\?\.signedUrl \?\? null, path:/);
+  });
+});
+
+describe("student downloads are reliable and visible to administrators", () => {
+  it("downloads a checked non-empty response using the original filename", () => {
+    expect(page).toMatch(/if \(!response\.ok\)/);
+    expect(page).toMatch(/if \(!blob\.size\)/);
+    expect(page).toMatch(/link\.download = fileName\(material\)/);
+  });
+
+  it("records a count only after a successful file transfer", () => {
+    expect(page.indexOf("link.click()")).toBeLessThan(
+      page.indexOf("recordAcademyMaterialDownload(material.id)"),
+    );
+    expect(lib).toMatch(/academy_record_material_download/);
+  });
+
+  it("increments counts atomically for signed-in users with access", () => {
+    expect(migration).toMatch(/download_count integer not null default 0/);
+    expect(migration).toMatch(/download_count = download_count \+ 1/);
+    expect(migration).toMatch(/auth\.uid\(\) is null/);
+    expect(migration).toMatch(/published or public\.academy_is_teacher\(\)/);
+    expect(migration).toMatch(/grant execute on function[\s\S]*to authenticated/);
+  });
+
+  it("shows each material's download total in the admin list", () => {
+    expect(lib).toMatch(/file_size_bytes, download_count, published/);
+    expect(admin).toMatch(/material\.download_count/);
   });
 });

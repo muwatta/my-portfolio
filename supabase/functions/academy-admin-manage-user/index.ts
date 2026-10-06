@@ -123,7 +123,7 @@ Deno.serve(async (request) => {
   // Capture who is about to disappear, and why, before they do.
   const { data: targetProfile } = await service
     .from("academy_profiles")
-    .select("id, display_name, role")
+    .select("id, display_name, role, registration_code_id")
     .eq("id", target)
     .maybeSingle();
   const { data: targetAuth } = await service.auth.admin.getUserById(target);
@@ -152,18 +152,34 @@ Deno.serve(async (request) => {
         403,
       );
 
-    await service.from("academy_registration_audit").insert({
-      actor_id: userResult.user.id,
-      student_id: target,
-      registration_number: null,
-      action: "account_deleted",
-      metadata: {
-        reason,
-        display_name: targetProfile?.display_name ?? null,
-        role: targetProfile?.role ?? null,
-        email: targetAuth?.user?.email ?? null,
-      },
-    });
+    const { data: registrationCode } = targetProfile?.registration_code_id
+      ? await service
+          .from("academy_registration_codes")
+          .select("registration_number")
+          .eq("id", targetProfile.registration_code_id)
+          .maybeSingle()
+      : { data: null };
+    const { error: auditError } = await service
+      .from("academy_registration_audit")
+      .insert({
+        actor_id: userResult.user.id,
+        student_id: target,
+        registration_code_id: targetProfile?.registration_code_id ?? null,
+        registration_number:
+          registrationCode?.registration_number ?? "UNASSIGNED",
+        action: "account_deleted",
+        metadata: {
+          reason,
+          display_name: targetProfile?.display_name ?? null,
+          role: targetProfile?.role ?? null,
+          email: targetAuth?.user?.email ?? null,
+        },
+      });
+    if (auditError)
+      return json(
+        { error: `The deletion could not be recorded: ${auditError.message}` },
+        500,
+      );
 
     const { error: deleteError } = await service.auth.admin.deleteUser(target);
     if (deleteError)

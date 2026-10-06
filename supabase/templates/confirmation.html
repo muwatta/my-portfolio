@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Confirm your Algorise Tech Explorers account</title>
+    <title>Activate your ATE Academy account</title>
   </head>
   <body
     style="
@@ -45,8 +45,24 @@
                   background-color: #0f172a;
                   padding: 24px 32px;
                   color: #ffffff;
+                  text-align: center;
                 "
               >
+                <img
+                  src="https://www.muwatta.com.ng/images/ate-logo.jpg"
+                  width="88"
+                  height="88"
+                  alt="Algorise Tech Explorers logo"
+                  style="
+                    display: block;
+                    width: 88px;
+                    height: 88px;
+                    object-fit: cover;
+                    margin: 0 auto 16px;
+                    border: 2px solid #67e8f9;
+                    border-radius: 16px;
+                  "
+                />
                 <span
                   style="
                     font-size: 14px;
@@ -63,14 +79,14 @@
                     color: #ffffff;
                   "
                 >
-                  Confirm your email to start learning
+                  One last step to access your dashboard
                 </p>
               </td>
             </tr>
             <tr>
               <td style="padding: 32px">
                 <p style="margin: 0 0 16px; font-size: 16px; color: #0f172a">
-                  Hi there,
+                  Hi{{ if .Data.first_name }} {{ .Data.first_name }}{{ else if .Data.display_name }} {{ .Data.display_name }}{{ end }},
                 </p>
                 <p
                   style="
@@ -80,9 +96,9 @@
                     color: #334155;
                   "
                 >
-                  Welcome to Algorise Tech Explorers. One quick step and your account is
-                  ready for Python for AI &amp; Machine Learning and C++ for
-                  Embedded Systems &amp; Robotics.
+                  Welcome to Algorise Tech Explorers. Confirm this email address
+                  to activate your student account and access your Academy
+                  dashboard, courses, and learning materials.
                 </p>
                 <p
                   style="
@@ -92,7 +108,8 @@
                     color: #334155;
                   "
                 >
-                  Click the button below to confirm your email address.
+                  Select the button below to confirm your email address. You
+                  will then be returned to the Academy dashboard.
                 </p>
                 <table
                   role="presentation"
@@ -119,7 +136,7 @@
                           text-decoration: none;
                           border-radius: 8px;
                         "
-                        >Confirm my email</a
+                        >Confirm email and open dashboard</a
                       >
                     </td>
                   </tr>
@@ -150,7 +167,36 @@
                 <p style="margin: 0; font-size: 12px; color: #64748b">
                   Algorise Tech Explorers (ATE) · RC No. RC-8665201
                 </p>
+                <p
+                  style="
+                    margin: 16px 0 0;
+                    font-size: 12px;
+                    line-height: 1.8;
+                    color: #64748b;
+                  "
+                >
+                  Join our community:
+                  <a
+                    href="https://whatsapp.com/channel/0029VbB1DYy4Y9lkPS0aNn2m"
+                    style="color: #2563eb; text-decoration: none"
+                    >WhatsApp</a
+                  >
+                  &nbsp;|&nbsp;
+                  <a
+                    href="https://web.facebook.com/algorise"
+                    style="color: #2563eb; text-decoration: none"
+                    >Facebook</a
+                  >
+                  &nbsp;|&nbsp;
+                  <a
+                    href="https://www.linkedin.com/in/muwatta"
+                    style="color: #2563eb; text-decoration: none"
+                    >LinkedIn</a
+                  >
+                </p>
                 <p style="margin: 6px 0 0; font-size: 12px; color: #94a3b8">
+                  If you do not see the confirmation screen, return to the
+                  Academy sign-in page and request a new confirmation email.
                   If you did not create this account, you can safely ignore
                   this email.
                 </p>
