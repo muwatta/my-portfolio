@@ -544,6 +544,9 @@ and verify the sender domain. Supabase's built-in mailer is rate-limited and is
 intended for testing, so changing the email template alone does not guarantee
 delivery. Keep SMTP credentials in Supabase's settings or secrets; never add
 them to the frontend or commit them to this repository.
+If the Resend SMTP credential is rotated, replace the saved SMTP password in
+the hosted project's **Authentication → SMTP Settings** as well; the encrypted
+value stored by Supabase is not updated automatically.
 
 The confirmation link returns students to `/academy/dashboard`. If an email is
 delayed, students can request another confirmation email from the signup
