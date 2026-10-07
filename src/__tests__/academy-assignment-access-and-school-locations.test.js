@@ -53,9 +53,11 @@ describe("school locations", () => {
   });
 
   it("updates the profile location when a listed school is selected", () => {
-    expect(profilePage).toContain("const selectSchool = (schoolId) =>");
-    expect(profilePage).toContain("state: selectedSchool.state");
-    expect(profilePage).toContain("city: selectedSchool.city");
+expect(profilePage).toContain("const selectSchool = (schoolId) =>");
+      // Null safe: a saved profile can carry a school_id that is no longer in
+      // the catalogue, and reading .state off the missing match would throw.
+      expect(profilePage).toContain("state: selectedSchool?.state");
+      expect(profilePage).toContain("city: selectedSchool?.city");
     expect(profilePage).toContain("onChange={(event) => selectSchool(event.target.value)}");
   });
 });

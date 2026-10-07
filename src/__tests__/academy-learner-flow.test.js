@@ -234,7 +234,34 @@ describe("the learner home survives a bad connection", () => {
     expect(home).toMatch(/OFFLINE_STORES\.metadata/);
   });
 
-  it("is keyed per student so one student never sees another's snapshot", () => {
-    expect(home).toMatch(/userId,/);
+it("is keyed per student so one student never sees another's snapshot", () => {
+      // The offline store is namespaced by userId, but that is a different
+      // layer: the memory cache is a module-level Map that outlives a sign-out.
+      // Assert the cache key itself carries the user, not merely that userId is
+      // passed to the offline fallback.
+      expect(home).toMatch(/withAcademyCache\(`home:\$\{userId \?\? "anon"\}`,/);
+expect(home).not.toMatch(/withAcademyCache\("home"/);
+    });
+
+    it("drops every cached Academy read when the account changes", () => {
+      // The caches that cannot be keyed by user, such as teacher-students,
+      // depend on this. A shared or borrowed device signs one student out and
+      // the next one in on the same tab.
+      const authContext = readFileSync(
+        "src/context/AcademyAuthContext.jsx",
+        "utf8",
+      );
+      expect(authContext).toMatch(/invalidateAcademyCache/);
+      const signOut = authContext.slice(
+        authContext.indexOf("const signOut"),
+        authContext.indexOf("const signOut") + 400,
+      );
+      expect(signOut).toMatch(/invalidateAcademyCache\(\)/);
+      // And on a silent account switch, where no signOut is ever called.
+      const sessionBranch = authContext.slice(
+        authContext.indexOf("hint.userId !== userId"),
+        authContext.indexOf("hint.userId !== userId") + 300,
+      );
+      expect(sessionBranch).toMatch(/invalidateAcademyCache\(\)/);
+    });
   });
-});

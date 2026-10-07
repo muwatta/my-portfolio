@@ -7,6 +7,7 @@ import {
   putOfflineRecord,
   OFFLINE_STORES,
 } from "../lib/offlineStore";
+import { invalidateAcademyCache } from "../lib/academy";
 
 const SESSION_HINT_KEY = "academy-session-hint";
 const SESSION_HINT_MAX_AGE = 1000 * 60 * 60 * 12;
@@ -80,10 +81,14 @@ export function AcademyAuthProvider({ children }) {
         const hint = readCachedProfileHint();
         if (!userId) {
           clearSessionCache();
+          invalidateAcademyCache();
           setProfile(null);
           setAdminStatus(false);
         } else if (hint && hint.userId !== userId) {
+          // A different account is taking over this tab. Cached Academy reads
+          // belong to the previous user, so drop them before they are served.
           clearSessionCache();
+          invalidateAcademyCache();
           setProfile(null);
           setAdminStatus(false);
           setProfileSettled(false);
@@ -298,6 +303,7 @@ export function AcademyAuthProvider({ children }) {
   const signOut = async () => {
     const result = supabase ? await supabase.auth.signOut() : { error: null };
     clearSessionCache();
+    invalidateAcademyCache();
     setProfile(null);
     setAdminStatus(false);
     setProfileSettled(true);

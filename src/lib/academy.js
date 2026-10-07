@@ -104,8 +104,11 @@ export async function getAcademyStudentHome(userId) {
     userId,
     store: OFFLINE_STORES.metadata,
     id: "student-home",
-    fetcher: () =>
-      withAcademyCache("home", 60 * 1000, async () => {
+fetcher: () =>
+        // Scoped by user: the RPC result is whoever is signed in, and the cache
+        // outlives a sign-out, so a shared key would serve one student's home
+        // snapshot to the next.
+        withAcademyCache(`home:${userId ?? "anon"}`, 60 * 1000, async () => {
         const { data, error } = await supabase.rpc("academy_student_home");
         if (error || !data) return { data: null, error, configured: true };
         return {

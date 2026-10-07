@@ -242,6 +242,33 @@ Deno.serve(async (request) => {
   if (authError)
     return json({ error: `The account could not be updated: ${authError.message}` }, 500);
 
+  // auth.users holds the login identity, but the Academy reads display_name and
+  // the location fields from academy_profiles, and nothing syncs them: the only
+  // auth.users triggers cover email and signup claiming. Writing to auth alone
+  // left the edit looking successful and then reverting on the next read, so
+  // persist the same values to the profile.
+  //
+  // `role` is deliberately not persisted here. It drives authorisation, and the
+  // single-admin and role RPC migrations own how a role may change.
+  const profilePatch: Record<string, unknown> = {};
+  if (typeof patch.display_name === "string")
+    profilePatch.display_name = patch.display_name;
+  for (const key of ["school_id", "state", "city", "student_level"] as const) {
+    if (key in patch) profilePatch[key] = patch[key];
+  }
+
+  if (Object.keys(profilePatch).length > 0) {
+    const { error: profileError } = await service
+      .from("academy_profiles")
+      .update({ ...profilePatch, updated_at: new Date().toISOString() })
+      .eq("id", target);
+    if (profileError)
+      return json(
+        { error: `The Academy profile could not be updated: ${profileError.message}` },
+        500,
+      );
+  }
+
   await service.from("academy_registration_audit").insert({
     actor_id: userResult.user.id,
     student_id: target,

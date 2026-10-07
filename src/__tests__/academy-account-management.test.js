@@ -126,6 +126,32 @@ describe("account management cannot lock the Academy out", () => {
   it("checks the target still exists before acting", () => {
     expect(fn).toMatch(/That account no longer exists/);
   });
+
+  it("persists the edit to the Academy profile, not only to the login record", () => {
+    // auth.users is where the login lives, but every Academy screen reads
+    // display_name from academy_profiles, and the only auth.users triggers
+    // cover email and signup claiming. Writing to auth alone reported success
+    // and then repainted the old name.
+    expect(fn).toMatch(
+      /from\("academy_profiles"\)[\s\S]{0,120}\.update\(\{/,
+    );
+    expect(fn).toMatch(/profilePatch\.display_name = patch\.display_name/);
+    expect(fn).toMatch(
+      /for \(const key of \["school_id", "state", "city", "student_level"\] as const\) \{\s*if \(key in patch\) profilePatch\[key\] = patch\[key\];/,
+    );
+    // A failed profile write must not look like a successful edit.
+    expect(fn).toMatch(/The Academy profile could not be updated/);
+  });
+
+  it("does not change a role through this generic edit path", () => {
+    // Role drives authorisation. The single-admin and role RPC migrations own
+    // how it may change, so persisting it here would bypass them.
+    const profilePatch = fn.slice(
+      fn.indexOf("const profilePatch"),
+      fn.indexOf("const profilePatch") + 600,
+    );
+    expect(profilePatch).not.toMatch(/profilePatch\.role/);
+  });
 });
 
 describe("the forgot password flow helps someone who is actually stuck", () => {

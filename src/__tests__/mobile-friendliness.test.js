@@ -106,9 +106,13 @@ describe("form accessibility on a phone", () => {
   });
 
   it("keeps the account fields out of the browser's autofill heuristics", () => {
-    const login = sources.get("src/pages/AcademyLogin.jsx");
-    expect(login).toMatch(/autoComplete="email"/);
-    expect(login).toMatch(/autoComplete="current-password"/);
+const login = sources.get("src/pages/AcademyLogin.jsx");
+      // The field accepts a registration number as well as an address, so it
+      // must not be type="email", which the browser would reject. "username" is
+      // the token a sign-in identifier field is meant to carry.
+      expect(login).toMatch(/autoComplete="username"/);
+      expect(login).not.toMatch(/autoComplete="email"/);
+      expect(login).toMatch(/autoComplete="current-password"/);
 
     const signup = sources.get("src/pages/AcademySignup.jsx");
     expect(signup).toMatch(/autoComplete="name"/);
