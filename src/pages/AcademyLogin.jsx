@@ -193,16 +193,19 @@ export default function AcademyLogin() {
           ) : (
             <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
               <label className="label">
-                Email
+                Verified email or registration number
                 <input
                   className="field"
-                  type="email"
-                  autoComplete="email"
+                  type="text"
+                  autoComplete="username"
                   maxLength={254}
                   value={email}
                   onChange={(event) => setEmail(event.target.value)}
                   required
                 />
+                <span className="mt-1 block text-xs font-normal text-slate-500 dark:text-slate-400">
+                  Use the email address you confirmed, or your Academy number.
+                </span>
               </label>
               <span className="label">
                 <label htmlFor="academy-login-password">Password</label>

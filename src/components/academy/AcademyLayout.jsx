@@ -171,6 +171,9 @@ export default function AcademyLayout({
   const displayName =
     profile?.display_name || user?.email?.split("@")[0] || "Student";
   const accessLabel = isAdmin ? "Admin" : isTeacher ? "Teacher" : "Student";
+  const profileIncomplete =
+    isStudent &&
+    (!profile?.display_name?.trim() || !profile?.school_id || !profile?.state);
 
   const navigationLinks =
     {
@@ -305,13 +308,25 @@ export default function AcademyLayout({
                 to={link.to}
                 className={({ isActive }) =>
                   `snap-start rounded-lg px-2.5 py-2 text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-950 sm:px-3 sm:text-sm ${
-                    isActive
-                      ? "bg-amber-500 text-slate-950"
-                      : "text-slate-600 hover:bg-slate-200 dark:text-slate-300 dark:hover:bg-slate-800"
+                    link.to === "/academy/profile" && profileIncomplete
+                      ? "animate-pulse border border-red-400 bg-red-50 text-red-800 motion-reduce:animate-none dark:border-red-700 dark:bg-red-950/50 dark:text-red-200"
+                      : isActive
+                        ? "bg-amber-500 text-slate-950"
+                        : "text-slate-600 hover:bg-slate-200 dark:text-slate-300 dark:hover:bg-slate-800"
                   }`
+                }
+                aria-label={
+                  link.to === "/academy/profile" && profileIncomplete
+                    ? "Profile incomplete. Complete your school and state."
+                    : undefined
                 }
               >
                 {link.label}
+                {link.to === "/academy/profile" && profileIncomplete && (
+                  <span className="ml-2 rounded-full bg-red-200 px-2 py-0.5 text-[0.65rem] font-bold uppercase text-red-900 dark:bg-red-900 dark:text-red-100">
+                    Complete
+                  </span>
+                )}
               </NavLink>
             ))}
           </div>
@@ -352,6 +367,22 @@ export default function AcademyLayout({
             workspace === "student" ? "academy-student-content" : ""
           }`}
         >
+          {profileIncomplete && (
+            <p
+              role="alert"
+              className="mb-4 rounded-xl border border-red-300 bg-red-50 p-4 text-sm font-semibold text-red-800 dark:border-red-800 dark:bg-red-950/40 dark:text-red-200"
+            >
+              Your profile needs attention. Add your school and confirm your
+              state in{" "}
+              <Link
+                to="/academy/profile"
+                className="underline underline-offset-2"
+              >
+                Profile
+              </Link>{" "}
+              to complete your account.
+            </p>
+          )}
           {aboveOutlet}
           <Outlet />
         </main>
@@ -368,13 +399,25 @@ export default function AcademyLayout({
               to={to}
               className={({ isActive }) =>
                 `flex min-h-11 flex-col items-center justify-center rounded-lg px-1 text-xs font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 ${
-                  isActive
-                    ? "text-amber-600 dark:text-amber-400"
-                    : "text-slate-500 dark:text-slate-400"
+                  to === "/academy/profile" && profileIncomplete
+                    ? "animate-pulse text-red-700 motion-reduce:animate-none dark:text-red-300"
+                    : isActive
+                      ? "text-amber-600 dark:text-amber-400"
+                      : "text-slate-500 dark:text-slate-400"
                 }`
+              }
+              aria-label={
+                to === "/academy/profile" && profileIncomplete
+                  ? "Profile incomplete. Complete your school and state."
+                  : undefined
               }
             >
               <span>{label}</span>
+              {to === "/academy/profile" && profileIncomplete && (
+                <span className="text-[0.6rem] font-bold uppercase text-red-700 dark:text-red-300">
+                  Complete
+                </span>
+              )}
             </NavLink>
           ))}
         </nav>

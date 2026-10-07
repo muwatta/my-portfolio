@@ -33,5 +33,5 @@ export function getAcademySignupErrorMessage(error) {
   if (isExistingAccount) {
     return "An Academy account may already exist for this email. Sign in or check your email for the confirmation link.";
   }
-  return "We couldn't verify this registration number. Please check your Academy registration details or contact your teacher.";
+  return "We couldn't create your Academy account. Please check your details and try again.";
 }

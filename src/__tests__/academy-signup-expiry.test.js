@@ -5,6 +5,10 @@ const expiryMigration = readFileSync(
   "supabase/migrations/20261349000000_academy_unconfirmed_signup_expiry.sql",
   "utf8",
 );
+const verifiedRegistrationMigration = readFileSync(
+  "supabase/migrations/20261401000000_academy_verified_registration_profiles.sql",
+  "utf8",
+);
 const accountFunction = readFileSync(
   "supabase/functions/academy-admin-manage-user/index.ts",
   "utf8",
@@ -27,11 +31,14 @@ describe("unconfirmed Academy signup expiry", () => {
     );
   });
 
-  it("audits expiry and frees any provisional registration number", () => {
+  it("audits expiry and removes any unconfirmed provisional number", () => {
     expect(expiryMigration).toMatch(/action,\s*reason,\s*metadata/);
     expect(expiryMigration).toMatch(/'signup_expired'/);
-    expect(expiryMigration).toMatch(/status = 'available'/);
     expect(expiryMigration).toMatch(/status = 'provisional'/);
+    expect(verifiedRegistrationMigration).toMatch(
+      /academy_release_provisional_registration_on_user_delete[\s\S]*?delete from public\.academy_registration_codes/,
+    );
+    expect(verifiedRegistrationMigration).toMatch(/academy\.registration_cleanup/);
   });
 });
 

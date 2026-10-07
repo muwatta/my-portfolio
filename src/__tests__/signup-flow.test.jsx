@@ -19,6 +19,21 @@ vi.mock("../context/useTheme", () => ({
   useTheme: () => ({ theme: "light", toggle: vi.fn() }),
 }));
 
+vi.mock("../lib/academy", () => ({
+  getAcademySchools: async () => ({
+    data: [
+      {
+        id: "school-cimai",
+        name: "CIMAI",
+        code: "CIMAI",
+        state: "Kwara",
+        city: "Ilorin",
+      },
+    ],
+    error: null,
+  }),
+}));
+
 import AcademySignup from "../pages/AcademySignup";
 
 describe("Academy signup submission", () => {
@@ -47,6 +62,10 @@ describe("Academy signup submission", () => {
     });
     fireEvent.change(screen.getByLabelText("Email"), {
       target: { value: "student@example.com" },
+    });
+    await screen.findByRole("option", { name: "CIMAI · Ilorin" });
+    fireEvent.change(screen.getByLabelText("School"), {
+      target: { value: "school-cimai" },
     });
     fireEvent.change(screen.getByLabelText("Password"), {
       target: { value: "Cplusplus2026!" },
@@ -89,6 +108,10 @@ describe("Academy signup submission", () => {
     });
     fireEvent.change(screen.getByLabelText("Email"), {
       target: { value: " Student@Example.com " },
+    });
+    await screen.findByRole("option", { name: "CIMAI · Ilorin" });
+    fireEvent.change(screen.getByLabelText("School"), {
+      target: { value: "school-cimai" },
     });
     fireEvent.change(screen.getByLabelText("Password"), {
       target: { value: "Cplusplus2026!" },

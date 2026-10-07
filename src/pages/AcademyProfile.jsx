@@ -18,7 +18,7 @@ import {
 } from "../lib/offlineStore";
 
 export default function AcademyProfile() {
-  const { user, profile, isAdmin, isTeacher } = useAcademyAuth();
+  const { user, profile, updateProfile, isAdmin, isTeacher } = useAcademyAuth();
   const accessLabel = isAdmin ? "Admin" : isTeacher ? "Teacher" : "Student";
   const [schools, setSchools] = useState([]);
   const [form, setForm] = useState({
@@ -138,6 +138,9 @@ export default function AcademyProfile() {
   const isDirty = Object.keys(form).some(
     (key) => form[key] !== initialForm[key],
   );
+  const selectedSchool = schools.find((school) => school.id === form.schoolId);
+  const profileIncomplete =
+    !form.displayName.trim() || !form.schoolId || !form.state;
   const updateField = (field, value) => {
     setForm((current) => ({ ...current, [field]: value }));
     setMessage("");
@@ -148,9 +151,8 @@ export default function AcademyProfile() {
     setForm((current) => ({
       ...current,
       schoolId,
-      ...(selectedSchool
-        ? { state: selectedSchool.state, city: selectedSchool.city }
-        : {}),
+      state: selectedSchool?.state ?? "",
+      city: selectedSchool?.city ?? "",
     }));
     setMessage("");
     setError("");
@@ -198,11 +200,16 @@ export default function AcademyProfile() {
     const savedForm = {
       displayName: form.displayName.trim(),
       schoolId: form.schoolId,
-      state: form.state,
-      city: form.city.trim(),
+      state: selectedSchool?.state ?? "",
+      city: selectedSchool?.city ?? "",
     };
+    if (!savedForm.schoolId || !savedForm.state) {
+      setError("Select a school from the available list before saving.");
+      setSaving(false);
+      return;
+    }
     try {
-      const { error: saveError } = await updateAcademyStudentProfile(user.id, {
+      const { data: updatedProfile, error: saveError } = await updateAcademyStudentProfile(user.id, {
         display_name: savedForm.displayName,
         school_id: savedForm.schoolId || null,
         state: savedForm.state,
@@ -213,6 +220,7 @@ export default function AcademyProfile() {
       } else {
         setForm(savedForm);
         setInitialForm(savedForm);
+        updateProfile(updatedProfile);
         setMessage("Profile updated.");
       }
     } catch (saveError) {
@@ -285,8 +293,16 @@ export default function AcademyProfile() {
             </p>
             <h2 className="mt-1 text-xl font-bold">Keep your profile current</h2>
             <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
-              Make sure your school and location are up to date.
+              School and state must match an option already available in Academy.
             </p>
+            {profileIncomplete && (
+              <p
+                role="status"
+                className="mt-3 rounded-lg border border-red-300 bg-red-50 p-3 text-sm font-semibold text-red-800 dark:border-red-800 dark:bg-red-950/40 dark:text-red-200"
+              >
+                Complete your name, school, and state to finish your profile.
+              </p>
+            )}
           </div>
           {isDirty && (
             <span className="shrink-0 rounded-full bg-amber-100 px-3 py-1 text-xs font-bold text-amber-900 dark:bg-amber-950 dark:text-amber-200">
@@ -314,8 +330,9 @@ export default function AcademyProfile() {
               className="field"
               value={form.schoolId}
               onChange={(event) => selectSchool(event.target.value)}
+              required
             >
-              <option value="">Other or not listed</option>
+              <option value="">Select your school</option>
               {schools.map((school) => (
                 <option key={school.id} value={school.id}>
                   {school.name}
@@ -326,38 +343,36 @@ export default function AcademyProfile() {
           </label>
           {schoolError && (
             <p
-              role="status"
-              className="text-sm text-amber-800 sm:col-span-2 dark:text-amber-300"
+              role="alert"
+              className="text-sm text-red-700 sm:col-span-2 dark:text-red-300"
             >
-              {schoolError} You can still save the rest of your profile.
+              {schoolError} A school selection is required to save your profile.
             </p>
           )}
           <label className="label">
             State
-            <select
+            <input
               className="field"
               value={form.state}
-              onChange={(event) => updateField("state", event.target.value)}
+              readOnly
               required
-            >
-              <option value="">Select state</option>
-              <option>Plateau</option>
-              <option>Kwara</option>
-              <option>Lagos</option>
-              <option>Abuja</option>
-              <option>Other</option>
-            </select>
+              aria-describedby="academy-profile-location-help"
+            />
           </label>
           <label className="label">
-            City or location
+            City
             <input
               className="field"
               value={form.city}
-              onChange={(event) => updateField("city", event.target.value)}
-              autoComplete="address-level2"
-              required
+              readOnly
             />
           </label>
+          <p
+            id="academy-profile-location-help"
+            className="text-xs text-slate-500 sm:col-span-2 dark:text-slate-400"
+          >
+            State and city are filled from the selected school.
+          </p>
           {error && (
             <p
               role="alert"
@@ -377,7 +392,7 @@ export default function AcademyProfile() {
           <button
             className="button-primary inline-flex w-full items-center justify-center gap-2 sm:w-auto"
             type="submit"
-            disabled={saving || !isDirty}
+            disabled={saving || !isDirty || schools.length === 0}
           >
             {saving ? "Saving..." : message ? <FiCheck aria-hidden="true" /> : null}
             {saving ? "Saving profile" : message ? "Saved" : "Save profile"}

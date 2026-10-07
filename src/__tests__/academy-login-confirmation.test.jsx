@@ -36,9 +36,12 @@ describe("Academy login confirmation resend", () => {
       </MemoryRouter>,
     );
 
-    fireEvent.change(screen.getByLabelText("Email"), {
-      target: { value: " Student@Example.com " },
-    });
+    fireEvent.change(
+      screen.getByLabelText(/Verified email or registration number/),
+      {
+        target: { value: " Student@Example.com " },
+      },
+    );
     fireEvent.click(
       screen.getByRole("button", { name: "Resend confirmation email" }),
     );
@@ -58,9 +61,12 @@ describe("Academy login confirmation resend", () => {
       </MemoryRouter>,
     );
 
-    fireEvent.change(screen.getByLabelText("Email"), {
-      target: { value: "not-an-email" },
-    });
+    fireEvent.change(
+      screen.getByLabelText(/Verified email or registration number/),
+      {
+        target: { value: "not-an-email" },
+      },
+    );
     fireEvent.click(
       screen.getByRole("button", { name: "Resend confirmation email" }),
     );

@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, Navigate, useNavigate } from "react-router-dom";
 import { useAcademyAuth } from "../hooks/useAcademyAuth";
 import { useTheme } from "../context/useTheme";
@@ -12,6 +12,7 @@ import {
 import PasswordField from "../components/academy/PasswordField";
 import TurnstileChallenge from "../components/academy/TurnstileChallenge";
 import { isTurnstileRequired } from "../lib/turnstile";
+import { getAcademySchools } from "../lib/academy";
 
 const sidePanelHighlights = [
   { text: "Paths across software, embedded, and AI/ML", accent: "teal" },
@@ -37,6 +38,10 @@ export default function AcademySignup() {
   const navigate = useNavigate();
   const [displayName, setDisplayName] = useState("");
   const [email, setEmail] = useState("");
+  const [schools, setSchools] = useState([]);
+  const [schoolId, setSchoolId] = useState("");
+  const [schoolsLoading, setSchoolsLoading] = useState(true);
+  const [schoolsError, setSchoolsError] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [passwordAttempted, setPasswordAttempted] = useState(false);
@@ -50,6 +55,32 @@ export default function AcademySignup() {
   const [captchaToken, setCaptchaToken] = useState("");
   const [captchaReset, setCaptchaReset] = useState(0);
   const signupRequestStarted = useRef(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    getAcademySchools()
+      .then(({ data, error: schoolsLoadError }) => {
+        if (cancelled) return;
+        if (schoolsLoadError) {
+          setSchoolsError("School choices could not be loaded. Please try again shortly.");
+          return;
+        }
+        setSchools(data ?? []);
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setSchoolsError("School choices could not be loaded. Please try again shortly.");
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setSchoolsLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const selectedSchool = schools.find((school) => school.id === schoolId);
 
   if (loading) {
     return (
@@ -70,6 +101,7 @@ export default function AcademySignup() {
     const name = displayName.trim();
     const normalizedEmail = email.trim().toLowerCase();
     if (!name) return setError("Please enter your full name.");
+    if (!selectedSchool) return setError("Select your school from the available list.");
     const problems = getAcademyPasswordProblems(password);
     if (problems.length) {
       setPasswordAttempted(true);
@@ -93,10 +125,16 @@ export default function AcademySignup() {
             normalizedEmail,
             password,
             name,
-            undefined,
             captchaToken,
+            selectedSchool,
           )
-        : await signUp(normalizedEmail, password, name);
+        : await signUp(
+            normalizedEmail,
+            password,
+            name,
+            undefined,
+            selectedSchool,
+          );
       const { error: signUpError } = signupResult;
       if (signUpError) throw signUpError;
       setCreated(true);
@@ -254,8 +292,7 @@ export default function AcademySignup() {
               />
               <p className="mt-4 text-sm leading-6 text-slate-600 dark:text-slate-300">
                 Your registration number is issued for you automatically once you
-                confirm your email, and you will see it on your dashboard. It
-                stays provisional until an administrator accepts it.
+                confirm your email, and you will see it on your dashboard.
               </p>
               <div className="mt-6 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
                 <button
@@ -318,6 +355,36 @@ export default function AcademySignup() {
                   required
                 />
               </label>
+              <label className="label">
+                School
+                <select
+                  className="field"
+                  value={schoolId}
+                  onChange={(event) => setSchoolId(event.target.value)}
+                  required
+                  disabled={schoolsLoading || schools.length === 0}
+                >
+                  <option value="">
+                    {schoolsLoading ? "Loading schools..." : "Select your school"}
+                  </option>
+                  {schools.map((school) => (
+                    <option key={school.id} value={school.id}>
+                      {school.name}
+                      {school.city ? ` · ${school.city}` : ""}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              {schoolsError && (
+                <p role="alert" className="text-sm text-red-700 dark:text-red-300">
+                  {schoolsError}
+                </p>
+              )}
+              {selectedSchool && (
+                <p className="text-sm text-slate-600 dark:text-slate-300">
+                  Location: {selectedSchool.city}, {selectedSchool.state}
+                </p>
+              )}
               <PasswordField
                 id="academy-signup-password"
                 label="Password"
@@ -351,7 +418,11 @@ export default function AcademySignup() {
                 className="button-primary w-full"
                 type="submit"
                 disabled={
-                  submitting || (isTurnstileRequired && !captchaToken)
+                  submitting ||
+                  schoolsLoading ||
+                  schools.length === 0 ||
+                  !selectedSchool ||
+                  (isTurnstileRequired && !captchaToken)
                 }
               >
                 {submitting

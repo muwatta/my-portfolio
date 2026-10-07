@@ -2,22 +2,17 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import {
   acceptAcademyRegistration,
-  assignAcademyRegistrationCode,
-  generateAcademyRegistrationCodes,
+  editAcademyRegistrationNumber,
   getAcademyRegistrationCodes,
   getAcademyTeacherStudents,
-  reassignAcademyRegistrationCode,
   suspendAcademyRegistrationCode,
   withdrawAcademyRegistration,
 } from "../lib/academy";
 import { friendlyError } from "../lib/utils";
 
 const emptyForm = {
-  year: String(new Date().getFullYear()),
-  count: "20",
   studentId: "",
-  registrationNumber: "",
-  replacementNumber: "",
+  replacementSerial: "",
   reason: "",
 };
 
@@ -30,9 +25,7 @@ export default function AcademyAdminRegistrations() {
   const [form, setForm] = useState(emptyForm);
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("");
-  const [showUnused, setShowUnused] = useState(false);
   const [directoryPage, setDirectoryPage] = useState(0);
-  const [generated, setGenerated] = useState([]);
   const [suspendTarget, setSuspendTarget] = useState(null);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
@@ -86,21 +79,13 @@ export default function AcademyAdminRegistrations() {
     (student) => student.id === form.studentId,
   );
   const selectedRegistration = selectedStudent
-    ? rows.find(
-        (row) => row.student_id === selectedStudent.id,
-      )?.registration_number ?? selectedStudent.academy_registration_codes?.registration_number
+    ? rows.find((row) => row.student_id === selectedStudent.id)
+        ?.registration_number ??
+      selectedStudent.academy_registration_codes?.registration_number
     : "";
-  const filteredStudents = useMemo(() => {
-    const query = form.studentId ? "" : form.registrationNumber.trim().toLowerCase();
-    if (!query) return students;
-    return students.filter((student) =>
-      `${student.display_name || ""} ${student.id}`.toLowerCase().includes(query),
-    );
-  }, [form.registrationNumber, form.studentId, students]);
   const counts = useMemo(
     () => ({
-      all: rows.length,
-      available: rows.filter((row) => row.status === "available").length,
+      all: rows.filter((row) => row.status !== "available").length,
       provisional: rows.filter((row) => row.status === "provisional").length,
       voided: rows.filter((row) => row.status === "voided").length,
       claimed: rows.filter((row) => row.status === "claimed").length,
@@ -109,11 +94,8 @@ export default function AcademyAdminRegistrations() {
     [rows],
   );
   const directoryRows = useMemo(
-    () =>
-      showUnused || status === "available" || search.trim()
-        ? rows
-        : rows.filter((row) => row.status !== "available"),
-    [rows, search, showUnused, status],
+    () => rows.filter((row) => row.status !== "available"),
+    [rows],
   );
   const directoryPageCount = Math.max(
     1,
@@ -123,10 +105,6 @@ export default function AcademyAdminRegistrations() {
     directoryPage * REGISTRATION_PAGE_SIZE,
     (directoryPage + 1) * REGISTRATION_PAGE_SIZE,
   );
-  const hiddenUnusedCount = rows.filter(
-    (row) => row.status === "available",
-  ).length;
-
   function updateForm(field, value) {
     setForm((current) => ({ ...current, [field]: value }));
   }
@@ -136,58 +114,24 @@ export default function AcademyAdminRegistrations() {
     update();
   }
 
-  async function handleGenerate(event) {
-    event.preventDefault();
-    setSaving(true);
-    setMessage("");
-    setError("");
-    const result = await generateAcademyRegistrationCodes(form.year, form.count);
-    if (result.error) {
-      setError(friendlyError(result.error, "Registration numbers could not be generated."));
-      setGenerated([]);
-    } else {
-      setGenerated(result.data ?? []);
-      setMessage(`${result.data?.length ?? 0} registration numbers generated.`);
-      await load();
-    }
-    setSaving(false);
-  }
-
-  async function handleAssign(event) {
-    event.preventDefault();
-    setSaving(true);
-    setMessage("");
-    setError("");
-    const result = await assignAcademyRegistrationCode(
-      form.studentId,
-      form.registrationNumber,
-    );
-    if (result.error) {
-      setError(friendlyError(result.error, "Registration number could not be assigned."));
-    } else {
-      setMessage("Registration number assigned successfully.");
-      setForm((current) => ({ ...current, registrationNumber: "" }));
-      await load();
-    }
-    setSaving(false);
-  }
-
   async function handleReassign(event) {
     event.preventDefault();
+    if (!selectedStudent?.registration_code_id) {
+      setError("Select a student who already has a registration number.");
+      return;
+    }
     setSaving(true);
     setMessage("");
     setError("");
-    const result = await reassignAcademyRegistrationCode({
-      studentId: form.studentId,
-      oldRegistrationNumber: selectedRegistration,
-      newRegistrationNumber: form.replacementNumber,
-      reason: form.reason,
-    });
+    const result = await editAcademyRegistrationNumber(
+      selectedStudent.registration_code_id,
+      form.replacementSerial,
+    );
     if (result.error) {
-      setError(friendlyError(result.error, "Registration number could not be reassigned."));
+      setError(friendlyError(result.error, "Registration number could not be changed."));
     } else {
-      setMessage("Registration number reassigned and audited.");
-      setForm((current) => ({ ...current, replacementNumber: "", reason: "" }));
+      setMessage("Registration number changed and audited.");
+      setForm((current) => ({ ...current, replacementSerial: "" }));
       await load();
     }
     setSaving(false);
@@ -248,23 +192,6 @@ export default function AcademyAdminRegistrations() {
     setSaving(false);
   }
 
-  async function copyGenerated() {
-    const text = generated.map((item) => item.registration_number).join("\n");
-    if (navigator.clipboard) await navigator.clipboard.writeText(text);
-    setMessage("Generated registration numbers copied to the clipboard.");
-  }
-
-  function downloadGenerated() {
-    const text = generated.map((item) => item.registration_number).join("\n");
-    const blob = new Blob([text], { type: "text/plain" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `academy-registration-${form.year}.txt`;
-    link.click();
-    URL.revokeObjectURL(url);
-  }
-
   return (
     <div className="space-y-8">
       <header className="flex flex-wrap items-end justify-between gap-4">
@@ -274,7 +201,7 @@ export default function AcademyAdminRegistrations() {
           </p>
           <h1 className="mt-2 text-3xl font-bold">Registration numbers</h1>
           <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
-            Generate, assign, and audit permanent Academy student identities.
+            View issued student identities and make audited corrections.
           </p>
         </div>
         <Link className="button-secondary inline-flex" to="/academy/admin/students">
@@ -291,11 +218,10 @@ export default function AcademyAdminRegistrations() {
         </p>
       )}
 
-      <section className="grid gap-4 sm:grid-cols-3 lg:grid-cols-6">
+      <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {[
           ["Total", counts.all],
           ["Awaiting acceptance", counts.provisional],
-          ["Available", counts.available],
           ["Claimed", counts.claimed],
           ["Suspended", counts.suspended],
         ].map(([label, value]) => (
@@ -304,63 +230,6 @@ export default function AcademyAdminRegistrations() {
             <p className="mt-2 text-3xl font-bold">{value}</p>
           </div>
         ))}
-      </section>
-
-      <section className="grid gap-6 lg:grid-cols-2">
-        <form onSubmit={handleGenerate} className="space-y-4 rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900">
-          <div>
-            <h2 className="text-xl font-bold">Generate numbers</h2>
-            <p className="mt-1 text-sm text-slate-500">New numbers continue after the highest serial already issued for the year.</p>
-          </div>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <label className="label">
-              Registration Year
-              <input className="field" type="number" min="2000" max="2099" value={form.year} onChange={(event) => updateForm("year", event.target.value)} required />
-            </label>
-            <label className="label">
-              Number to Generate
-              <input className="field" type="number" min="1" max="999" value={form.count} onChange={(event) => updateForm("count", event.target.value)} required />
-            </label>
-          </div>
-          <button className="button-primary" type="submit" disabled={saving}>
-            {saving ? "Generating..." : "Generate Registration Numbers"}
-          </button>
-          {generated.length > 0 && (
-            <div className="rounded-xl bg-slate-950 p-4 text-sm text-slate-100">
-              <p className="font-semibold text-cyan-300">Generated numbers</p>
-              <p className="mt-2 max-h-32 overflow-y-auto whitespace-pre-wrap">{generated.map((item) => item.registration_number).join("\n")}</p>
-              <div className="mt-3 flex flex-wrap gap-2">
-                <button className="button-secondary" type="button" onClick={copyGenerated}>Copy list</button>
-                <button className="button-secondary" type="button" onClick={downloadGenerated}>Export list</button>
-              </div>
-            </div>
-          )}
-        </form>
-
-        <form onSubmit={handleAssign} className="space-y-4 rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900">
-          <div>
-            <h2 className="text-xl font-bold">Assign to an existing student</h2>
-            <p className="mt-1 text-sm text-slate-500">Assignment changes only the identity link; the student's course, level, and learning records stay intact.</p>
-          </div>
-          <label className="label">
-            Student
-            <select className="field" value={form.studentId} onChange={(event) => updateForm("studentId", event.target.value)} required>
-              <option value="">Select a student</option>
-              {filteredStudents.map((student) => (
-                <option key={student.id} value={student.id}>
-                  {student.display_name || "Unnamed student"} · {student.academy_registration_codes?.registration_number || "Unassigned"}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="label">
-            Registration Number
-            <input className="field uppercase" placeholder="ATE-26-001" value={form.registrationNumber} onChange={(event) => updateForm("registrationNumber", event.target.value.toUpperCase())} required />
-          </label>
-          <button className="button-primary" type="submit" disabled={saving}>
-            {saving ? "Assigning..." : "Assign Registration Number"}
-          </button>
-        </form>
       </section>
 
       <section className="rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900">
@@ -373,24 +242,11 @@ export default function AcademyAdminRegistrations() {
             <input className="field min-w-64" aria-label="Search registration numbers" placeholder="Search registration numbers..." value={search} onChange={(event) => updateDirectoryFilter(() => setSearch(event.target.value))} />
             <select className="field" aria-label="Filter registration status" value={status} onChange={(event) => updateDirectoryFilter(() => setStatus(event.target.value))}>
               <option value="">All statuses</option>
-              <option value="available">Available</option>
+              <option value="provisional">Awaiting acceptance</option>
               <option value="claimed">Claimed</option>
+              <option value="voided">Withdrawn</option>
               <option value="suspended">Suspended</option>
             </select>
-            {hiddenUnusedCount > 0 && (
-              <button
-                className="button-secondary whitespace-nowrap"
-                type="button"
-                aria-pressed={showUnused}
-                onClick={() =>
-                  updateDirectoryFilter(() => setShowUnused((current) => !current))
-                }
-              >
-                {showUnused
-                  ? "Hide unused"
-                  : `Show unused (${hiddenUnusedCount})`}
-              </button>
-            )}
           </div>
         </div>
         <p className="mt-3 text-sm text-slate-500" aria-live="polite">
@@ -400,9 +256,6 @@ export default function AcademyAdminRegistrations() {
                 directoryRows.length,
               )} of ${directoryRows.length} registration numbers.`
             : "No registration numbers to show."}
-          {!showUnused && status !== "available" && !search.trim() && hiddenUnusedCount > 0
-            ? ` ${hiddenUnusedCount} unused numbers are hidden.`
-            : ""}
         </p>
         {loading ? <p className="mt-5 text-sm text-slate-500">Loading registration numbers...</p> : (
           <div className="mt-5 overflow-x-auto">
@@ -422,8 +275,8 @@ export default function AcademyAdminRegistrations() {
                 {pageRows.map((row) => (
                   <tr key={row.registration_number}>
                     <td className="px-4 py-3 font-semibold tracking-[0.1em]">{row.registration_number}</td>
-                    <td className="px-4 py-3"><span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${row.status === "available" ? "bg-emerald-100 text-emerald-800" : row.status === "provisional" ? "bg-violet-100 text-violet-800" : row.status === "claimed" ? "bg-blue-100 text-blue-800" : row.status === "voided" ? "bg-slate-200 text-slate-700" : "bg-amber-100 text-amber-800"}`}>{row.status === "provisional" ? "awaiting acceptance" : row.status}</span></td>
-                    <td className="px-4 py-3">{row.student_name || "Not assigned"}</td>
+                    <td className="px-4 py-3"><span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${row.status === "provisional" ? "bg-violet-100 text-violet-800" : row.status === "claimed" ? "bg-blue-100 text-blue-800" : row.status === "voided" ? "bg-slate-200 text-slate-700" : "bg-amber-100 text-amber-800"}`}>{row.status === "provisional" ? "awaiting acceptance" : row.status}</span></td>
+                    <td className="px-4 py-3">{row.student_name || "Student record unavailable"}</td>
                     <td className="px-4 py-3">{row.student_email || "Not available"}</td>
                     <td className="px-4 py-3">{row.course_title || "Not assigned"}</td>
                     <td className="px-4 py-3">{new Date(row.created_at).toLocaleDateString()}</td>
@@ -461,9 +314,6 @@ export default function AcademyAdminRegistrations() {
                         )}
                         {row.status === "suspended" && "Suspended"}
                         {row.status === "voided" && "Withdrawn"}
-                        {row.status === "available" && (
-                          <span className="text-xs text-slate-500">Unused</span>
-                        )}
                       </div>
                     </td>
                   </tr>
@@ -507,16 +357,62 @@ export default function AcademyAdminRegistrations() {
 
       <section className="rounded-2xl border border-amber-200 bg-amber-50 p-6 dark:border-amber-900 dark:bg-amber-950/30">
         <h2 className="text-xl font-bold">Controlled changes</h2>
-        {selectedStudent && selectedRegistration ? (
-          <form onSubmit={handleReassign} className="mt-4 grid gap-4 lg:grid-cols-4">
-            <p className="text-sm lg:col-span-4">Selected student: <strong>{selectedStudent.display_name || "Unnamed student"}</strong> · Current number: <strong>{selectedRegistration}</strong></p>
-            <label className="label">New Registration Number<input className="field uppercase" value={form.replacementNumber} onChange={(event) => updateForm("replacementNumber", event.target.value.toUpperCase())} required /></label>
-            <label className="label">Reason<input className="field" value={form.reason} onChange={(event) => updateForm("reason", event.target.value)} required /></label>
-            <div className="flex items-end"><button className="button-secondary" type="submit" disabled={saving}>Reassign with audit</button></div>
-          </form>
-        ) : (
-          <p className="mt-2 text-sm text-amber-900 dark:text-amber-100">Select a claimed student above to review the explicit reassignment workflow.</p>
-        )}
+        <p className="mt-2 text-sm text-amber-900 dark:text-amber-100">
+          Change only the serial within the student's existing registration
+          year. The system rejects numbers already assigned to another student.
+        </p>
+        <form onSubmit={handleReassign} className="mt-4 grid gap-4 lg:grid-cols-3">
+          <label className="label">
+            Student
+            <select
+              className="field"
+              value={form.studentId}
+              onChange={(event) => {
+                updateForm("studentId", event.target.value);
+                updateForm("replacementSerial", "");
+              }}
+              required
+            >
+              <option value="">Select a student</option>
+              {students.map((student) => (
+                <option key={student.id} value={student.id}>
+                  {student.display_name || "Unnamed student"} ·{" "}
+                  {student.academy_registration_codes?.registration_number || "No number"}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="label">
+            New serial
+            <input
+              className="field"
+              type="number"
+              min="1"
+              max="999"
+              value={form.replacementSerial}
+              onChange={(event) =>
+                updateForm("replacementSerial", event.target.value)
+              }
+              required
+              disabled={!selectedRegistration}
+            />
+          </label>
+          <div className="flex items-end">
+            <button
+              className="button-secondary"
+              type="submit"
+              disabled={saving || !selectedStudent?.registration_code_id}
+            >
+              {saving ? "Saving..." : "Save number change"}
+            </button>
+          </div>
+          {selectedStudent && (
+            <p className="text-sm lg:col-span-3">
+              Current number:{" "}
+              <strong>{selectedRegistration || "No number assigned"}</strong>
+            </p>
+          )}
+        </form>
       </section>
 
       {suspendTarget && (

@@ -195,12 +195,35 @@ export function AcademyAuthProvider({ children }) {
     };
   }, [session]);
 
-  const signIn = (email, password, captchaToken) => {
+  const signIn = async (identifier, password, captchaToken) => {
     if (!supabase) {
       throw new Error("Academy authentication is not configured yet.");
     }
+
+    const normalizedIdentifier = String(identifier ?? "").trim();
+    if (/^ATE-\d{2}-\d{3}$/i.test(normalizedIdentifier)) {
+      const { data, error } = await supabase.functions.invoke(
+        "academy-registration-login",
+        {
+          body: {
+            registration_number: normalizedIdentifier.toUpperCase(),
+            password,
+            ...(captchaToken ? { captcha_token: captchaToken } : {}),
+          },
+        },
+      );
+      if (error) return { error };
+      if (!data?.session?.access_token || !data?.session?.refresh_token) {
+        return { error: new Error("We could not sign you in.") };
+      }
+      return supabase.auth.setSession({
+        access_token: data.session.access_token,
+        refresh_token: data.session.refresh_token,
+      });
+    }
+
     return supabase.auth.signInWithPassword({
-      email,
+      email: normalizedIdentifier.toLowerCase(),
       password,
       ...(captchaToken ? { options: { captchaToken } } : {}),
     });
@@ -210,8 +233,8 @@ export function AcademyAuthProvider({ children }) {
     email,
     password,
     displayName,
-    registrationNumber,
     captchaToken,
+    selectedSchool,
   ) => {
     if (!supabase) {
       throw new Error("Academy authentication is not configured yet.");
@@ -225,11 +248,12 @@ export function AcademyAuthProvider({ children }) {
         data: {
           display_name: displayName,
           first_name: displayName.trim().split(/\s+/)[0] ?? "",
-          // Optional. A student is issued a number automatically now. Schools
-          // that hand numbers out on paper can still pass one, and the trigger
-          // honours it when it is a real unused code.
-          ...(registrationNumber
-            ? { registration_number: registrationNumber }
+          ...(selectedSchool
+            ? {
+                school_code: selectedSchool.code,
+                state: selectedSchool.state,
+                city: selectedSchool.city,
+              }
             : {}),
         },
       },
@@ -287,12 +311,17 @@ export function AcademyAuthProvider({ children }) {
     return result;
   };
 
+  const updateProfile = (updates) => {
+    setProfile((current) => (current ? { ...current, ...updates } : current));
+  };
+
   return (
     <AcademyAuthContext.Provider
       value={{
         session,
         user: session?.user ?? null,
         profile,
+        updateProfile,
         loading,
         profileLoading,
         initializing: loading || (Boolean(session?.user?.id) && !profileSettled),
