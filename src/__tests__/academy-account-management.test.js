@@ -5,6 +5,10 @@ const fn = readFileSync(
   "supabase/functions/academy-admin-manage-user/index.ts",
   "utf8",
 );
+const deletionAttribution = readFileSync(
+  "supabase/migrations/20261402000000_academy_account_deletion_attribution.sql",
+  "utf8",
+);
 const emailSql = readFileSync(
   "supabase/migrations/20261203000000_academy_profile_email.sql",
   "utf8",
@@ -46,6 +50,28 @@ describe("one account per email address", () => {
   it("frees the address again once the account is deleted", () => {
     // The profile row goes with the auth user, so nothing holds the address.
     expect(fn).toMatch(/auth\.admin\.deleteUser\(target\)/);
+  });
+
+  it("preserves authored content while clearing references that would block deletion", () => {
+    const attributionFields = [
+      ["academy_assignments", "created_by"],
+      ["academy_classes", "created_by"],
+      ["academy_schedules", "created_by"],
+      ["academy_materials", "created_by"],
+      ["academy_student_badges", "awarded_by"],
+      ["academy_live_rooms", "created_by"],
+      ["academy_submission_results", "reviewed_by"],
+      ["academy_exam_questions", "created_by"],
+      ["academy_exams", "created_by"],
+    ];
+
+    for (const [table, column] of attributionFields) {
+      expect(deletionAttribution).toMatch(
+        new RegExp(
+          `alter table public\\.${table}[\\s\\S]*?add constraint ${table}_${column}_fkey[\\s\\S]*?foreign key \\(${column}\\) references auth\\.users\\(id\\) on delete set null`,
+        ),
+      );
+    }
   });
 
   it("still tells a signing up student an account may exist, without confirming it", () => {
