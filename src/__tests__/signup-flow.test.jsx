@@ -1,6 +1,12 @@
+import { readFileSync } from "node:fs";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+
+const publicSchoolCatalog = readFileSync(
+  "supabase/migrations/20261403000000_academy_public_school_catalogue.sql",
+  "utf8",
+);
 
 const signUp = vi.fn();
 const resendConfirmation = vi.fn();
@@ -35,6 +41,17 @@ vi.mock("../lib/academy", () => ({
 }));
 
 import AcademySignup from "../pages/AcademySignup";
+
+describe("public Academy signup school options", () => {
+  it("allows anonymous signup to read active schools only", () => {
+    expect(publicSchoolCatalog).toMatch(
+      /grant select on public\.academy_schools to anon/,
+    );
+    expect(publicSchoolCatalog).toMatch(
+      /create policy academy_schools_public_signup_read[\s\S]*for select to anon\s+using \(is_active\)/,
+    );
+  });
+});
 
 describe("Academy signup submission", () => {
   beforeEach(() => {
