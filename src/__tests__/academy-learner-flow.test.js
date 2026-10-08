@@ -145,6 +145,12 @@ describe("the learner pages use the server answer", () => {
     expect(dashboard).not.toMatch(/loadSection\("home"/);
   });
 
+  it("refreshes the home snapshot when progress changes", () => {
+    const academy = readFileSync("src/lib/academy.js", "utf8");
+    expect(academy).toMatch(/`home:\$\{studentId\}`/);
+    expect(academy).toMatch(/`home:\$\{userId \?\? "anon"\}`/);
+  });
+
   it("surfaces the task step with its submission state", () => {
     expect(lesson).toMatch(/topic-step-task/);
     expect(lesson).toMatch(/task\.submission/);

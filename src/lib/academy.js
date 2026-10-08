@@ -86,6 +86,7 @@ export async function selectAcademyCourse(studentId, courseId) {
       `progress:${studentId}`,
       `assignments:${studentId}`,
       `overview:${studentId}`,
+      `home:${studentId}`,
     );
   }
   return { data, error };
@@ -1462,6 +1463,7 @@ export async function assignAcademyStudentLevel(studentId, courseId) {
       `progress:${studentId}`,
       `assignments:${studentId}`,
       `overview:${studentId}`,
+      `home:${studentId}`,
       "teacher-students",
     );
   }
@@ -1578,7 +1580,7 @@ export async function markLessonStarted(lessonId, studentId) {
   const { error } = await supabase.rpc("academy_start_lesson", {
     target_lesson_id: lessonId,
   });
-  if (!error) invalidateAcademyCache(`lesson:${lessonId}:${studentId}`, `lessons:${studentId}`, `progress:${studentId}`);
+  if (!error) invalidateAcademyCache(`lesson:${lessonId}:${studentId}`, `lessons:${studentId}`, `progress:${studentId}`, `home:${studentId}`);
   return { error };
 }
 
@@ -1786,6 +1788,7 @@ export async function markLessonComplete(lessonId, studentId) {
       `lessons:${studentId}`,
       `progress:${studentId}`,
       `overview:${studentId}`,
+      `home:${studentId}`,
       "leaderboard:",
     );
   }
@@ -1900,7 +1903,7 @@ export async function submitObjectiveAnswer(
     "academy_submit_objective_answer",
     args,
   );
-  if (!error) invalidateAcademyCache("leaderboard:", "lesson:");
+  if (!error) invalidateAcademyCache("leaderboard:", "lesson:", "home:");
   return { data, error };
 }
 
@@ -2184,6 +2187,7 @@ export async function submitAssignment({
       `progress:${studentId}`,
       `assignments:${studentId}`,
       `overview:${studentId}`,
+      `home:${studentId}`,
       "leaderboard:",
     );
   }
