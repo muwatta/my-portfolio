@@ -136,6 +136,16 @@ export default function GradingInbox() {
 
   const save = useCallback(async () => {
     if (!current) return;
+    const maximum = Number(current.max_score ?? 100);
+    const numericScore = String(score).trim() ? Number(score) : Number.NaN;
+    if (
+      !Number.isFinite(numericScore) ||
+      numericScore < 0 ||
+      numericScore > maximum
+    ) {
+      setStatus(`Enter a mark from 0 to ${maximum}.`);
+      return;
+    }
     setBusy(true);
     const { error } = await reviewSubmission({
       submissionId: current.submission_id,
@@ -416,6 +426,7 @@ export default function GradingInbox() {
                 className="field"
                 type="number"
                 min={0}
+                max={current.max_score ?? 100}
                 step="0.5"
                 value={score}
                 onChange={(event) => setScore(event.target.value)}

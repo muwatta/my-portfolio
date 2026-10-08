@@ -11,6 +11,7 @@ const migration = readFileSync(
   "supabase/migrations/20261341000000_academy_grading_file_path.sql",
   "utf8",
 );
+const supabaseConfig = readFileSync("supabase/config.toml", "utf8");
 
 describe("staff file review and AI grade suggestions", () => {
   it("returns the uploaded file path only in the staff grading queue", () => {
@@ -24,6 +25,13 @@ describe("staff file review and AI grade suggestions", () => {
     expect(edgeFunction).toMatch(/academy_is_teacher/);
     expect(edgeFunction).toMatch(/academy_is_admin/);
     expect(edgeFunction).toMatch(/if \(!isTeacher && !isAdmin\)/);
+  });
+
+  it("lets the function handle browser preflight before verifying the user itself", () => {
+    expect(supabaseConfig).toMatch(
+      /\[functions\.academy-ai-grade-submission\]\s+verify_jwt = false/,
+    );
+    expect(edgeFunction).toMatch(/Access-Control-Allow-Methods": "POST, OPTIONS"/);
   });
 
   it("validates AI marks against the assignment maximum and returns a suggestion", () => {

@@ -186,4 +186,11 @@ describe("the grading screen", () => {
     expect(inbox).toMatch(/server did not run/);
     expect(inbox).toMatch(/treat it as a hint, not a mark/);
   });
+
+  it("rejects a missing or out-of-range mark before saving a review", () => {
+    expect(inbox).toMatch(/const numericScore = String\(score\)\.trim\(\)/);
+    expect(inbox).toMatch(/numericScore > maximum/);
+    expect(inbox).toMatch(/Enter a mark from 0 to \$\{maximum\}/);
+    expect(inbox).toMatch(/max=\{current\.max_score \?\? 100\}/);
+  });
 });

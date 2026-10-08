@@ -426,3 +426,6 @@ enabled = true
 
 [functions.academy-registration-login]
 verify_jwt = false
+
+[functions.academy-ai-grade-submission]
+verify_jwt = false
