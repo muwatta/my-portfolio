@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import {
-  getAcademyExercises,
   getAcademyLesson,
   getNextAcademyLesson,
+  generateAcademyPracticeSession,
   markLessonComplete,
   submitObjectiveAnswer,
 } from "../lib/academy";
@@ -60,6 +60,12 @@ export default function AcademyPractice() {
     ? exercises.filter((exercise) => exercise.lesson_id === selectedLessonId)
     : exercises;
   const practiceLanguage = visibleExercises[0]?.language || "python";
+  const practiceLanguageLabel =
+    practiceLanguage === "cpp"
+      ? "C++"
+      : practiceLanguage === "shell"
+        ? "Terminal"
+        : "Python";
 
   useEffect(() => {
     if (!selectedLessonId) return;
@@ -101,11 +107,35 @@ export default function AcademyPractice() {
           id: selectedLessonId
             ? `practice:${selectedLessonId}:${practiceSessionId}`
             : undefined,
-          fetcher: async () =>
-            getAcademyExercises(
-              user.id,
-              selectedLessonId ? practiceSessionId : null,
-            ),
+          allowEmpty: false,
+          fetcher: async () => {
+            const session = await generateAcademyPracticeSession(
+              selectedLessonId,
+              practiceSessionId,
+            );
+            if (session.error) {
+              return { data: null, error: session.error, configured: true };
+            }
+            if (!Array.isArray(session.data?.questions)) {
+              return {
+                data: null,
+                error: new Error("The practice service returned an invalid question set."),
+                configured: true,
+              };
+            }
+            if (session.data.questions.length === 0) {
+              return {
+                data: null,
+                error: new Error("No practice questions are available for this lesson yet."),
+                configured: true,
+              };
+            }
+            return {
+              data: session.data.questions,
+              error: null,
+              configured: true,
+            };
+          },
         });
         let draft = null;
         try {
@@ -329,13 +359,13 @@ export default function AcademyPractice() {
         </p>
         <h1 className="mt-2 text-3xl font-bold">
           {selectedLessonId
-            ? `Lesson practice · ${practiceLanguage === "cpp" ? "C++" : "Python"}`
+            ? `Lesson practice · ${practiceLanguageLabel}`
             : "Practice by lesson"}
         </h1>
         <p className="mt-2 text-slate-600 dark:text-slate-300">
           {selectedLessonId
-            ? "This lesson uses teacher-authored practice questions stored in the Academy database."
-            : "Choose a lesson to start with its prepared question set from the Academy bank."}
+            ? "Practice questions are prepared for this lesson and saved to your session."
+            : "Choose a lesson to start with its prepared question set."}
         </p>
       </header>
       {offline && (

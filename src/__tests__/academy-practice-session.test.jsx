@@ -126,7 +126,7 @@ describe("AcademyPractice saved session", () => {
       value: true,
     });
     api.generateAcademyPracticeSession.mockResolvedValue({
-      data: { session_id: SESSION_ID },
+      data: { session_id: SESSION_ID, questions: EXERCISES },
       error: null,
     });
     api.getAcademyExercises.mockResolvedValue({
@@ -193,16 +193,70 @@ describe("AcademyPractice saved session", () => {
     expect(screen.getAllByRole("button", { name: "Submit answer" })[0]).toBeEnabled();
   });
 
-  it("creates a fresh practice session id without invoking the PDF generator when practice opens without a session id", async () => {
+  it("creates a fresh session and loads its prepared question set when practice opens without a session id", async () => {
     renderPractice("/academy/practice?lesson=lesson-1");
 
     await screen.findByRole("radio", { name: "true" });
-    await waitFor(() => {
-      expect(api.generateAcademyPracticeSession).not.toHaveBeenCalled();
-    });
-    expect(api.getAcademyExercises).toHaveBeenCalledWith(
-      "student-1",
+    expect(api.generateAcademyPracticeSession).toHaveBeenCalledWith(
+      "lesson-1",
       expect.any(String),
+    );
+    expect(api.getAcademyExercises).not.toHaveBeenCalled();
+  });
+
+  it("shows the generation error instead of reporting an empty question bank", async () => {
+    api.generateAcademyPracticeSession.mockResolvedValueOnce({
+      data: null,
+      error: new Error("No prepared practice questions or published PDF are available for this lesson."),
+    });
+    renderPractice();
+
+    expect(
+      await screen.findByText(
+        "No prepared practice questions or published PDF are available for this lesson.",
+      ),
+    ).toBeInTheDocument();
+    expect(screen.queryByText("No prepared questions are available")).not.toBeInTheDocument();
+  });
+
+  it("does not treat an empty generated response as a successful session", async () => {
+    api.generateAcademyPracticeSession.mockResolvedValueOnce({
+      data: { session_id: SESSION_ID, questions: [] },
+      error: null,
+    });
+    renderPractice();
+
+    expect(
+      await screen.findByText("No practice questions are available for this lesson yet."),
+    ).toBeInTheDocument();
+    expect(api.generateAcademyPracticeSession).toHaveBeenCalledWith(
+      "lesson-1",
+      SESSION_ID,
+    );
+  });
+
+  it("labels terminal-language practice accurately", async () => {
+    api.generateAcademyPracticeSession.mockResolvedValueOnce({
+      data: {
+        session_id: SESSION_ID,
+        questions: [{ ...EXERCISES[0], language: "shell" }],
+      },
+      error: null,
+    });
+    renderPractice();
+
+    expect(
+      await screen.findByRole("heading", { name: "Lesson practice · Terminal" }),
+    ).toBeInTheDocument();
+  });
+
+  it("uses a saved session's prepared questions without reloading the general exercise list", async () => {
+    renderPractice();
+
+    await screen.findByRole("radio", { name: "true" });
+    expect(api.generateAcademyPracticeSession).toHaveBeenCalledWith(
+      "lesson-1",
+      SESSION_ID,
     );
   });
 
@@ -213,13 +267,13 @@ describe("AcademyPractice saved session", () => {
       await screen.findByRole("heading", { name: "Choose a lesson to practice" }),
     ).toBeInTheDocument();
     expect(api.getAcademyExercises).not.toHaveBeenCalled();
+    expect(api.generateAcademyPracticeSession).not.toHaveBeenCalled();
   });
 
   it("automatically advances to the Task phase after passing the generated set", async () => {
-    api.getAcademyExercises.mockResolvedValue({
-      data: [EXERCISES[0]],
+    api.generateAcademyPracticeSession.mockResolvedValue({
+      data: { session_id: SESSION_ID, questions: [EXERCISES[0]] },
       error: null,
-      configured: true,
     });
     renderPractice();
     fireEvent.click(await screen.findByRole("radio", { name: "true" }));

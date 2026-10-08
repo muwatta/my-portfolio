@@ -6,8 +6,10 @@ import {
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Max-Age": "86400",
 };
 const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -97,7 +99,10 @@ Deno.serve(async (request) => {
     );
     if (existingQuestions.error)
       return json({ error: "Could not load saved practice questions." }, 500);
-    if (existingQuestions.data.length === QUESTION_COUNT)
+    if (
+      existingQuestions.data.length > 0 &&
+      existingQuestions.data.length <= QUESTION_COUNT
+    )
       return json({ session_id: input.session_id, questions: existingQuestions.data });
     if (existingQuestions.data.length > 0) {
       return json({
@@ -105,20 +110,22 @@ Deno.serve(async (request) => {
       }, 409);
     }
   }
-  if (!providerKey)
-    return json({ error: "PDF-based practice generation is not configured." }, 503);
-
-  if (!existingSession) {
+  const ensurePracticeSession = async () => {
+    if (existingSession) return null;
     const { count, error: countError } = await serviceClient
       .from("academy_practice_sessions")
       .select("id", { count: "exact", head: true })
       .eq("student_id", authResult.user.id)
-      .gte("created_at", new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString());
+      .gte(
+        "created_at",
+        new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
+      );
     if (countError)
       return json({ error: "Could not prepare a practice session." }, 500);
     if ((count ?? 0) >= 10)
       return json({
-        error: "You have reached today's limit for generating practice sets. Try again tomorrow.",
+        error:
+          "You have reached today's limit for generating practice sets. Try again tomorrow.",
       }, 429);
 
     const { error: createSessionError } = await serviceClient
@@ -140,7 +147,94 @@ Deno.serve(async (request) => {
       )
         return json({ error: "Could not create the practice session." }, 409);
     }
+    return null;
+  };
+
+  const { data: preparedQuestions, error: preparedQuestionsError } =
+    await serviceClient
+      .from("academy_exercises")
+      .select(
+        "title, instructions, difficulty, expected_concepts, hints, explanation, question_type, choices, correct_answer, attempt_limit",
+      )
+      .eq("lesson_id", input.lesson_id)
+      .eq("published", true)
+      .eq("status", "published")
+      .is("practice_session_id", null)
+      .or(`release_at.is.null,release_at.lte.${new Date().toISOString()}`);
+  if (preparedQuestionsError)
+    return json({ error: "Could not load this lesson's prepared practice questions." }, 500);
+
+  const eligibleQuestions = (preparedQuestions ?? []).filter((question) => {
+    if (
+      !["multiple_choice", "true_false", "short_answer"].includes(
+        question.question_type,
+      ) ||
+      !question.correct_answer?.trim()
+    )
+      return false;
+    return (
+      question.question_type !== "multiple_choice" ||
+      (Array.isArray(question.choices) && question.choices.length >= 2)
+    );
+  });
+  const shuffledQuestions = eligibleQuestions.slice();
+  for (let index = shuffledQuestions.length - 1; index > 0; index -= 1) {
+    const swapIndex = Math.floor(Math.random() * (index + 1));
+    [shuffledQuestions[index], shuffledQuestions[swapIndex]] = [
+      shuffledQuestions[swapIndex],
+      shuffledQuestions[index],
+    ];
   }
+  const selectedQuestions = shuffledQuestions.slice(0, QUESTION_COUNT);
+  if (selectedQuestions.length) {
+    const sessionError = await ensurePracticeSession();
+    if (sessionError) return sessionError;
+    const { error: insertPreparedError } = await serviceClient
+      .from("academy_exercises")
+      .insert(
+        selectedQuestions.map((question, index) => ({
+          lesson_id: input.lesson_id,
+          title: question.title,
+          instructions: question.instructions,
+          difficulty: question.difficulty,
+          expected_concepts: question.expected_concepts,
+          hints: question.hints,
+          explanation: question.explanation,
+          question_type: question.question_type,
+          choices: question.choices,
+          correct_answer: question.correct_answer,
+          attempt_limit: question.attempt_limit,
+          published: true,
+          status: "published",
+          practice_session_id: input.session_id,
+          practice_question_number: index + 1,
+        })),
+      );
+    if (insertPreparedError) {
+      const racedQuestions = await readSessionQuestions(
+        serviceClient,
+        input.session_id,
+      );
+      if (
+        !racedQuestions.error &&
+        racedQuestions.data.length === selectedQuestions.length
+      )
+        return json({
+          session_id: input.session_id,
+          questions: racedQuestions.data,
+        });
+      console.error("Prepared practice questions could not be saved", insertPreparedError);
+      return json({ error: "The prepared questions could not be loaded for this practice session." }, 500);
+    }
+
+    const saved = await readSessionQuestions(serviceClient, input.session_id);
+    if (saved.error || saved.data.length !== selectedQuestions.length)
+      return json({ error: "The prepared practice questions could not be loaded. Please retry." }, 500);
+    return json({ session_id: input.session_id, questions: saved.data });
+  }
+
+  const sessionError = await ensurePracticeSession();
+  if (sessionError) return sessionError;
 
   const { data: lesson, error: lessonError } = await serviceClient
     .from("academy_lessons")
@@ -184,6 +278,11 @@ Deno.serve(async (request) => {
     return json({
       error: "No published PDF is linked to this lesson or course yet. Ask your teacher to attach the lesson material.",
     }, 404);
+  if (!providerKey)
+    return json({
+      error:
+        "PDF-based practice is not configured yet. Ask your teacher to add prepared questions or contact support.",
+    }, 503);
 
   let pdf: Blob;
   try {
@@ -388,6 +487,18 @@ Deno.serve(async (request) => {
         })),
       );
     if (insertError) {
+      const racedQuestions = await readSessionQuestions(
+        serviceClient,
+        input.session_id,
+      );
+      if (
+        !racedQuestions.error &&
+        racedQuestions.data.length === QUESTION_COUNT
+      )
+        return json({
+          session_id: input.session_id,
+          questions: racedQuestions.data,
+        });
       console.error("Practice questions could not be saved", insertError);
       return json({ error: "The generated questions could not be saved. Please retry." }, 500);
     }

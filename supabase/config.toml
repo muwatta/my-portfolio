@@ -429,3 +429,6 @@ verify_jwt = false
 
 [functions.academy-ai-grade-submission]
 verify_jwt = false
+
+[functions.academy-generate-practice]
+verify_jwt = false
