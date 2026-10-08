@@ -127,10 +127,16 @@ function runPython(code, onLoading) {
   });
 }
 
-export default function PythonEditor({ starterCode = "", onSubmit }) {
-  const [code, setCode] = useState(
+export default function PythonEditor({
+  starterCode = "",
+  onSubmit,
+  code: controlledCode,
+  onCodeChange,
+}) {
+  const [localCode, setLocalCode] = useState(
     () => separateTerminalInstructions(starterCode).code,
   );
+  const code = controlledCode ?? localCode;
   const [output, setOutput] = useState("");
   const [error, setError] = useState("");
   const [running, setRunning] = useState(false);
@@ -142,7 +148,7 @@ export default function PythonEditor({ starterCode = "", onSubmit }) {
 
   useEffect(() => {
     runId.current += 1;
-    setCode(editableStarterCode);
+    setLocalCode(editableStarterCode);
     setOutput("");
     setError("");
   }, [editableStarterCode]);
@@ -200,7 +206,10 @@ export default function PythonEditor({ starterCode = "", onSubmit }) {
       <textarea
         aria-label="Python code editor"
         value={code}
-        onChange={(event) => setCode(event.target.value)}
+        onChange={(event) => {
+          if (controlledCode === undefined) setLocalCode(event.target.value);
+          onCodeChange?.(event.target.value);
+        }}
         spellCheck="false"
         className="min-h-64 w-full resize-y bg-slate-950 p-4 font-mono text-sm leading-6 text-slate-100 outline-none"
       />
@@ -224,7 +233,8 @@ export default function PythonEditor({ starterCode = "", onSubmit }) {
           className="button-secondary border-slate-700 text-slate-200"
           onClick={() => {
             runId.current += 1;
-            setCode(editableStarterCode);
+            if (controlledCode === undefined) setLocalCode(editableStarterCode);
+            onCodeChange?.(editableStarterCode);
             setOutput("");
             setError("");
           }}

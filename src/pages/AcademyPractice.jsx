@@ -6,11 +6,19 @@ import PythonEditor from "../components/academy/PythonEditor";
 import { useAcademyAuth } from "../hooks/useAcademyAuth";
 import { friendlyError } from "../lib/utils";
 import { fetchWithOfflineFallback } from "../lib/academyOffline";
-import { OFFLINE_STORES } from "../lib/offlineStore";
+import {
+  getOfflineRecord,
+  OFFLINE_STORES,
+  putOfflineRecord,
+} from "../lib/offlineStore";
 import { enqueueAcademyOperation } from "../lib/academySync";
 import AcademyConnectionState from "../components/academy/AcademyConnectionState";
 import ProtectedContent from "../components/academy/ProtectedContent";
 import { useNetworkStatus } from "../hooks/useNetworkStatus";
+
+const makeOperationId = () =>
+  globalThis.crypto?.randomUUID?.() ||
+  `practice-${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
 export default function AcademyPractice() {
   const { user } = useAcademyAuth();
@@ -20,60 +28,152 @@ export default function AcademyPractice() {
   const [state, setState] = useState("loading");
   const [offline, setOffline] = useState(false);
   const [answers, setAnswers] = useState({});
+  const [codeDrafts, setCodeDrafts] = useState({});
+  const [operationIds, setOperationIds] = useState({});
   const [results, setResults] = useState({});
   const [submitting, setSubmitting] = useState(null);
+  const [loadedDraftKey, setLoadedDraftKey] = useState(null);
+  const [draftSaveState, setDraftSaveState] = useState("idle");
   const [reloadToken, setReloadToken] = useState(0);
   const network = useNetworkStatus();
+  const draftKey = `practice:${selectedLessonId || "all"}`;
   const visibleExercises = selectedLessonId
     ? exercises.filter((exercise) => exercise.lesson_id === selectedLessonId)
     : exercises;
   const practiceLanguage = visibleExercises[0]?.language || "python";
 
   useEffect(() => {
-    fetchWithOfflineFallback({
-      userId: user.id,
-      store: OFFLINE_STORES.exercises,
-      fetcher: () => getAcademyExercises(user.id),
-    }).then(({ data, error, configured, offline: isOffline }) => {
-      setOffline(Boolean(isOffline));
-      setExercises(data ?? []);
-      setState(error ? "error" : configured ? "ready" : "unconfigured");
+    let cancelled = false;
+    setLoadedDraftKey(null);
+    setState("loading");
+    async function loadPractice() {
+      try {
+        const result = await fetchWithOfflineFallback({
+          userId: user.id,
+          store: OFFLINE_STORES.exercises,
+          fetcher: () => getAcademyExercises(user.id),
+        });
+        let draft = null;
+        try {
+          draft = await getOfflineRecord(
+            OFFLINE_STORES.drafts,
+            user.id,
+            draftKey,
+          );
+          setDraftSaveState("idle");
+        } catch {
+          setDraftSaveState("error");
+        }
+        if (cancelled) return;
+        setOffline(Boolean(result.offline));
+        setExercises(result.data ?? []);
+        setAnswers(draft?.answers ?? {});
+        setCodeDrafts(draft?.codeDrafts ?? {});
+        setOperationIds(draft?.operationIds ?? {});
+        setResults(draft?.results ?? {});
+        setState(
+          result.error ? "error" : result.configured ? "ready" : "unconfigured",
+        );
+        setLoadedDraftKey(draftKey);
+      } catch {
+        if (cancelled) return;
+        setState("error");
+      }
+    }
+    void loadPractice();
+    return () => {
+      cancelled = true;
+    };
+  }, [draftKey, reloadToken, user.id]);
+
+  useEffect(() => {
+    if (loadedDraftKey !== draftKey) return undefined;
+    const timer = window.setTimeout(() => {
+      setDraftSaveState("saving");
+      void putOfflineRecord(OFFLINE_STORES.drafts, user.id, draftKey, {
+        answers,
+        codeDrafts,
+        operationIds,
+        results: Object.fromEntries(
+          Object.entries(results).filter(([, result]) => !result?.error),
+        ),
+      })
+        .then(() => setDraftSaveState("saved"))
+        .catch(() => setDraftSaveState("error"));
+    }, 400);
+    return () => window.clearTimeout(timer);
+  }, [
+    answers,
+    codeDrafts,
+    draftKey,
+    loadedDraftKey,
+    operationIds,
+    results,
+    user.id,
+  ]);
+
+  function updateAnswer(exerciseId, answer) {
+    setAnswers((current) => ({ ...current, [exerciseId]: answer }));
+    setOperationIds((current) => {
+      const next = { ...current };
+      delete next[exerciseId];
+      return next;
     });
-  }, [user.id, reloadToken]);
+    setResults((current) => {
+      const next = { ...current };
+      delete next[exerciseId];
+      return next;
+    });
+  }
 
   async function submitAnswer(exerciseId) {
+    const answer = answers[exerciseId] || "";
+    const clientOperationId = operationIds[exerciseId] || makeOperationId();
+    if (!operationIds[exerciseId]) {
+      setOperationIds((current) => ({
+        ...current,
+        [exerciseId]: clientOperationId,
+      }));
+    }
     setSubmitting(exerciseId);
-    if (!navigator.onLine) {
-      const clientOperationId =
-        globalThis.crypto?.randomUUID?.() ||
-        `practice-${Date.now()}-${Math.random().toString(36).slice(2)}`;
-      await enqueueAcademyOperation(user.id, {
-        operationId: clientOperationId,
-        type: "objective_answer",
-        payload: {
-          exerciseId,
-          answer: answers[exerciseId] || "",
-          clientOperationId,
-        },
-      });
+    try {
+      if (!navigator.onLine) {
+        await enqueueAcademyOperation(user.id, {
+          operationId: clientOperationId,
+          type: "objective_answer",
+          payload: {
+            exerciseId,
+            answer,
+            clientOperationId,
+          },
+        });
+        setResults((current) => ({
+          ...current,
+          [exerciseId]: { pending: true },
+        }));
+        return;
+      }
+      const { data, error } = await submitObjectiveAnswer(
+        exerciseId,
+        answer,
+        clientOperationId,
+      );
       setResults((current) => ({
         ...current,
-        [exerciseId]: { pending: true },
+        [exerciseId]: error
+          ? { error: friendlyError(error, "Your answer could not be checked.") }
+          : data,
       }));
+    } catch (error) {
+      setResults((current) => ({
+        ...current,
+        [exerciseId]: {
+          error: friendlyError(error, "Your answer could not be checked."),
+        },
+      }));
+    } finally {
       setSubmitting(null);
-      return;
     }
-    const { data, error } = await submitObjectiveAnswer(
-      exerciseId,
-      answers[exerciseId] || "",
-    );
-    setResults((current) => ({
-      ...current,
-      [exerciseId]: error
-        ? { error: friendlyError(error, "Your answer could not be checked.") }
-        : data,
-    }));
-    setSubmitting(null);
   }
 
   return (
@@ -98,6 +198,16 @@ export default function AcademyPractice() {
       {offline && (
         <p className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">
           Offline practice mode. Code runs on this device. Official practice results are checked after reconnecting.
+        </p>
+      )}
+      {draftSaveState === "saved" && (
+        <p role="status" className="text-sm text-slate-500">
+          Your practice answers and code are saved on this device.
+        </p>
+      )}
+      {draftSaveState === "error" && (
+        <p role="alert" className="text-sm text-amber-700">
+          Your practice answers could not be saved on this device. Keep this page open until they are submitted.
         </p>
       )}
       {state === "loading" && (
@@ -166,12 +276,30 @@ export default function AcademyPractice() {
               {exercise.instructions}
             </p>
           </ProtectedContent>
-           {exercise.question_type === "programming" ? (
-             exercise.language === "cpp" ? (
-               <CppEditor starterCode={exercise.starter_code} />
-             ) : (
-               <PythonEditor starterCode={exercise.starter_code} />
-             )
+          {exercise.question_type === "programming" ? (
+            exercise.language === "cpp" ? (
+              <CppEditor
+                starterCode={exercise.starter_code}
+                code={codeDrafts[exercise.id]}
+                onCodeChange={(code) =>
+                  setCodeDrafts((current) => ({
+                    ...current,
+                    [exercise.id]: code,
+                  }))
+                }
+              />
+            ) : (
+              <PythonEditor
+                starterCode={exercise.starter_code}
+                code={codeDrafts[exercise.id]}
+                onCodeChange={(code) =>
+                  setCodeDrafts((current) => ({
+                    ...current,
+                    [exercise.id]: code,
+                  }))
+                }
+              />
+            )
           ) : (
             <div className="space-y-4">
               {exercise.question_type === "short_answer" ? (
@@ -179,10 +307,7 @@ export default function AcademyPractice() {
                   className="field"
                   value={answers[exercise.id] || ""}
                   onChange={(event) =>
-                    setAnswers((current) => ({
-                      ...current,
-                      [exercise.id]: event.target.value,
-                    }))
+                    updateAnswer(exercise.id, event.target.value)
                   }
                   placeholder="Type your answer"
                   aria-label={`Answer for ${exercise.title}`}
@@ -208,10 +333,7 @@ export default function AcademyPractice() {
                           value={value}
                           checked={answers[exercise.id] === value}
                           onChange={(event) =>
-                            setAnswers((current) => ({
-                              ...current,
-                              [exercise.id]: event.target.value,
-                            }))
+                            updateAnswer(exercise.id, event.target.value)
                           }
                         />
                         <span>{label}</span>
@@ -238,7 +360,9 @@ export default function AcademyPractice() {
                   {results[exercise.id].error}
                 </p>
               )}
-              {results[exercise.id] && !results[exercise.id].error && (
+              {results[exercise.id] &&
+                !results[exercise.id].error &&
+                !results[exercise.id].pending && (
                 <p
                   role="status"
                   className="text-sm font-semibold text-emerald-600"

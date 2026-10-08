@@ -7,8 +7,12 @@ import {
   markLessonStarted,
 } from "../lib/academy";
 import { fetchWithOfflineFallback } from "../lib/academyOffline";
-import { OFFLINE_STORES } from "../lib/offlineStore";
 import { enqueueAcademyOperation } from "../lib/academySync";
+import {
+  getOfflineRecord,
+  OFFLINE_STORES,
+  putOfflineRecord,
+} from "../lib/offlineStore";
 import AcademyConnectionState from "../components/academy/AcademyConnectionState";
 import { useNetworkStatus } from "../hooks/useNetworkStatus";
 import { useAcademyAuth } from "../hooks/useAcademyAuth";
@@ -27,12 +31,15 @@ export default function AcademyLesson() {
   const [locked, setLocked] = useState(false);
   const [completed, setCompleted] = useState(false);
   const [step, setStep] = useState("learn");
+  const [stepReady, setStepReady] = useState(false);
+  const [codeDrafts, setCodeDrafts] = useState({});
   const [notice, setNotice] = useState("");
   const [reloadToken, setReloadToken] = useState(0);
   const network = useNetworkStatus();
 
   useEffect(() => {
     let cancelled = false;
+    setStepReady(false);
     // Ask the server whether this lesson is available before marking it started
     // or rendering it. Marking first and swallowing the failure, which is what
     // this used to do, meant a locked lesson still displayed its content and the
@@ -65,15 +72,72 @@ export default function AcademyLesson() {
       });
       if (cancelled) return;
       const { data, error, configured, offline } = result;
+      let savedStep = null;
+      let savedCode = null;
+      try {
+        [savedStep, savedCode] = await Promise.all([
+          getOfflineRecord(
+            OFFLINE_STORES.drafts,
+            user.id,
+            `lesson:${id}:step`,
+          ),
+          getOfflineRecord(
+            OFFLINE_STORES.drafts,
+            user.id,
+            `lesson:${id}:code`,
+          ),
+        ]);
+      } catch {
+        setNotice("Some saved lesson work could not be restored on this device.");
+      }
+      if (cancelled) return;
       setLesson(data);
       setCompleted(Boolean(data?.progress?.completed_at));
       setState(error ? "error" : configured ? "ready" : "unconfigured");
       if (offline) setCompleted(Boolean(data?.progress?.completed_at));
+      const availableSteps = [
+        "learn",
+        ...(data?.exercises?.length ? ["practice"] : []),
+        ...(data?.tasks?.length ? ["task"] : []),
+      ];
+      setStep(
+        availableSteps.includes(savedStep?.step) ? savedStep.step : "learn",
+      );
+      setCodeDrafts(savedCode?.codeDrafts ?? {});
+      setStepReady(true);
     })();
     return () => {
       cancelled = true;
     };
   }, [id, user.id, reloadToken]);
+
+  useEffect(() => {
+    if (!stepReady || !lesson) return undefined;
+    const timer = window.setTimeout(() => {
+      void putOfflineRecord(
+        OFFLINE_STORES.drafts,
+        user.id,
+        `lesson:${id}:step`,
+        { step, savedAt: new Date().toISOString() },
+      ).catch(() => setNotice("Your lesson position could not be saved on this device."));
+    }, 300);
+    return () => window.clearTimeout(timer);
+  }, [id, lesson, step, stepReady, user.id]);
+
+  useEffect(() => {
+    if (!stepReady || !lesson || !Object.keys(codeDrafts).length) {
+      return undefined;
+    }
+    const timer = window.setTimeout(() => {
+      void putOfflineRecord(
+        OFFLINE_STORES.drafts,
+        user.id,
+        `lesson:${id}:code`,
+        { codeDrafts, savedAt: new Date().toISOString() },
+      ).catch(() => setNotice("Your lesson code could not be saved on this device."));
+    }, 400);
+    return () => window.clearTimeout(timer);
+  }, [codeDrafts, id, lesson, stepReady, user.id]);
 
   async function completeLesson() {
     if (!navigator.onLine) {
@@ -171,6 +235,12 @@ export default function AcademyLesson() {
   const taskDone = tasks.every((task) => Boolean(task.submission));
   const jumpTo = (target) => {
     setStep(target);
+    void putOfflineRecord(
+      OFFLINE_STORES.drafts,
+      user.id,
+      `lesson:${id}:step`,
+      { step: target, savedAt: new Date().toISOString() },
+    ).catch(() => setNotice("Your lesson position could not be saved on this device."));
     document
       .getElementById(`topic-step-${target}`)
       ?.scrollIntoView({ block: "start" });
@@ -224,7 +294,13 @@ export default function AcademyLesson() {
               sent to a device or the server.
             </p>
           </div>
-          <CppEditor starterCode={content.starter_code} />
+          <CppEditor
+            starterCode={content.starter_code}
+            code={codeDrafts.cpp}
+            onCodeChange={(code) =>
+              setCodeDrafts((current) => ({ ...current, cpp: code }))
+            }
+          />
         </section>
       )}
       {isTerminalCourse && content.starter_code && (
@@ -259,7 +335,13 @@ export default function AcademyLesson() {
               with your own changes. Nothing is sent to the server.
             </p>
           </div>
-          <PythonEditor starterCode={content.starter_code || "print('Hello, engineer!')"} />
+          <PythonEditor
+            starterCode={content.starter_code || "print('Hello, engineer!')"}
+            code={codeDrafts.python}
+            onCodeChange={(code) =>
+              setCodeDrafts((current) => ({ ...current, python: code }))
+            }
+          />
         </section>
       )}
       {practice.length > 0 && (
@@ -296,6 +378,16 @@ export default function AcademyLesson() {
           <Link
             className="button-primary mt-4 inline-flex"
             to={`/academy/practice?lesson=${encodeURIComponent(id)}`}
+            onClick={() =>
+              void putOfflineRecord(
+                OFFLINE_STORES.drafts,
+                user.id,
+                `lesson:${id}:step`,
+                { step: "practice", savedAt: new Date().toISOString() },
+              ).catch(() =>
+                setNotice("Your lesson position could not be saved on this device."),
+              )
+            }
           >
             Start practice
           </Link>

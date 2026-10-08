@@ -43,4 +43,10 @@ describe("lesson activity provisioning", () => {
     expect(lessonPage).toMatch(/practice\?lesson=\$\{encodeURIComponent\(id\)\}/);
     expect(practicePage).toMatch(/exercise\.lesson_id === selectedLessonId/);
   });
+
+  it("restores the student's last lesson step after reopening the lesson", () => {
+    expect(lessonPage).toMatch(/lesson:\$\{id\}:step/);
+    expect(lessonPage).toMatch(/availableSteps\.includes\(savedStep\?\.step\)/);
+    expect(lessonPage).toMatch(/setStep\(target\)/);
+  });
 });

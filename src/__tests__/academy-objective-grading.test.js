@@ -14,6 +14,10 @@ const matches = [
   ),
 ];
 const fn = matches.at(-1)[0];
+const overloadFix = readFileSync(
+  "supabase/migrations/20261362000000_academy_objective_rpc_overload_fix.sql",
+  "utf8",
+);
 
 describe("objective grading checks access before scoring", () => {
   // A student who learned an exercise uuid could be graded on, and earn points
@@ -86,6 +90,13 @@ describe("objective grading stays server side and unfakeable", () => {
     expect(allSql).toMatch(
       /on public\.academy_exercise_attempts[\s\S]*?for select to authenticated using \(student_id = auth\.uid\(\)\)/,
     );
+  });
+
+  it("removes the legacy overload that makes RPC resolution ambiguous", () => {
+    expect(overloadFix).toMatch(
+      /drop function if exists public\.academy_submit_objective_answer\(uuid, text\)/,
+    );
+    expect(overloadFix).toMatch(/notify pgrst, 'reload schema'/);
   });
 
   it("keeps offline retries idempotent", () => {

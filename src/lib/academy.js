@@ -1835,15 +1835,15 @@ export async function getAcademyExercises(studentId) {
 export async function submitObjectiveAnswer(
   exerciseId,
   answer,
-  clientOperationId = null,
+  clientOperationId,
 ) {
   if (!supabase)
     return { data: null, error: new Error("Academy is not configured.") };
   const args = {
     target_exercise_id: exerciseId,
     submitted_answer: answer,
+    client_operation_key: clientOperationId,
   };
-  if (clientOperationId) args.client_operation_key = clientOperationId;
   const { data, error } = await supabase.rpc(
     "academy_submit_objective_answer",
     args,
