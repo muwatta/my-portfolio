@@ -180,7 +180,7 @@ export default function AcademyLayout({
   };
 
   return (
-    <div className="flex min-h-screen flex-col bg-[#F2F4F8] text-[#101425] dark:bg-[#0B0F1A] dark:text-slate-100">
+    <div className="academy-shell flex min-h-screen flex-col bg-[#F2F4F8] text-[#101425] dark:bg-[#0B0F1A] dark:text-slate-100">
       <header className="border-b border-slate-200 bg-white/95 dark:border-slate-800 dark:bg-slate-950/95">
         <div className="mx-auto flex min-h-16 max-w-7xl items-center gap-2 px-3 py-2 sm:min-h-20 sm:gap-4 sm:px-6 sm:py-3">
           <Link
@@ -352,8 +352,10 @@ export default function AcademyLayout({
         </nav>
 
         <main
-          className={`min-w-0 flex-1 ${
-            workspace === "student" ? "academy-student-content" : ""
+          className={`academy-workspace-content mx-auto min-w-0 w-full flex-1 ${
+            workspace === "student"
+              ? "academy-student-content max-w-6xl"
+              : "max-w-full"
           }`}
         >
           {workspace === "student" && (

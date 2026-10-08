@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import {
   getAcademyAssignment,
+  getAcademyCourseMaterials,
+  getAcademyMaterialUrl,
   getSubmissionCount,
   getAcademySubmissionHistory,
   requestAcademyDeterministicGrading,
@@ -54,6 +56,8 @@ export default function AcademyAssignment() {
   const [sourceCode, setSourceCode] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [history, setHistory] = useState([]);
+  const [learningMaterial, setLearningMaterial] = useState(null);
+  const [materialState, setMaterialState] = useState("loading");
   const [reloadToken, setReloadToken] = useState(0);
 
   useEffect(() => {
@@ -124,6 +128,61 @@ export default function AcademyAssignment() {
       mounted = false;
     };
   }, [id, user.id, reloadToken]);
+
+  useEffect(() => {
+    let mounted = true;
+    const courseId =
+      assignment?.course_id ?? assignment?.academy_courses?.id ?? null;
+    if (!courseId) {
+      setLearningMaterial(null);
+      setMaterialState(assignment ? "missing" : "loading");
+      return undefined;
+    }
+
+    setLearningMaterial(null);
+    setMaterialState("loading");
+    async function loadLearningMaterial() {
+      try {
+        const result = await getAcademyCourseMaterials(courseId);
+        if (!mounted) return;
+        if (result.error) {
+          setMaterialState("unavailable");
+          return;
+        }
+        const pdfs = (result.data ?? []).filter(
+          (material) =>
+            material.mime_type?.toLowerCase() === "application/pdf" ||
+            /\.pdf$/i.test(
+              material.original_filename || material.storage_path || "",
+            ),
+        );
+        const material =
+          pdfs.find(
+            (item) =>
+              assignment.lesson_id && item.lesson_id === assignment.lesson_id,
+          ) ?? pdfs.find((item) => item.lesson_id === null);
+        if (!material) {
+          setMaterialState("missing");
+          return;
+        }
+
+        const urlResult = await getAcademyMaterialUrl(material);
+        if (!mounted) return;
+        if (urlResult.error || !urlResult.data?.url) {
+          setMaterialState("unavailable");
+          return;
+        }
+        setLearningMaterial({ ...material, url: urlResult.data.url });
+        setMaterialState("ready");
+      } catch {
+        if (mounted) setMaterialState("unavailable");
+      }
+    }
+    void loadLearningMaterial();
+    return () => {
+      mounted = false;
+    };
+  }, [assignment]);
 
   useEffect(() => {
     if (!assignment || !sourceCode) return undefined;
@@ -350,7 +409,14 @@ export default function AcademyAssignment() {
       : []),
   ].join(",");
   return (
-    <article className="max-w-3xl space-y-6">
+    <div
+      className={`mx-auto grid w-full items-start gap-6 ${
+        learningMaterial
+          ? "max-w-6xl xl:grid-cols-[minmax(0,1fr)_minmax(20rem,0.8fr)]"
+          : "max-w-3xl"
+      }`}
+    >
+      <article className="min-w-0 space-y-6">
       <Link
         to="/academy/assignments"
         className="text-sm font-semibold text-blue-600"
@@ -362,10 +428,30 @@ export default function AcademyAssignment() {
           {assignment.points} points
         </p>
         <h1 className="mt-2 text-3xl font-bold">{assignment.title}</h1>
+        <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
+          Use the matching topic in your course PDF and the starter code below.
+          Work with ideas already covered in your lessons; you do not need extra
+          tools or advanced techniques.
+        </p>
         <ProtectedContent className="mt-3 whitespace-pre-wrap text-slate-600 dark:text-slate-300">
           {assignment.instructions}
         </ProtectedContent>
       </header>
+      {materialState === "missing" && (
+        <p className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-950 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-100">
+          No matching course PDF is linked to this assignment yet. You can
+          still work from the lesson and starter code.
+        </p>
+      )}
+      {materialState === "unavailable" && (
+        <p
+          role="status"
+          className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-950 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-100"
+        >
+          The assignment is ready, but its course PDF could not be opened. Try
+          again from the Materials page.
+        </p>
+      )}
       <div className="rounded-xl border border-slate-200 p-5 dark:border-slate-800">
         <p className="text-sm font-semibold">
           Attempts remaining: {attemptsRemaining}
@@ -474,6 +560,33 @@ export default function AcademyAssignment() {
           );
         })}
       </section>
-    </article>
+      </article>
+      {learningMaterial && (
+        <aside className="min-w-0 overflow-hidden rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900 xl:sticky xl:top-6">
+          <div className="mb-3 flex items-start justify-between gap-3">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.14em] text-cyan-700 dark:text-cyan-300">
+                Learning source
+              </p>
+              <h2 className="mt-1 font-bold">{learningMaterial.title}</h2>
+            </div>
+            <a
+              href={learningMaterial.url}
+              target="_blank"
+              rel="noreferrer"
+              className="shrink-0 rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold hover:border-cyan-500 dark:border-slate-700"
+            >
+              Open PDF
+            </a>
+          </div>
+          <iframe
+            title={`Course PDF: ${learningMaterial.title}`}
+            src={learningMaterial.url}
+            loading="lazy"
+            className="h-[65vh] min-h-96 w-full rounded-xl border border-slate-200 bg-white dark:border-slate-700"
+          />
+        </aside>
+      )}
+    </div>
   );
 }

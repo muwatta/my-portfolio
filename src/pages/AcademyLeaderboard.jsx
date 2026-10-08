@@ -61,7 +61,7 @@ export default function AcademyLeaderboard() {
         refreshInFlight = false;
         if (!mounted) return;
         setOffline(Boolean(result.offline));
-        setRows(result.data ?? []);
+        setRows((result.data ?? []).slice(0, 10));
         setState(result.error ? "error" : result.configured ? "ready" : "unconfigured");
       }, delay);
     };

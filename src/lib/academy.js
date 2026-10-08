@@ -210,7 +210,7 @@ export async function getAcademyWeeklyLeaderboard() {
   if (!supabase) return unavailable([]);
   return withAcademyCache("leaderboard:weekly", 30 * 1000, async () => {
     const { data, error } = await supabase.rpc("academy_weekly_leaderboard");
-    return { data: data ?? [], error, configured: true };
+    return { data: (data ?? []).slice(0, 10), error, configured: true };
   });
 }
 

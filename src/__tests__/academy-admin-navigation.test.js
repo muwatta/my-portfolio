@@ -2,13 +2,33 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 const layout = readFileSync("src/components/academy/AcademyLayout.jsx", "utf8");
+const studentNavigation = readFileSync(
+  "src/components/academy/studentNavigation.js",
+  "utf8",
+);
+const studentSections = readFileSync(
+  "src/components/academy/StudentSectionNav.jsx",
+  "utf8",
+);
 const app = readFileSync("src/App.jsx", "utf8");
 
 function extractLinks(constantName) {
-  const block = layout.match(
-    new RegExp(`const ${constantName} = \\[([\\s\\S]*?)\\n\\];`),
+  const source =
+    constantName === "STUDENT_LINKS"
+      ? studentNavigation
+      : constantName === "TEACHER_LINKS" || constantName === "ADMIN_LINKS"
+        ? layout
+        : studentSections;
+  const declaration =
+    constantName === "STUDENT_LINKS"
+      ? "STUDENT_NAVIGATION"
+      : constantName === "STUDENT_SECTION_LINKS"
+        ? "SECTIONS"
+        : constantName;
+  const block = source.match(
+    new RegExp(`(?:const|export const) ${declaration} = \\[([\\s\\S]*?)\\n\\];`),
   )?.[1];
-  if (!block) throw new Error(`${constantName} not found in AcademyLayout.jsx`);
+  if (!block) throw new Error(`${constantName} not found`);
   return [...block.matchAll(/to:\s*"([^"]+)"/g)].map((match) => match[1]);
 }
 
@@ -33,6 +53,7 @@ describe("an administrator can reach the leaderboard", () => {
 describe("every navigation entry points at a real route", () => {
   for (const constantName of [
     "STUDENT_LINKS",
+    "STUDENT_SECTION_LINKS",
     "TEACHER_LINKS",
     "ADMIN_LINKS",
   ]) {

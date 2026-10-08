@@ -60,8 +60,8 @@ body {
 }
 
 .min-h-screen[data-font-section="academy"] {
-  --font-sans: "Inter";
-  --font-display: "Plus Jakarta Sans";
+  --font-sans: "DM Sans";
+  --font-display: "Space Grotesk";
 }
 
 .min-h-screen[data-font-section="blog"] {
@@ -229,6 +229,51 @@ pre {
 
 .animate-slideUp {
   animation: slideUp 0.3s ease-out;
+}
+
+.academy-workspace-content {
+  min-width: 0;
+}
+
+.academy-workspace-content .space-y-8 > :not([hidden]) ~ :not([hidden]) {
+  margin-top: 1.25rem;
+}
+
+.academy-workspace-content .space-y-6 > :not([hidden]) ~ :not([hidden]) {
+  margin-top: 1rem;
+}
+
+.academy-workspace-content :is(h1, h2, h3) {
+  text-wrap: balance;
+}
+
+.academy-workspace-content h1 {
+  font-size: clamp(1.75rem, 3vw, 2.5rem);
+  letter-spacing: -0.04em;
+  line-height: 1.12;
+}
+
+.academy-workspace-content h2 {
+  letter-spacing: -0.025em;
+}
+
+.academy-workspace-content
+  :is(section, article, aside, div)[class~="bg-white"][class*="rounded"][class*="border"] {
+  border-radius: 1rem;
+  box-shadow: 0 1px 3px rgb(15 23 42 / 0.06);
+}
+
+.dark
+  .academy-workspace-content
+  :is(section, article, aside, div)[class~="bg-white"][class*="rounded"][class*="border"] {
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.2);
+}
+
+.academy-shell .button-primary,
+.academy-shell .button-secondary,
+.academy-shell .button-ghost {
+  min-height: 2.75rem;
+  border-radius: 0.75rem;
 }
 
 .academy-student-content .space-y-8 > :not([hidden]) ~ :not([hidden]) {

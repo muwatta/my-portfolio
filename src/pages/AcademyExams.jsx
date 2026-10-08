@@ -125,7 +125,14 @@ export default function AcademyExams() {
       {error && <p className="text-sm text-rose-600">{error}</p>}
 
       {state === "ready" && exams.length === 0 && (
-        <p className="text-sm text-slate-500">No tests have been set yet.</p>
+        <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-6 dark:border-slate-700 dark:bg-slate-900 sm:p-8">
+          <h2 className="text-lg font-bold">No tests are available yet</h2>
+          <p className="mt-2 max-w-2xl text-sm text-slate-600 dark:text-slate-300">
+            Published tests assigned to your class will appear here at their
+            scheduled times. If you expected a test, ask your teacher to check
+            the class assignment and your active class enrollment.
+          </p>
+        </div>
       )}
 
       {/*

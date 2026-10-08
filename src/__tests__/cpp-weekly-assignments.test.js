@@ -9,6 +9,10 @@ const gradeFn = readFileSync(
   "supabase/functions/academy-grade-submission/index.ts",
   "utf8",
 );
+const learningFixes = readFileSync(
+  "supabase/migrations/20261405000000_academy_learning_material_and_leaderboard_limit.sql",
+  "utf8",
+);
 
 // A deterministic grader rejects correct code when the expected string is wrong,
 // and it fails silently: the student's submission simply never passes. So the
@@ -94,5 +98,25 @@ describe("these assignments are not a progress gate yet", () => {
 
   it("is re-runnable without duplicating", () => {
     expect(migration).toMatch(/where not exists \([\s\S]*?existing\.title = seed\.title/);
+  });
+});
+
+describe("the learning assignment corrections", () => {
+  it("simplifies the week 9 calculation and matches its grading cases", () => {
+    expect(learningFixes).toMatch(/C\+\+ Week 9: average two distances/);
+    expect(learningFixes).toMatch(/Read two distance readings/);
+    expect(learningFixes).toMatch(/"expected":"20\.00"/);
+    expect(learningFixes).toMatch(/"expected":"35\.00"/);
+  });
+
+  it("makes the week 10 motor limit match its tested output", () => {
+    expect(learningFixes).toMatch(/values 0, 50, 100, 150, 200, and 250/);
+    expect(learningFixes).toMatch(/must not go above 250/);
+    expect(learningFixes).not.toMatch(/final value must be exactly 255/);
+  });
+
+  it("ranks the full standings before returning only ten students", () => {
+    expect(learningFixes).toMatch(/row_number\(\) over[\s\S]*?as rank/);
+    expect(learningFixes).toMatch(/where ranked\.rank <= 10/);
   });
 });

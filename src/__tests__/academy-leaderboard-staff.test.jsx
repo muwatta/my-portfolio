@@ -100,6 +100,13 @@ describe("an administrator reading the leaderboard", () => {
       ...ROWS,
       { student_id: "s3", display_name: "Cy", points: 250, rank: 3 },
       { student_id: "s4", display_name: "Dee", points: 120, rank: 4 },
+      ...Array.from({ length: 7 }, (_, index) => ({
+        student_id: `s${index + 5}`,
+        display_name: `Student ${index + 5}`,
+        points: 100 - index,
+        rank: index + 5,
+      })),
+      { student_id: "s12", display_name: "Student 12", points: 1, rank: 11 },
     ]);
     renderPage();
 
@@ -115,6 +122,8 @@ describe("an administrator reading the leaderboard", () => {
       "900",
     );
     expect(screen.getByText(/dee/i)).toBeInTheDocument();
+    expect(screen.getByText(/student 10/i)).toBeInTheDocument();
+    expect(screen.queryByText(/student 12/i)).not.toBeInTheDocument();
   });
 
   it("links students from the empty state to lessons and practice", async () => {

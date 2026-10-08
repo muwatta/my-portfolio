@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
+import { readFileSync } from "node:fs";
 
 vi.mock("../lib/supabase", () => ({
   isSupabaseConfigured: false,
@@ -10,6 +11,12 @@ vi.mock("../lib/supabase", () => ({
 import App from "../App";
 
 describe("Academy routes", () => {
+  it("applies the Academy design system to student, teacher and Academy admin routes", () => {
+    const source = readFileSync("src/App.jsx", "utf8");
+    expect(source).toMatch(/const isAcademyRoute = pathname\.startsWith\("\/academy"\)/);
+    expect(source).toMatch(/: isAcademyRoute\s*\n\s*\? "academy"/);
+  });
+
   it("renders the Academy entry page inside the existing app", async () => {
     render(
       <MemoryRouter initialEntries={["/academy"]}>

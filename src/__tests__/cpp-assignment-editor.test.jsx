@@ -8,6 +8,8 @@ vi.mock("../hooks/useAcademyAuth", () => ({
 vi.mock("../lib/supabase", () => ({ supabase: null }));
 vi.mock("../lib/academy", () => ({
   getAcademyAssignment: vi.fn(),
+  getAcademyCourseMaterials: vi.fn(),
+  getAcademyMaterialUrl: vi.fn(),
   getSubmissionCount: vi.fn(),
   getAcademySubmissionHistory: vi.fn(),
   requestAcademyDeterministicGrading: vi.fn(),
@@ -34,6 +36,8 @@ vi.mock("../components/academy/CppEditor", () => ({
 
 const {
   getAcademyAssignment,
+  getAcademyCourseMaterials,
+  getAcademyMaterialUrl,
   getSubmissionCount,
   getAcademySubmissionHistory,
 } = await import("../lib/academy");
@@ -52,6 +56,7 @@ function assignmentFor(language) {
       allowed_submission_types: ["code"],
       starter_code: "// starter",
       published: true,
+      lesson_id: "lesson-1",
       academy_courses: { id: "c1", slug: "cpp", title: "C++", language },
     },
     error: null,
@@ -77,6 +82,8 @@ describe("which editor an assignment offers", () => {
     vi.clearAllMocks();
     getSubmissionCount.mockResolvedValue({ count: 0, error: null });
     getAcademySubmissionHistory.mockResolvedValue({ data: [], error: null });
+    getAcademyCourseMaterials.mockResolvedValue({ data: [], error: null });
+    getAcademyMaterialUrl.mockResolvedValue({ data: null, error: null });
     getOfflineRecord.mockResolvedValue(null);
     // getAcademyAssignment returns a { data, error, configured } envelope and the
     // page assigns result.data. Returning the envelope itself would leave every
@@ -132,5 +139,55 @@ describe("which editor an assignment offers", () => {
     const input = screen.getByLabelText(/upload a file/i);
     expect(input.getAttribute("accept")).not.toContain(".cpp");
     expect(input.getAttribute("accept")).toContain(".py");
+  });
+
+  it("shows the PDF for the assignment lesson beside the task", async () => {
+    const lessonPdf = {
+      id: "pdf-lesson",
+      lesson_id: "lesson-1",
+      title: "LEDs and resistors",
+      mime_type: "application/pdf",
+      storage_path: "leds.pdf",
+      storage_kind: "static",
+    };
+    getAcademyCourseMaterials.mockResolvedValue({
+      data: [
+        {
+          ...lessonPdf,
+          id: "pdf-other",
+          lesson_id: "another-lesson",
+          title: "Unrelated lesson",
+        },
+        lessonPdf,
+      ],
+      error: null,
+    });
+    getAcademyMaterialUrl.mockResolvedValue({
+      data: { url: "/course_material_assets/leds.pdf" },
+      error: null,
+    });
+    getAcademyAssignment.mockResolvedValue(assignmentFor("cpp"));
+
+    renderPage();
+
+    expect(
+      await screen.findByTitle("Course PDF: LEDs and resistors"),
+    ).toHaveAttribute("src", "/course_material_assets/leds.pdf");
+    expect(screen.getByRole("link", { name: "Open PDF" })).toHaveAttribute(
+      "href",
+      "/course_material_assets/leds.pdf",
+    );
+  });
+
+  it("explains when no course PDF is linked without blocking the task", async () => {
+    getAcademyAssignment.mockResolvedValue(assignmentFor("cpp"));
+    getAcademyCourseMaterials.mockResolvedValue({ data: [], error: null });
+
+    renderPage();
+
+    expect(
+      await screen.findByText(/no matching course pdf is linked/i),
+    ).toBeInTheDocument();
+    expect(screen.getByTestId("cpp-editor")).toBeInTheDocument();
   });
 });

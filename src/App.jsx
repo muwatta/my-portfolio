@@ -173,7 +173,7 @@ function AppShell() {
   const { pathname, search } = useLocation();
   const isAdminRoute = pathname.startsWith("/admin");
   const isAcademyRoute = pathname.startsWith("/academy");
-  const fontSection = isAdminRoute || /^\/academy\/(admin|teacher)(\/|$)/.test(pathname)
+  const fontSection = isAdminRoute
     ? "admin"
     : isAcademyRoute
       ? "academy"
