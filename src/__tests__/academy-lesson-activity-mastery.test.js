@@ -43,7 +43,7 @@ describe("lesson activity provisioning", () => {
     expect(lessonPage).toMatch(/practiceSessionCompleted/);
     expect(lessonPage).toMatch(/practice\?lesson=\$\{encodeURIComponent\(id\)\}/);
     expect(practicePage).toMatch(/exercise\.lesson_id === selectedLessonId/);
-    expect(practicePage).toMatch(/generateAcademyPracticeSession/);
+    expect(practicePage).toMatch(/teacher-authored practice set/i);
     expect(practicePage).toMatch(/step=task/);
   });
 

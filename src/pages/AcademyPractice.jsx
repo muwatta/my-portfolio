@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import {
-  generateAcademyPracticeSession,
   getAcademyExercises,
   getAcademyLesson,
   getNextAcademyLesson,
@@ -63,15 +62,18 @@ export default function AcademyPractice() {
   const practiceLanguage = visibleExercises[0]?.language || "python";
 
   useEffect(() => {
-    if (!selectedLessonId || practiceSessionId) return;
-    setSearchParams(
-      (current) => {
-        const next = new URLSearchParams(current);
-        next.set("session", makeSessionId());
-        return next;
-      },
-      { replace: true },
-    );
+    if (!selectedLessonId) return;
+    if (!practiceSessionId) {
+      setSearchParams(
+        (current) => {
+          const next = new URLSearchParams(current);
+          next.set("session", makeSessionId());
+          return next;
+        },
+        { replace: true },
+      );
+      return;
+    }
   }, [practiceSessionId, selectedLessonId, setSearchParams]);
 
   useEffect(() => {
@@ -99,21 +101,11 @@ export default function AcademyPractice() {
           id: selectedLessonId
             ? `practice:${selectedLessonId}:${practiceSessionId}`
             : undefined,
-          fetcher: async () => {
-            if (selectedLessonId) {
-              const generated = await generateAcademyPracticeSession(
-                selectedLessonId,
-                practiceSessionId,
-              );
-              if (generated.error) {
-                return { data: null, error: generated.error, configured: true };
-              }
-            }
-            return getAcademyExercises(
+          fetcher: async () =>
+            getAcademyExercises(
               user.id,
               selectedLessonId ? practiceSessionId : null,
-            );
-          },
+            ),
         });
         let draft = null;
         try {
@@ -342,8 +334,8 @@ export default function AcademyPractice() {
         </h1>
         <p className="mt-2 text-slate-600 dark:text-slate-300">
           {selectedLessonId
-            ? "Each session generates new questions from the PDF material and topic discussed in this lesson."
-            : "Choose a lesson to start a fresh, topic-specific practice set generated from its PDF material."}
+            ? "This lesson uses teacher-authored practice questions stored in the Academy database."
+            : "Choose a lesson to start with its prepared question set from the Academy bank."}
         </p>
       </header>
       {offline && (
@@ -364,8 +356,7 @@ export default function AcademyPractice() {
       {state === "loading" &&
         (selectedLessonId ? (
           <p role="status" className="rounded-xl bg-blue-50 p-4 text-sm text-blue-900">
-            Preparing fresh questions from this lesson's PDF. This can take a
-            little while.
+            Loading prepared practice questions for this lesson.
           </p>
         ) : (
           <AcademyConnectionState
@@ -403,13 +394,13 @@ export default function AcademyPractice() {
             slow={network.slow}
             title={
               network.online
-                ? "No PDF-based questions are available"
+                ? "No prepared questions are available"
                 : "This practice session is not downloaded"
             }
             description={
               network.online
-                ? "The AI could not create this lesson's question set. Check that a published PDF is linked to the lesson or course, then retry."
-                : "Reconnect to generate this session's questions. Previously saved practice sessions remain available from their session links."
+                ? "Ask your teacher to add practice questions for this lesson in the Academy question bank."
+                : "Reconnect to load this lesson's saved practice questions. Previously saved practice sessions remain available from their session links."
             }
             onRetry={
               network.online
@@ -436,8 +427,7 @@ export default function AcademyPractice() {
           <section className="rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
             <h2 className="text-lg font-bold">Choose a lesson to practice</h2>
             <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
-              Questions are generated for a specific topic from its course PDF,
-              so practice no longer serves the same general question list.
+              Practice uses prepared questions from the teacher-authored Academy question bank for this lesson.
             </p>
             <Link
               to="/academy/lessons"

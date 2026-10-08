@@ -193,17 +193,12 @@ describe("AcademyPractice saved session", () => {
     expect(screen.getAllByRole("button", { name: "Submit answer" })[0]).toBeEnabled();
   });
 
-  it("creates a fresh PDF-based session when practice is opened without a session id", async () => {
+  it("creates a fresh practice session id without invoking the PDF generator when practice opens without a session id", async () => {
     renderPractice("/academy/practice?lesson=lesson-1");
 
     await screen.findByRole("radio", { name: "true" });
     await waitFor(() => {
-      expect(api.generateAcademyPracticeSession).toHaveBeenCalledWith(
-        "lesson-1",
-        expect.stringMatching(
-          /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i,
-        ),
-      );
+      expect(api.generateAcademyPracticeSession).not.toHaveBeenCalled();
     });
     expect(api.getAcademyExercises).toHaveBeenCalledWith(
       "student-1",

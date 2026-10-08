@@ -448,8 +448,8 @@ export default function AcademyLesson() {
           <h2 className="text-xl font-bold">Practice</h2>
           <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
             {lesson.practiceSessionCompleted
-              ? "Your PDF-based practice set is complete. This counts toward the lesson requirements."
-              : `${scoredPractice.filter((exercise) => exercise.completed).length} of ${scoredPractice.length} scored questions passed. A new question set is generated from the lesson material each time you start practice.`}
+              ? "Your teacher-authored practice set is complete. This counts toward the lesson requirements."
+              : `${scoredPractice.filter((exercise) => exercise.completed).length} of ${scoredPractice.length} scored questions passed. Practice draws from the lesson's prepared question bank each time you start it.`}
           </p>
           <ul className="mt-3 space-y-1 text-sm text-slate-700 dark:text-slate-300">
             {practice.slice(0, 6).map((exercise) => (
@@ -485,7 +485,7 @@ export default function AcademyLesson() {
               )
             }
           >
-            Start fresh PDF-based practice
+            Start prepared practice
           </Link>
         </section>
       )}
