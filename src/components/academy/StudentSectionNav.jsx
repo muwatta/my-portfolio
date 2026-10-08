@@ -8,17 +8,17 @@ import {
 } from "react-icons/fi";
 
 const SECTIONS = [
+  { label: "Courses", to: "/academy/courses", icon: FiLayers },
   { label: "Materials", to: "/academy/materials", icon: FiBookOpen },
-  { label: "Course", to: "/academy/courses", icon: FiLayers },
   { label: "Projects", to: "/academy/projects", icon: FiBriefcase },
-  { label: "Tests", to: "/academy/exams", icon: FiFileText },
+  { label: "Assessments", to: "/academy/exams", icon: FiFileText },
   { label: "Leaderboard", to: "/academy/leaderboard", icon: FiAward },
 ];
 
 export default function StudentSectionNav() {
   return (
     <nav
-      aria-label="Academy sections"
+      aria-label="More student sections"
       className="mb-4 flex gap-2 overflow-x-auto border-b border-slate-200 pb-2.5 dark:border-slate-800"
     >
       {SECTIONS.map(({ label, to, icon: Icon }) => (

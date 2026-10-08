@@ -12,27 +12,12 @@ import { useAcademyAuth } from "../../hooks/useAcademyAuth";
 import { useTheme } from "../../context/useTheme";
 import OfflineStatus from "./OfflineStatus";
 import AcademyFooter from "./AcademyFooter";
+import StudentPrimaryNav from "./StudentPrimaryNav";
+import { STUDENT_NAVIGATION } from "./studentNavigation";
 import {
   heartbeatAcademyLearningSession,
   startAcademyLearningSession,
 } from "../../lib/academy";
-
-const STUDENT_LINKS = [
-  { label: "Home", to: "/academy/dashboard" },
-  { label: "Learn", to: "/academy/lessons" },
-  { label: "Practice", to: "/academy/practice" },
-  { label: "My work", to: "/academy/assignments" },
-  { label: "Progress", to: "/academy/progress" },
-  { label: "Profile", to: "/academy/profile" },
-];
-
-const QUICK_LINKS = [
-  { label: "Home", to: "/academy/dashboard" },
-  { label: "Learn", to: "/academy/lessons" },
-  { label: "Practice", to: "/academy/practice" },
-  { label: "Tasks", to: "/academy/assignments" },
-  { label: "Profile", to: "/academy/profile" },
-];
 
 const TEACHER_LINKS = [
   { label: "Teacher dashboard", to: "/academy/teacher" },
@@ -177,10 +162,10 @@ export default function AcademyLayout({
 
   const navigationLinks =
     {
-      student: STUDENT_LINKS,
+      student: STUDENT_NAVIGATION,
       teacher: TEACHER_LINKS,
       admin: ADMIN_LINKS,
-    }[workspace] || STUDENT_LINKS;
+    }[workspace] || STUDENT_NAVIGATION;
 
   const dashboardPath = {
     student: "/academy/dashboard",
@@ -296,7 +281,11 @@ export default function AcademyLayout({
             navigationOpen
               ? "visible translate-x-0"
               : "invisible -translate-x-full"
-          } fixed inset-y-0 left-0 z-40 w-72 overflow-y-auto bg-white px-4 pb-6 pt-20 shadow-2xl transition-[transform,visibility] dark:bg-slate-950 lg:visible lg:static lg:z-auto lg:block lg:w-52 lg:translate-x-0 lg:overflow-visible lg:bg-transparent lg:p-0 lg:shadow-none lg:transition-none`}
+          } fixed inset-y-0 left-0 z-40 w-72 overflow-y-auto bg-white px-4 pb-6 pt-20 shadow-2xl transition-[transform,visibility] dark:bg-slate-950 ${
+            workspace === "student"
+              ? "lg:hidden"
+              : "lg:visible lg:static lg:z-auto lg:block lg:w-52 lg:translate-x-0 lg:overflow-visible lg:bg-transparent lg:p-0 lg:shadow-none lg:transition-none"
+          }`}
         >
           <div className="mb-4 border-b border-slate-200 pb-4 text-xs font-semibold uppercase tracking-[0.16em] text-slate-500 dark:border-slate-800 dark:text-slate-400 lg:hidden">
             Menu
@@ -367,6 +356,12 @@ export default function AcademyLayout({
             workspace === "student" ? "academy-student-content" : ""
           }`}
         >
+          {workspace === "student" && (
+            <>
+              <StudentPrimaryNav />
+              {aboveOutlet}
+            </>
+          )}
           {profileIncomplete && (
             <p
               role="alert"
@@ -383,7 +378,7 @@ export default function AcademyLayout({
               to complete your account.
             </p>
           )}
-          {aboveOutlet}
+          {workspace !== "student" && aboveOutlet}
           <Outlet />
         </main>
       </div>
@@ -393,33 +388,26 @@ export default function AcademyLayout({
           aria-label="Quick navigation"
           className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-5 border-t border-slate-200 bg-white/95 px-1 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-1 backdrop-blur lg:hidden dark:border-slate-800 dark:bg-slate-950/95"
         >
-          {QUICK_LINKS.map(({ label, to }) => (
-            <NavLink
-              key={to}
-              to={to}
-              className={({ isActive }) =>
-                `flex min-h-11 flex-col items-center justify-center rounded-lg px-1 text-xs font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 ${
-                  to === "/academy/profile" && profileIncomplete
-                    ? "animate-pulse text-red-700 motion-reduce:animate-none dark:text-red-300"
-                    : isActive
+          {STUDENT_NAVIGATION.filter(({ quickAccess }) => quickAccess).map(
+            ({ label, to, icon: Icon, end = false }) => (
+              <NavLink
+                key={to}
+                to={to}
+                end={end}
+                className={({ isActive }) =>
+                  `flex min-h-12 flex-col items-center justify-center rounded-lg px-1 text-[0.68rem] font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 ${
+                    isActive
                       ? "text-amber-600 dark:text-amber-400"
                       : "text-slate-500 dark:text-slate-400"
-                }`
-              }
-              aria-label={
-                to === "/academy/profile" && profileIncomplete
-                  ? "Profile incomplete. Complete your school and state."
-                  : undefined
-              }
-            >
-              <span>{label}</span>
-              {to === "/academy/profile" && profileIncomplete && (
-                <span className="text-[0.6rem] font-bold uppercase text-red-700 dark:text-red-300">
-                  Complete
-                </span>
-              )}
-            </NavLink>
-          ))}
+                  }`
+                }
+                aria-label={label}
+              >
+                <Icon aria-hidden="true" className="text-base" />
+                <span>{label}</span>
+              </NavLink>
+            ),
+          )}
         </nav>
       )}
 
