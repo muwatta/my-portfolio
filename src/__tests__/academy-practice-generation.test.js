@@ -16,7 +16,7 @@ const terminalPracticeMigration = readFileSync(
 const supabaseConfig = readFileSync("supabase/config.toml", "utf8");
 
 describe("prepared practice session generation", () => {
-  it("uses published, released, scorable objective questions before requiring PDF AI", () => {
+  it("uses prepared questions first and grounds generated practice in the selected lesson", () => {
     expect(generator).toContain('.eq("published", true)');
     expect(generator).toContain('.eq("status", "published")');
     expect(generator).toContain(".is(\"practice_session_id\", null)");
@@ -25,6 +25,14 @@ describe("prepared practice session generation", () => {
     );
     expect(generator).toContain("if (selectedQuestions.length)");
     expect(generator).toContain("if (!providerKey)");
+    expect(generator).toContain("if (objectives.length === 0 && !hasLessonContent)");
+    expect(generator).toContain("learn_content: lessonContent");
+    expect(generator).toContain(
+      "Every question and its correct answer must be directly supported by the selected lesson's objectives or Learn content.",
+    );
+    expect(generator).toContain("Use no other source.");
+    expect(generator).not.toContain("academy_materials");
+    expect(generator).not.toContain("input_file");
   });
 
   it("creates sessions with the function's own authenticated user check", () => {
