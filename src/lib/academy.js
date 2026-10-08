@@ -874,6 +874,7 @@ export async function getAcademyCoursePreview(courseSlug) {
           .select("id, lesson_id, title, instructions, difficulty, status, release_at")
           .in("lesson_id", lessonIds)
           .eq("published", true)
+          .is("practice_session_id", null)
           .order("title", { ascending: true }),
         supabase
           .from("academy_lesson_activities")
@@ -1559,6 +1560,18 @@ export async function getAcademyLessons(studentId) {
   });
 }
 
+export async function getNextAcademyLesson(studentId, completedLessonId) {
+  const { data, error } = await getAcademyLessons(studentId);
+  if (error) return { data: null, error };
+  const currentIndex = (data ?? []).findIndex(
+    (lesson) => lesson.id === completedLessonId,
+  );
+  const nextLesson = (data ?? [])
+    .slice(currentIndex + 1)
+    .find((lesson) => lesson.status === "available" || lesson.status === "in-progress");
+  return { data: nextLesson ?? null, error: null };
+}
+
 export async function markLessonStarted(lessonId, studentId) {
   if (!supabase) return { error: new Error("Academy is not configured.") };
   if (!studentId) return { error: new Error("Authentication required.") };
@@ -1606,6 +1619,7 @@ export async function getAcademyLesson(id, studentId) {
       { data: activities, error: activitiesError },
       { data: submissions, error: submissionsError },
       { data: exerciseAttempts, error: exerciseAttemptsError },
+      { data: latestPracticeSession, error: practiceSessionError },
     ] = await Promise.all([
         supabase
           .from("academy_exercises")
@@ -1613,7 +1627,8 @@ export async function getAcademyLesson(id, studentId) {
             "id, lesson_id, title, instructions, starter_code, difficulty, expected_concepts, hints, explanation, question_type, choices, attempt_limit",
           )
           .eq("lesson_id", id)
-          .eq("published", true),
+          .eq("published", true)
+          .is("practice_session_id", null),
         supabase
           .from("academy_lesson_subtopics")
           .select("id, title, concept, explanation, example, ordering")
@@ -1651,13 +1666,25 @@ export async function getAcademyLesson(id, studentId) {
               .eq("student_id", studentId)
               .eq("academy_exercises.lesson_id", id)
           : Promise.resolve({ data: [] }),
+        studentId
+          ? supabase
+              .from("academy_practice_sessions")
+              .select("completed_at")
+              .eq("lesson_id", id)
+              .eq("student_id", studentId)
+              .not("completed_at", "is", null)
+              .order("completed_at", { ascending: false })
+              .limit(1)
+              .maybeSingle()
+          : Promise.resolve({ data: null, error: null }),
       ]);
 
     if (
       exercisesError ||
       activitiesError ||
       submissionsError ||
-      exerciseAttemptsError
+      exerciseAttemptsError ||
+      practiceSessionError
     ) {
       return {
         data: null,
@@ -1665,7 +1692,8 @@ export async function getAcademyLesson(id, studentId) {
           exercisesError ||
           activitiesError ||
           submissionsError ||
-          exerciseAttemptsError,
+          exerciseAttemptsError ||
+          practiceSessionError,
         configured: true,
       };
     }
@@ -1732,6 +1760,7 @@ export async function getAcademyLesson(id, studentId) {
       data: {
         ...data,
         tasks,
+        practiceSessionCompleted: Boolean(latestPracticeSession?.completed_at),
         exercises: (exercises ?? []).map((exercise) => ({
           ...exercise,
           completed: passedExerciseIds.has(exercise.id),
@@ -1804,20 +1833,26 @@ export async function getAcademyAssignments(studentId) {
   });
 }
 
-export async function getAcademyExercises(studentId) {
+export async function getAcademyExercises(studentId, practiceSessionId = null) {
   if (!supabase) return unavailable([]);
   if (!studentId) return { data: [], error: null, configured: true };
   const activeCourse = await getActiveCourseForStudent(studentId);
   if (!activeCourse) return { data: [], error: null, configured: true };
-  const { data, error } = await supabase
+  let query = supabase
     .from("academy_exercises")
     .select(
-      "id, lesson_id, title, instructions, starter_code, difficulty, expected_concepts, hints, explanation, question_type, choices, attempt_limit, academy_lessons!inner(title, published, academy_weeks!inner(academy_courses!inner(id, slug, title, language)))",
+      "id, lesson_id, title, instructions, starter_code, difficulty, expected_concepts, hints, explanation, question_type, choices, attempt_limit, practice_question_number, academy_lessons!inner(title, published, academy_weeks!inner(academy_courses!inner(id, slug, title, language)))",
     )
     .eq("published", true)
     .eq("academy_lessons.published", true)
-    .eq("academy_lessons.academy_weeks.course_id", activeCourse.id)
-    .order("title");
+    .eq("academy_lessons.academy_weeks.course_id", activeCourse.id);
+  query = practiceSessionId
+    ? query.eq("practice_session_id", practiceSessionId).order(
+        "practice_question_number",
+        { ascending: true },
+      )
+    : query.is("practice_session_id", null).order("title");
+  const { data, error } = await query;
   return {
     // The runtime comes from academy_courses.language, not from comparing a
     // course slug, so adding a course in a new language needs no code change.
@@ -1830,6 +1865,23 @@ export async function getAcademyExercises(studentId) {
     error,
     configured: true,
   };
+}
+
+export async function generateAcademyPracticeSession(lessonId, sessionId) {
+  if (!supabase)
+    return { data: null, error: new Error("Academy is not configured.") };
+  const { data, error } = await supabase.functions.invoke(
+    "academy-generate-practice",
+    { body: { lesson_id: lessonId, session_id: sessionId } },
+  );
+  if (error) return { data: null, error: await friendlyFunctionError(error) };
+  if (!data || data.session_id !== sessionId) {
+    return {
+      data: null,
+      error: new Error("The generated practice session could not be verified."),
+    };
+  }
+  return { data, error: null };
 }
 
 export async function submitObjectiveAnswer(
@@ -2128,6 +2180,7 @@ export async function submitAssignment({
   });
   if (!error) {
     invalidateAcademyCache(
+      "lesson:",
       `progress:${studentId}`,
       `assignments:${studentId}`,
       `overview:${studentId}`,

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import {
   getAcademyAssignment,
   getSubmissionCount,
@@ -43,6 +43,8 @@ function CodeEditorForAssignment({ assignment, onCaptureSource }) {
 
 export default function AcademyAssignment() {
   const { id } = useParams();
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const { user } = useAcademyAuth();
   const [assignment, setAssignment] = useState(null);
   const [attempts, setAttempts] = useState(0);
@@ -220,6 +222,13 @@ export default function AcademyAssignment() {
         `assignment:${assignment.id}:source`,
       );
       setNotice("Submitted. Deterministic grading has started.");
+      const returnTo = searchParams.get("returnTo");
+      if (
+        returnTo?.startsWith("/academy/lessons/") &&
+        !returnTo.startsWith("//")
+      ) {
+        navigate(returnTo, { replace: true });
+      }
     } catch (error) {
       if ((error?.message || "").toLowerCase().includes("network")) {
         const operationId =

@@ -4,9 +4,14 @@ import { MemoryRouter, Route, Routes } from "react-router-dom";
 
 const api = vi.hoisted(() => ({
   getAcademyExercises: vi.fn(),
+  generateAcademyPracticeSession: vi.fn(),
+  getAcademyLesson: vi.fn(),
+  markLessonComplete: vi.fn(),
+  getNextAcademyLesson: vi.fn(),
   submitObjectiveAnswer: vi.fn(),
 }));
 const offlineState = vi.hoisted(() => ({ records: {} }));
+const SESSION_ID = "d6487ba2-aaf0-4dc7-a9ad-8cb6c663bfac";
 
 vi.mock("../hooks/useAcademyAuth", () => ({
   useAcademyAuth: () => ({ user: { id: "student-1" } }),
@@ -99,11 +104,14 @@ const EXERCISES = [
   },
 ];
 
-function renderPractice() {
+function renderPractice(
+  entry = `/academy/practice?lesson=lesson-1&session=${SESSION_ID}`,
+) {
   return render(
-    <MemoryRouter initialEntries={["/academy/practice?lesson=lesson-1"]}>
+    <MemoryRouter initialEntries={[entry]}>
       <Routes>
         <Route path="/academy/practice" element={<AcademyPractice />} />
+        <Route path="/academy/lessons/:id" element={<p>Task phase</p>} />
       </Routes>
     </MemoryRouter>,
   );
@@ -117,11 +125,21 @@ describe("AcademyPractice saved session", () => {
       configurable: true,
       value: true,
     });
+    api.generateAcademyPracticeSession.mockResolvedValue({
+      data: { session_id: SESSION_ID },
+      error: null,
+    });
     api.getAcademyExercises.mockResolvedValue({
       data: EXERCISES,
       error: null,
       configured: true,
     });
+    api.getAcademyLesson.mockResolvedValue({
+      data: { tasks: [{ submission: null }] },
+      error: null,
+    });
+    api.markLessonComplete.mockResolvedValue({ error: null });
+    api.getNextAcademyLesson.mockResolvedValue({ data: null, error: null });
     api.submitObjectiveAnswer.mockResolvedValue({
       data: { score: 1, max_score: 1 },
       error: null,
@@ -137,7 +155,10 @@ describe("AcademyPractice saved session", () => {
     });
 
     await waitFor(() => {
-      const saved = offlineState.records["student-1:practice:lesson-1"]?.data;
+      const savedKey = Object.keys(offlineState.records).find((key) =>
+        key.startsWith(`student-1:practice:lesson-1:${SESSION_ID}`),
+      );
+      const saved = offlineState.records[savedKey]?.data;
       expect(saved?.answers["quiz-1"]).toBe("true");
       expect(saved?.codeDrafts["code-1"]).toBe("print('Saved work')");
     });
@@ -170,5 +191,46 @@ describe("AcademyPractice saved session", () => {
       expect.any(String),
     );
     expect(screen.getAllByRole("button", { name: "Submit answer" })[0]).toBeEnabled();
+  });
+
+  it("creates a fresh PDF-based session when practice is opened without a session id", async () => {
+    renderPractice("/academy/practice?lesson=lesson-1");
+
+    await screen.findByRole("radio", { name: "true" });
+    await waitFor(() => {
+      expect(api.generateAcademyPracticeSession).toHaveBeenCalledWith(
+        "lesson-1",
+        expect.stringMatching(
+          /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i,
+        ),
+      );
+    });
+    expect(api.getAcademyExercises).toHaveBeenCalledWith(
+      "student-1",
+      expect.any(String),
+    );
+  });
+
+  it("requires a lesson instead of showing the repeated generic question list", async () => {
+    renderPractice("/academy/practice");
+
+    expect(
+      await screen.findByRole("heading", { name: "Choose a lesson to practice" }),
+    ).toBeInTheDocument();
+    expect(api.getAcademyExercises).not.toHaveBeenCalled();
+  });
+
+  it("automatically advances to the Task phase after passing the generated set", async () => {
+    api.getAcademyExercises.mockResolvedValue({
+      data: [EXERCISES[0]],
+      error: null,
+      configured: true,
+    });
+    renderPractice();
+    fireEvent.click(await screen.findByRole("radio", { name: "true" }));
+    fireEvent.click(screen.getByRole("button", { name: "Submit answer" }));
+
+    expect(await screen.findByText("Task phase")).toBeInTheDocument();
+    expect(api.getAcademyLesson).toHaveBeenCalledWith("lesson-1", "student-1");
   });
 });

@@ -1,7 +1,8 @@
-import { useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { useEffect, useRef, useState } from "react";
+import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import {
   getAcademyLesson,
+  getNextAcademyLesson,
   isAcademyLessonUnlocked,
   markLessonComplete,
   markLessonStarted,
@@ -25,6 +26,8 @@ import TerminalEditor from "../components/academy/TerminalEditor";
 
 export default function AcademyLesson() {
   const { id } = useParams();
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const { user } = useAcademyAuth();
   const [lesson, setLesson] = useState(null);
   const [state, setState] = useState("loading");
@@ -35,6 +38,9 @@ export default function AcademyLesson() {
   const [codeDrafts, setCodeDrafts] = useState({});
   const [notice, setNotice] = useState("");
   const [reloadToken, setReloadToken] = useState(0);
+  const automaticCompletionStarted = useRef(false);
+  const requestedStep = searchParams.get("step");
+  const autoCompleteAfterTask = searchParams.get("autoComplete") === "1";
   const network = useNetworkStatus();
 
   useEffect(() => {
@@ -101,7 +107,11 @@ export default function AcademyLesson() {
         ...(data?.tasks?.length ? ["task"] : []),
       ];
       setStep(
-        availableSteps.includes(savedStep?.step) ? savedStep.step : "learn",
+        availableSteps.includes(requestedStep)
+          ? requestedStep
+          : availableSteps.includes(savedStep?.step)
+            ? savedStep.step
+            : "learn",
       );
       setCodeDrafts(savedCode?.codeDrafts ?? {});
       setStepReady(true);
@@ -109,7 +119,7 @@ export default function AcademyLesson() {
     return () => {
       cancelled = true;
     };
-  }, [id, user.id, reloadToken]);
+  }, [id, requestedStep, user.id, reloadToken]);
 
   useEffect(() => {
     if (!stepReady || !lesson) return undefined;
@@ -172,6 +182,90 @@ export default function AcademyLesson() {
     setCompleted(true);
   }
 
+  const lessonPracticeDone =
+    Boolean(lesson?.practiceSessionCompleted) ||
+    (lesson?.exercises ?? [])
+      .filter((exercise) => exercise.question_type !== "programming")
+      .every((exercise) => exercise.completed);
+  const lessonTasksDone = (lesson?.tasks ?? []).every((task) =>
+    Boolean(task.submission),
+  );
+
+  useEffect(() => {
+    automaticCompletionStarted.current = false;
+  }, [id]);
+
+  useEffect(() => {
+    if (!stepReady || !requestedStep) return undefined;
+    const timer = window.setTimeout(() => {
+      document
+        .getElementById(`topic-step-${requestedStep}`)
+        ?.scrollIntoView({ block: "start" });
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, [requestedStep, stepReady]);
+
+  useEffect(() => {
+    if (
+      !stepReady ||
+      state !== "ready" ||
+      !lesson ||
+      !autoCompleteAfterTask ||
+      completed ||
+      !lessonPracticeDone ||
+      !lessonTasksDone ||
+      automaticCompletionStarted.current
+    )
+      return undefined;
+
+    automaticCompletionStarted.current = true;
+    let cancelled = false;
+    async function completeAndAdvance() {
+      const { error } = await markLessonComplete(id, user.id);
+      if (cancelled) return;
+      if (error) {
+        setNotice(
+          friendlyError(
+            error,
+            "Your work was submitted, but the lesson could not be completed automatically.",
+          ),
+        );
+        return;
+      }
+      setCompleted(true);
+      const nextLesson = await getNextAcademyLesson(user.id, id);
+      if (cancelled) return;
+      if (nextLesson.error) {
+        setNotice(
+          "Your lesson is complete, but the next lesson could not be loaded. Open the lessons list to continue.",
+        );
+        return;
+      }
+      navigate(
+        nextLesson.data
+          ? `/academy/lessons/${encodeURIComponent(nextLesson.data.id)}`
+          : "/academy/lessons",
+        { replace: true },
+      );
+    }
+
+    void completeAndAdvance();
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    autoCompleteAfterTask,
+    completed,
+    id,
+    lessonPracticeDone,
+    lesson,
+    lessonTasksDone,
+    navigate,
+    state,
+    stepReady,
+    user.id,
+  ]);
+
   if (state === "loading")
     return <AcademyConnectionState loading title="" description="" showChallenge={false} />;
   if (state === "unconfigured")
@@ -231,7 +325,9 @@ export default function AcademyLesson() {
     (exercise) => exercise.question_type !== "programming",
   );
   const tasks = lesson.tasks ?? [];
-  const practiceDone = scoredPractice.every((exercise) => exercise.completed);
+  const practiceDone =
+    Boolean(lesson.practiceSessionCompleted) ||
+    scoredPractice.every((exercise) => exercise.completed);
   const taskDone = tasks.every((task) => Boolean(task.submission));
   const jumpTo = (target) => {
     setStep(target);
@@ -351,9 +447,9 @@ export default function AcademyLesson() {
         >
           <h2 className="text-xl font-bold">Practice</h2>
           <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
-            {scoredPractice.filter((exercise) => exercise.completed).length} of{" "}
-            {scoredPractice.length} scored questions passed. Pass each one to
-            unlock the next lesson.
+            {lesson.practiceSessionCompleted
+              ? "Your PDF-based practice set is complete. This counts toward the lesson requirements."
+              : `${scoredPractice.filter((exercise) => exercise.completed).length} of ${scoredPractice.length} scored questions passed. A new question set is generated from the lesson material each time you start practice.`}
           </p>
           <ul className="mt-3 space-y-1 text-sm text-slate-700 dark:text-slate-300">
             {practice.slice(0, 6).map((exercise) => (
@@ -389,7 +485,7 @@ export default function AcademyLesson() {
               )
             }
           >
-            Start practice
+            Start fresh PDF-based practice
           </Link>
         </section>
       )}
@@ -458,7 +554,7 @@ export default function AcademyLesson() {
 
                   <Link
                     className="button-secondary mt-3 inline-flex"
-                    to={`/academy/assignments/${task.assignmentId}`}
+                    to={`/academy/assignments/${task.assignmentId}?returnTo=${encodeURIComponent(`/academy/lessons/${id}?step=task&autoComplete=1`)}`}
                   >
                     {submission ? "View or resubmit" : "Open task"}
                   </Link>

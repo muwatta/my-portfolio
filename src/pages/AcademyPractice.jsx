@@ -1,6 +1,13 @@
-import { useEffect, useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
-import { getAcademyExercises, submitObjectiveAnswer } from "../lib/academy";
+import { useEffect, useRef, useState } from "react";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import {
+  generateAcademyPracticeSession,
+  getAcademyExercises,
+  getAcademyLesson,
+  getNextAcademyLesson,
+  markLessonComplete,
+  submitObjectiveAnswer,
+} from "../lib/academy";
 import CppEditor from "../components/academy/CppEditor";
 import PythonEditor from "../components/academy/PythonEditor";
 import { useAcademyAuth } from "../hooks/useAcademyAuth";
@@ -19,13 +26,22 @@ import { useNetworkStatus } from "../hooks/useNetworkStatus";
 const makeOperationId = () =>
   globalThis.crypto?.randomUUID?.() ||
   `practice-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+const makeSessionId = () =>
+  globalThis.crypto?.randomUUID?.() ||
+  "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (character) => {
+    const value = Math.floor(Math.random() * 16);
+    return (character === "x" ? value : (value & 0x3) | 0x8).toString(16);
+  });
 
 export default function AcademyPractice() {
   const { user } = useAcademyAuth();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
   const selectedLessonId = searchParams.get("lesson");
+  const practiceSessionId = searchParams.get("session");
   const [exercises, setExercises] = useState([]);
   const [state, setState] = useState("loading");
+  const [loadError, setLoadError] = useState(null);
   const [offline, setOffline] = useState(false);
   const [answers, setAnswers] = useState({});
   const [codeDrafts, setCodeDrafts] = useState({});
@@ -34,24 +50,70 @@ export default function AcademyPractice() {
   const [submitting, setSubmitting] = useState(null);
   const [loadedDraftKey, setLoadedDraftKey] = useState(null);
   const [draftSaveState, setDraftSaveState] = useState("idle");
+  const [advanceNotice, setAdvanceNotice] = useState("");
   const [reloadToken, setReloadToken] = useState(0);
+  const advancedSession = useRef(null);
   const network = useNetworkStatus();
-  const draftKey = `practice:${selectedLessonId || "all"}`;
+  const draftKey = selectedLessonId
+    ? `practice:${selectedLessonId}:${practiceSessionId || "pending"}`
+    : "practice:all";
   const visibleExercises = selectedLessonId
     ? exercises.filter((exercise) => exercise.lesson_id === selectedLessonId)
     : exercises;
   const practiceLanguage = visibleExercises[0]?.language || "python";
 
   useEffect(() => {
+    if (!selectedLessonId || practiceSessionId) return;
+    setSearchParams(
+      (current) => {
+        const next = new URLSearchParams(current);
+        next.set("session", makeSessionId());
+        return next;
+      },
+      { replace: true },
+    );
+  }, [practiceSessionId, selectedLessonId, setSearchParams]);
+
+  useEffect(() => {
     let cancelled = false;
     setLoadedDraftKey(null);
     setState("loading");
     async function loadPractice() {
+      if (!selectedLessonId) {
+        setExercises([]);
+        setAnswers({});
+        setCodeDrafts({});
+        setOperationIds({});
+        setResults({});
+        setOffline(false);
+        setLoadError(null);
+        setState("ready");
+        setLoadedDraftKey(draftKey);
+        return;
+      }
+      if (selectedLessonId && !practiceSessionId) return;
       try {
         const result = await fetchWithOfflineFallback({
           userId: user.id,
           store: OFFLINE_STORES.exercises,
-          fetcher: () => getAcademyExercises(user.id),
+          id: selectedLessonId
+            ? `practice:${selectedLessonId}:${practiceSessionId}`
+            : undefined,
+          fetcher: async () => {
+            if (selectedLessonId) {
+              const generated = await generateAcademyPracticeSession(
+                selectedLessonId,
+                practiceSessionId,
+              );
+              if (generated.error) {
+                return { data: null, error: generated.error, configured: true };
+              }
+            }
+            return getAcademyExercises(
+              user.id,
+              selectedLessonId ? practiceSessionId : null,
+            );
+          },
         });
         let draft = null;
         try {
@@ -67,6 +129,7 @@ export default function AcademyPractice() {
         if (cancelled) return;
         setOffline(Boolean(result.offline));
         setExercises(result.data ?? []);
+        setLoadError(result.error ?? null);
         setAnswers(draft?.answers ?? {});
         setCodeDrafts(draft?.codeDrafts ?? {});
         setOperationIds(draft?.operationIds ?? {});
@@ -77,6 +140,7 @@ export default function AcademyPractice() {
         setLoadedDraftKey(draftKey);
       } catch {
         if (cancelled) return;
+        setLoadError(new Error("Practice questions could not be loaded."));
         setState("error");
       }
     }
@@ -84,10 +148,16 @@ export default function AcademyPractice() {
     return () => {
       cancelled = true;
     };
-  }, [draftKey, reloadToken, user.id]);
+  }, [
+    draftKey,
+    practiceSessionId,
+    reloadToken,
+    selectedLessonId,
+    user.id,
+  ]);
 
   useEffect(() => {
-    if (loadedDraftKey !== draftKey) return undefined;
+    if (!selectedLessonId || loadedDraftKey !== draftKey) return undefined;
     const timer = window.setTimeout(() => {
       setDraftSaveState("saving");
       void putOfflineRecord(OFFLINE_STORES.drafts, user.id, draftKey, {
@@ -109,6 +179,7 @@ export default function AcademyPractice() {
     loadedDraftKey,
     operationIds,
     results,
+    selectedLessonId,
     user.id,
   ]);
 
@@ -176,6 +247,88 @@ export default function AcademyPractice() {
     }
   }
 
+  const sessionPassed =
+    Boolean(selectedLessonId && practiceSessionId) &&
+    visibleExercises.length > 0 &&
+    visibleExercises.every((exercise) => {
+      const result = results[exercise.id];
+      return (
+        !result?.error &&
+        !result?.pending &&
+        (result?.passed > 0 ||
+          (Number(result?.max_score) > 0 &&
+            Number(result?.score) >= Number(result?.max_score)))
+      );
+    });
+
+  useEffect(() => {
+    if (state !== "ready" || !sessionPassed || !selectedLessonId || !practiceSessionId) {
+      return undefined;
+    }
+    if (advancedSession.current === practiceSessionId) return undefined;
+    advancedSession.current = practiceSessionId;
+    let cancelled = false;
+
+    async function advanceToNextPhase() {
+      const lessonResult = await getAcademyLesson(selectedLessonId, user.id);
+      if (cancelled) return;
+      if (lessonResult.error || !lessonResult.data) {
+        setAdvanceNotice(
+          "Practice passed, but the next lesson phase could not be loaded. Your answers are saved; use the lesson link to continue.",
+        );
+        return;
+      }
+
+      const tasks = lessonResult.data.tasks ?? [];
+      const allTasksDone = tasks.every((task) => Boolean(task.submission));
+      if (tasks.length && !allTasksDone) {
+        navigate(
+          `/academy/lessons/${encodeURIComponent(selectedLessonId)}?step=task&session=${encodeURIComponent(practiceSessionId)}`,
+          { replace: true },
+        );
+        return;
+      }
+
+      const { error } = await markLessonComplete(selectedLessonId, user.id);
+      if (cancelled) return;
+      if (error) {
+        setAdvanceNotice(
+          friendlyError(
+            error,
+            "Practice passed, but the lesson could not be completed yet.",
+          ),
+        );
+        return;
+      }
+      const nextLesson = await getNextAcademyLesson(user.id, selectedLessonId);
+      if (cancelled) return;
+      if (nextLesson.error) {
+        setAdvanceNotice(
+          "The lesson is complete, but the next lesson could not be loaded. Your progress is saved; open the lessons list to continue.",
+        );
+        return;
+      }
+      navigate(
+        nextLesson.data
+          ? `/academy/lessons/${encodeURIComponent(nextLesson.data.id)}`
+          : "/academy/lessons",
+        { replace: true },
+      );
+    }
+
+    void advanceToNextPhase();
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    navigate,
+    practiceSessionId,
+    selectedLessonId,
+    sessionPassed,
+    state,
+    user.id,
+  ]);
+
   return (
     <div className="space-y-6">
       <header>
@@ -185,14 +338,12 @@ export default function AcademyPractice() {
         <h1 className="mt-2 text-3xl font-bold">
           {selectedLessonId
             ? `Lesson practice · ${practiceLanguage === "cpp" ? "C++" : "Python"}`
-            : practiceLanguage === "cpp"
-              ? "Practice C++"
-              : "Practice Python"}
+            : "Practice by lesson"}
         </h1>
         <p className="mt-2 text-slate-600 dark:text-slate-300">
-          {practiceLanguage === "cpp"
-            ? "Read each step, change the starter program, and run it in the beginner console lab."
-            : "Run beginner Python in your browser. The runtime loads only when you run code."}
+          {selectedLessonId
+            ? "Each session generates new questions from the PDF material and topic discussed in this lesson."
+            : "Choose a lesson to start a fresh, topic-specific practice set generated from its PDF material."}
         </p>
       </header>
       {offline && (
@@ -210,9 +361,20 @@ export default function AcademyPractice() {
           Your practice answers could not be saved on this device. Keep this page open until they are submitted.
         </p>
       )}
-      {state === "loading" && (
-        <AcademyConnectionState loading title="" description="" showChallenge={false} />
-      )}
+      {state === "loading" &&
+        (selectedLessonId ? (
+          <p role="status" className="rounded-xl bg-blue-50 p-4 text-sm text-blue-900">
+            Preparing fresh questions from this lesson's PDF. This can take a
+            little while.
+          </p>
+        ) : (
+          <AcademyConnectionState
+            loading
+            title=""
+            description=""
+            showChallenge={false}
+          />
+        ))}
       {state === "unconfigured" && (
         <p className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">
           Connect Supabase to load practice exercises.
@@ -223,44 +385,68 @@ export default function AcademyPractice() {
           role="alert"
           className="rounded-xl border border-red-300 bg-red-50 p-4 text-sm text-red-700"
         >
-          Practice exercises could not be loaded.
+          {friendlyError(
+            loadError,
+            "Practice exercises could not be loaded.",
+          )}
+        </p>
+      )}
+      {advanceNotice && (
+        <p role="alert" className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">
+          {advanceNotice}
         </p>
       )}
       {state === "ready" && visibleExercises.length === 0 && (
-        <AcademyConnectionState
-          online={network.online}
-          slow={network.slow}
-          title={
-            network.online
-              ? "No practice exercises yet"
-              : "Practice is not downloaded"
-          }
-          description={
-            network.online
-              ? "Your teacher has not added practice for this course yet. Keep moving through your lessons while new exercises are prepared."
-              : "Reconnect once to download practice exercises. Your saved lessons remain available offline."
-          }
-          onRetry={
-            network.online
-              ? undefined
-              : () => setReloadToken((value) => value + 1)
-          }
-        >
-          <div className="mt-4 flex flex-wrap gap-2">
+        selectedLessonId ? (
+          <AcademyConnectionState
+            online={network.online}
+            slow={network.slow}
+            title={
+              network.online
+                ? "No PDF-based questions are available"
+                : "This practice session is not downloaded"
+            }
+            description={
+              network.online
+                ? "The AI could not create this lesson's question set. Check that a published PDF is linked to the lesson or course, then retry."
+                : "Reconnect to generate this session's questions. Previously saved practice sessions remain available from their session links."
+            }
+            onRetry={
+              network.online
+                ? () => setReloadToken((value) => value + 1)
+                : undefined
+            }
+          >
+            <div className="mt-4 flex flex-wrap gap-2">
+              <Link
+                to="/academy/lessons"
+                className="inline-flex min-h-10 items-center justify-center rounded-lg bg-amber-400 px-4 py-2 text-sm font-bold text-slate-950 hover:bg-amber-300"
+              >
+                Continue lessons
+              </Link>
+              <Link
+                to="/academy/materials"
+                className="inline-flex min-h-10 items-center justify-center rounded-lg border border-amber-300 px-4 py-2 text-sm font-semibold text-amber-950 hover:bg-amber-100 dark:border-amber-800 dark:text-amber-100 dark:hover:bg-amber-900/40"
+              >
+                Browse materials
+              </Link>
+            </div>
+          </AcademyConnectionState>
+        ) : (
+          <section className="rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+            <h2 className="text-lg font-bold">Choose a lesson to practice</h2>
+            <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
+              Questions are generated for a specific topic from its course PDF,
+              so practice no longer serves the same general question list.
+            </p>
             <Link
               to="/academy/lessons"
-              className="inline-flex min-h-10 items-center justify-center rounded-lg bg-amber-400 px-4 py-2 text-sm font-bold text-slate-950 hover:bg-amber-300"
+              className="button-primary mt-4 inline-flex"
             >
-              Continue lessons
+              Open my lessons
             </Link>
-            <Link
-              to="/academy/materials"
-              className="inline-flex min-h-10 items-center justify-center rounded-lg border border-amber-300 px-4 py-2 text-sm font-semibold text-amber-950 hover:bg-amber-100 dark:border-amber-800 dark:text-amber-100 dark:hover:bg-amber-900/40"
-            >
-              Browse materials
-            </Link>
-          </div>
-        </AcademyConnectionState>
+          </section>
+        )
       )}
       {visibleExercises.map((exercise) => (
         <article

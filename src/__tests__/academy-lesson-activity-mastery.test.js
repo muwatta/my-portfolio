@@ -40,8 +40,11 @@ describe("lesson activity provisioning", () => {
   it("shows practice completion and links students to the current lesson's questions", () => {
     expect(lessonPage).toMatch(/practiceDone=\{practiceDone\}/);
     expect(lessonPage).toMatch(/exercise\.completed/);
+    expect(lessonPage).toMatch(/practiceSessionCompleted/);
     expect(lessonPage).toMatch(/practice\?lesson=\$\{encodeURIComponent\(id\)\}/);
     expect(practicePage).toMatch(/exercise\.lesson_id === selectedLessonId/);
+    expect(practicePage).toMatch(/generateAcademyPracticeSession/);
+    expect(practicePage).toMatch(/step=task/);
   });
 
   it("restores the student's last lesson step after reopening the lesson", () => {

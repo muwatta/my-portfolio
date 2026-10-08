@@ -674,7 +674,16 @@ prerendered page as unstyled text.
    `AI_PROVIDER_API_KEY` and optional `AI_FEEDBACK_MODEL` as Edge Function
    secrets. Keep service-role and provider keys out of Vite environment
    variables.
-6. Deploy `supabase/functions/academy-grade-submission` and configure
+6. Deploy `supabase/functions/academy-generate-practice` and configure
+   `AI_PROVIDER_API_KEY` and optional `AI_PRACTICE_MODEL` as Edge Function
+   secrets. The function generates five new questions from the PDF linked to a
+   lesson (or its course), stores answer keys server-side, and uses the normal
+   objective-grading RPC. Set `ACADEMY_PUBLIC_ORIGIN` if the static course PDFs
+   are served from a host other than `https://www.muwatta.com.ng`. Students need
+   an active unlocked lesson and a published PDF; without one, generation fails
+   with an actionable message rather than serving the old generic question set.
+   Each student is limited to ten generated sessions per day.
+7. Deploy `supabase/functions/academy-grade-submission` and configure
    `GRADING_EXECUTOR_URL`, `GRADING_EXECUTOR_KEY`, and optional executor name
    and version secrets. The executor must be an isolated, no-network Python
    sandbox; the Edge Function deliberately does not execute student code.
@@ -1011,9 +1020,11 @@ recovery). Build the image and check the isolation actually applies before
 pointing real traffic at it — the flags are the security, so an unbuilt
 `docker-compose.yml` is an untested security control, not a finished one.
 
-**All three edge functions are deployed. The grading executor is not.** As of the
-last check `supabase functions list` shows `academy-admin-manage-user`,
-`academy-ai-feedback` and `academy-grade-submission` as ACTIVE, and
+**The grading executor is not deployed.** As of the last check, the Supabase CLI
+shows `academy-admin-manage-user`, `academy-ai-feedback` and
+`academy-grade-submission` as ACTIVE. The PDF-based practice migration and
+`academy-generate-practice` function must also be applied/deployed before the
+new practice flow is available. The existing
 `AI_PROVIDER_API_KEY` and `AI_FEEDBACK_MODEL` are set, so `academy-ai-feedback`
 is live. It writes narrative feedback only; its prompt explicitly forbids
 inventing a score, so the "AI grades it" path still does not exist. That is a
