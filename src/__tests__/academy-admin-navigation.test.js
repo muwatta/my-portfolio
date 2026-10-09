@@ -41,6 +41,14 @@ describe("an administrator can reach the leaderboard", () => {
     expect(extractLinks("ADMIN_LINKS")).toContain("/academy/admin/leaderboard");
   });
 
+  describe("an administrator can reach signup notifications", () => {
+    it("offers a route to notifications from the admin navigation", () => {
+      expect(extractLinks("ADMIN_LINKS")).toContain(
+        "/academy/admin/notifications",
+      );
+    });
+  });
+
   it("sits alongside the other performance views", () => {
     const links = extractLinks("ADMIN_LINKS");
     const at = links.indexOf("/academy/admin/leaderboard");

@@ -20,7 +20,12 @@ import {
 
 export default function OfflineStatus() {
   const { user } = useAcademyAuth();
-  const [state, setState] = useState({ online: true, status: "idle", pending: 0 });
+  const [state, setState] = useState({
+    online: true,
+    status: "idle",
+    pending: 0,
+    failed: 0,
+  });
 
   useEffect(() => {
     startAcademySync();
@@ -116,6 +121,8 @@ export default function OfflineStatus() {
     ? "Offline"
     : state.status === "syncing"
       ? "Syncing"
+      : state.failed
+        ? `${state.failed} need${state.failed === 1 ? "s" : ""} attention`
       : state.pending
         ? `${state.pending} waiting to sync`
         : "Online";
@@ -125,10 +132,20 @@ export default function OfflineStatus() {
       className="flex min-h-10 shrink-0 items-center gap-1.5 rounded-full border border-slate-200 bg-white px-2 text-[0.68rem] font-semibold text-slate-600 sm:min-h-11 sm:gap-2 sm:px-3 sm:text-xs dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300"
       role="status"
       aria-live="polite"
+      aria-label={
+        state.failed
+          ? `${label}. ${state.lastError || "An offline item could not be synchronized."}`
+          : label
+      }
+      title={state.failed ? state.lastError : undefined}
     >
       <span
         className={`h-2 w-2 rounded-full ${
-          state.online ? "bg-emerald-500" : "bg-amber-500"
+          state.failed
+            ? "bg-red-500"
+            : state.online
+              ? "bg-emerald-500"
+              : "bg-amber-500"
         }`}
         aria-hidden="true"
       />
@@ -137,6 +154,8 @@ export default function OfflineStatus() {
           ? "Offline"
           : state.status === "syncing"
             ? "Syncing"
+            : state.failed
+              ? `${state.failed} need attention`
             : state.pending
               ? `${state.pending} queued`
               : "Online"}

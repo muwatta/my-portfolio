@@ -13,6 +13,11 @@ const learningFixes = readFileSync(
   "supabase/migrations/20261405000000_academy_learning_material_and_leaderboard_limit.sql",
   "utf8",
 );
+const workflowMigration = readFileSync(
+  "supabase/migrations/20261409000000_academy_signup_notifications_cpp_sequence_and_leaderboard.sql",
+  "utf8",
+);
+const academy = readFileSync("src/lib/academy.js", "utf8");
 
 // A deterministic grader rejects correct code when the expected string is wrong,
 // and it fails silently: the student's submission simply never passes. So the
@@ -118,5 +123,28 @@ describe("the learning assignment corrections", () => {
   it("ranks the full standings before returning only ten students", () => {
     expect(learningFixes).toMatch(/row_number\(\) over[\s\S]*?as rank/);
     expect(learningFixes).toMatch(/where ranked\.rank <= 10/);
+  });
+
+  it("orders C++ assignments by week and blocks later submissions server side", () => {
+    const assignmentList = readFileSync("src/pages/AcademyAssignments.jsx", "utf8");
+    const assignmentDetail = readFileSync("src/pages/AcademyAssignment.jsx", "utf8");
+    expect(academy).toMatch(/activeCourse\.language === "cpp"[\s\S]*?week_number/);
+    expect(academy).toMatch(/locked:[\s\S]*?week_number > nextCppWeek/);
+    expect(assignmentList).toMatch(/Week \$\{assignment\.week_number\}/);
+    expect(assignmentList).toMatch(/Complete the previous week first/);
+    expect(assignmentDetail).toMatch(/assignment\.locked/);
+    expect(workflowMigration).toMatch(
+      /create trigger academy_require_prior_cpp_assignments\s+before insert on public\.academy_submissions/,
+    );
+    expect(workflowMigration).toMatch(
+      /prior_week\.week_number < target_week_number/,
+    );
+    expect(workflowMigration).toMatch(/Submit the previous C\+\+ week assignment/);
+  });
+
+  it("gives administrators the full cohort while limiting other viewers to ten", () => {
+    expect(workflowMigration).toMatch(/ranked\.rank <= 10/);
+    expect(workflowMigration).toMatch(/or public\.academy_is_admin\(\)/);
+    expect(academy).toMatch(/data: data \?\? \[\], error, configured: true/);
   });
 });

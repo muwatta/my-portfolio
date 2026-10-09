@@ -101,10 +101,24 @@ export default function AcademyAssignments() {
           <Link
             key={assignment.id}
             to={`/academy/assignments/${assignment.id}`}
-            className="rounded-xl border border-slate-200 bg-white p-5 hover:border-blue-400 dark:border-slate-800 dark:bg-slate-900"
+            className={`rounded-xl border bg-white p-5 hover:border-blue-400 dark:bg-slate-900 ${
+              assignment.locked
+                ? "border-slate-200 opacity-75 dark:border-slate-800"
+                : "border-slate-200 dark:border-slate-800"
+            }`}
           >
-            <p className="text-xs font-semibold uppercase tracking-wider text-blue-600">
-              {assignment.points} points
+            <p className="flex flex-wrap items-center justify-between gap-2 text-xs font-semibold uppercase tracking-wider text-blue-600">
+              <span>
+                {assignment.week_number
+                  ? `Week ${assignment.week_number} · `
+                  : ""}
+                {assignment.points} points
+              </span>
+              {assignment.locked && (
+                <span className="text-amber-700 dark:text-amber-300">
+                  Complete the previous week first
+                </span>
+              )}
             </p>
             <h2 className="mt-2 text-lg font-bold">{assignment.title}</h2>
             <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">

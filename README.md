@@ -669,7 +669,9 @@ prerendered page as unstyled text.
 3. Configure the private `assignment-submissions` Storage bucket and apply
    the storage policies from the migrations.
 4. Enable Supabase Realtime for leaderboard points, activity feed, live
-   messages, and any other tables listed in the Realtime migrations.
+   messages, signup notifications, and any other tables listed in the Realtime
+   migrations. Administrators receive a live alert and can review saved signup
+   notifications from the admin workspace.
 5. Deploy `supabase/functions/academy-ai-feedback` and configure
    `AI_PROVIDER_API_KEY` and optional `AI_FEEDBACK_MODEL` as Edge Function
    secrets. Keep service-role and provider keys out of Vite environment
@@ -709,9 +711,12 @@ prerendered page as unstyled text.
    the GitHub Actions repository secrets `SUPABASE_URL` and
    `SUPABASE_SERVICE_ROLE_KEY`. The daily
    `cleanup-assignment-files.yml` workflow removes uploaded assignment files
-   after 30 days through the Storage API while keeping submission and grading
+   after 14 days through the Storage API while keeping submission and grading
    history. Keep the service-role key out of browser configuration.
-9. Run `npm test -- --run`, `npm run lint`, and `npm run build` before
+9. C++ assignments are listed in week order and unlock after the previous
+   week's assignment is submitted. Students see the top ten leaderboard
+   standings; administrators can see the full cohort.
+10. Run `npm test -- --run`, `npm run lint`, and `npm run build` before
    promoting the frontend.
 
 ---

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import {
   getAcademyNotifications,
   markAcademyNotificationRead,
@@ -79,6 +80,14 @@ export default function AcademyNotifications() {
                 <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
                   {item.message}
                 </p>
+                {item.type === "registration" && (
+                  <Link
+                    to="/academy/admin/registrations"
+                    className="mt-3 inline-flex min-h-10 items-center font-semibold text-cyan-700 underline underline-offset-2 dark:text-cyan-300"
+                  >
+                    Review registrations
+                  </Link>
+                )}
               </div>
               {!item.read_at && (
                 <button

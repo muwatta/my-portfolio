@@ -60,7 +60,7 @@ export async function getActiveCourseForStudent(studentId) {
     const { data: enrollmentData } = await supabase
       .from("academy_enrollments")
       .select(
-        "course_id, academy_courses!academy_enrollments_course_id_fkey(id, slug, title, description, duration_weeks)",
+        "course_id, academy_courses!academy_enrollments_course_id_fkey(id, slug, title, description, duration_weeks, language)",
       )
       .eq("student_id", studentId)
       .eq("status", "active")
@@ -207,12 +207,16 @@ export async function getAcademyLeaderboard() {
   return { data: data  ??  [], error, configured: true };
 }
 
-export async function getAcademyWeeklyLeaderboard() {
+export async function getAcademyWeeklyLeaderboard(viewerId = "current") {
   if (!supabase) return unavailable([]);
-  return withAcademyCache("leaderboard:weekly", 30 * 1000, async () => {
-    const { data, error } = await supabase.rpc("academy_weekly_leaderboard");
-    return { data: (data ?? []).slice(0, 10), error, configured: true };
-  });
+  return withAcademyCache(
+    `leaderboard:weekly:${viewerId}`,
+    30 * 1000,
+    async () => {
+      const { data, error } = await supabase.rpc("academy_weekly_leaderboard");
+      return { data: data ?? [], error, configured: true };
+    },
+  );
 }
 
 export async function getAcademyNotifications(studentId) {
@@ -1808,7 +1812,7 @@ export async function getAcademyAssignments(studentId) {
       supabase
         .from("academy_assignments")
         .select(
-          "id, course_id, lesson_id, title, due_at, points, retry_limit, published, created_at",
+          "id, course_id, week_id, lesson_id, title, due_at, points, retry_limit, published, created_at, academy_weeks(week_number, title)",
         )
         .eq("is_draft", false)
         .eq("published", true)
@@ -1826,10 +1830,37 @@ export async function getAcademyAssignments(studentId) {
     const submittedAssignmentIds = new Set(
       (submissions ?? []).map((submission) => submission.assignment_id),
     );
+    const outstanding = (assignments ?? []).filter(
+      (assignment) => !submittedAssignmentIds.has(assignment.id),
+    );
+    const orderedAssignments =
+      activeCourse.language === "cpp"
+        ? outstanding.slice().sort(
+            (left, right) =>
+              (left.academy_weeks?.week_number ?? Number.MAX_SAFE_INTEGER) -
+                (right.academy_weeks?.week_number ?? Number.MAX_SAFE_INTEGER) ||
+              left.title.localeCompare(right.title),
+          )
+        : outstanding;
+    const nextCppWeek =
+      activeCourse.language === "cpp"
+        ? Math.min(
+            ...orderedAssignments.map(
+              (assignment) =>
+                assignment.academy_weeks?.week_number ?? Number.MAX_SAFE_INTEGER,
+            ),
+          )
+        : null;
     return {
-      data: (assignments ?? []).filter(
-        (assignment) => !submittedAssignmentIds.has(assignment.id),
-      ),
+      data: orderedAssignments.map((assignment) => ({
+        ...assignment,
+        week_number: assignment.academy_weeks?.week_number ?? null,
+        week_title: assignment.academy_weeks?.title ?? null,
+        locked:
+          activeCourse.language === "cpp" &&
+          assignment.academy_weeks?.week_number != null &&
+          assignment.academy_weeks.week_number > nextCppWeek,
+      })),
       error: null,
       configured: true,
     };
@@ -1921,13 +1952,31 @@ export async function getAcademyAssignment(id, studentId = null) {
       // academy_courses!inner because the page has to know which language the
       // assignment is written in before it can offer the right editor, and a
       // half-fetched assignment must not silently fall back to Python.
-      "id, course_id, lesson_id, title, instructions, due_at, points, allowed_submission_types, starter_code, hints, retry_limit, published, is_draft, created_at, academy_courses!academy_assignments_course_id_fkey!inner(id, slug, title, language)",
+      "id, course_id, week_id, lesson_id, title, instructions, due_at, points, allowed_submission_types, starter_code, hints, retry_limit, published, is_draft, created_at, academy_weeks(week_number, title), academy_courses!academy_assignments_course_id_fkey!inner(id, slug, title, language)",
     )
     .eq("id", id)
     .eq("is_draft", false);
   if (activeCourse) query = query.eq("course_id", activeCourse.id);
   const { data, error } = await query.maybeSingle();
-  return { data, error, configured: true };
+  if (error || !data || !studentId || data.academy_courses?.language !== "cpp") {
+    return { data, error, configured: true };
+  }
+
+  const assignments = await getAcademyAssignments(studentId);
+  if (assignments.error) {
+    return { data: null, error: assignments.error, configured: true };
+  }
+  return {
+    data: {
+      ...data,
+      week_number: data.academy_weeks?.week_number ?? null,
+      locked:
+        assignments.data?.find((assignment) => assignment.id === data.id)
+          ?.locked ?? false,
+    },
+    error: null,
+    configured: true,
+  };
 }
 
 export async function getSubmissionCount(assignmentId, studentId) {

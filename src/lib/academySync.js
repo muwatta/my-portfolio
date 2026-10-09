@@ -7,12 +7,17 @@ import {
 const listeners = new Set();
 let syncPromise = null;
 let started = false;
+let lastQueuedAt = 0;
 
 const emit = (state) => listeners.forEach((listener) => listener(state));
 const online = () => typeof navigator === "undefined" || navigator.onLine;
 const createOperationId = () =>
   globalThis.crypto?.randomUUID?.() ||
   `academy-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+const nextQueuedAt = () => {
+  lastQueuedAt = Math.max(Date.now(), lastQueuedAt + 1);
+  return new Date(lastQueuedAt).toISOString();
+};
 
 export function subscribeToAcademySync(listener) {
   listeners.add(listener);
@@ -34,7 +39,7 @@ export async function enqueueAcademyOperation(userId, operation) {
     userId,
     type: operation.type,
     payload: operation.payload,
-    createdAt: operation.createdAt || new Date().toISOString(),
+    createdAt: operation.createdAt || nextQueuedAt(),
     status: "pending",
     attempts: 0,
     lastError: null,
@@ -61,6 +66,11 @@ export async function getPendingAcademyOperations(userId) {
             (operation.attempts || 0) < 5)) &&
         (!operation.nextRetryAt ||
           Date.parse(operation.nextRetryAt) <= Date.now()),
+    )
+    .sort(
+      (left, right) =>
+        Date.parse(left.createdAt) - Date.parse(right.createdAt) ||
+        String(left.operationId).localeCompare(String(right.operationId)),
     );
 }
 
@@ -68,12 +78,46 @@ export async function syncAcademyOperations(userId, handlers = {}) {
   if (!userId || !online() || syncPromise) return syncPromise;
   syncPromise = (async () => {
     const operations = await getPendingAcademyOperations(userId);
+    const reportQueueState = async () => {
+      const records = await getOfflineRecords(OFFLINE_STORES.syncQueue, userId);
+      const remaining = records.map((record) => record.data);
+      const failed = remaining.filter(
+        (operation) =>
+          operation.status === "failed" &&
+          (operation.permanent || (operation.attempts || 0) >= 5),
+      );
+      const lastError = failed
+        .map((operation) => operation.lastError)
+        .filter(Boolean)
+        .pop();
+      const pending = remaining.filter(
+        (operation) =>
+          operation.status === "pending" ||
+          (operation.status === "failed" &&
+            !operation.permanent &&
+            (operation.attempts || 0) < 5),
+      );
+      emit({
+        online: true,
+        status: failed.length ? "failed" : pending.length ? "pending" : "synced",
+        pending: pending.length,
+        failed: failed.length,
+        lastError,
+      });
+    };
     if (!operations.length) {
-      emit({ online: true, status: "synced", pending: 0 });
+      await reportQueueState();
       return;
     }
     emit({ online: true, status: "syncing", pending: operations.length });
+    let assignmentSequenceBlocked = false;
     for (const operation of operations) {
+      if (
+        operation.type === "assignment_submission" &&
+        assignmentSequenceBlocked
+      ) {
+        continue;
+      }
       const handler = handlers[operation.type];
       if (!handler) {
         await putOfflineRecord(OFFLINE_STORES.syncQueue, userId, operation.operationId, {
@@ -82,6 +126,9 @@ export async function syncAcademyOperations(userId, handlers = {}) {
           permanent: true,
           lastError: "No sync handler is available for this operation.",
         });
+        if (operation.type === "assignment_submission") {
+          assignmentSequenceBlocked = true;
+        }
         continue;
       }
       try {
@@ -107,9 +154,12 @@ export async function syncAcademyOperations(userId, handlers = {}) {
             ? null
             : new Date(Date.now() + Math.min(300000, 1000 * 2 ** attempts)).toISOString(),
         });
+        if (operation.type === "assignment_submission") {
+          assignmentSequenceBlocked = true;
+        }
       }
     }
-    emit({ online: true, status: "synced", pending: 0 });
+    await reportQueueState();
   })().finally(() => {
     syncPromise = null;
   });

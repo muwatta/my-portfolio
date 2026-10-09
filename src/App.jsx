@@ -396,6 +396,10 @@ function AppShell() {
                               element={<AcademyAdminRegistrations />}
                             />
                             <Route
+                              path="/academy/admin/notifications"
+                              element={<AcademyNotifications />}
+                            />
+                            <Route
                               path="/academy/admin/students/:studentId"
                               element={<AcademyAdminStudentProfile />}
                             />

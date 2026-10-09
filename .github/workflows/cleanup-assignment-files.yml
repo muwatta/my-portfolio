@@ -12,7 +12,7 @@ jobs:
       group: assignment-file-cleanup
       cancel-in-progress: false
     steps:
-      - name: Remove assignment uploads older than 30 days
+      - name: Remove assignment uploads older than 14 days
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}

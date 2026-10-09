@@ -13,6 +13,7 @@ const workflow = readFileSync(
   ".github/workflows/cleanup-assignment-files.yml",
   "utf8",
 );
+const readme = readFileSync("README.md", "utf8");
 
 describe("assignment file uploads", () => {
   it("allows the supported source, document, notebook and image formats", () => {
@@ -53,18 +54,20 @@ describe("assignment file uploads", () => {
   });
 
   it("removes expired objects with the Storage API and preserves submission history", () => {
-    expect(cleanup).toMatch(/RETENTION_DAYS = 30/);
+    expect(cleanup).toMatch(/RETENTION_DAYS = 14/);
     expect(cleanup).toMatch(/\.from\(BUCKET\)\s*\.remove\(filePaths\)/);
     expect(cleanup).toMatch(/update\(\{ file_path: null \}\)/);
     expect(cleanup).not.toMatch(/\.delete\(\)/);
     expect(workflow).toMatch(/schedule:/);
     expect(workflow).toMatch(/SUPABASE_SERVICE_ROLE_KEY/);
     expect(workflow).toMatch(/academy-cleanup-assignment-files/);
+    expect(readme).toMatch(/uploaded assignment files\s+after 14 days/);
   });
 
-  it("runs a scheduled cleanup daily so files expire at the 30-day threshold", () => {
+  it("runs a scheduled cleanup daily so files expire at the 14-day threshold", () => {
     expect(workflow).toMatch(/cron: "17 3 \* \* \*"/);
     expect(workflow).toMatch(/workflow_dispatch/);
+    expect(workflow).toMatch(/older than 14 days/);
   });
 });
 

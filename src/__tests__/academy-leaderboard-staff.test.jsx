@@ -78,6 +78,28 @@ describe("an administrator reading the leaderboard", () => {
     expect(screen.queryByText(/students ranked/i)).not.toBeInTheDocument();
   });
 
+  it("shows students only the ten highest-ranked learners", async () => {
+    getAcademyWeeklyLeaderboard.mockResolvedValue([
+      ...ROWS,
+      ...Array.from({ length: 9 }, (_, index) => ({
+        student_id: `s${index + 3}`,
+        display_name: `Student ${index + 3}`,
+        points: 300 - index,
+        rank: index + 3,
+      })),
+      { student_id: "s12", display_name: "Student 12", points: 1, rank: 11 },
+    ]);
+    useAcademyAuth.mockReturnValue({
+      user: { id: "student-1" },
+      isAdmin: false,
+      isTeacher: false,
+    });
+    renderPage();
+
+    expect(await screen.findByText(/student 10/i)).toBeInTheDocument();
+    expect(screen.queryByText(/student 12/i)).not.toBeInTheDocument();
+  });
+
   it("gives a teacher the cohort count as well", async () => {
     useAcademyAuth.mockReturnValue({
       user: { id: "teacher-1" },
@@ -123,6 +145,29 @@ describe("an administrator reading the leaderboard", () => {
     );
     expect(screen.getByText(/dee/i)).toBeInTheDocument();
     expect(screen.getByText(/student 10/i)).toBeInTheDocument();
+    expect(screen.getByText(/student 12/i)).toBeInTheDocument();
+    expect(screen.getByText(/12 students ranked/i)).toBeInTheDocument();
+  });
+
+  it("limits teachers to the same top ten students as learners", async () => {
+    useAcademyAuth.mockReturnValue({
+      user: { id: "teacher-1" },
+      isAdmin: false,
+      isTeacher: true,
+    });
+    getAcademyWeeklyLeaderboard.mockResolvedValue([
+      ...ROWS,
+      ...Array.from({ length: 9 }, (_, index) => ({
+        student_id: `s${index + 3}`,
+        display_name: `Student ${index + 3}`,
+        points: 300 - index,
+        rank: index + 3,
+      })),
+      { student_id: "s12", display_name: "Student 12", points: 1, rank: 11 },
+    ]);
+    renderPage();
+
+    expect(await screen.findByText(/student 10/i)).toBeInTheDocument();
     expect(screen.queryByText(/student 12/i)).not.toBeInTheDocument();
   });
 

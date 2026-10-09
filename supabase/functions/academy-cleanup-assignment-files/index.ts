@@ -1,7 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const BUCKET = "assignment-submissions";
-const RETENTION_DAYS = 30;
+const RETENTION_DAYS = 14;
 const BATCH_SIZE = 100;
 
 const json = (body: Record<string, unknown>, status = 200) =>

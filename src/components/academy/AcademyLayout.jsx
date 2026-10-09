@@ -13,6 +13,7 @@ import { useTheme } from "../../context/useTheme";
 import OfflineStatus from "./OfflineStatus";
 import AcademyFooter from "./AcademyFooter";
 import StudentPrimaryNav from "./StudentPrimaryNav";
+import AcademyAdminSignupAlert from "./AcademyAdminSignupAlert";
 import { STUDENT_NAVIGATION } from "./studentNavigation";
 import {
   heartbeatAcademyLearningSession,
@@ -35,6 +36,7 @@ const ADMIN_LINKS = [
   { label: "Content", to: "/academy/admin/content" },
   { label: "Students", to: "/academy/admin/students" },
   { label: "Registrations", to: "/academy/admin/registrations" },
+  { label: "Notifications", to: "/academy/admin/notifications" },
   { label: "Classes", to: "/academy/admin/schedule" },
   { label: "Submissions", to: "/academy/admin/submissions" },
   { label: "Analytics", to: "/academy/admin/analytics" },
@@ -234,13 +236,11 @@ export default function AcademyLayout({
             <Link
               to={
                 workspace === "admin"
-                  ? "/academy/admin"
+                  ? "/academy/admin/notifications"
                   : "/academy/notifications"
               }
               className="grid h-10 w-10 shrink-0 place-items-center rounded-lg border border-slate-200 text-slate-700 hover:border-amber-400 hover:text-amber-600 lg:hidden dark:border-slate-700 dark:text-slate-200"
-              aria-label={
-                workspace === "admin" ? "Admin dashboard" : "Notifications"
-              }
+              aria-label="Notifications"
             >
               <FiBell />
             </Link>
@@ -257,6 +257,8 @@ export default function AcademyLayout({
           </button>
         </div>
       </header>
+
+      {workspace === "admin" && <AcademyAdminSignupAlert />}
 
       {navigationOpen && (
         <button

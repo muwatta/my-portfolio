@@ -209,6 +209,11 @@ export default function AcademyAssignment() {
   }
 
   async function submit(source = sourceCode) {
+    if (assignment?.locked) {
+      return setNotice(
+        "Submit the previous week's assignment before starting this one.",
+      );
+    }
     if (!assignment || attempts >= assignment.retry_limit)
       return setNotice("No attempts remaining.");
     setSubmitting(true);
@@ -425,7 +430,9 @@ export default function AcademyAssignment() {
       </Link>
       <header>
         <p className="text-sm font-semibold uppercase tracking-[0.18em] text-blue-600">
-          {assignment.points} points
+          {assignment.week_number
+            ? `Week ${assignment.week_number} · ${assignment.points} points`
+            : `${assignment.points} points`}
         </p>
         <h1 className="mt-2 text-3xl font-bold">{assignment.title}</h1>
         <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
@@ -437,6 +444,14 @@ export default function AcademyAssignment() {
           {assignment.instructions}
         </ProtectedContent>
       </header>
+      {assignment.locked && (
+        <p
+          role="status"
+          className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-950 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-100"
+        >
+          Submit the previous week's assignment before starting this one.
+        </p>
+      )}
       {materialState === "missing" && (
         <p className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-950 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-100">
           No matching course PDF is linked to this assignment yet. You can
@@ -483,7 +498,7 @@ export default function AcademyAssignment() {
       </label>
       <p className="-mt-4 text-sm text-slate-500 dark:text-slate-400">
         Python, C++ (for C++ courses), documents, and images are supported.
-        Files must be 5 MB or smaller and are removed 30 days after submission.
+        Files must be 5 MB or smaller and are removed 14 days after submission.
       </p>
       {file && <p className="text-sm text-slate-500">Selected: {file.name}</p>}
       {notice && (
@@ -497,7 +512,7 @@ export default function AcademyAssignment() {
       <button
         className="button-primary"
         type="button"
-        disabled={submitting || attemptsRemaining === 0}
+        disabled={submitting || attemptsRemaining === 0 || assignment.locked}
         onClick={() => submit()}
       >
         {submitting ? "Submitting..." : "Submit assignment"}

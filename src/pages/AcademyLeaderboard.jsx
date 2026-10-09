@@ -56,12 +56,14 @@ export default function AcademyLeaderboard() {
         const result = await fetchWithOfflineFallback({
           userId: user?.id,
           store: OFFLINE_STORES.leaderboard,
-          fetcher: () => getAcademyWeeklyLeaderboard(),
+          fetcher: () => getAcademyWeeklyLeaderboard(user?.id),
         });
         refreshInFlight = false;
         if (!mounted) return;
         setOffline(Boolean(result.offline));
-        setRows((result.data ?? []).slice(0, 10));
+        setRows(
+          isAdmin ? result.data ?? [] : (result.data ?? []).slice(0, 10),
+        );
         setState(result.error ? "error" : result.configured ? "ready" : "unconfigured");
       }, delay);
     };
@@ -86,7 +88,7 @@ export default function AcademyLeaderboard() {
       window.clearTimeout(refreshTimer);
       void supabase.removeChannel(channel);
     };
-  }, [user?.id]);
+  }, [user?.id, isAdmin]);
   const currentUserRow = rows.find((row) => row.student_id === user?.id);
   const rankedRows = [...rows].sort(
     (left, right) =>
