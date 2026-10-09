@@ -12,6 +12,7 @@ alter table public.academy_notifications
       'badge',
       'live_class',
       'announcement',
+      'password_policy_update',
       'registration'
     )
   );
