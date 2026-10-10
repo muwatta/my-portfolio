@@ -142,7 +142,7 @@ function NavBar() {
           </MotionLink>
 
           {/* Desktop Navigation - hidden on mobile, shown from md breakpoint */}
-          <div className="hidden gap-8 md:flex md:items-center">
+          <div className="hidden gap-8 md:absolute md:left-1/2 md:flex md:-translate-x-1/2 md:items-center">
             {navItems.map((item, i) => (
               <MotionNavLink
                 key={item.name}
