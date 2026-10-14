@@ -19,7 +19,7 @@ describe("manual grading authorization", () => {
     expect(migration).toMatch(/create table if not exists public\.academy_graders/);
     expect(migration).toMatch(/create or replace function public\.academy_can_grade/);
     expect(migration).toMatch(/if not public\.academy_is_admin\(\) then/);
-    expect(migration).toMatch(/Only the superadmin can appoint or remove graders/);
+    expect(migration).toMatch(/Only the primary superadmin can appoint or remove graders/);
   });
 
   it("guards direct result writes as well as UI calls", () => {
