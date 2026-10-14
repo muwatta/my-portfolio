@@ -2032,7 +2032,7 @@ export async function getAcademyTeacherAssignments() {
   const { data, error } = await supabase
     .from("academy_assignments")
     .select(
-      "id, course_id, week_id, lesson_id, title, instructions, due_at, points, retry_limit, published, is_draft, ai_feedback_enabled, academy_courses!academy_assignments_course_id_fkey(title)",
+      "id, course_id, week_id, lesson_id, title, instructions, due_at, points, retry_limit, published, is_draft, ai_feedback_enabled, academy_courses!academy_assignments_course_id_fkey(title), academy_lessons(title)",
     )
     .order("course_id")
     .order("week_id", { ascending: true, nullsFirst: true })
