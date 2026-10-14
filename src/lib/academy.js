@@ -2143,6 +2143,7 @@ export async function saveAcademyAssignment(assignment) {
   }
   const payload = {
     course_id: assignment.course_id,
+    lesson_id: assignment.lesson_id || null,
     title: assignment.title.trim(),
     instructions: assignment.instructions.trim(),
     points: Number(assignment.points),
