@@ -504,16 +504,33 @@ function normaliseQuestionText(value: unknown) {
 }
 
 function deduplicateQuestions<T extends Record<string, unknown>>(questions: T[]) {
-  const seen = new Set<string>();
-  return questions.filter((question) => {
+  const seenTitles = new Set<string>();
+  const seenInstructions = new Set<string>();
+  const fingerprints: Set<string>[] = [];
+  const unique: T[] = [];
+
+  for (const question of questions) {
     const title = normaliseQuestionText(question.title);
     const instructions = normaliseQuestionText(question.instructions);
-    if (!title || !instructions) return false;
-    const signature = title + "|" + instructions;
-    if (seen.has(signature)) return false;
-    seen.add(signature);
-    return true;
-  });
+    if (!title || !instructions || seenTitles.has(title) || seenInstructions.has(instructions)) {
+      continue;
+    }
+
+    const tokens = new Set((title + " " + instructions).split(/\\s+/).filter(Boolean));
+    const nearDuplicate = fingerprints.some((previous) => {
+      let intersection = 0;
+      for (const token of tokens) if (previous.has(token)) intersection += 1;
+      const union = new Set([...tokens, ...previous]).size;
+      return union > 0 && intersection / union >= 0.88;
+    });
+    if (nearDuplicate) continue;
+
+    seenTitles.add(title);
+    seenInstructions.add(instructions);
+    fingerprints.push(tokens);
+    unique.push(question);
+  }
+  return unique;
 }
 
 function validateQuestions(value: unknown) {
