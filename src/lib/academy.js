@@ -1581,13 +1581,30 @@ export async function getAcademyLessons(studentId) {
       return { data: data ?? [], error, configured: true };
     }
 
-    const { data: progress, error: progressError } = await supabase
-      .from("academy_lesson_progress")
-      .select("lesson_id, completed_at")
-      .eq("student_id", studentId);
+    const [
+      { data: progress, error: progressError },
+      { data: practiceSessions, error: practiceError },
+    ] = await Promise.all([
+      supabase
+        .from("academy_lesson_progress")
+        .select("lesson_id, started_at, completed_at")
+        .eq("student_id", studentId),
+      supabase
+        .from("academy_practice_sessions")
+        .select("lesson_id, completed_at")
+        .eq("student_id", studentId)
+        .not("completed_at", "is", null)
+        .order("completed_at", { ascending: false }),
+    ]);
     const progressByLesson = new Map(
       (progress ?? []).map((item) => [item.lesson_id, item]),
     );
+    const practiceCompletedByLesson = new Map();
+    for (const session of practiceSessions ?? []) {
+      if (!practiceCompletedByLesson.has(session.lesson_id)) {
+        practiceCompletedByLesson.set(session.lesson_id, session.completed_at);
+      }
+    }
     const ordered = (data ?? [])
       .slice()
       .sort(
@@ -1600,6 +1617,7 @@ export async function getAcademyLessons(studentId) {
       data: ordered.map((lesson) => ({
         ...lesson,
         progress: progressByLesson.get(lesson.id) ?? null,
+        practiceCompletedAt: practiceCompletedByLesson.get(lesson.id) ?? null,
         status: progressByLesson.get(lesson.id)?.completed_at
           ? "completed"
           : progressByLesson.get(lesson.id)?.started_at
@@ -1609,7 +1627,7 @@ export async function getAcademyLessons(studentId) {
               ? "locked"
               : "available",
       })),
-      error: progressError,
+      error: progressError ?? practiceError,
       configured: true,
     };
   });
@@ -1983,7 +2001,8 @@ export async function submitObjectiveAnswer(
     "academy_submit_objective_answer",
     args,
   );
-  if (!error) invalidateAcademyCache("leaderboard:", "lesson:", "home:");
+  if (!error)
+    invalidateAcademyCache("leaderboard:", "lesson:", "lessons:", "home:");
   return { data, error };
 }
 

@@ -291,6 +291,12 @@ export default function AcademyLessons() {
                         Lesson {lesson.lesson_number}
                       </p>
                       <h3 className="mt-1 text-lg font-bold">{lesson.title}</h3>
+                      {lesson.practiceCompletedAt && (
+                        <span className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-bold text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300">
+                          <FiCheckCircle aria-hidden="true" />
+                          Practice complete
+                        </span>
+                      )}
                       {!!lesson.objectives?.length && (
                         <p className="mt-2 line-clamp-2 text-sm text-slate-600 dark:text-slate-300">
                           {lesson.objectives.join(" · ")}

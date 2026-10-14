@@ -1,15 +1,18 @@
-import { lazy, Suspense, useEffect } from "react";
+import { Fragment, lazy, Suspense, useEffect } from "react";
 import { Navigate, Routes, Route, useLocation } from "react-router-dom";
 import ErrorBoundary from "./components/academy/ErrorBoundary";
 import { useAcademyBranding } from "./hooks/useAcademyBranding";
 import { HelmetProvider } from "react-helmet-async";
-import { MotionConfig } from "framer-motion";
 import { ThemeProvider } from "./context/ThemeContext";
 import PWAInstallPrompt from "./components/PWAInstallPrompt";
 
-import Navbar from "./components/layout/Navbar";
-import Footer from "./components/layout/Footer";
 import Loader from "./components/layout/Loader";
+
+const Navbar = lazy(() => import("./components/layout/Navbar"));
+const Footer = lazy(() => import("./components/layout/Footer"));
+const PublicMotionConfig = lazy(
+  () => import("./components/layout/PublicMotionConfig"),
+);
 
 const AuthProvider = lazy(() =>
   import("./context/AuthContext").then((module) => ({
@@ -183,6 +186,10 @@ function AppShell() {
   const { pathname, search } = useLocation();
   const isAdminRoute = pathname.startsWith("/admin");
   const isAcademyRoute = pathname.startsWith("/academy");
+  const isPublicRoute = !isAdminRoute && !isAcademyRoute;
+  const isAcademyLoginRoute =
+    pathname.replace(/\/+$/, "") === "/academy/login";
+  const MotionWrapper = isAcademyLoginRoute ? Fragment : PublicMotionConfig;
   const fontSection = isAdminRoute
     ? "admin"
     : isAcademyRoute
@@ -198,11 +205,11 @@ function AppShell() {
   return (
     <HelmetProvider>
       <ThemeProvider>
-        <MotionConfig reducedMotion="user">
-              <div
-                data-font-section={fontSection}
-                className="min-h-screen bg-white text-slate-900 dark:bg-slate-950 dark:text-slate-100 transition-colors duration-300"
-              >
+        <MotionWrapper>
+          <div
+            data-font-section={fontSection}
+            className="min-h-screen bg-white text-slate-900 dark:bg-slate-950 dark:text-slate-100 transition-colors duration-300"
+          >
                 <a
                   href="#main-content"
                   className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[100] focus:px-4 focus:py-2 focus:rounded-lg focus:bg-blue-600 focus:text-white focus:text-sm focus:font-semibold"
@@ -210,7 +217,11 @@ function AppShell() {
                   Skip to main content
                 </a>
                 <Loader>
-                  {!isAdminRoute && !isAcademyRoute && <Navbar />}
+                  {isPublicRoute && (
+                    <Suspense fallback={null}>
+                      <Navbar />
+                    </Suspense>
+                  )}
                   <main id="main-content" className="flex-grow">
                     <ErrorBoundary resetKey={`${pathname}${search}`}>
                     <Suspense fallback={<PageLoader />}>
@@ -520,11 +531,15 @@ function AppShell() {
                     </Suspense>
                     </ErrorBoundary>
                   </main>
-                  {!isAdminRoute && !isAcademyRoute && <Footer />}
+                  {isPublicRoute && (
+                    <Suspense fallback={null}>
+                      <Footer />
+                    </Suspense>
+                  )}
                 </Loader>
                  <PWAInstallPrompt />
-              </div>
-            </MotionConfig>
+          </div>
+        </MotionWrapper>
       </ThemeProvider>
     </HelmetProvider>
   );

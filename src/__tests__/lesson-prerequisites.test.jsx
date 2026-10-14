@@ -151,6 +151,21 @@ describe("a locked lesson is not a link", () => {
     expect(link).toHaveAttribute("href", "/academy/lessons/l2");
   });
 
+  it("shows the saved practice completion tick on the lesson card", async () => {
+    api.getAcademyLessons.mockResolvedValueOnce({
+      data: [
+        {
+          ...LESSONS[1],
+          practiceCompletedAt: "2026-04-22T12:00:00.000Z",
+        },
+      ],
+      error: null,
+      configured: true,
+    });
+    renderList();
+    expect(await screen.findByText("Practice complete")).toBeInTheDocument();
+  });
+
   it("keeps the lessons introduction readable in light mode", async () => {
     renderList();
     const intro = await screen.findByText(/Follow your course week by week/);
