@@ -75,7 +75,7 @@ declare
   grading_changed boolean := false;
   request_role text := coalesce(current_setting('request.jwt.claim.role', true), '');
 begin
-  if request_role = 'service_role' or auth.uid() is null then
+  if request_role = 'service_role' then
     return new;
   end if;
 
