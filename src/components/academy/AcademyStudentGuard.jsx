@@ -3,7 +3,7 @@ import { useAcademyAuth } from "../../hooks/useAcademyAuth";
 import AcademyLoadingScreen from "./AcademyLoadingScreen";
 
 export default function AcademyStudentGuard() {
-  const { initializing, isAdmin, isTeacher } = useAcademyAuth();
+  const { initializing, isAdmin, isSchoolAdmin, isTeacher } = useAcademyAuth();
   if (initializing) {
     return (
       <AcademyLoadingScreen
@@ -13,6 +13,7 @@ export default function AcademyStudentGuard() {
     );
   }
   if (isAdmin) return <Navigate to="/academy/admin" replace />;
+  if (isSchoolAdmin) return <Navigate to="/academy/school-admin" replace />;
   if (isTeacher) return <Navigate to="/academy/teacher" replace />;
   return <Outlet />;
 }

@@ -17,8 +17,6 @@ import {
 // database. Deleting or demoting the owner, or an administrator deleting
 // themselves, would leave nobody able to administer the Academy.
 
-const OWNER_ID = "45501f33-911d-495b-a994-ba654683e521";
-
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -91,6 +89,11 @@ Deno.serve(async (request) => {
   const target = input.target_user_id;
 
   const service = createClient(supabaseUrl, serviceKey);
+  const { data: primaryAdminId, error: primaryAdminError } = await service.rpc(
+    "academy_primary_admin_id",
+  );
+  if (primaryAdminError || !primaryAdminId)
+    return json({ error: "Primary administrator identity could not be verified." }, 500);
 
   // Lets an administrator see that an address is already taken before trying,
   // which is the duplicate case the signup form cannot report honestly without
@@ -132,7 +135,7 @@ Deno.serve(async (request) => {
 
   // Lockout protection. An administrator who removes the owner, or themselves,
   // leaves nobody able to administer the Academy or undo the deletion.
-  if (target === OWNER_ID)
+  if (target === primaryAdminId)
     return json(
       { error: "The account owner cannot be edited or deleted from here." },
       403,
@@ -157,19 +160,6 @@ Deno.serve(async (request) => {
       return json(
         { error: "A reason is required before deleting an account." },
         400,
-      );
-
-    // Never remove the last administrator, whoever is asking.
-    const { data: admins } = await service
-      .from("academy_admins")
-      .select("user_id");
-    const remaining = (admins ?? []).filter(
-      (row) => row.user_id !== target && row.user_id !== OWNER_ID,
-    );
-    if (admins && remaining.length === 0 && targetAuth?.user)
-      return json(
-        { error: "That is the last removable administrator. Keep at least one." },
-        403,
       );
 
     const { data: registrationCode } = targetProfile?.registration_code_id

@@ -299,9 +299,27 @@ export default function GradingInbox() {
           {queue.length} submission{queue.length === 1 ? "" : "s"}
           {current ? ` · showing ${index + 1}` : ""}
         </p>
-        <p className="text-xs text-slate-500 dark:text-slate-400">
-          j / k to move, Enter to save
-        </p>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            className="button-secondary"
+            onClick={() => move(-1)}
+            disabled={index === 0}
+          >
+            Previous
+          </button>
+          <button
+            type="button"
+            className="button-secondary"
+            onClick={() => move(1)}
+            disabled={index >= queue.length - 1}
+          >
+            Next
+          </button>
+          <p className="hidden text-xs text-slate-500 dark:text-slate-400 lg:block">
+            j / k to move · Enter to save
+          </p>
+        </div>
       </div>
 
       {status ? (
@@ -315,185 +333,212 @@ export default function GradingInbox() {
           Nothing here with these filters.
         </p>
       ) : (
-        <div className="space-y-4">
-          <div className="rounded-xl border border-slate-200 p-5 dark:border-slate-800">
-            <div className="flex flex-wrap items-start justify-between gap-2">
-              <div>
-                <p className="font-semibold">{current.assignment_title}</p>
-                <p className="text-sm text-slate-600 dark:text-slate-300">
-                  {current.student_name} · attempt {current.attempt_number} ·{" "}
-                  {current.submitted_at
-                    ? new Date(current.submitted_at).toLocaleString()
-                    : "no timestamp"}
-                </p>
-                {current.lesson_title ? (
-                  <p className="text-xs text-slate-500 dark:text-slate-400">
-                    {current.course_title} · {current.lesson_title}
+        <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1.1fr)_minmax(20rem,0.9fr)]">
+          <section className="space-y-4">
+            <div className="rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-blue-600 dark:text-blue-400">
+                    Submission to review
                   </p>
-                ) : null}
+                  <h2 className="mt-1 text-lg font-bold">
+                    {current.assignment_title}
+                  </h2>
+                  <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
+                    {current.student_name} · attempt {current.attempt_number}
+                  </p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    {current.submitted_at
+                      ? new Date(current.submitted_at).toLocaleString()
+                      : "No submission timestamp"}
+                    {current.lesson_title
+                      ? ` · ${current.course_title} · ${current.lesson_title}`
+                      : ""}
+                  </p>
+                </div>
+                <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                  {reviewStateLabel(current.review_state)}
+                </span>
               </div>
-              <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700 dark:bg-slate-800 dark:text-slate-300">
-                {reviewStateLabel(current.review_state)}
-              </span>
+
+              {current.client_ran_tests ? (
+                <p className="mt-4 rounded-lg bg-amber-50 p-3 text-sm text-amber-900 dark:bg-amber-950/40 dark:text-amber-100">
+                  Their browser reported {current.client_passed} of{" "}
+                  {current.client_total} tests passing. The server did not run
+                  this, so treat it as a hint, not a mark.
+                </p>
+              ) : null}
+
+              {current.grading_error ? (
+                <p className="mt-3 text-sm text-red-600 dark:text-red-400">
+                  Automated grading reported: {current.grading_error}
+                </p>
+              ) : null}
+
+              {current.source_code ? (
+                <details className="mt-4">
+                  <summary className="min-h-11 cursor-pointer text-sm font-semibold text-blue-600 dark:text-blue-400">
+                    Show the code they submitted
+                  </summary>
+                  <pre className="mt-2 max-h-96 overflow-auto rounded-lg bg-slate-900 p-3 text-xs text-slate-100">
+                    {current.source_code}
+                  </pre>
+                </details>
+              ) : null}
+              {current.original_filename ? (
+                <div className="mt-4 flex flex-wrap items-center gap-3 text-sm text-slate-600 dark:text-slate-300">
+                  <span>
+                    Uploaded {current.original_filename}
+                    {current.file_size_bytes
+                      ? ` (${Math.round(current.file_size_bytes / 1024)} KB)`
+                      : ""}
+                    .
+                  </span>
+                  {fileUrl ? (
+                    <a
+                      className="font-semibold text-blue-600 underline dark:text-blue-400"
+                      href={fileUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      Open submitted file
+                    </a>
+                  ) : current.file_path ? (
+                    <span aria-live="polite">Preparing secure file link…</span>
+                  ) : null}
+                </div>
+              ) : null}
             </div>
 
-            {current.client_ran_tests ? (
-              <p className="mt-3 rounded-lg bg-amber-50 p-3 text-sm text-amber-900 dark:bg-amber-950/40 dark:text-amber-100">
-                Their browser reported {current.client_passed} of{" "}
-                {current.client_total} tests passing. The server did not run
-                this, so treat it as a hint, not a mark.
-              </p>
+            {rubric.length > 0 ? (
+              <fieldset className="rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+                <legend className="px-1 text-sm font-semibold">
+                  Manual rubric scoring
+                </legend>
+                <ul className="space-y-3">
+                  {rubric.map((criterion) => (
+                    <li
+                      key={criterion.criterion}
+                      className="grid gap-2 sm:grid-cols-[1fr_8rem]"
+                    >
+                      <label
+                        className="text-sm"
+                        htmlFor={`rubric-${current.submission_id}-${criterion.criterion}`}
+                      >
+                        {criterion.criterion}
+                        {criterion.max ? (
+                          <span className="block text-xs text-slate-500">
+                            out of {criterion.max}
+                          </span>
+                        ) : null}
+                      </label>
+                      <input
+                        id={`rubric-${current.submission_id}-${criterion.criterion}`}
+                        className="field"
+                        type="number"
+                        min={0}
+                        max={criterion.max ?? undefined}
+                        step="0.5"
+                        value={rubricMarks[criterion.criterion] ?? ""}
+                        onChange={(event) =>
+                          setRubricMarks((value) => ({
+                            ...value,
+                            [criterion.criterion]: event.target.value,
+                          }))
+                        }
+                      />
+                    </li>
+                  ))}
+                </ul>
+              </fieldset>
             ) : null}
+          </section>
 
-            {current.grading_error ? (
-              <p className="mt-3 text-sm text-red-600 dark:text-red-400">
-                Automated grading reported: {current.grading_error}
+          <section className="rounded-xl border border-blue-200 bg-blue-50/70 p-5 dark:border-blue-900 dark:bg-blue-950/30">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wide text-blue-700 dark:text-blue-300">
+                Manual grading
               </p>
-            ) : null}
+              <h2 className="mt-1 text-lg font-bold">Your mark and feedback</h2>
+              <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
+                Review the work and enter your own mark. Saving keeps it private;
+                publishing makes it visible to the student.
+              </p>
+            </div>
 
-            {current.source_code ? (
-              <details className="mt-3">
-                <summary className="min-h-11 cursor-pointer text-sm font-semibold text-blue-600 dark:text-blue-400">
-                  Show the code they submitted
-                </summary>
-                <pre className="mt-2 max-h-96 overflow-auto rounded-lg bg-slate-900 p-3 text-xs text-slate-100">
-                  {current.source_code}
-                </pre>
-              </details>
-            ) : null}
-            {current.original_filename ? (
-              <div className="mt-3 flex flex-wrap items-center gap-3 text-sm text-slate-600 dark:text-slate-300">
-                <span>
-                  Uploaded {current.original_filename}
-                  {current.file_size_bytes
-                    ? ` (${Math.round(current.file_size_bytes / 1024)} KB)`
-                    : ""}
-                  .
+            <div className="mt-5 space-y-4">
+              <label className="label block max-w-xs">
+                Manual mark
+                <div className="mt-1 flex items-center gap-2">
+                  <input
+                    className="field"
+                    type="number"
+                    min={0}
+                    max={current.max_score ?? 100}
+                    step="0.5"
+                    value={score}
+                    onChange={(event) => setScore(event.target.value)}
+                    aria-describedby="manual-mark-range"
+                  />
+                  <span className="shrink-0 text-sm text-slate-500">
+                    / {current.max_score ?? 100}
+                  </span>
+                </div>
+                <span
+                  id="manual-mark-range"
+                  className="mt-1 block text-xs font-normal text-slate-500"
+                >
+                  Enter a mark from 0 to {current.max_score ?? 100}.
                 </span>
-                {fileUrl ? (
-                  <a
-                    className="font-semibold text-blue-600 underline dark:text-blue-400"
-                    href={fileUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    Open submitted file
-                  </a>
-                ) : current.file_path ? (
-                  <span aria-live="polite">Preparing secure file link…</span>
-                ) : null}
-              </div>
-            ) : null}
-          </div>
+              </label>
 
-          {rubric.length > 0 ? (
-            <fieldset className="rounded-xl border border-slate-200 p-5 dark:border-slate-800">
-              <legend className="px-1 text-sm font-semibold">Rubric</legend>
-              <ul className="space-y-3">
-                {rubric.map((criterion) => (
-                  <li key={criterion.criterion} className="grid gap-2 sm:grid-cols-[1fr_8rem]">
-                    <label className="text-sm">
-                      {criterion.criterion}
-                      {criterion.max ? (
-                        <span className="block text-xs text-slate-500">
-                          out of {criterion.max}
-                        </span>
-                      ) : null}
-                    </label>
-                    <input
-                      className="field"
-                      type="number"
-                      min={0}
-                      step="0.5"
-                      value={rubricMarks[criterion.criterion] ?? ""}
-                      onChange={(event) =>
-                        setRubricMarks((value) => ({
-                          ...value,
-                          [criterion.criterion]: event.target.value,
-                        }))
-                      }
-                    />
-                  </li>
-                ))}
-              </ul>
-            </fieldset>
-          ) : null}
+              <label className="label block">
+                Feedback for the student
+                <textarea
+                  className="field mt-1 min-h-36"
+                  value={feedback}
+                  onChange={(event) => setFeedback(event.target.value)}
+                  placeholder="Say what went well and what to try next."
+                />
+              </label>
+            </div>
 
-          <div className="grid gap-4 sm:grid-cols-[10rem_1fr]">
-            <label className="label">
-              Mark
-              <input
-                className="field"
-                type="number"
-                min={0}
-                max={current.max_score ?? 100}
-                step="0.5"
-                value={score}
-                onChange={(event) => setScore(event.target.value)}
-              />
-              <span className="mt-1 block text-xs font-normal text-slate-500">
-                out of {current.max_score ?? 100}
-              </span>
-            </label>
-
-            <label className="label">
-              Feedback for the student
-              <textarea
-                className="field min-h-28"
-                value={feedback}
-                onChange={(event) => setFeedback(event.target.value)}
-                placeholder="Say what went well and what to try next."
-              />
-            </label>
-          </div>
-
-          <div className="flex flex-wrap gap-3">
-            <button
-              type="button"
-              className="button-secondary"
-              onClick={suggestGrade}
-              disabled={busy || aiBusy}
-            >
-              {aiBusy ? "Generating AI suggestion…" : "Get AI grade suggestion"}
-            </button>
-            <button
-              type="button"
-              className="button-primary"
-              onClick={save}
-              disabled={busy}
-            >
-              {busy ? "Working" : "Save review"}
-            </button>
-            <button
-              type="button"
-              className="button-primary"
-              onClick={publish}
-              disabled={busy || !["reviewed", "published"].includes(current.review_state)}
-              title={
-                current.review_state === "reviewed" || current.review_state === "published"
-                  ? undefined
-                  : "Review it before publishing"
-              }
-            >
-              Publish to student
-            </button>
-            <button
-              type="button"
-              className="button-secondary"
-              onClick={() => move(-1)}
-              disabled={index === 0}
-            >
-              Previous
-            </button>
-            <button
-              type="button"
-              className="button-secondary"
-              onClick={() => move(1)}
-              disabled={index >= queue.length - 1}
-            >
-              Next
-            </button>
-          </div>
+            <div className="mt-5 flex flex-col gap-3">
+              <button
+                type="button"
+                className="button-primary w-full"
+                onClick={save}
+                disabled={busy}
+              >
+                {busy ? "Saving manual review…" : "Save manual review"}
+              </button>
+              <button
+                type="button"
+                className="button-secondary w-full"
+                onClick={publish}
+                disabled={busy || !["reviewed", "published"].includes(current.review_state)}
+                title={
+                  current.review_state === "reviewed" || current.review_state === "published"
+                    ? undefined
+                    : "Save a review before publishing"
+                }
+              >
+                Publish mark and feedback
+              </button>
+              <button
+                type="button"
+                className="button-secondary w-full"
+                onClick={suggestGrade}
+                disabled={busy || aiBusy}
+              >
+                {aiBusy ? "Generating AI suggestion…" : "Get optional AI suggestion"}
+              </button>
+            </div>
+            <p className="mt-3 text-xs text-slate-500 dark:text-slate-400">
+              AI suggestions are optional. You control the final mark and when
+              it is shared.
+            </p>
+          </section>
         </div>
       )}
     </div>

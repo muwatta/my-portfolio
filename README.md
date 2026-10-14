@@ -857,37 +857,28 @@ Software engineering • Education Technology • AI/ML • IoT
 
 ## Roles and authorization
 
-There is no single `role` value that means administrator. Authority is resolved
-from three separate places, and the combination matters:
+Academy accounts have student, teacher, global administrator, and school
+administrator access, but `academy_profiles.role` remains an `academy_role`
+enum with only `student` and `teacher`.
 
-1. **`academy_profiles.role`**, an `academy_role` enum with only two values,
-   `student` and `teacher`. There is deliberately no `admin` in the enum.
-2. **`academy_admins`**, an allow list keyed by user id. Membership here grants
-   administrator access and can be changed with `academy_set_user_admin`.
-3. **A hard coded address** in `academy_is_admin()`, read from the JWT rather
-   than from `auth.users`. Treat it as unverified: probing an equivalent
-   comparison against `auth.users` twice on this database gave contradictory
-   answers, so whether the branch fires cannot be reasoned about from database
-   state alone. Administrator access is in practice granted by the allow list.
+`academy_primary_admin_id()` returns an id only when exactly one
+`auth.users` account matches `abdullahmusliudeen@gmail.com`. Migration
+`20261417000000_academy_school_scoped_admins.sql` uses that lookup; if the
+address is missing or duplicated, it completes without granting anyone global
+administrator access. `academy_is_admin()` compares the signed-in user id with
+that id. The `academy_admins` row is retained for compatibility, but adding
+other rows does not grant global administrator access.
 
-`academy_admins` currently holds two rows: the account owner, and a colleague
-who publishes content and grades work. The owner is protected from removal by
-`academy_primary_admin_id()`, which pins the user id rather than comparing an
-address, because an address comparison could not be trusted to match
-consistently on this database. Everyone else is granted or revoked explicitly,
-and there is no automatic rule that adds or strips colleagues.
-
-The two helpers everything else is built on:
-
-```
-academy_is_teacher() = academy_is_admin() OR academy_profiles.role = 'teacher'
-academy_is_admin()   = the hard coded address OR a row in academy_admins
-```
-
-So **administrator implies teacher**, and the teacher workspace accepts either.
-Because `role` has no `admin` value, an administrator whose profile says
-`student` is `isAdmin` and `isStudent` at the same time; the route guards
-resolve that by testing `isAdmin` first in `AcademyStudentGuard`.
+`academy_school_admins` maps one account to one active school. The primary
+administrator assigns or removes this mapping from Academy **Access and roles**.
+School administrators use `/academy/school-admin`; its server-side dashboard
+function returns only students whose `school_id` matches the assigned school,
+including their progress and verified achievements. Course changes are
+validated against that same school in `academy_assign_student_course()`.
+School administrators do not inherit global teacher permissions, even if their
+profile role is `teacher`. The global administrator and teacher workspaces
+remain separate; only the primary administrator can use the all-school
+administrator dashboard.
 
 Server side enforcement does not rely on the client. Every read and write is
 guarded four ways: `SECURITY DEFINER` predicate helpers, permissive RLS
@@ -1048,14 +1039,14 @@ refuses to point Supabase anywhere until the executor answers, rejects a bad
 token, grades a real program correctly, and egress is blocked. See
 `executor/README.md`.
 
-**The hard coded administrator address is unverified.** See Roles and
-authorization above. It reads the JWT, so whether it matches depends on the token
-Supabase issues. The `academy_admins` allow list is what actually grants access,
-and it holds two rows: the owner and a colleague.
+**Academy global administration is pinned by user id.** See Roles and
+authorization above. The latest school-scoped administrator migration transfers
+the pinned id to the requested address, removes other global administrator
+rows, and gives school staff a separate per-school assignment.
 
 **One student is not one account per role system.** Being a portfolio admin and an
 Academy admin are unrelated: Firebase `admin_users/{uid}` governs the former and
-`academy_admins` the latter, with nothing linking them.
+`academy_admins` / `academy_school_admins` the latter, with nothing linking them.
 
 **There are no live rooms yet.** The voice note classroom needs a published
 `academy_schedules` row with `activity_type = 'live_class'` and a room attached

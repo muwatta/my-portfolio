@@ -13,6 +13,7 @@ const homePreview = readFileSync(
 const lesson = readFileSync("src/pages/AcademyLesson.jsx", "utf8");
 const courseDetail = readFileSync("src/pages/CourseDetail.jsx", "utf8");
 const prerender = readFileSync("scripts/prerender.mjs", "utf8");
+const sitemapBuilder = readFileSync("scripts/build-sitemap.js", "utf8");
 const sitemap = readFileSync("public/sitemap.xml", "utf8");
 
 describe("only the requested Academy courses are available", () => {
@@ -53,14 +54,17 @@ describe("only the requested Academy courses are available", () => {
   it("does not prerender or list retired course pages", () => {
     expect(prerender).not.toContain('vite.ssrLoadModule("/src/data/courses.js")');
     expect(prerender).not.toContain("...courses.map");
+    expect(sitemapBuilder).toMatch(
+      /\.\.\.academyCourses\.map\(\(course\) => `\/courses\/\$\{course\.slug\}`\)/,
+    );
     expect(sitemap).not.toContain("terminal-and-command-line");
-    expect(sitemap).toContain("/courses/python-for-ai-machine-learning");
-    expect(sitemap).toContain("/courses/cpp-embedded-robotics");
   });
 
   it("renders an in-lesson interactive terminal for C++ course lessons", () => {
     expect(lesson).toMatch(/isCppCourse && content\.starter_code/);
-    expect(lesson).toMatch(/<CppEditor starterCode=\{content\.starter_code\}/);
+    expect(lesson).toMatch(
+      /<CppEditor\s+starterCode=\{content\.starter_code\}/,
+    );
     expect(lesson).toContain("C++ embedded-systems terminal");
   });
 });

@@ -193,4 +193,13 @@ describe("the grading screen", () => {
     expect(inbox).toMatch(/Enter a mark from 0 to \$\{maximum\}/);
     expect(inbox).toMatch(/max=\{current\.max_score \?\? 100\}/);
   });
+
+  it("puts manual marking and feedback at the center of the review UI", () => {
+    expect(inbox).toMatch(/Manual grading/);
+    expect(inbox).toMatch(/Your mark and feedback/);
+    expect(inbox).toMatch(/Save manual review/);
+    expect(inbox).toMatch(/Publish mark and feedback/);
+    expect(inbox).toMatch(/Saving keeps it private/);
+    expect(inbox).toMatch(/Get optional AI suggestion/);
+  });
 });

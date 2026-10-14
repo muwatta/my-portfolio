@@ -48,6 +48,10 @@ const ADMIN_LINKS = [
   { label: "Settings", to: "/academy/admin/settings" },
 ];
 
+const SCHOOL_ADMIN_LINKS = [
+  { label: "School dashboard", to: "/academy/school-admin" },
+];
+
 function useSessionHeartbeat(isStudent, userId, pathname) {
   const learningSession = useRef(null);
   const heartbeatInFlight = useRef(false);
@@ -138,7 +142,7 @@ export default function AcademyLayout({
   workspace = "student",
   aboveOutlet = null,
 }) {
-  const { profile, user, signOut, isAdmin, isTeacher, isStudent } =
+  const { profile, user, signOut, isAdmin, isSchoolAdmin, isTeacher, isStudent } =
     useAcademyAuth();
   const { theme, applyTheme } = useTheme();
   const { pathname } = useLocation();
@@ -165,10 +169,12 @@ export default function AcademyLayout({
     workspace === "grader"
       ? "Grader"
       : isAdmin
-        ? "Admin"
-        : isTeacher
-          ? "Teacher"
-          : "Student";
+        ? "Superadmin"
+        : isSchoolAdmin
+          ? "School admin"
+          : isTeacher
+            ? "Teacher"
+            : "Student";
   const profileIncomplete =
     isStudent &&
     (!profile?.display_name?.trim() || !profile?.school_id || !profile?.state);
@@ -179,6 +185,7 @@ export default function AcademyLayout({
       teacher: TEACHER_LINKS,
       grader: GRADER_LINKS,
       admin: ADMIN_LINKS,
+      "school-admin": SCHOOL_ADMIN_LINKS,
     }[workspace] || STUDENT_NAVIGATION;
 
   const dashboardPath = {
@@ -186,6 +193,7 @@ export default function AcademyLayout({
     teacher: "/academy/teacher",
     grader: "/academy/dashboard",
     admin: "/academy/admin",
+    "school-admin": "/academy/school-admin",
   }[workspace];
 
   const toggleTheme = () => {

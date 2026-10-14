@@ -23,7 +23,9 @@ describe("prepared practice session generation", () => {
     expect(generator).toContain(
       '["multiple_choice", "true_false", "short_answer"]',
     );
-    expect(generator).toContain("if (selectedQuestions.length)");
+    expect(generator).toContain(
+      "if (selectedQuestions.length === QUESTION_COUNT)",
+    );
     expect(generator).toContain("if (!providerKey)");
     expect(generator).toContain("if (objectives.length === 0 && !hasLessonContent)");
     expect(generator).toContain("learn_content: lessonContent");
