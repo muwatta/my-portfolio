@@ -60,6 +60,25 @@ describe("C++ practice terminal", () => {
     });
   });
 
+  it("prefills example input and restores it when reset is pressed", () => {
+    vi.stubGlobal("Worker", MockWorker);
+    render(
+      <CppEditor
+        starterCode={"int distance;\ncin >> distance;"}
+        stdin="60"
+      />,
+    );
+
+    const input = screen.getByRole("textbox", { name: "Program input" });
+    expect(input).toHaveValue("60");
+    expect(screen.getByText(/Example input is already filled in/)).toBeInTheDocument();
+
+    fireEvent.change(input, { target: { value: "120" } });
+    fireEvent.click(screen.getByRole("button", { name: "Reset" }));
+
+    expect(input).toHaveValue("60");
+  });
+
   it("only asks for program input when the source reads from cin", () => {
     vi.stubGlobal("Worker", MockWorker);
     render(

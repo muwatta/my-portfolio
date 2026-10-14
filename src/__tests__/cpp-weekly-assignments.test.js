@@ -17,6 +17,10 @@ const weekThreeFix = readFileSync(
   "supabase/migrations/20261421000000_cpp_week_three_beginner_speed_task.sql",
   "utf8",
 );
+const beginnerGuides = readFileSync(
+  "supabase/migrations/20261422000000_cpp_weekly_beginner_guides.sql",
+  "utf8",
+);
 const workflowMigration = readFileSync(
   "supabase/migrations/20261409000000_academy_signup_notifications_cpp_sequence_and_leaderboard.sql",
   "utf8",
@@ -118,6 +122,20 @@ describe("the learning assignment corrections", () => {
     expect(weekThreeFix).toMatch(/int distance = 60;/);
     expect(weekThreeFix).toMatch(/"expected":"medium"/);
     expect(weekThreeFix).not.toMatch(/cin\s*>>/);
+  });
+
+  it("gives all fifteen weeks beginner instructions and matching example input", () => {
+    const weeks = new Set(
+      [...beginnerGuides.matchAll(/^\s{6}(\d+),$/gm)].map((match) => match[1]),
+    );
+    expect([...weeks].sort((left, right) => Number(left) - Number(right))).toEqual(
+      Array.from({ length: 15 }, (_, index) => String(index + 1)),
+    );
+    expect(beginnerGuides).toMatch(/Program input example: 3000/);
+    expect(beginnerGuides).toMatch(/Program input example \(five values\): 10 20 30 40 60/);
+    expect(beginnerGuides).toMatch(/Program input example: F/);
+    expect(beginnerGuides).toMatch(/Expected output: unknown/);
+    expect(beginnerGuides).toMatch(/"expected":"20\\\\nalarm"/);
   });
 
   it("simplifies the week 9 calculation and matches its grading cases", () => {

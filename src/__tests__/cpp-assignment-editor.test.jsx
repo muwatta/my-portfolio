@@ -31,7 +31,7 @@ vi.mock("../components/academy/PythonEditor", () => ({
   default: () => <div data-testid="python-editor" />,
 }));
 vi.mock("../components/academy/CppEditor", () => ({
-  default: () => <div data-testid="cpp-editor" />,
+  default: ({ stdin }) => <div data-testid="cpp-editor" data-stdin={stdin} />,
 }));
 
 const {
@@ -50,7 +50,7 @@ function assignmentFor(language) {
     data: {
       id: "a1",
       title: "Blink an LED",
-      instructions: "Write the program.",
+      instructions: "Program input example: 3000",
       points: 10,
       retry_limit: 3,
       allowed_submission_types: ["code"],
@@ -105,6 +105,7 @@ describe("which editor an assignment offers", () => {
     renderPage();
     await waitFor(() => expect(screen.getByTestId("cpp-editor")).toBeInTheDocument());
     expect(screen.queryByTestId("python-editor")).not.toBeInTheDocument();
+    expect(screen.getByTestId("cpp-editor")).toHaveAttribute("data-stdin", "3000");
   });
 
   it("offers the Python editor for a Python course", async () => {

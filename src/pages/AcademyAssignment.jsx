@@ -25,12 +25,21 @@ import PythonEditor from "../components/academy/PythonEditor";
 import CppEditor from "../components/academy/CppEditor";
 import ProtectedContent from "../components/academy/ProtectedContent";
 
+function getCppExampleInput(instructions = "") {
+  return (
+    instructions.match(
+      /^Program input example(?: \([^)]*\))?:\s*(.+)$/im,
+    )?.[1] ?? ""
+  );
+}
+
 function CodeEditorForAssignment({ assignment, onCaptureSource }) {
   const isCpp = assignment?.academy_courses?.language === "cpp";
   if (isCpp) {
     return (
       <CppEditor
         starterCode={assignment.starter_code || ""}
+        stdin={getCppExampleInput(assignment.instructions)}
         onSubmit={onCaptureSource}
       />
     );

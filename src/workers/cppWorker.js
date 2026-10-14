@@ -176,7 +176,11 @@ class BeginnerCpp {
       throw new Error(unsupportedMessage("cin"));
     }
     for (const name of targets) {
-      this.variables.set(name, this.evaluate(this.nextStdinToken()));
+      const token = this.nextStdinToken();
+      this.variables.set(
+        name,
+        /^-?\d+(\.\d+)?$/.test(token) ? Number(token) : token,
+      );
     }
   }
 
@@ -481,7 +485,14 @@ class BeginnerCpp {
     }
     const declaration = text.match(/^(?:const\s+)?((?:unsigned\s+)?(?:long|short|int|double|float|bool|char|string))\s+([A-Za-z_]\w*)\s*=\s*(.+)$/);
     if (declaration) {
-      this.variables.set(declaration[2], this.evaluate(declaration[3]));
+      const value = this.evaluate(declaration[3]);
+      const integerType = /^(?:unsigned\s+)?(?:long|short|int)$/.test(
+        declaration[1],
+      );
+      this.variables.set(
+        declaration[2],
+        integerType ? Math.trunc(Number(value)) : value,
+      );
       return;
     }
     const compound = text.match(/^([A-Za-z_]\w*)\s*(\+=|-=|\*=|\/=|%=)\s*(.+)$/);

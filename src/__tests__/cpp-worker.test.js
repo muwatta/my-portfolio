@@ -192,6 +192,25 @@ describe("honest failures", () => {
     ).toBe("7\n");
   });
 
+  it("reads a letter command as text for a switch statement", () => {
+    const code = main(
+      "  char command = 0;\n  cin >> command;\n  switch (command) {\n    case 'F':\n      cout << \"forward\" << endl;\n      break;\n    default:\n      cout << \"unknown\" << endl;\n  }",
+    );
+
+    expect(run(code, "F")).toBe("forward\n");
+    expect(run(code, "X")).toBe("unknown\n");
+  });
+
+  it("stores a calculated percentage as a whole number in an int", () => {
+    expect(
+      run(
+        main(
+          "  int raw = 512;\n  int percent = raw * 100 / 1023;\n  cout << percent << \" pct\" << endl;",
+        ),
+      ),
+    ).toBe("50 pct\n");
+  });
+
   it("accepts the std:: qualified form", () => {
     expect(
       run(

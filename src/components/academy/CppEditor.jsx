@@ -158,6 +158,12 @@ export default function CppEditor({
             spellCheck="false"
             className="w-full resize-y rounded-lg border border-slate-700 bg-slate-900 p-3 font-mono text-sm text-slate-100 outline-none focus:border-cyan-500"
           />
+          {starterInput.trim() && (
+            <span className="block text-xs text-cyan-200">
+              Example input is already filled in. Change it to try another
+              value.
+            </span>
+          )}
           <span className="block text-xs text-slate-400">
             Used by statements such as <code>cin &gt;&gt; distance;</code>.
           </span>
@@ -173,6 +179,7 @@ export default function CppEditor({
           onClick={() => {
             runId.current += 1;
             setLocalCode(editableStarterCode);
+            setProgramInput(starterInput);
             onCodeChange?.(editableStarterCode);
             setOutput("");
             setError("");
