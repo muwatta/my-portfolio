@@ -104,6 +104,9 @@ const AcademyStudentGuard = lazy(
 const AcademyTeacherGuard = lazy(
   () => import("./components/academy/AcademyTeacherGuard"),
 );
+const AcademyGraderGuard = lazy(
+  () => import("./components/academy/AcademyGraderGuard"),
+);
 const AcademyAdminGuard = lazy(
   () => import("./components/academy/AcademyAdminGuard"),
 );
@@ -368,6 +371,12 @@ function AppShell() {
                               element={<AcademyTeacherSubmissions />}
                             />
                           </Route>
+                        </Route>
+                        <Route element={<AcademyGraderGuard />}>
+                          <Route
+                            path="/academy/grading"
+                            element={<AcademyTeacherSubmissions />}
+                          />
                         </Route>
                         <Route element={<AcademyAdminGuard />}>
                           <Route element={<AcademyAdminLayout />}>
