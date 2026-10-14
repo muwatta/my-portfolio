@@ -106,12 +106,13 @@ begin
 
   update public.academy_submissions set status = 'graded' where id = p_submission_id;
   insert into public.academy_submission_events (submission_id, event_type, payload)
-  values (p_submission_id, 'grade_published',
-          jsonb_build_object('score', scored, 'max', maximum));
+  values (p_submission_id, 'scored',
+          jsonb_build_object('published', true, 'score', scored));
 
   insert into public.academy_notifications (user_id, type, title, message)
-  values (student, 'feedback', 'Assignment graded: ' || assignment_title,
-          'Your assignment has been graded: ' || scored || '/' || maximum || '.');
+  values (student, 'feedback', 'Your mark for ' || assignment_title,
+          'You scored ' || coalesce(scored::text, 'a mark') ||
+            ' out of ' || coalesce(maximum::text, 'the maximum') || '. Open the task to read the feedback.');
 
   return saved;
 end;
