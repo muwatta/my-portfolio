@@ -59,34 +59,16 @@ export async function requestAiGradeSuggestion(submissionId) {
 // scoped reads the rest of the admin uses.
 export async function getGradingFilters() {
   if (!supabase) return notConfigured({ courses: [], topics: [], students: [] });
-
-  const [courses, topics, students] = await Promise.all([
-    supabase
-      .from("academy_courses")
-      .select("id, title")
-      .order("title"),
-    supabase
-      .from("academy_lessons")
-      .select("id, title, academy_weeks!inner(title, week_number, academy_courses!inner(id, title))")
-      .order("lesson_number")
-      .limit(400),
-    supabase
-      .from("academy_profiles")
-      .select("id, display_name")
-      .order("display_name")
-      .limit(400),
-  ]);
-
+  const { data, error } = await supabase.rpc("academy_grading_filters");
   return {
     data: {
-      courses: courses.data ?? [],
-      topics: topics.data ?? [],
-      students: students.data ?? [],
+      courses: data?.courses ?? [],
+      topics: data?.topics ?? [],
+      students: data?.students ?? [],
     },
-    error: courses.error || topics.error || students.error,
+    error,
   };
 }
-
 // A grade is never a published grade. This records the review; the student sees
 // nothing until publishResult.
 export async function reviewSubmission({
