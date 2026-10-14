@@ -7,6 +7,10 @@ const migration = readFileSync(
 );
 const lessonPage = readFileSync("src/pages/AcademyLesson.jsx", "utf8");
 const practicePage = readFileSync("src/pages/AcademyPractice.jsx", "utf8");
+const cppPracticeGuard = readFileSync(
+  "supabase/migrations/20261420000000_cpp_generated_practice_completion_guard.sql",
+  "utf8",
+);
 
 describe("lesson activity provisioning", () => {
   it("fills published Python and Embedded lessons to three scored questions", () => {
@@ -45,6 +49,35 @@ describe("lesson activity provisioning", () => {
     expect(practicePage).toMatch(/exercise\.lesson_id === selectedLessonId/);
     expect(practicePage).toMatch(/prepared question set/i);
     expect(practicePage).toMatch(/step=task/);
+  });
+
+  it("keeps C++ lesson practice available after repeated weekly bank copies are archived", () => {
+    expect(lessonPage).toMatch(/data\?\.academy_weeks\?\.academy_courses\?\.language === "cpp"/);
+    expect(lessonPage).toMatch(/\(practice\.length > 0 \|\| isCppCourse\)/);
+    expect(lessonPage).toMatch(/practiceCount=\{[\s\S]*?Math\.max\(scoredPractice\.length, 1\)/);
+    expect(lessonPage).toMatch(
+      /scoredPractice\.length === 0 \|\|\s*scoredPractice\.every\(\(exercise\) => exercise\.completed\)/,
+    );
+    expect(lessonPage).toMatch(/!isCppLesson &&/);
+    expect(lessonPage).toMatch(/lessonScoredExercises\.every\(\(exercise\) => exercise\.completed\)/);
+    expect(lessonPage).toMatch(/Start lesson practice/);
+    expect(lessonPage).toMatch(/!isCppCourse &&/);
+    expect(lessonPage).toMatch(/Pass the five-question practice set generated from this lesson/);
+  });
+
+  it("requires generated C++ practice server-side without retroactively blocking completed lessons", () => {
+    expect(cppPracticeGuard).toContain(
+      "course.slug = 'cpp-embedded-robotics'",
+    );
+    expect(cppPracticeGuard).toContain(
+      "practice_session.completed_at is not null",
+    );
+    expect(cppPracticeGuard).toMatch(
+      /progress\.completion_status = 'completed'[\s\S]*?progress\.completed_at is not null/,
+    );
+    expect(cppPracticeGuard).toContain(
+      "academy_lesson_required_activities_complete(uuid, uuid)",
+    );
   });
 
   it("restores the student's last lesson step after reopening the lesson", () => {

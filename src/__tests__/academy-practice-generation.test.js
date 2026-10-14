@@ -13,6 +13,10 @@ const terminalPracticeMigration = readFileSync(
   "supabase/migrations/20261407000000_terminal_lesson_practice_bank.sql",
   "utf8",
 );
+const cppLessonPracticeMigration = readFileSync(
+  "supabase/migrations/20261419000000_cpp_lesson_specific_practice.sql",
+  "utf8",
+);
 const supabaseConfig = readFileSync("supabase/config.toml", "utf8");
 
 describe("prepared practice session generation", () => {
@@ -69,5 +73,23 @@ describe("prepared practice session generation", () => {
     );
     expect(terminalPracticeMigration).toContain("'grep error notes.txt'");
     expect(terminalPracticeMigration).toContain("'history'");
+  });
+
+  it("stops copying the same weekly C++ questions across every lesson", () => {
+    expect(cppLessonPracticeMigration).toContain(
+      "course.slug = 'cpp-embedded-robotics'",
+    );
+    expect(cppLessonPracticeMigration).toContain("weeks.week_number > 1");
+    expect(cppLessonPracticeMigration).toContain("lesson.lesson_number <> 2");
+    expect(cppLessonPracticeMigration).toMatch(/status = 'archived'/);
+    expect(cppLessonPracticeMigration).toMatch(
+      /required_for_completion = false/,
+    );
+    expect(cppLessonPracticeMigration).toContain(
+      "lesson-grounded practice generator",
+    );
+    expect(cppLessonPracticeMigration).toContain(
+      "exercise.practice_session_id is null",
+    );
   });
 });

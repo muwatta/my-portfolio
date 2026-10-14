@@ -103,7 +103,10 @@ export default function AcademyLesson() {
       if (offline) setCompleted(Boolean(data?.progress?.completed_at));
       const availableSteps = [
         "learn",
-        ...(data?.exercises?.length ? ["practice"] : []),
+        ...(data?.exercises?.length ||
+        data?.academy_weeks?.academy_courses?.language === "cpp"
+          ? ["practice"]
+          : []),
         ...(data?.tasks?.length ? ["task"] : []),
       ];
       setStep(
@@ -182,11 +185,16 @@ export default function AcademyLesson() {
     setCompleted(true);
   }
 
+  const lessonScoredExercises = (lesson?.exercises ?? []).filter(
+    (exercise) => exercise.question_type !== "programming",
+  );
+  const isCppLesson =
+    lesson?.academy_weeks?.academy_courses?.language === "cpp";
   const lessonPracticeDone =
     Boolean(lesson?.practiceSessionCompleted) ||
-    (lesson?.exercises ?? [])
-      .filter((exercise) => exercise.question_type !== "programming")
-      .every((exercise) => exercise.completed);
+    (!isCppLesson &&
+      (lessonScoredExercises.length === 0 ||
+        lessonScoredExercises.every((exercise) => exercise.completed)));
   const lessonTasksDone = (lesson?.tasks ?? []).every((task) =>
     Boolean(task.submission),
   );
@@ -327,7 +335,9 @@ export default function AcademyLesson() {
   const tasks = lesson.tasks ?? [];
   const practiceDone =
     Boolean(lesson.practiceSessionCompleted) ||
-    scoredPractice.every((exercise) => exercise.completed);
+    (!isCppCourse &&
+      (scoredPractice.length === 0 ||
+        scoredPractice.every((exercise) => exercise.completed)));
   const taskDone = tasks.every((task) => Boolean(task.submission));
   const jumpTo = (target) => {
     setStep(target);
@@ -362,7 +372,9 @@ export default function AcademyLesson() {
       <TopicStepper
         current={step}
         learnDone={completed}
-        practiceCount={scoredPractice.length}
+        practiceCount={
+          isCppCourse ? Math.max(scoredPractice.length, 1) : scoredPractice.length
+        }
         taskCount={tasks.length}
         practiceDone={practiceDone}
         taskDone={taskDone}
@@ -440,7 +452,7 @@ export default function AcademyLesson() {
           />
         </section>
       )}
-      {practice.length > 0 && (
+      {(practice.length > 0 || isCppCourse) && (
         <section
           id="topic-step-practice"
           className="rounded-xl border border-slate-200 p-5 dark:border-slate-800"
@@ -448,8 +460,12 @@ export default function AcademyLesson() {
           <h2 className="text-xl font-bold">Practice</h2>
           <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
             {lesson.practiceSessionCompleted
-              ? "Your teacher-authored practice set is complete. This counts toward the lesson requirements."
-              : `${scoredPractice.filter((exercise) => exercise.completed).length} of ${scoredPractice.length} scored questions passed. Practice draws from the lesson's prepared question bank each time you start it.`}
+              ? "Your lesson practice set is complete. This counts toward the lesson requirements."
+              : isCppCourse
+                ? "Pass the five-question practice set generated from this lesson’s learning content."
+                : scoredPractice.length > 0
+                ? `${scoredPractice.filter((exercise) => exercise.completed).length} of ${scoredPractice.length} scored questions passed.`
+                : "This lesson’s practice is generated from its own learning content so it assesses the right topics."}
           </p>
           <ul className="mt-3 space-y-1 text-sm text-slate-700 dark:text-slate-300">
             {practice.slice(0, 6).map((exercise) => (
@@ -485,7 +501,7 @@ export default function AcademyLesson() {
               )
             }
           >
-            Start prepared practice
+            Start lesson practice
           </Link>
         </section>
       )}

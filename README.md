@@ -678,13 +678,15 @@ prerendered page as unstyled text.
    variables.
 6. Deploy `supabase/functions/academy-generate-practice` and configure
    `AI_PROVIDER_API_KEY` and optional `AI_PRACTICE_MODEL` as Edge Function
-   secrets. The function generates five new questions from the PDF linked to a
-   lesson (or its course), stores answer keys server-side, and uses the normal
-   objective-grading RPC. Set `ACADEMY_PUBLIC_ORIGIN` if the static course PDFs
-   are served from a host other than `https://www.muwatta.com.ng`. Students need
-   an active unlocked lesson and a published PDF; without one, generation fails
-   with an actionable message rather than serving the old generic question set.
-   Each student is limited to ten generated sessions per day.
+   secrets. The function generates five questions from the selected lesson's
+   published objectives and Learn content, stores answer keys server-side, and
+   uses the normal objective-grading RPC. Students need an active unlocked
+   lesson with enough published lesson content. Each student is limited to ten
+   generated sessions per day.
+   C++ scored weekly-bank questions stay on that week's checkpoint; the copied
+   versions on other lessons are archived so each lesson uses its own generated
+   practice set. A passed C++ practice session is required to progress, while
+   lessons already completed before this requirement remain grandfathered.
 7. Deploy `supabase/functions/academy-grade-submission` and configure
    `GRADING_EXECUTOR_URL`, `GRADING_EXECUTOR_KEY`, and optional executor name
    and version secrets. The executor must be an isolated, no-network Python
