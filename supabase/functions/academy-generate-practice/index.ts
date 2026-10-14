@@ -184,7 +184,7 @@ Deno.serve(async (request) => {
     ];
   }
   const selectedQuestions = shuffledQuestions.slice(0, QUESTION_COUNT);
-  if (selectedQuestions.length) {
+  if (selectedQuestions.length === QUESTION_COUNT) {
     const sessionError = await ensurePracticeSession();
     if (sessionError) return sessionError;
     const { error: insertPreparedError } = await serviceClient
