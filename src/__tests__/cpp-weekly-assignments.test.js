@@ -21,6 +21,10 @@ const beginnerGuides = readFileSync(
   "supabase/migrations/20261422000000_cpp_weekly_beginner_guides.sql",
   "utf8",
 );
+const assignmentRetakes = readFileSync(
+  "supabase/migrations/20261423000000_cpp_assignment_retakes_and_marked_progression.sql",
+  "utf8",
+);
 const workflowMigration = readFileSync(
   "supabase/migrations/20261409000000_academy_signup_notifications_cpp_sequence_and_leaderboard.sql",
   "utf8",
@@ -162,7 +166,7 @@ describe("the learning assignment corrections", () => {
     expect(academy).toMatch(/activeCourse\.language === "cpp"[\s\S]*?week_number/);
     expect(academy).toMatch(/locked:[\s\S]*?week_number > nextCppWeek/);
     expect(assignmentList).toMatch(/Week \$\{assignment\.week_number\}/);
-    expect(assignmentList).toMatch(/Complete the previous week first/);
+    expect(assignmentList).toMatch(/Waiting for the previous week to be marked/);
     expect(assignmentDetail).toMatch(/assignment\.locked/);
     expect(workflowMigration).toMatch(
       /create trigger academy_require_prior_cpp_assignments\s+before insert on public\.academy_submissions/,
@@ -171,6 +175,18 @@ describe("the learning assignment corrections", () => {
       /prior_week\.week_number < target_week_number/,
     );
     expect(workflowMigration).toMatch(/Submit the previous C\+\+ week assignment/);
+  });
+
+  it("keeps previous C++ work visible, shows the best mark, and unlocks only after grading", () => {
+    const assignmentList = readFileSync("src/pages/AcademyAssignments.jsx", "utf8");
+    expect(academy).toMatch(/activeCourse\.language === "cpp"[\s\S]*?assignments/);
+    expect(academy).toMatch(/completed_mark:[\s\S]*?final_score/);
+    expect(academy).toMatch(/submission\.status === "graded"/);
+    expect(assignmentList).toMatch(/Done · Best mark/);
+    expect(assignmentList).toMatch(/use another attempt/);
+    expect(assignmentRetakes).toMatch(/result\.final_score is not null/);
+    expect(assignmentRetakes).toMatch(/submission\.status = 'graded'/);
+    expect(assignmentRetakes).toMatch(/must be marked before starting/);
   });
 
   it("gives administrators the full cohort while limiting other viewers to ten", () => {

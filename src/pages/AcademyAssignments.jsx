@@ -28,6 +28,19 @@ export default function AcademyAssignments() {
     });
   }, [user?.id, reloadToken]);
 
+  useEffect(() => {
+    const hasUnmarkedSubmission = assignments.some(
+      (assignment) =>
+        assignment.attempts_used > 0 && assignment.completed_mark == null,
+    );
+    if (!network.online || !hasUnmarkedSubmission) return undefined;
+    const timer = window.setTimeout(
+      () => setReloadToken((value) => value + 1),
+      15_000,
+    );
+    return () => window.clearTimeout(timer);
+  }, [assignments, network.online]);
+
   return (
     <div className="space-y-6">
       <header>
@@ -116,11 +129,28 @@ export default function AcademyAssignments() {
               </span>
               {assignment.locked && (
                 <span className="text-amber-700 dark:text-amber-300">
-                  Complete the previous week first
+                  Waiting for the previous week to be marked
+                </span>
+              )}
+              {assignment.completed_mark != null && (
+                <span className="text-emerald-700 dark:text-emerald-300">
+                  Done · Best mark {assignment.completed_mark}/100
                 </span>
               )}
             </p>
             <h2 className="mt-2 text-lg font-bold">{assignment.title}</h2>
+            {assignment.completed_mark != null && (
+              <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
+                {assignment.attempts_used < assignment.retry_limit
+                  ? "Completed and marked. Reopen this assignment to review it or use another attempt."
+                  : "Completed and marked. Reopen this assignment to review your work and mark."}
+              </p>
+            )}
+            {assignment.completed_mark == null && assignment.attempts_used > 0 && (
+              <p className="mt-2 text-sm text-amber-700 dark:text-amber-300">
+                Submitted · waiting for your mark
+              </p>
+            )}
             <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
               {assignment.due_at
                 ? `Due ${new Date(assignment.due_at).toLocaleDateString()}`

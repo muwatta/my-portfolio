@@ -220,7 +220,7 @@ export default function AcademyAssignment() {
   async function submit(source = sourceCode) {
     if (assignment?.locked) {
       return setNotice(
-        "Submit the previous week's assignment before starting this one.",
+        "The previous week's assignment must be marked before starting this one.",
       );
     }
     if (!assignment || attempts >= assignment.retry_limit)
@@ -458,7 +458,8 @@ export default function AcademyAssignment() {
           role="status"
           className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-950 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-100"
         >
-          Submit the previous week's assignment before starting this one.
+          Wait until the previous week's assignment has been marked before
+          starting this one.
         </p>
       )}
       {materialState === "missing" && (

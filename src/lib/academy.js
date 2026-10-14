@@ -9,6 +9,24 @@ const unavailable = (data = null) => ({ data, error: null, configured: false });
 const isReleased = (item) =>
   item.status === "published" &&
   (!item.release_at || Date.parse(item.release_at) <= Date.now());
+const submissionResultsFor = (submission) =>
+  Array.isArray(submission?.academy_submission_results)
+    ? submission.academy_submission_results
+    : submission?.academy_submission_results
+      ? [submission.academy_submission_results]
+      : [];
+const bestMarkedScore = (submissions) =>
+  (submissions ?? [])
+    .filter((submission) => submission.status === "graded")
+    .flatMap(submissionResultsFor)
+    .map((result) => result?.final_score)
+    .filter((score) => score != null)
+    .map(Number)
+    .filter(Number.isFinite)
+    .reduce(
+      (best, score) => (best == null || score > best ? score : best),
+      null,
+    );
 const createClientOperationId = () =>
   globalThis.crypto?.randomUUID?.() ||
   `academy-${Date.now()}-${Math.random().toString(36).slice(2)}`;
@@ -1869,7 +1887,7 @@ export async function markLessonComplete(lessonId, studentId) {
 export async function getAcademyAssignments(studentId) {
   if (!supabase) return unavailable([]);
   if (!studentId) return { data: [], error: null, configured: true };
-  return withAcademyCache(`assignments:${studentId}`, 2 * 60 * 1000, async () => {
+  return withAcademyCache(`assignments:${studentId}`, 10 * 1000, async () => {
     const activeCourse = await getActiveCourseForStudent(studentId);
     if (!activeCourse) return { data: [], error: null, configured: true };
     const [
@@ -1888,33 +1906,51 @@ export async function getAcademyAssignments(studentId) {
         .order("due_at", { ascending: true, nullsFirst: false }),
       supabase
         .from("academy_submissions")
-        .select("assignment_id")
+        .select(
+          "assignment_id, attempt_number, status, academy_submission_results(final_score)",
+        )
         .eq("student_id", studentId),
     ]);
     const error = assignmentError || submissionError;
     if (error) return { data: [], error, configured: true };
 
-    const submittedAssignmentIds = new Set(
-      (submissions ?? []).map((submission) => submission.assignment_id),
-    );
-    const outstanding = (assignments ?? []).filter(
-      (assignment) => !submittedAssignmentIds.has(assignment.id),
-    );
+    const submissionsByAssignment = new Map();
+    (submissions ?? []).forEach((submission) => {
+      const rows = submissionsByAssignment.get(submission.assignment_id) ?? [];
+      rows.push(submission);
+      submissionsByAssignment.set(submission.assignment_id, rows);
+    });
+    const visibleAssignments =
+      activeCourse.language === "cpp"
+        ? assignments ?? []
+        : (assignments ?? []).filter(
+            (assignment) => !submissionsByAssignment.has(assignment.id),
+          );
     const orderedAssignments =
       activeCourse.language === "cpp"
-        ? outstanding.slice().sort(
+        ? visibleAssignments.slice().sort(
             (left, right) =>
               (left.academy_weeks?.week_number ?? Number.MAX_SAFE_INTEGER) -
                 (right.academy_weeks?.week_number ?? Number.MAX_SAFE_INTEGER) ||
               left.title.localeCompare(right.title),
           )
-        : outstanding;
+        : visibleAssignments;
+    const markedAssignments = new Set(
+      orderedAssignments
+        .filter((assignment) =>
+          bestMarkedScore(submissionsByAssignment.get(assignment.id)) != null,
+        )
+        .map((assignment) => assignment.id),
+    );
     const nextCppWeek =
       activeCourse.language === "cpp"
         ? Math.min(
             ...orderedAssignments.map(
               (assignment) =>
-                assignment.academy_weeks?.week_number ?? Number.MAX_SAFE_INTEGER,
+                markedAssignments.has(assignment.id)
+                  ? Number.MAX_SAFE_INTEGER
+                  : assignment.academy_weeks?.week_number ??
+                    Number.MAX_SAFE_INTEGER,
             ),
           )
         : null;
@@ -1923,6 +1959,15 @@ export async function getAcademyAssignments(studentId) {
         ...assignment,
         week_number: assignment.academy_weeks?.week_number ?? null,
         week_title: assignment.academy_weeks?.title ?? null,
+        attempts_used: (submissionsByAssignment.get(assignment.id) ?? [])
+          .reduce(
+            (maximum, submission) =>
+              Math.max(maximum, submission.attempt_number ?? 0),
+            0,
+          ),
+        completed_mark: bestMarkedScore(
+          submissionsByAssignment.get(assignment.id),
+        ),
         locked:
           activeCourse.language === "cpp" &&
           assignment.academy_weeks?.week_number != null &&
