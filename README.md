@@ -869,16 +869,17 @@ administrator access. `academy_is_admin()` compares the signed-in user id with
 that id. The `academy_admins` row is retained for compatibility, but adding
 other rows does not grant global administrator access.
 
-`academy_school_admins` maps one account to one active school. The primary
-administrator assigns or removes this mapping from Academy **Access and roles**.
-School administrators use `/academy/school-admin`; its server-side dashboard
-function returns only students whose `school_id` matches the assigned school,
-including their progress and verified achievements. Course changes are
-validated against that same school in `academy_assign_student_course()`.
-School administrators do not inherit global teacher permissions, even if their
-profile role is `teacher`. The global administrator and teacher workspaces
-remain separate; only the primary administrator can use the all-school
-administrator dashboard.
+`academy_school_admins` maps one account to one active school. In Academy
+**Access and roles**, these accounts are named **School viewers**: they use
+`/academy/school-admin`, which returns only students whose `school_id` matches
+their assigned school, including progress and verified achievements. Course
+changes are validated against that same school. School viewers cannot grade.
+
+**Grading editors** are separately appointed by the primary administrator.
+They can review and publish submissions across all schools, but do not receive
+the all-school administrator dashboard or curriculum-management access. Assign
+this role only to trusted graders. Only the primary administrator can appoint
+or remove school viewers and grading editors.
 
 Server side enforcement does not rely on the client. Every read and write is
 guarded four ways: `SECURITY DEFINER` predicate helpers, permissive RLS

@@ -72,9 +72,10 @@ export default function AcademyAdminAccess() {
         </p>
         <h1 className="mt-2 text-3xl font-bold">Access and roles</h1>
         <p className="mt-2 max-w-2xl text-slate-600 dark:text-slate-300">
-          Assign an existing account to one school. School administrators can
-          see and support students from that school only. Only the primary
-          administrator can access the all-school dashboard and appoint graders.
+          School viewers can see and support students at one assigned school
+          without grading access. Grading editors can review and publish
+          submissions across all schools. Only you can appoint either role or
+          access the all-school dashboard.
         </p>
       </header>
       {message && (
@@ -122,8 +123,8 @@ export default function AcademyAdminAccess() {
               <tr>
                 <th className="px-5 py-4">Name</th>
                 <th className="px-5 py-4">Academy role</th>
-                <th className="px-5 py-4">Can grade submissions</th>
-                <th className="px-5 py-4">School access</th>
+                <th className="px-5 py-4">Grading editor</th>
+                <th className="px-5 py-4">School viewer</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -132,7 +133,10 @@ export default function AcademyAdminAccess() {
                 return (
                   <tr key={profile.id}>
                     <td className="px-5 py-4 font-semibold">
-                      {profile.display_name || "Unnamed user"}
+                      {profile.display_name ||
+                        (isPrimaryAdmin
+                          ? "Abdullahi Musliudeen"
+                          : "Unnamed user")}
                     </td>
                     <td className="px-5 py-4">
                       <select
@@ -157,7 +161,7 @@ export default function AcademyAdminAccess() {
                         type="checkbox"
                         checked={isPrimaryAdmin || graderIds.has(profile.id)}
                         disabled={isPrimaryAdmin}
-                        aria-label={`Allow ${profile.display_name || "this user"} to grade submissions`}
+                        aria-label={`Appoint ${profile.display_name || (isPrimaryAdmin ? "the superadmin" : "this user")} as a grading editor`}
                         onChange={(event) => changeGrader(profile.id, event.target.checked)}
                       />
                       <span className="ml-2">
@@ -165,14 +169,14 @@ export default function AcademyAdminAccess() {
                           ? "Superadmin"
                           : graderIds.has(profile.id)
                             ? "Appointed grader"
-                            : "Appoint grader"}
+                            : "Appoint grading editor"}
                       </span>
                     </td>
                     <td className="px-5 py-4">
                       <select
                         className="field min-w-48"
                         value={schoolByAdmin.get(profile.id) || ""}
-                        aria-label={`School access for ${profile.display_name || "this user"}`}
+                        aria-label={`School viewer access for ${profile.display_name || (isPrimaryAdmin ? "the superadmin" : "this user")}`}
                         disabled={isPrimaryAdmin}
                         onChange={(event) =>
                           changeSchoolAdmin(profile.id, event.target.value)
@@ -181,7 +185,7 @@ export default function AcademyAdminAccess() {
                         <option value="">
                           {isPrimaryAdmin
                             ? "Primary superadmin"
-                            : "No school admin access"}
+                            : "No school viewer access"}
                         </option>
                         {data.schools.map((school) => (
                           <option

@@ -63,6 +63,16 @@ describe("school administrators have a separate, scoped role", () => {
     expect(allSql).toMatch(/delete from public\.academy_admins\s+where user_id is distinct from public\.academy_primary_admin_id\(\)/);
   });
 
+  it("shows the primary admin by name and distinguishes viewer/editor access", () => {
+    const accessPage = readFileSync("src/pages/AcademyAdminAccess.jsx", "utf8");
+    expect(accessPage).toContain('"Abdullahi Musliudeen"');
+    expect(accessPage).toContain('">Grading editor</th>');
+    expect(accessPage).toContain('">School viewer</th>');
+    expect(accessPage).toContain('"No school viewer access"');
+    expect(accessPage).toContain('"Appoint grading editor"');
+    expect(accessPage).toMatch(/across all schools/);
+  });
+
   it("is executable only by a signed in user, and still requires an administrator", () => {
     expect(allSql).toMatch(
       /revoke execute on function public\.academy_set_user_admin\(uuid, boolean\) from public, anon/,

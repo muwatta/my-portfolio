@@ -98,7 +98,7 @@ describe("admin controls", () => {
     expect(guard).toMatch(/primary administrator cannot be removed/i);
     const accessPage = readFileSync("src/pages/AcademyAdminAccess.jsx", "utf8");
     expect(accessPage).toMatch(/setAcademySchoolAdmin/);
-    expect(accessPage).toMatch(/No school admin access/);
-    expect(accessPage).toMatch(/only the primary[\s\S]*?administrator can access the all-school dashboard/i);
+    expect(accessPage).toMatch(/No school viewer access/);
+    expect(accessPage).toMatch(/Only you can appoint either role or\s+access the all-school dashboard/i);
   });
 });
