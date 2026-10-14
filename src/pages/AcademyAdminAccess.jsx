@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import {
   getAcademyAdminAccess,
   setAcademyAdmin,
+  setAcademyGrader,
   setAcademyUserRole,
 } from "../lib/academy";
 import { friendlyError } from "../lib/utils";
@@ -10,14 +11,14 @@ import { useAutoRefresh } from "../hooks/useAutoRefresh";
 import { Skeleton } from "../components/ui/Skeleton";
 
 export default function AcademyAdminAccess() {
-  const [data, setData] = useState({ profiles: [], admins: [] });
+  const [data, setData] = useState({ profiles: [], admins: [], graders: [] });
   const [state, setState] = useState("loading");
   const [message, setMessage] = useState("");
 
   const load = useCallback(async (background = false) => {
     const result = await getAcademyAdminAccess();
     if (background && result.error) return;
-    setData(result.data ?? { profiles: [], admins: [] });
+    setData(result.data ?? { profiles: [], admins: [], graders: [] });
     setState(result.error ? "error" : "ready");
   }, []);
 
@@ -35,6 +36,12 @@ export default function AcademyAdminAccess() {
     if (!error) await load();
   }
 
+  async function changeGrader(userId, enabled) {
+    const { error } = await setAcademyGrader(userId, enabled);
+    setMessage(friendlyError(error, enabled ? "Grader appointed." : "Grader access removed."));
+    if (!error) await load();
+  }
+
   async function changeRole(userId, role) {
     const { error } = await setAcademyUserRole(userId, role);
     setMessage(friendlyError(error, "Role updated."));
@@ -42,6 +49,7 @@ export default function AcademyAdminAccess() {
   }
 
   const adminIds = new Set(data.admins.map((admin) => admin.user_id));
+  const graderIds = new Set(data.graders.map((grader) => grader.user_id));
 
   return (
     <div className="space-y-8">
@@ -51,8 +59,7 @@ export default function AcademyAdminAccess() {
         </p>
         <h1 className="mt-2 text-3xl font-bold">Access and roles</h1>
         <p className="mt-2 max-w-2xl text-slate-600 dark:text-slate-300">
-          Administrators can appoint or remove other administrators and set
-          teaching roles. The primary administrator cannot be removed.
+          Manage teaching roles, administrator access, and manual grading permissions. Only you can appoint graders; graders cannot appoint others or manage curriculum.
         </p>
       </header>
       {message && (
@@ -101,6 +108,7 @@ export default function AcademyAdminAccess() {
                 <th className="px-5 py-4">Name</th>
                 <th className="px-5 py-4">Academy role</th>
                 <th className="px-5 py-4">Administrator</th>
+                <th className="px-5 py-4">Can grade submissions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -136,6 +144,17 @@ export default function AcademyAdminAccess() {
                           ? "Administrator"
                           : "Grant admin access"}
                       </span>
+                    </label>
+                  </td>
+                  <td className="px-5 py-4">
+                    <label className="inline-flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        checked={graderIds.has(profile.id)}
+                        aria-label={`Allow ${profile.display_name || "this user"} to grade submissions`}
+                        onChange={(event) => changeGrader(profile.id, event.target.checked)}
+                      />
+                      <span>{graderIds.has(profile.id) ? "Appointed grader" : "Appoint grader"}</span>
                     </label>
                   </td>
                 </tr>
