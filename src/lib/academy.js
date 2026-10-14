@@ -605,16 +605,22 @@ export async function getAcademyAdminAccess() {
   const [
     { data: profiles, error: profileError },
     { data: admins, error: adminError },
+    { data: graders, error: graderError },
   ] = await Promise.all([
     supabase
       .from("academy_profiles")
       .select("id, display_name, role, updated_at")
       .order("display_name"),
     supabase.from("academy_admins").select("user_id"),
+    supabase.from("academy_graders").select("user_id, appointed_by, created_at"),
   ]);
   return {
-    data: { profiles: profiles  ??  [], admins: admins  ??  [] },
-    error: profileError || adminError,
+    data: {
+      profiles: profiles ?? [],
+      admins: admins ?? [],
+      graders: graders ?? [],
+    },
+    error: profileError || adminError || graderError,
     configured: true,
   };
 }
@@ -625,6 +631,16 @@ export async function setAcademyAdmin(userId, enabled) {
   const { data, error } = await supabase.rpc("academy_set_user_admin", {
     target_user_id: userId,
     should_be_admin: enabled,
+  });
+  return { data, error };
+}
+
+export async function setAcademyGrader(userId, enabled) {
+  if (!supabase)
+    return { data: null, error: new Error("Academy is not configured.") };
+  const { data, error } = await supabase.rpc("academy_set_grader", {
+    target_user_id: userId,
+    should_be_grader: enabled,
   });
   return { data, error };
 }
