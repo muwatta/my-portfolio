@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 const migration = readFileSync(
-  "supabase/migrations/20261015000000_academy_grader_permissions.sql",
+  "supabase/migrations/20261410000000_academy_grader_permissions.sql",
   "utf8",
 );
 const practiceGenerator = readFileSync(
@@ -10,7 +10,7 @@ const practiceGenerator = readFileSync(
   "utf8",
 );
 const gradingQueue = readFileSync(
-  "supabase/migrations/20261015000002_academy_grader_queue.sql",
+  "supabase/migrations/20261412000000_academy_grader_queue.sql",
   "utf8",
 );
 
