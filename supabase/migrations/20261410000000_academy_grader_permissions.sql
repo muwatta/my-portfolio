@@ -17,7 +17,7 @@ stable
 security definer
 set search_path = public
 as $$
-  select public.academy_is_admin()
+  select auth.uid() = public.academy_primary_admin_id()
     or exists (
       select 1
       from public.academy_graders g
@@ -38,8 +38,8 @@ security definer
 set search_path = public
 as $$
 begin
-  if not public.academy_is_admin() then
-    raise exception 'Only the superadmin can appoint or remove graders.'
+  if auth.uid() is distinct from public.academy_primary_admin_id() then
+    raise exception 'Only the primary superadmin can appoint or remove graders.'
       using errcode = '42501';
   end if;
   if target_user_id is null or not exists (
