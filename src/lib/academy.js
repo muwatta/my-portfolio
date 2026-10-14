@@ -2166,6 +2166,7 @@ export async function saveAcademyAssignment(assignment) {
     retry_limit: Number(assignment.retry_limit),
     published: Boolean(assignment.published),
     is_draft: !assignment.published,
+    status: assignment.published ? "published" : "draft",
     ai_feedback_enabled: Boolean(assignment.ai_feedback_enabled),
     automated_tests: automatedTests,
     created_by: userResult.user ?.id,

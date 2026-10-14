@@ -498,7 +498,7 @@ function normaliseQuestionText(value: unknown) {
   return String(value ?? "")
     .normalize("NFKC")
     .toLocaleLowerCase()
-    .replace(/[^\\p{L}\\p{N}]+/gu, " ")
+    .replace(/[^\p{L}\p{N}]+/gu, " ")
     .trim();
 }
 

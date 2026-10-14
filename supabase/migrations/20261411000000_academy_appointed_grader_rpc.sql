@@ -71,7 +71,6 @@ as $$
 declare
   saved public.academy_submission_results;
   student uuid;
-  assignment_title text;
   scored numeric;
   maximum numeric;
   a_title text;
@@ -110,7 +109,7 @@ begin
           jsonb_build_object('published', true, 'score', scored));
 
   insert into public.academy_notifications (user_id, type, title, message)
-  values (student, 'feedback', 'Your mark for ' || assignment_title,
+  values (student, 'feedback', 'Your mark for ' || a_title,
           'You scored ' || coalesce(scored::text, 'a mark') ||
             ' out of ' || coalesce(maximum::text, 'the maximum') || '. Open the task to read the feedback.');
 

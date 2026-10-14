@@ -13,12 +13,24 @@ const gradingQueue = readFileSync(
   "supabase/migrations/20261412000000_academy_grader_queue.sql",
   "utf8",
 );
+const graderWriteAccess = readFileSync(
+  "supabase/migrations/20261415000000_academy_grader_write_and_file_access.sql",
+  "utf8",
+);
+const assignmentActivitySync = readFileSync(
+  "supabase/migrations/20261416000000_academy_assignment_activity_sync.sql",
+  "utf8",
+);
+const assignmentEditor = readFileSync("src/pages/AcademyTeacherAssignments.jsx", "utf8");
+const academyLibrary = readFileSync("src/lib/academy.js", "utf8");
+const appRoutes = readFileSync("src/App.jsx", "utf8");
+const academyLayout = readFileSync("src/components/academy/AcademyLayout.jsx", "utf8");
 
 describe("manual grading authorization", () => {
   it("separates graders from teachers and limits appointment to the superadmin", () => {
     expect(migration).toMatch(/create table if not exists public\.academy_graders/);
     expect(migration).toMatch(/create or replace function public\.academy_can_grade/);
-    expect(migration).toMatch(/if not public\.academy_is_admin\(\) then/);
+    expect(migration).toMatch(/auth\.uid\(\) is distinct from public\.academy_primary_admin_id\(\)/);
     expect(migration).toMatch(/Only the primary superadmin can appoint or remove graders/);
   });
 
@@ -26,6 +38,14 @@ describe("manual grading authorization", () => {
     expect(migration).toMatch(/create trigger academy_submission_results_manual_grade_guard/);
     expect(migration).toMatch(/not public\.academy_can_grade\(\)/);
     expect(gradingQueue).toMatch(/if not public\.academy_can_grade\(\)/);
+    expect(graderWriteAccess).toMatch(/for insert to authenticated\s+with check \(public\.academy_can_grade\(\)\)/);
+    expect(graderWriteAccess).toMatch(/for update to authenticated\s+using \(public\.academy_can_grade\(\)\)/);
+  });
+
+  it("lets appointed graders securely open submissions without widening student access", () => {
+    expect(graderWriteAccess).toMatch(/bucket_id = 'assignment-submissions'/);
+    expect(graderWriteAccess).toMatch(/or public\.academy_can_grade\(\)/);
+    expect(graderWriteAccess).toMatch(/\(storage\.foldername\(name\)\)\[1\] = auth\.uid\(\)::text/);
   });
 });
 
@@ -39,5 +59,34 @@ describe("practice question uniqueness", () => {
   it("rejects duplicate generated prompts and requires a complete prepared set", () => {
     expect(practiceGenerator).toMatch(/deduplicateQuestions\(validQuestions\)\.length === QUESTION_COUNT/);
     expect(practiceGenerator).toMatch(/selectedQuestions\.length === QUESTION_COUNT/);
+  });
+
+  it("normalizes Unicode letters and numbers when comparing prompts", () => {
+    expect(practiceGenerator).toContain('.replace(/[^\\p{L}\\p{N}]+/gu, " ")');
+  });
+});
+
+describe("assignment lesson organization", () => {
+  it("filters lesson choices by course and persists the lesson association", () => {
+    expect(assignmentEditor).toMatch(/getAcademyTeacherCurriculum\(\)/);
+    expect(assignmentEditor).toMatch(/week\?\.course_id === form\.course_id/);
+    expect(academyLibrary).toMatch(/lesson_id: assignment\.lesson_id \|\| null/);
+    expect(academyLibrary).toMatch(/status: assignment\.published \? "published" : "draft"/);
+  });
+
+  it("keeps assignment lesson activities synchronized for learner progress", () => {
+    expect(assignmentActivitySync).toMatch(/before insert or update or delete on public\.academy_assignments/);
+    expect(assignmentActivitySync).toMatch(/insert into public\.academy_lesson_activities/);
+    expect(assignmentActivitySync).toMatch(/new\.course_id <> selected_course_id/);
+    expect(assignmentActivitySync).toMatch(/new\.week_id := selected_week_id/);
+    expect(assignmentActivitySync).toMatch(/delete from public\.academy_lesson_activities/);
+    expect(assignmentActivitySync).toMatch(/assignment\.course_id = week\.course_id/);
+  });
+
+  it("keeps grading routes behind the grader guard and gives graders a restricted navigation", () => {
+    expect(appRoutes).toMatch(/<Route element=\{<AcademyGraderGuard \/>\}>[\s\S]*?path="\/academy\/grading"/);
+    expect(appRoutes).toMatch(/path="\/academy\/teacher\/submissions"[\s\S]*?Navigate to="\/academy\/grading"/);
+    expect(academyLayout).toMatch(/const GRADER_LINKS = \[[\s\S]*?to: "\/academy\/grading"/);
+    expect(academyLayout).not.toMatch(/label: "Submissions", to: "\/academy\/teacher\/submissions"/);
   });
 });

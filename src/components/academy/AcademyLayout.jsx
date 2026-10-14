@@ -28,7 +28,11 @@ const TEACHER_LINKS = [
   { label: "Analytics", to: "/academy/teacher/analytics" },
   { label: "Classes", to: "/academy/teacher/classes" },
   { label: "Assignments", to: "/academy/teacher/assignments" },
-  { label: "Submissions", to: "/academy/teacher/submissions" },
+];
+
+const GRADER_LINKS = [
+  { label: "Student dashboard", to: "/academy/dashboard" },
+  { label: "Grading inbox", to: "/academy/grading" },
 ];
 
 const ADMIN_LINKS = [
@@ -157,7 +161,14 @@ export default function AcademyLayout({
 
   const displayName =
     profile?.display_name || user?.email?.split("@")[0] || "Student";
-  const accessLabel = isAdmin ? "Admin" : isTeacher ? "Teacher" : "Student";
+  const accessLabel =
+    workspace === "grader"
+      ? "Grader"
+      : isAdmin
+        ? "Admin"
+        : isTeacher
+          ? "Teacher"
+          : "Student";
   const profileIncomplete =
     isStudent &&
     (!profile?.display_name?.trim() || !profile?.school_id || !profile?.state);
@@ -166,12 +177,14 @@ export default function AcademyLayout({
     {
       student: STUDENT_NAVIGATION,
       teacher: TEACHER_LINKS,
+      grader: GRADER_LINKS,
       admin: ADMIN_LINKS,
     }[workspace] || STUDENT_NAVIGATION;
 
   const dashboardPath = {
     student: "/academy/dashboard",
     teacher: "/academy/teacher",
+    grader: "/academy/dashboard",
     admin: "/academy/admin",
   }[workspace];
 

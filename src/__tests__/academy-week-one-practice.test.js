@@ -27,7 +27,7 @@ describe("C++ Week 1 lesson-specific practice", () => {
 
   it("archives the copied week-wide bank but preserves per-session history", () => {
     expect(migration).toContain("set published = false");
-    expect(migration).toContain("set status = 'archived'");
+    expect(migration).toMatch(/status = 'archived'/);
     expect(migration).toContain("exercise.practice_session_id is null");
     expect(migration).toContain("saved_question.practice_question_number = question.question_number");
     expect(migration).toContain("and attempt.student_id = practice_session.student_id");
@@ -39,5 +39,12 @@ describe("C++ Week 1 lesson-specific practice", () => {
     expect(migration).toContain("'practice'");
     expect(migration).toContain("required_for_completion");
     expect(migration).toContain("on conflict (lesson_id, kind, ref_id)");
+  });
+
+  it("gives every seeded practice question an answer and explanation", () => {
+    for (const question of questions) {
+      expect(question.correct_answer.trim()).not.toBe("");
+      expect(question.explanation.trim()).not.toBe("");
+    }
   });
 });
