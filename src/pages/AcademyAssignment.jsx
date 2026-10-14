@@ -28,9 +28,24 @@ import ProtectedContent from "../components/academy/ProtectedContent";
 function CodeEditorForAssignment({ assignment, onCaptureSource }) {
   const isCpp = assignment?.academy_courses?.language === "cpp";
   if (isCpp) {
+    const readsDistanceForSpeed =
+      /\bdistance\b/i.test(assignment.instructions ?? "") &&
+      /\bslow\b/i.test(assignment.instructions ?? "") &&
+      /\bmedium\b/i.test(assignment.instructions ?? "") &&
+      /\bfast\b/i.test(assignment.instructions ?? "");
     return (
       <CppEditor
         starterCode={assignment.starter_code || ""}
+        inputHint={
+          readsDistanceForSpeed
+            ? "This program reads one distance. Enter a number such as 60 here, then run it. Finish the TODO so it prints slow, medium, or fast."
+            : ""
+        }
+        inputPlaceholder={
+          readsDistanceForSpeed
+            ? "For example: 60"
+            : undefined
+        }
         onSubmit={onCaptureSource}
       />
     );

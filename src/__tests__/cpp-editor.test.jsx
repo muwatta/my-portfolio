@@ -59,4 +59,21 @@ describe("C++ practice terminal", () => {
       expect(MockWorker.lastMessage.stdin).toBe("42");
     });
   });
+
+  it("shows an assignment-specific hint for the expected input", () => {
+    vi.stubGlobal("Worker", MockWorker);
+    render(
+      <CppEditor
+        starterCode={"int distance;\ncin >> distance;\n// TODO: print slow, medium, or fast"}
+        inputHint="Enter a distance such as 60, then finish the TODO."
+        inputPlaceholder="For example: 60"
+      />,
+    );
+
+    expect(screen.getByText(/enter a distance such as 60/i)).toBeInTheDocument();
+    expect(screen.getByRole("textbox", { name: "Program input" })).toHaveAttribute(
+      "placeholder",
+      "For example: 60",
+    );
+  });
 });

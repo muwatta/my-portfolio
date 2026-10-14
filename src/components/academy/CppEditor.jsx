@@ -74,6 +74,8 @@ export default function CppEditor({
   starterCode = "",
   onSubmit,
   stdin: starterInput = "",
+  inputHint = "",
+  inputPlaceholder = "Enter values read by cin, separated by spaces or new lines",
   code: controlledCode,
   onCodeChange,
 }) {
@@ -146,11 +148,16 @@ export default function CppEditor({
       />
       <label className="block space-y-2 border-t border-slate-800 px-4 py-3 text-sm text-slate-300">
         <span className="font-semibold">Program input</span>
+        {inputHint && (
+          <span className="block text-sm leading-6 text-cyan-200">
+            {inputHint}
+          </span>
+        )}
         <textarea
           aria-label="Program input"
           value={programInput}
           onChange={(event) => setProgramInput(event.target.value)}
-          placeholder="Enter values read by cin, separated by spaces or new lines"
+          placeholder={inputPlaceholder}
           rows={2}
           spellCheck="false"
           className="w-full resize-y rounded-lg border border-slate-700 bg-slate-900 p-3 font-mono text-sm text-slate-100 outline-none focus:border-cyan-500"
