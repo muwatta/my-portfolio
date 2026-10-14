@@ -516,7 +516,7 @@ function deduplicateQuestions<T extends Record<string, unknown>>(questions: T[])
       continue;
     }
 
-    const tokens = new Set((title + " " + instructions).split(/\\s+/).filter(Boolean));
+    const tokens = new Set((title + " " + instructions).split(/\s+/).filter(Boolean));
     const nearDuplicate = fingerprints.some((previous) => {
       let intersection = 0;
       for (const token of tokens) if (previous.has(token)) intersection += 1;
