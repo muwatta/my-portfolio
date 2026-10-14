@@ -13,6 +13,10 @@ const learningFixes = readFileSync(
   "supabase/migrations/20261405000000_academy_learning_material_and_leaderboard_limit.sql",
   "utf8",
 );
+const weekThreeFix = readFileSync(
+  "supabase/migrations/20261421000000_cpp_week_three_beginner_speed_task.sql",
+  "utf8",
+);
 const workflowMigration = readFileSync(
   "supabase/migrations/20261409000000_academy_signup_notifications_cpp_sequence_and_leaderboard.sql",
   "utf8",
@@ -107,6 +111,15 @@ describe("these assignments are not a progress gate yet", () => {
 });
 
 describe("the learning assignment corrections", () => {
+  it("makes the Week 3 motor task self-contained for a beginner", () => {
+    expect(weekThreeFix).toMatch(/program already has a distance value of 60/i);
+    expect(weekThreeFix).toMatch(/Do not read input/);
+    expect(weekThreeFix).toMatch(/change distance to 10 and then 120/);
+    expect(weekThreeFix).toMatch(/int distance = 60;/);
+    expect(weekThreeFix).toMatch(/"expected":"medium"/);
+    expect(weekThreeFix).not.toMatch(/cin\s*>>/);
+  });
+
   it("simplifies the week 9 calculation and matches its grading cases", () => {
     expect(learningFixes).toMatch(/C\+\+ Week 9: average two distances/);
     expect(learningFixes).toMatch(/Read two distance readings/);

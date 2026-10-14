@@ -74,7 +74,6 @@ export default function CppEditor({
   starterCode = "",
   onSubmit,
   stdin: starterInput = "",
-  inputHint = "",
   inputPlaceholder = "Enter values read by cin, separated by spaces or new lines",
   code: controlledCode,
   onCodeChange,
@@ -84,6 +83,7 @@ export default function CppEditor({
   );
   const code = controlledCode ?? localCode;
   const [programInput, setProgramInput] = useState(starterInput);
+  const readsStandardInput = /\b(?:std::)?cin\s*>>/.test(code);
   const [output, setOutput] = useState("");
   const [error, setError] = useState("");
   const [running, setRunning] = useState(false);
@@ -146,26 +146,23 @@ export default function CppEditor({
         spellCheck="false"
         className="min-h-64 w-full resize-y bg-slate-950 p-4 font-mono text-sm leading-6 text-slate-100 outline-none"
       />
-      <label className="block space-y-2 border-t border-slate-800 px-4 py-3 text-sm text-slate-300">
-        <span className="font-semibold">Program input</span>
-        {inputHint && (
-          <span className="block text-sm leading-6 text-cyan-200">
-            {inputHint}
+      {readsStandardInput && (
+        <label className="block space-y-2 border-t border-slate-800 px-4 py-3 text-sm text-slate-300">
+          <span className="font-semibold">Program input</span>
+          <textarea
+            aria-label="Program input"
+            value={programInput}
+            onChange={(event) => setProgramInput(event.target.value)}
+            placeholder={inputPlaceholder}
+            rows={2}
+            spellCheck="false"
+            className="w-full resize-y rounded-lg border border-slate-700 bg-slate-900 p-3 font-mono text-sm text-slate-100 outline-none focus:border-cyan-500"
+          />
+          <span className="block text-xs text-slate-400">
+            Used by statements such as <code>cin &gt;&gt; distance;</code>.
           </span>
-        )}
-        <textarea
-          aria-label="Program input"
-          value={programInput}
-          onChange={(event) => setProgramInput(event.target.value)}
-          placeholder={inputPlaceholder}
-          rows={2}
-          spellCheck="false"
-          className="w-full resize-y rounded-lg border border-slate-700 bg-slate-900 p-3 font-mono text-sm text-slate-100 outline-none focus:border-cyan-500"
-        />
-        <span className="block text-xs text-slate-400">
-          Used by statements such as <code>cin &gt;&gt; distance;</code>.
-        </span>
-      </label>
+        </label>
+      )}
       <div className="flex flex-wrap gap-2 border-t border-slate-800 p-3">
         <button type="button" className="button-primary" onClick={run} disabled={running}>
           {running ? "Running..." : "Run program"}

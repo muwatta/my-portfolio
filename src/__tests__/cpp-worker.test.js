@@ -15,6 +15,20 @@ const run = (code, stdin = "") => new BeginnerCpp(stdin).run(code);
 const main = (body) => `#include <iostream>\nusing namespace std;\n\nint main() {\n${body}\n  return 0;\n}`;
 
 describe("decisions", () => {
+  it.each([
+    [10, "slow"],
+    [60, "medium"],
+    [120, "fast"],
+  ])("chooses %s as %s in the beginner motor-speed task", (distance, speed) => {
+    expect(
+      run(
+        main(
+          `  int distance = ${distance};\n  if (distance < 30) {\n    cout << "slow";\n  } else if (distance < 100) {\n    cout << "medium";\n  } else {\n    cout << "fast";\n  }`,
+        ),
+      ),
+    ).toBe(speed);
+  });
+
   it("runs an else if ladder", () => {
     // This was rejected outright. Six of the C++ course's own code blocks were
     // written this way, so a lesson could teach a construct the runner refused.

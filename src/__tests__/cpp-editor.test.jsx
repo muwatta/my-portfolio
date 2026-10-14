@@ -60,20 +60,20 @@ describe("C++ practice terminal", () => {
     });
   });
 
-  it("shows an assignment-specific hint for the expected input", () => {
+  it("only asks for program input when the source reads from cin", () => {
     vi.stubGlobal("Worker", MockWorker);
     render(
-      <CppEditor
-        starterCode={"int distance;\ncin >> distance;\n// TODO: print slow, medium, or fast"}
-        inputHint="Enter a distance such as 60, then finish the TODO."
-        inputPlaceholder="For example: 60"
-      />,
+      <CppEditor starterCode={"int distance = 60;\ncout << distance;"} />,
     );
 
-    expect(screen.getByText(/enter a distance such as 60/i)).toBeInTheDocument();
-    expect(screen.getByRole("textbox", { name: "Program input" })).toHaveAttribute(
-      "placeholder",
-      "For example: 60",
-    );
+    expect(
+      screen.queryByRole("textbox", { name: "Program input" }),
+    ).not.toBeInTheDocument();
+
+    cleanup();
+    render(<CppEditor starterCode={"int distance;\ncin >> distance;"} />);
+    expect(
+      screen.getByRole("textbox", { name: "Program input" }),
+    ).toBeInTheDocument();
   });
 });

@@ -31,9 +31,7 @@ vi.mock("../components/academy/PythonEditor", () => ({
   default: () => <div data-testid="python-editor" />,
 }));
 vi.mock("../components/academy/CppEditor", () => ({
-  default: ({ inputHint }) => (
-    <div data-testid="cpp-editor">{inputHint}</div>
-  ),
+  default: () => <div data-testid="cpp-editor" />,
 }));
 
 const {
@@ -107,20 +105,6 @@ describe("which editor an assignment offers", () => {
     renderPage();
     await waitFor(() => expect(screen.getByTestId("cpp-editor")).toBeInTheDocument());
     expect(screen.queryByTestId("python-editor")).not.toBeInTheDocument();
-  });
-
-  it("explains what input to enter for the motor-speed assignment", async () => {
-    const payload = assignmentFor("cpp");
-    payload.data.instructions =
-      'Read a distance and choose a speed. Closer than 30 prints "slow", 30 to 99 prints "medium", anything further prints "fast".';
-    payload.data.starter_code =
-      "int distance = 0;\ncin >> distance;\n// TODO: print slow, medium or fast";
-    getAcademyAssignment.mockResolvedValue(payload);
-
-    renderPage();
-
-    expect(await screen.findByText(/enter a number such as 60/i)).toBeInTheDocument();
-    expect(screen.getByText(/finish the todo so it prints slow, medium, or fast/i)).toBeInTheDocument();
   });
 
   it("offers the Python editor for a Python course", async () => {
