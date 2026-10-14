@@ -24,19 +24,20 @@ function latestDefinition(name) {
 const guard = latestDefinition("academy_set_user_admin");
 const primary = latestDefinition("academy_primary_admin_id");
 
-describe("the account owner is always an administrator", () => {
-  it("is identified by user id, not by an address", () => {
-    // Probing lower(email) = '...' against this database twice gave
-    // contradictory answers, so a guard built on it could not be trusted to
-    // match. An id is deterministic and has no case or collation question.
-    expect(primary).toMatch(/select '[0-9a-f-]{36}'::uuid/);
+describe("the requested account is the sole global administrator", () => {
+  it("resolves the requested email once and pins the matching user id", () => {
+    expect(allSql).toMatch(
+      /where lower\(email\) = 'abdullahmusliudeen@gmail\.com'[\s\S]*?array_length\(matching_user_ids, 1\), 0\) <> 1/,
+    );
+    expect(primary).toMatch(/select %L::uuid/);
     expect(guard).toMatch(
       /target_user_id = public\.academy_primary_admin_id\(\)\s+and not should_be_admin/,
     );
   });
 
-  it("cannot be removed by an administrator", () => {
+  it("cannot be removed or replaced by another global administrator", () => {
     expect(guard).toMatch(/primary administrator cannot be removed/i);
+    expect(guard).toMatch(/global administrator access is reserved for the primary administrator/i);
   });
 
   it("is guaranteed a row even if the table were emptied", () => {
@@ -52,24 +53,14 @@ describe("the account owner is always an administrator", () => {
   });
 });
 
-describe("other teachers and colleagues keep their access", () => {
-  it("lets an administrator grant and revoke anyone but the owner", () => {
-    expect(guard).toMatch(/if should_be_admin then/);
-    expect(guard).toMatch(/insert into public\.academy_admins/);
-    expect(guard).toMatch(
-      /delete from public\.academy_admins\s+where\s+user_id = target_user_id/,
-    );
-  });
-
-  it("records the colleague as a named administrator", () => {
-    // Removing a colleague on an ambiguous instruction was the wrong call, so
-    // the restoration is kept on the record rather than left as a silent no-op.
-    const restore = readFileSync(
-      `${MIGRATIONS}/20261095000000_academy_restore_colleague_admin.sql`,
-      "utf8",
-    );
-    expect(restore).toMatch(/ec499da3-5c3c-4df5-9f9d-8e1c6496e0ae/);
-    expect(restore).toMatch(/on conflict \(user_id\) do nothing/);
+describe("school administrators have a separate, scoped role", () => {
+  it("keeps the school assignment separate from global administrator grants", () => {
+    expect(allSql).toMatch(/create table if not exists public\.academy_school_admins/);
+    expect(allSql).toMatch(/create or replace function public\.academy_set_school_admin/);
+    expect(allSql).toMatch(/academy_school_admin_dashboard\(\)/);
+    expect(allSql).toMatch(/profile\.school_id = assigned_school\.id/);
+    expect(allSql).toMatch(/academy_school_admin_can_manage_student\(target_student_id\)/);
+    expect(allSql).toMatch(/delete from public\.academy_admins\s+where user_id <> public\.academy_primary_admin_id\(\)/);
   });
 
   it("is executable only by a signed in user, and still requires an administrator", () => {
@@ -79,6 +70,6 @@ describe("other teachers and colleagues keep their access", () => {
     expect(allSql).toMatch(
       /grant execute on function public\.academy_set_user_admin\(uuid, boolean\) to authenticated/,
     );
-    expect(guard).toMatch(/Administrator access required/);
+    expect(guard).toMatch(/Primary administrator access required/);
   });
 });

@@ -100,9 +100,10 @@ describe("only an administrator can manage accounts", () => {
 
 describe("account management cannot lock the Academy out", () => {
   it("pins the owner by id rather than comparing an address", () => {
-    // An address comparison could not be trusted to match consistently here.
-    expect(fn).toMatch(/const OWNER_ID = "45501f33-911d-495b-a994-ba654683e521"/);
-    expect(fn).toMatch(/if \(target === OWNER_ID\)/);
+    // The migration resolves the requested address once; the edge function
+    // obtains that pinned id from the database before protecting the account.
+    expect(fn).toMatch(/service\.rpc\(\s*"academy_primary_admin_id"/);
+    expect(fn).toMatch(/if \(target === primaryAdminId\)/);
   });
 
   it("refuses an administrator editing or deleting themselves", () => {
@@ -111,8 +112,9 @@ describe("account management cannot lock the Academy out", () => {
     );
   });
 
-  it("keeps at least one removable administrator", () => {
-    expect(fn).toMatch(/That is the last removable administrator/);
+  it("does not rely on administrator rows to protect the owner", () => {
+    expect(fn).toMatch(/Primary administrator identity could not be verified/);
+    expect(fn).not.toMatch(/That is the last removable administrator/);
   });
 
   it("requires a reason before deleting, and records it", () => {

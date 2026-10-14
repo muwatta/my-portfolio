@@ -2,35 +2,40 @@ import { useCallback, useState } from "react";
 import { motion } from "framer-motion";
 import {
   getAcademyAdminAccess,
-  setAcademyAdmin,
+  setAcademySchoolAdmin,
   setAcademyUserRole,
 } from "../lib/academy";
 import { friendlyError } from "../lib/utils";
+import { useAcademyAuth } from "../hooks/useAcademyAuth";
 import { useAutoRefresh } from "../hooks/useAutoRefresh";
 import { Skeleton } from "../components/ui/Skeleton";
 
 export default function AcademyAdminAccess() {
-  const [data, setData] = useState({ profiles: [], admins: [] });
+  const { user, isAdmin } = useAcademyAuth();
+  const [data, setData] = useState({
+    profiles: [],
+    schoolAdmins: [],
+    schools: [],
+  });
   const [state, setState] = useState("loading");
   const [message, setMessage] = useState("");
 
   const load = useCallback(async (background = false) => {
     const result = await getAcademyAdminAccess();
     if (background && result.error) return;
-    setData(result.data ?? { profiles: [], admins: [] });
+    setData(
+      result.data ?? { profiles: [], schoolAdmins: [], schools: [] },
+    );
     setState(result.error ? "error" : "ready");
   }, []);
 
   // Poll while visible; returning from a brief app switch should not reload it.
   useAutoRefresh(load, { interval: 120000 });
 
-  async function changeAdmin(userId, enabled) {
-    const { error } = await setAcademyAdmin(userId, enabled);
+  async function changeSchoolAdmin(userId, schoolId) {
+    const { error } = await setAcademySchoolAdmin(userId, schoolId);
     setMessage(
-      friendlyError(
-        error,
-        enabled ? "Administrator appointed." : "Administrator access removed.",
-      ),
+      friendlyError(error, schoolId ? "School administrator assigned." : "School administrator access removed."),
     );
     if (!error) await load();
   }
@@ -41,7 +46,9 @@ export default function AcademyAdminAccess() {
     if (!error) await load();
   }
 
-  const adminIds = new Set(data.admins.map((admin) => admin.user_id));
+  const schoolByAdmin = new Map(
+    data.schoolAdmins.map((admin) => [admin.user_id, admin.school_id]),
+  );
 
   return (
     <div className="space-y-8">
@@ -51,8 +58,9 @@ export default function AcademyAdminAccess() {
         </p>
         <h1 className="mt-2 text-3xl font-bold">Access and roles</h1>
         <p className="mt-2 max-w-2xl text-slate-600 dark:text-slate-300">
-          Administrators can appoint or remove other administrators and set
-          teaching roles. The primary administrator cannot be removed.
+          Assign an existing account to one school. School administrators can
+          see and support students from that school only; only the primary
+          administrator can access the all-school dashboard.
         </p>
       </header>
       {message && (
@@ -100,46 +108,59 @@ export default function AcademyAdminAccess() {
               <tr>
                 <th className="px-5 py-4">Name</th>
                 <th className="px-5 py-4">Academy role</th>
-                <th className="px-5 py-4">Administrator</th>
+                <th className="px-5 py-4">School access</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-              {data.profiles.map((profile) => (
-                <tr key={profile.id}>
-                  <td className="px-5 py-4 font-semibold">
-                    {profile.display_name || "Unnamed user"}
-                  </td>
-                  <td className="px-5 py-4">
-                    <select
-                      className="field"
-                      value={profile.role}
-                      onChange={(event) =>
-                        changeRole(profile.id, event.target.value)
-                      }
-                    >
-                      <option value="student">Student</option>
-                      <option value="teacher">Teacher</option>
-                    </select>
-                  </td>
-                  <td className="px-5 py-4">
-                    <label className="inline-flex items-center gap-2">
-                      <input
-                        type="checkbox"
-                        checked={adminIds.has(profile.id)}
-                        aria-label={`Grant administrator access to ${profile.display_name || "this user"}`}
+              {data.profiles.map((profile) => {
+                const isPrimaryAdmin = isAdmin && profile.id === user?.id;
+                return (
+                  <tr key={profile.id}>
+                    <td className="px-5 py-4 font-semibold">
+                      {profile.display_name || "Unnamed user"}
+                    </td>
+                    <td className="px-5 py-4">
+                      <select
+                        className="field"
+                        value={profile.role}
                         onChange={(event) =>
-                          changeAdmin(profile.id, event.target.checked)
+                          changeRole(profile.id, event.target.value)
                         }
-                      />
-                      <span>
-                        {adminIds.has(profile.id)
-                          ? "Administrator"
-                          : "Grant admin access"}
-                      </span>
-                    </label>
-                  </td>
-                </tr>
-              ))}
+                      >
+                        <option value="student">Student</option>
+                        <option value="teacher">Teacher</option>
+                      </select>
+                    </td>
+                    <td className="px-5 py-4">
+                      <select
+                        className="field min-w-48"
+                        value={schoolByAdmin.get(profile.id) || ""}
+                        aria-label={`School access for ${profile.display_name || "this user"}`}
+                        disabled={isPrimaryAdmin}
+                        onChange={(event) =>
+                          changeSchoolAdmin(profile.id, event.target.value)
+                        }
+                      >
+                        <option value="">
+                          {isPrimaryAdmin
+                            ? "Primary superadmin"
+                            : "No school admin access"}
+                        </option>
+                        {data.schools.map((school) => (
+                          <option
+                            key={school.id}
+                            value={school.id}
+                            disabled={!school.is_active}
+                          >
+                            {school.name} · {school.city}, {school.state}
+                            {!school.is_active ? " (inactive)" : ""}
+                          </option>
+                        ))}
+                      </select>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>

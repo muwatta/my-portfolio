@@ -62,7 +62,8 @@ const focusRing =
 
 export default function AcademyHome() {
   const { theme, toggle } = useTheme();
-  const { initializing, user, isAdmin, isTeacher } = useAcademyAuth();
+  const { initializing, user, isAdmin, isSchoolAdmin, isTeacher } =
+    useAcademyAuth();
 
   if (initializing) {
     return (
@@ -76,9 +77,11 @@ export default function AcademyHome() {
   if (user) {
     const dashboard = isAdmin
       ? "/academy/admin"
-      : isTeacher
-        ? "/academy/teacher"
-        : "/academy/dashboard";
+      : isSchoolAdmin
+        ? "/academy/school-admin"
+        : isTeacher
+          ? "/academy/teacher"
+          : "/academy/dashboard";
     return <Navigate to={dashboard} replace />;
   }
 
