@@ -162,7 +162,7 @@ Deno.serve(async (request) => {
   if (preparedQuestionsError)
     return json({ error: "Could not load this lesson's prepared practice questions." }, 500);
 
-  const eligibleQuestions = (preparedQuestions ?? []).filter((question) => {
+  const eligibleQuestions = deduplicateQuestions(preparedQuestions ?? []).filter((question) => {
     if (
       !["multiple_choice", "true_false", "short_answer"].includes(
         question.question_type,
@@ -495,6 +495,27 @@ function getResponseText(response: Record<string, unknown>) {
   return null;
 }
 
+function normaliseQuestionText(value: unknown) {
+  return String(value ?? "")
+    .normalize("NFKC")
+    .toLocaleLowerCase()
+    .replace(/[^\\p{L}\\p{N}]+/gu, " ")
+    .trim();
+}
+
+function deduplicateQuestions<T extends Record<string, unknown>>(questions: T[]) {
+  const seen = new Set<string>();
+  return questions.filter((question) => {
+    const title = normaliseQuestionText(question.title);
+    const instructions = normaliseQuestionText(question.instructions);
+    if (!title || !instructions) return false;
+    const signature = title + "|" + instructions;
+    if (seen.has(signature)) return false;
+    seen.add(signature);
+    return true;
+  });
+}
+
 function validateQuestions(value: unknown) {
   if (!Array.isArray(value) || value.length !== QUESTION_COUNT) return null;
   const questions = value.map((rawItem) => {
@@ -536,5 +557,9 @@ function validateQuestions(value: unknown) {
       correct_answer: correctAnswer,
     };
   });
-  return questions.some((question) => !question) ? null : questions;
+  if (questions.some((question) => !question)) return null;
+  const validQuestions = questions as NonNullable<(typeof questions)[number]>[];
+  return deduplicateQuestions(validQuestions).length === QUESTION_COUNT
+    ? validQuestions
+    : null;
 }
