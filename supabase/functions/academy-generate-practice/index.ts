@@ -98,8 +98,7 @@ Deno.serve(async (request) => {
     if (existingQuestions.error)
       return json({ error: "Could not load saved practice questions." }, 500);
     if (
-      existingQuestions.data.length > 0 &&
-      existingQuestions.data.length <= QUESTION_COUNT
+      existingQuestions.data.length === QUESTION_COUNT
     )
       return json({ session_id: input.session_id, questions: existingQuestions.data });
     if (existingQuestions.data.length > 0) {
