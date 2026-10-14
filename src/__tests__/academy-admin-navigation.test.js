@@ -93,6 +93,19 @@ describe("the Academy mobile header and navigation", () => {
   });
 });
 
+describe("the admin navigation", () => {
+  it("centers admin links in a horizontal, responsive desktop bar", () => {
+    expect(layout).toMatch(/workspace === "admin"[\s\S]*?lg:flex-col/);
+    expect(layout).toMatch(
+      /lg:flex-row lg:flex-wrap lg:items-center lg:justify-center/,
+    );
+    expect(layout).toMatch(/workspace === "admin"[\s\S]*?lg:w-full[\s\S]*?lg:rounded-2xl/);
+    expect(layout).toMatch(
+      /end=\{workspace === "admin" && link\.to === "\/academy\/admin"\}/,
+    );
+  });
+});
+
 describe("student tests navigation", () => {
   it("renders the tests route inside the student dashboard layout", () => {
     const studentLayoutStart = app.indexOf(

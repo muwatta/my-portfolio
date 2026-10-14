@@ -291,10 +291,12 @@ export default function AcademyLayout({
       )}
 
       <div
-        className={`mx-auto flex w-full max-w-7xl flex-1 flex-col px-4 sm:px-6 lg:flex-row ${
-          workspace === "student"
-            ? "gap-5 py-4 pb-24 lg:pb-4"
-            : "gap-6 py-6 pb-24 lg:pb-6"
+        className={`mx-auto flex w-full max-w-7xl flex-1 flex-col px-4 sm:px-6 ${
+          workspace === "admin"
+            ? "gap-4 py-4 pb-24 lg:flex-col"
+            : workspace === "student"
+              ? "gap-5 py-4 pb-24 lg:flex-row lg:pb-4"
+              : "gap-6 py-6 pb-24 lg:flex-row lg:pb-6"
         }`}
       >
         <nav
@@ -307,23 +309,36 @@ export default function AcademyLayout({
           } fixed inset-y-0 left-0 z-40 w-72 overflow-y-auto bg-white px-4 pb-6 pt-20 shadow-2xl transition-[transform,visibility] dark:bg-slate-950 ${
             workspace === "student"
               ? "lg:hidden"
-              : "lg:visible lg:static lg:z-auto lg:block lg:w-52 lg:translate-x-0 lg:overflow-visible lg:bg-transparent lg:p-0 lg:shadow-none lg:transition-none"
+              : workspace === "admin"
+                ? "lg:visible lg:static lg:z-auto lg:block lg:w-full lg:translate-x-0 lg:overflow-visible lg:rounded-2xl lg:border lg:border-slate-200 lg:bg-white lg:p-3 lg:shadow-sm lg:transition-none dark:lg:border-slate-800 dark:lg:bg-slate-950"
+                : "lg:visible lg:static lg:z-auto lg:block lg:w-52 lg:translate-x-0 lg:overflow-visible lg:bg-transparent lg:p-0 lg:shadow-none lg:transition-none"
           }`}
         >
           <div className="mb-4 border-b border-slate-200 pb-4 text-xs font-semibold uppercase tracking-[0.16em] text-slate-500 dark:border-slate-800 dark:text-slate-400 lg:hidden">
             Menu
           </div>
-          <div className="flex flex-col gap-1.5">
+          <div
+            className={`flex flex-col gap-1.5 ${
+              workspace === "admin"
+                ? "lg:flex-row lg:flex-wrap lg:items-center lg:justify-center lg:gap-2"
+                : ""
+            }`}
+          >
             {navigationLinks.map((link) => (
               <NavLink
                 key={link.to}
                 to={link.to}
+                end={workspace === "admin" && link.to === "/academy/admin"}
                 className={({ isActive }) =>
                   `snap-start rounded-lg px-2.5 py-2 text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-950 sm:px-3 sm:text-sm ${
+                    workspace === "admin"
+                      ? "lg:min-h-11 lg:px-4 lg:py-2.5 lg:text-sm"
+                      : ""
+                  } ${
                     link.to === "/academy/profile" && profileIncomplete
                       ? "animate-pulse border border-red-400 bg-red-50 text-red-800 motion-reduce:animate-none dark:border-red-700 dark:bg-red-950/50 dark:text-red-200"
                       : isActive
-                        ? "bg-amber-500 text-slate-950"
+                        ? "bg-amber-500 text-slate-950 shadow-sm"
                         : "text-slate-600 hover:bg-slate-200 dark:text-slate-300 dark:hover:bg-slate-800"
                   }`
                 }
