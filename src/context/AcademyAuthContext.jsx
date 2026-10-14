@@ -54,15 +54,11 @@ export function AcademyAuthProvider({ children }) {
     const cached = readCachedProfileHint();
     return cached?.profile ?? null;
   });
-  const [adminStatus, setAdminStatus] = useState(() => {
-    const cached = readCachedProfileHint();
-    return Boolean(cached?.isAdmin);
-  });
+  const [adminStatus, setAdminStatus] = useState(false);
+  const [schoolAdminStatus, setSchoolAdminStatus] = useState(false);
   const [loading, setLoading] = useState(true);
   const [profileLoading, setProfileLoading] = useState(false);
-  const [profileSettled, setProfileSettled] = useState(() =>
-    Boolean(readCachedProfileHint()),
-  );
+  const [profileSettled, setProfileSettled] = useState(false);
   const [error, setError] = useState(null);
 
   useEffect(() => {
@@ -84,6 +80,7 @@ export function AcademyAuthProvider({ children }) {
           invalidateAcademyCache();
           setProfile(null);
           setAdminStatus(false);
+          setSchoolAdminStatus(false);
         } else if (hint && hint.userId !== userId) {
           // A different account is taking over this tab. Cached Academy reads
           // belong to the previous user, so drop them before they are served.
@@ -91,10 +88,11 @@ export function AcademyAuthProvider({ children }) {
           invalidateAcademyCache();
           setProfile(null);
           setAdminStatus(false);
+          setSchoolAdminStatus(false);
           setProfileSettled(false);
         }
         setSession(data.session);
-        setProfileSettled((current) => current && Boolean(hint && hint.userId === userId) ? true : !userId);
+        setProfileSettled(!userId);
         setError(sessionError ?? null);
         setLoading(false);
       })
@@ -108,11 +106,21 @@ export function AcademyAuthProvider({ children }) {
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+    } = supabase.auth.onAuthStateChange((event, nextSession) => {
+      if (event === "SIGNED_IN") {
+        clearSessionCache();
+        invalidateAcademyCache();
+        setProfile(null);
+        setAdminStatus(false);
+        setSchoolAdminStatus(false);
+      }
       setSession(nextSession);
       setProfileSettled(!nextSession);
-      if (!nextSession) setAdminStatus(false);
-      if (!nextSession) setProfile(null);
+      if (!nextSession) {
+        setAdminStatus(false);
+        setSchoolAdminStatus(false);
+        setProfile(null);
+      }
       setLoading(false);
     });
 
@@ -168,8 +176,13 @@ export function AcademyAuthProvider({ children }) {
         .eq("id", session.user.id)
         .maybeSingle(),
       supabase.rpc("academy_is_admin"),
+      supabase.rpc("academy_is_school_admin"),
     ])
-      .then(async ([{ data, error: profileError }, { data: isAdmin }]) => {
+      .then(async ([
+        { data, error: profileError },
+        { data: isAdmin },
+        { data: isSchoolAdmin, error: schoolAdminError },
+      ]) => {
         const resolved = await hydrateProfile(data);
         if (cancelled) return;
         const nextProfile = resolved ?? cachedProfile ?? null;
@@ -177,13 +190,13 @@ export function AcademyAuthProvider({ children }) {
         if (resolved)
           void putOfflineRecord(OFFLINE_STORES.profile, session.user.id, "profile", resolved);
         setAdminStatus(Boolean(isAdmin));
+        setSchoolAdminStatus(Boolean(isSchoolAdmin));
         if (nextProfile) {
           writeSessionCache(session.user.id, {
             profile: nextProfile,
-            isAdmin: Boolean(isAdmin),
           });
         }
-        setError(profileError ?? null);
+        setError(profileError ?? schoolAdminError ?? null);
         setProfileLoading(false);
         setProfileSettled(true);
       })
@@ -334,7 +347,8 @@ export function AcademyAuthProvider({ children }) {
         error,
         role: profile?.role ?? null,
         isAdmin: adminStatus,
-        isTeacher: profile?.role === "teacher",
+        isSchoolAdmin: schoolAdminStatus,
+        isTeacher: profile?.role === "teacher" && !schoolAdminStatus,
         isStudent: profile?.role === "student",
         signIn,
         signUp,

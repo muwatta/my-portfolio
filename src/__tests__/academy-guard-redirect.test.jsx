@@ -105,4 +105,36 @@ describe("Academy route guards", () => {
     await waitFor(() => expect(screen.getByText("Teacher home")).toBeInTheDocument());
     expect(screen.queryByText("Admin overview")).toBeNull();
   });
+
+  it("sends a school administrator away from the student dashboard", async () => {
+    authState.current = {
+      initializing: false,
+      isAdmin: false,
+      isSchoolAdmin: true,
+      isTeacher: false,
+    };
+
+    render(
+      <MemoryRouter initialEntries={["/academy/dashboard"]}>
+        <Routes>
+          <Route
+            path="/academy/dashboard"
+            element={
+              <AcademyStudentGuard>
+                <Outlet />
+              </AcademyStudentGuard>
+            }
+          >
+            <Route path="/academy/dashboard" element={<StudentPage />} />
+          </Route>
+          <Route path="/academy/school-admin" element={<p>School admin home</p>} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    await waitFor(() =>
+      expect(screen.getByText("School admin home")).toBeInTheDocument(),
+    );
+    expect(screen.queryByText("Student dashboard")).toBeNull();
+  });
 });

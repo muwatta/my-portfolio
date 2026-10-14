@@ -80,7 +80,7 @@ describe("admin controls", () => {
     expect(dashboard).toMatch(/overview\?\.pendingSubmissions/);
   });
 
-  it("allows existing admins to appoint other admins and protects the owner", () => {
+  it("allows only the primary admin to appoint school-scoped administrators", () => {
     const migrations = readdirSync("supabase/migrations")
       .filter((name) => name.endsWith(".sql"))
       .sort()
@@ -94,12 +94,11 @@ describe("admin controls", () => {
       ),
     ].at(-1)?.[0];
     expect(guard).toMatch(/if not public\.academy_is_admin\(\) then/);
-    expect(guard).toMatch(/if should_be_admin then/);
     expect(guard).toMatch(/academy_primary_admin_id\(\)/);
     expect(guard).toMatch(/primary administrator cannot be removed/i);
     const accessPage = readFileSync("src/pages/AcademyAdminAccess.jsx", "utf8");
-    expect(accessPage).toMatch(/setAcademyAdmin/);
-    expect(accessPage).toMatch(/Grant admin access/);
-    expect(accessPage).toMatch(/Administrators can appoint or remove other administrators/);
+    expect(accessPage).toMatch(/setAcademySchoolAdmin/);
+    expect(accessPage).toMatch(/No school admin access/);
+    expect(accessPage).toMatch(/only the primary[\s\S]*?administrator can access the all-school dashboard/i);
   });
 });

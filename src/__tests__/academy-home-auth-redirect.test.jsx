@@ -20,6 +20,7 @@ const dashboardNames = {
   "/academy/dashboard": "Student dashboard",
   "/academy/teacher": "Teacher dashboard",
   "/academy/admin": "Admin dashboard",
+  "/academy/school-admin": "School admin dashboard",
 };
 
 function renderHome() {
@@ -49,6 +50,7 @@ describe("Academy landing-page session routing", () => {
     ["/academy/dashboard", "Student dashboard"],
     ["/academy/teacher", "Teacher dashboard", { isTeacher: true }],
     ["/academy/admin", "Admin dashboard", { isAdmin: true }],
+    ["/academy/school-admin", "School admin dashboard", { isSchoolAdmin: true }],
   ])("sends signed-in users to %s", async (path, name, role = {}) => {
     authState.current = { ...authState.current, ...role };
 

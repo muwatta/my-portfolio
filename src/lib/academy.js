@@ -601,22 +601,48 @@ export async function getAcademyAdminOverview() {
 }
 
 export async function getAcademyAdminAccess() {
-  if (!supabase) return unavailable({ profiles: [], admins: [] });
+  if (!supabase)
+    return unavailable({ profiles: [], schoolAdmins: [], schools: [] });
   const [
     { data: profiles, error: profileError },
-    { data: admins, error: adminError },
+    { data: schoolAdmins, error: schoolAdminError },
+    { data: schools, error: schoolError },
   ] = await Promise.all([
     supabase
       .from("academy_profiles")
-      .select("id, display_name, role, updated_at")
+      .select("id, display_name, role, school_id, updated_at")
       .order("display_name"),
-    supabase.from("academy_admins").select("user_id"),
+    supabase.from("academy_school_admins").select("user_id, school_id"),
+    supabase
+      .from("academy_schools")
+      .select("id, name, code, state, city, is_active")
+      .order("name"),
   ]);
   return {
-    data: { profiles: profiles  ??  [], admins: admins  ??  [] },
-    error: profileError || adminError,
+    data: {
+      profiles: profiles ?? [],
+      schoolAdmins: schoolAdmins ?? [],
+      schools: schools ?? [],
+    },
+    error: profileError || schoolAdminError || schoolError,
     configured: true,
   };
+}
+
+export async function setAcademySchoolAdmin(userId, schoolId) {
+  if (!supabase)
+    return { data: null, error: new Error("Academy is not configured.") };
+  const { data, error } = await supabase.rpc("academy_set_school_admin", {
+    target_user_id: userId,
+    target_school_id: schoolId || null,
+  });
+  return { data, error };
+}
+
+export async function getAcademySchoolAdminDashboard() {
+  if (!supabase) return unavailable(null);
+  const { data, error } = await supabase.rpc("academy_school_admin_dashboard");
+  return { data, error, configured: true };
 }
 
 export async function setAcademyAdmin(userId, enabled) {
