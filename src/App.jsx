@@ -97,12 +97,16 @@ const AcademyAdminLayout = lazy(
 const AcademyTeacherLayout = lazy(
   () => import("./components/academy/AcademyTeacherLayout"),
 );
+const AcademyLayout = lazy(() => import("./components/academy/AcademyLayout"));
 const AcademyGuard = lazy(() => import("./components/academy/AcademyGuard"));
 const AcademyStudentGuard = lazy(
   () => import("./components/academy/AcademyStudentGuard"),
 );
 const AcademyTeacherGuard = lazy(
   () => import("./components/academy/AcademyTeacherGuard"),
+);
+const AcademyGraderGuard = lazy(
+  () => import("./components/academy/AcademyGraderGuard"),
 );
 const AcademyAdminGuard = lazy(
   () => import("./components/academy/AcademyAdminGuard"),
@@ -377,9 +381,17 @@ function AppShell() {
                               path="/academy/teacher/assignments"
                               element={<AcademyTeacherAssignments />}
                             />
+                          </Route>
+                        </Route>
+                        <Route element={<AcademyGraderGuard />}>
+                          <Route element={<AcademyLayout workspace="grader" />}>
+                            <Route
+                              path="/academy/grading"
+                              element={<AcademyTeacherSubmissions />}
+                            />
                             <Route
                               path="/academy/teacher/submissions"
-                              element={<AcademyTeacherSubmissions />}
+                              element={<Navigate to="/academy/grading" replace />}
                             />
                           </Route>
                         </Route>

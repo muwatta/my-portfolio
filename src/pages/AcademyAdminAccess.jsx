@@ -2,6 +2,7 @@ import { useCallback, useState } from "react";
 import { motion } from "framer-motion";
 import {
   getAcademyAdminAccess,
+  setAcademyGrader,
   setAcademySchoolAdmin,
   setAcademyUserRole,
 } from "../lib/academy";
@@ -14,6 +15,7 @@ export default function AcademyAdminAccess() {
   const { user, isAdmin } = useAcademyAuth();
   const [data, setData] = useState({
     profiles: [],
+    graders: [],
     schoolAdmins: [],
     schools: [],
   });
@@ -24,7 +26,12 @@ export default function AcademyAdminAccess() {
     const result = await getAcademyAdminAccess();
     if (background && result.error) return;
     setData(
-      result.data ?? { profiles: [], schoolAdmins: [], schools: [] },
+      result.data ?? {
+        profiles: [],
+        graders: [],
+        schoolAdmins: [],
+        schools: [],
+      },
     );
     setState(result.error ? "error" : "ready");
   }, []);
@@ -40,12 +47,19 @@ export default function AcademyAdminAccess() {
     if (!error) await load();
   }
 
+  async function changeGrader(userId, enabled) {
+    const { error } = await setAcademyGrader(userId, enabled);
+    setMessage(friendlyError(error, enabled ? "Grader appointed." : "Grader access removed."));
+    if (!error) await load();
+  }
+
   async function changeRole(userId, role) {
     const { error } = await setAcademyUserRole(userId, role);
     setMessage(friendlyError(error, "Role updated."));
     if (!error) await load();
   }
 
+  const graderIds = new Set(data.graders.map((grader) => grader.user_id));
   const schoolByAdmin = new Map(
     data.schoolAdmins.map((admin) => [admin.user_id, admin.school_id]),
   );
@@ -59,8 +73,8 @@ export default function AcademyAdminAccess() {
         <h1 className="mt-2 text-3xl font-bold">Access and roles</h1>
         <p className="mt-2 max-w-2xl text-slate-600 dark:text-slate-300">
           Assign an existing account to one school. School administrators can
-          see and support students from that school only; only the primary
-          administrator can access the all-school dashboard.
+          see and support students from that school only. Only the primary
+          administrator can access the all-school dashboard and appoint graders.
         </p>
       </header>
       {message && (
@@ -108,6 +122,7 @@ export default function AcademyAdminAccess() {
               <tr>
                 <th className="px-5 py-4">Name</th>
                 <th className="px-5 py-4">Academy role</th>
+                <th className="px-5 py-4">Can grade submissions</th>
                 <th className="px-5 py-4">School access</th>
               </tr>
             </thead>
@@ -123,6 +138,7 @@ export default function AcademyAdminAccess() {
                       <select
                         className="field"
                         value={profile.role}
+                        disabled={isPrimaryAdmin}
                         onChange={(event) =>
                           changeRole(profile.id, event.target.value)
                         }
@@ -130,6 +146,27 @@ export default function AcademyAdminAccess() {
                         <option value="student">Student</option>
                         <option value="teacher">Teacher</option>
                       </select>
+                      {isPrimaryAdmin && (
+                        <span className="ml-2 text-xs text-slate-500">
+                          Superadmin
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-5 py-4">
+                      <input
+                        type="checkbox"
+                        checked={isPrimaryAdmin || graderIds.has(profile.id)}
+                        disabled={isPrimaryAdmin}
+                        aria-label={`Allow ${profile.display_name || "this user"} to grade submissions`}
+                        onChange={(event) => changeGrader(profile.id, event.target.checked)}
+                      />
+                      <span className="ml-2">
+                        {isPrimaryAdmin
+                          ? "Superadmin"
+                          : graderIds.has(profile.id)
+                            ? "Appointed grader"
+                            : "Appoint grader"}
+                      </span>
                     </td>
                     <td className="px-5 py-4">
                       <select

@@ -861,12 +861,12 @@ Academy accounts have student, teacher, global administrator, and school
 administrator access, but `academy_profiles.role` remains an `academy_role`
 enum with only `student` and `teacher`.
 
-`academy_primary_admin_id()` pins the sole global administrator by user id.
-Migration `20261417000000_academy_school_scoped_admins.sql` resolves the exact
-`abdullahmusliudeen@gmail.com` account once and installs that account's id; it
-fails rather than changing access if the address does not resolve to exactly
-one auth user. `academy_is_admin()` compares the signed-in user id with that
-pinned id. The `academy_admins` row is retained for compatibility, but adding
+`academy_primary_admin_id()` returns an id only when exactly one
+`auth.users` account matches `abdullahmusliudeen@gmail.com`. Migration
+`20261417000000_academy_school_scoped_admins.sql` uses that lookup; if the
+address is missing or duplicated, it completes without granting anyone global
+administrator access. `academy_is_admin()` compares the signed-in user id with
+that id. The `academy_admins` row is retained for compatibility, but adding
 other rows does not grant global administrator access.
 
 `academy_school_admins` maps one account to one active school. The primary

@@ -47,12 +47,10 @@ Deno.serve(async (request) => {
   });
   const { data: userResult } = await userClient.auth.getUser();
   if (!userResult.user) return json({ error: "Authentication required." }, 401);
-  const [{ data: isTeacher }, { data: isAdmin }] = await Promise.all([
-    userClient.rpc("academy_is_teacher"),
-    userClient.rpc("academy_is_admin"),
-  ]);
-  if (!isTeacher && !isAdmin)
-    return json({ error: "Teacher or admin access required." }, 403);
+  const { data: canGrade, error: graderCheckError } =
+    await userClient.rpc("academy_can_grade");
+  if (graderCheckError || !canGrade)
+    return json({ error: "Superadmin or appointed grader access required." }, 403);
 
   let input: { submission_id?: string };
   try {

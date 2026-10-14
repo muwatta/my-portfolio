@@ -15,13 +15,13 @@ const academyLibrary = readFileSync("src/lib/academy.js", "utf8");
 const app = readFileSync("src/App.jsx", "utf8");
 
 describe("school administrator privacy boundary", () => {
-  it("pins the sole global administrator to the requested account", () => {
+  it("fails closed unless the requested email resolves to one account", () => {
     expect(migration).toMatch(
       /where lower\(email\) = 'abdullahmusliudeen@gmail\.com'/,
     );
-    expect(migration).toMatch(/array_length\(matching_user_ids, 1\), 0\) <> 1/);
+    expect(migration).toMatch(/having count\(\*\) = 1/);
     expect(migration).toMatch(
-      /delete from public\.academy_admins\s+where user_id <> public\.academy_primary_admin_id\(\)/,
+      /delete from public\.academy_admins\s+where user_id is distinct from public\.academy_primary_admin_id\(\)/,
     );
     expect(migration).toMatch(
       /coalesce\(auth\.uid\(\) = public\.academy_primary_admin_id\(\), false\)/,

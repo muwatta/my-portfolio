@@ -13,7 +13,10 @@ const sourceFiles = walk("src").filter(
   (file) => file.endsWith(".jsx") && !file.includes("__tests__"),
 );
 const sources = new Map(
-  sourceFiles.map((file) => [file, readFileSync(file, "utf8")]),
+  sourceFiles.map((file) => [
+    file.split(path.sep).join("/"),
+    readFileSync(file, "utf8"),
+  ]),
 );
 
 describe("mobile shell", () => {

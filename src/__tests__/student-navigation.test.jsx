@@ -29,7 +29,7 @@ describe("student navigation", () => {
       "Courses",
       "Materials",
       "Projects",
-      "Assessments",
+      "Tests",
       "Leaderboard",
     ]);
   });

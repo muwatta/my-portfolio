@@ -602,9 +602,17 @@ export async function getAcademyAdminOverview() {
 
 export async function getAcademyAdminAccess() {
   if (!supabase)
-    return unavailable({ profiles: [], schoolAdmins: [], schools: [] });
+    return unavailable({
+      profiles: [],
+      admins: [],
+      graders: [],
+      schoolAdmins: [],
+      schools: [],
+    });
   const [
     { data: profiles, error: profileError },
+    { data: admins, error: adminError },
+    { data: graders, error: graderError },
     { data: schoolAdmins, error: schoolAdminError },
     { data: schools, error: schoolError },
   ] = await Promise.all([
@@ -612,6 +620,8 @@ export async function getAcademyAdminAccess() {
       .from("academy_profiles")
       .select("id, display_name, role, school_id, updated_at")
       .order("display_name"),
+    supabase.from("academy_admins").select("user_id"),
+    supabase.from("academy_graders").select("user_id, appointed_by, created_at"),
     supabase.from("academy_school_admins").select("user_id, school_id"),
     supabase
       .from("academy_schools")
@@ -621,10 +631,13 @@ export async function getAcademyAdminAccess() {
   return {
     data: {
       profiles: profiles ?? [],
+      admins: admins ?? [],
+      graders: graders ?? [],
       schoolAdmins: schoolAdmins ?? [],
       schools: schools ?? [],
     },
-    error: profileError || schoolAdminError || schoolError,
+    error:
+      profileError || adminError || graderError || schoolAdminError || schoolError,
     configured: true,
   };
 }
@@ -651,6 +664,16 @@ export async function setAcademyAdmin(userId, enabled) {
   const { data, error } = await supabase.rpc("academy_set_user_admin", {
     target_user_id: userId,
     should_be_admin: enabled,
+  });
+  return { data, error };
+}
+
+export async function setAcademyGrader(userId, enabled) {
+  if (!supabase)
+    return { data: null, error: new Error("Academy is not configured.") };
+  const { data, error } = await supabase.rpc("academy_set_grader", {
+    target_user_id: userId,
+    should_be_grader: enabled,
   });
   return { data, error };
 }
@@ -2058,7 +2081,7 @@ export async function getAcademyTeacherAssignments() {
   const { data, error } = await supabase
     .from("academy_assignments")
     .select(
-      "id, course_id, week_id, lesson_id, title, instructions, due_at, points, retry_limit, published, is_draft, ai_feedback_enabled, academy_courses!academy_assignments_course_id_fkey(title)",
+      "id, course_id, week_id, lesson_id, title, instructions, due_at, points, retry_limit, published, is_draft, ai_feedback_enabled, academy_courses!academy_assignments_course_id_fkey(title), academy_lessons(title)",
     )
     .order("course_id")
     .order("week_id", { ascending: true, nullsFirst: true })
@@ -2169,12 +2192,14 @@ export async function saveAcademyAssignment(assignment) {
   }
   const payload = {
     course_id: assignment.course_id,
+    lesson_id: assignment.lesson_id || null,
     title: assignment.title.trim(),
     instructions: assignment.instructions.trim(),
     points: Number(assignment.points),
     retry_limit: Number(assignment.retry_limit),
     published: Boolean(assignment.published),
     is_draft: !assignment.published,
+    status: assignment.published ? "published" : "draft",
     ai_feedback_enabled: Boolean(assignment.ai_feedback_enabled),
     automated_tests: automatedTests,
     created_by: userResult.user ?.id,

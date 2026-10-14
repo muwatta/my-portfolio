@@ -1,40 +1,29 @@
--- Transfer global administration to the explicitly requested account, then
--- give school administrators a separate, school-scoped permission boundary.
-do $migration$
-declare
-  matching_user_ids uuid[];
-begin
-  select array_agg(id)
-    into matching_user_ids
+-- Give one named account global administration and keep school administrators
+-- inside a separate, school-scoped permission boundary. If the email is
+-- missing or duplicated, the lookup returns NULL and admin access fails closed.
+create or replace function public.academy_primary_admin_id()
+returns uuid
+language sql
+stable
+security definer
+set search_path = pg_catalog, auth
+as $$
+  select (array_agg(id))[1]
   from auth.users
-  where lower(email) = 'abdullahmusliudeen@gmail.com';
-
-  if coalesce(array_length(matching_user_ids, 1), 0) <> 1 then
-    raise exception
-      'Expected exactly one auth.users account for abdullahmusliudeen@gmail.com; found %.',
-      coalesce(array_length(matching_user_ids, 1), 0);
-  end if;
-
-  execute format(
-    'create or replace function public.academy_primary_admin_id()
-     returns uuid
-     language sql
-     immutable
-     as $function$ select %L::uuid; $function$',
-    matching_user_ids[1]
-  );
-end;
-$migration$;
+  where lower(email) = 'abdullahmusliudeen@gmail.com'
+  having count(*) = 1;
+$$;
 
 revoke execute on function public.academy_primary_admin_id()
   from public, anon, authenticated;
 grant execute on function public.academy_primary_admin_id() to service_role;
 
 delete from public.academy_admins
-where user_id <> public.academy_primary_admin_id();
+where user_id is distinct from public.academy_primary_admin_id();
 
 insert into public.academy_admins (user_id)
-values (public.academy_primary_admin_id())
+select public.academy_primary_admin_id()
+where public.academy_primary_admin_id() is not null
 on conflict (user_id) do nothing;
 
 create or replace function public.academy_is_admin()

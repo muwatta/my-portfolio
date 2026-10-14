@@ -25,11 +25,11 @@ const guard = latestDefinition("academy_set_user_admin");
 const primary = latestDefinition("academy_primary_admin_id");
 
 describe("the requested account is the sole global administrator", () => {
-  it("resolves the requested email once and pins the matching user id", () => {
+  it("fails closed unless the requested email resolves to one account", () => {
     expect(allSql).toMatch(
-      /where lower\(email\) = 'abdullahmusliudeen@gmail\.com'[\s\S]*?array_length\(matching_user_ids, 1\), 0\) <> 1/,
+      /where lower\(email\) = 'abdullahmusliudeen@gmail\.com'[\s\S]*?having count\(\*\) = 1/,
     );
-    expect(primary).toMatch(/select %L::uuid/);
+    expect(primary).toMatch(/language sql\s+stable[\s\S]*?array_agg\(id\)[\s\S]*?having count\(\*\) = 1/);
     expect(guard).toMatch(
       /target_user_id = public\.academy_primary_admin_id\(\)\s+and not should_be_admin/,
     );
@@ -42,7 +42,7 @@ describe("the requested account is the sole global administrator", () => {
 
   it("is guaranteed a row even if the table were emptied", () => {
     expect(allSql).toMatch(
-      /insert into public\.academy_admins \(user_id\)[\s\S]*?values \(public\.academy_primary_admin_id\(\)\)[\s\S]*?on conflict \(user_id\) do nothing/,
+      /insert into public\.academy_admins \(user_id\)[\s\S]*?select public\.academy_primary_admin_id\(\)[\s\S]*?where public\.academy_primary_admin_id\(\) is not null[\s\S]*?on conflict \(user_id\) do nothing/,
     );
   });
 
@@ -60,7 +60,7 @@ describe("school administrators have a separate, scoped role", () => {
     expect(allSql).toMatch(/academy_school_admin_dashboard\(\)/);
     expect(allSql).toMatch(/profile\.school_id = assigned_school\.id/);
     expect(allSql).toMatch(/academy_school_admin_can_manage_student\(target_student_id\)/);
-    expect(allSql).toMatch(/delete from public\.academy_admins\s+where user_id <> public\.academy_primary_admin_id\(\)/);
+    expect(allSql).toMatch(/delete from public\.academy_admins\s+where user_id is distinct from public\.academy_primary_admin_id\(\)/);
   });
 
   it("is executable only by a signed in user, and still requires an administrator", () => {

@@ -98,8 +98,7 @@ Deno.serve(async (request) => {
     if (existingQuestions.error)
       return json({ error: "Could not load saved practice questions." }, 500);
     if (
-      existingQuestions.data.length > 0 &&
-      existingQuestions.data.length <= QUESTION_COUNT
+      existingQuestions.data.length === QUESTION_COUNT
     )
       return json({ session_id: input.session_id, questions: existingQuestions.data });
     if (existingQuestions.data.length > 0) {
@@ -162,7 +161,7 @@ Deno.serve(async (request) => {
   if (preparedQuestionsError)
     return json({ error: "Could not load this lesson's prepared practice questions." }, 500);
 
-  const eligibleQuestions = (preparedQuestions ?? []).filter((question) => {
+  const eligibleQuestions = deduplicateQuestions(preparedQuestions ?? []).filter((question) => {
     if (
       !["multiple_choice", "true_false", "short_answer"].includes(
         question.question_type,
@@ -184,7 +183,7 @@ Deno.serve(async (request) => {
     ];
   }
   const selectedQuestions = shuffledQuestions.slice(0, QUESTION_COUNT);
-  if (selectedQuestions.length) {
+  if (selectedQuestions.length === QUESTION_COUNT) {
     const sessionError = await ensurePracticeSession();
     if (sessionError) return sessionError;
     const { error: insertPreparedError } = await serviceClient
@@ -495,6 +494,44 @@ function getResponseText(response: Record<string, unknown>) {
   return null;
 }
 
+function normaliseQuestionText(value: unknown) {
+  return String(value ?? "")
+    .normalize("NFKC")
+    .toLocaleLowerCase()
+    .replace(/[^\p{L}\p{N}]+/gu, " ")
+    .trim();
+}
+
+function deduplicateQuestions<T extends Record<string, unknown>>(questions: T[]) {
+  const seenTitles = new Set<string>();
+  const seenInstructions = new Set<string>();
+  const fingerprints: Set<string>[] = [];
+  const unique: T[] = [];
+
+  for (const question of questions) {
+    const title = normaliseQuestionText(question.title);
+    const instructions = normaliseQuestionText(question.instructions);
+    if (!title || !instructions || seenTitles.has(title) || seenInstructions.has(instructions)) {
+      continue;
+    }
+
+    const tokens = new Set((title + " " + instructions).split(/\s+/).filter(Boolean));
+    const nearDuplicate = fingerprints.some((previous) => {
+      let intersection = 0;
+      for (const token of tokens) if (previous.has(token)) intersection += 1;
+      const union = new Set([...tokens, ...previous]).size;
+      return union > 0 && intersection / union >= 0.88;
+    });
+    if (nearDuplicate) continue;
+
+    seenTitles.add(title);
+    seenInstructions.add(instructions);
+    fingerprints.push(tokens);
+    unique.push(question);
+  }
+  return unique;
+}
+
 function validateQuestions(value: unknown) {
   if (!Array.isArray(value) || value.length !== QUESTION_COUNT) return null;
   const questions = value.map((rawItem) => {
@@ -536,5 +573,9 @@ function validateQuestions(value: unknown) {
       correct_answer: correctAnswer,
     };
   });
-  return questions.some((question) => !question) ? null : questions;
+  if (questions.some((question) => !question)) return null;
+  const validQuestions = questions as NonNullable<(typeof questions)[number]>[];
+  return deduplicateQuestions(validQuestions).length === QUESTION_COUNT
+    ? validQuestions
+    : null;
 }

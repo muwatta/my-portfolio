@@ -2,12 +2,14 @@ import { useEffect, useState } from "react";
 import {
   getAcademyTeacherAssignments,
   getAcademyTeacherCourses,
+  getAcademyTeacherCurriculum,
   saveAcademyAssignment,
 } from "../lib/academy";
 import { friendlyError } from "../lib/utils";
 
 const initialForm = {
   course_id: "",
+  lesson_id: "",
   title: "",
   instructions: "",
   points: 10,
@@ -20,19 +22,24 @@ const initialForm = {
 export default function AcademyTeacherAssignments() {
   const [assignments, setAssignments] = useState([]);
   const [courses, setCourses] = useState([]);
+  const [weeks, setWeeks] = useState([]);
+  const [lessons, setLessons] = useState([]);
   const [form, setForm] = useState(initialForm);
   const [state, setState] = useState("loading");
   const [notice, setNotice] = useState("");
 
   async function load() {
     setState("loading");
-    const [assignmentResult, courseResult] = await Promise.all([
+    const [assignmentResult, courseResult, curriculumResult] = await Promise.all([
       getAcademyTeacherAssignments(),
       getAcademyTeacherCourses(),
+      getAcademyTeacherCurriculum(),
     ]);
     setAssignments(assignmentResult.data ?? []);
     setCourses(courseResult.data ?? []);
-    setState(assignmentResult.error || courseResult.error ? "error" : "ready");
+    setWeeks(curriculumResult.data?.weeks ?? []);
+    setLessons(curriculumResult.data?.lessons ?? []);
+    setState(assignmentResult.error || courseResult.error || curriculumResult.error ? "error" : "ready");
   }
 
   useEffect(() => {
@@ -47,7 +54,7 @@ export default function AcademyTeacherAssignments() {
       error ? friendlyError(error, "Assignment could not be saved.") : "Assignment saved.",
     );
     if (!error) {
-      setForm({ ...initialForm, course_id: form.course_id });
+      setForm({ ...initialForm, course_id: form.course_id, lesson_id: form.lesson_id });
       await load();
     }
   }
@@ -92,7 +99,7 @@ export default function AcademyTeacherAssignments() {
             required
             value={form.course_id}
             onChange={(event) =>
-              setForm({ ...form, course_id: event.target.value })
+              setForm({ ...form, course_id: event.target.value, lesson_id: "" })
             }
           >
             <option value="">Select a course</option>
@@ -101,6 +108,31 @@ export default function AcademyTeacherAssignments() {
                 {course.title}
               </option>
             ))}
+          </select>
+        </label>
+        <label className="text-sm font-semibold">
+          Lesson
+          <select
+            className="field mt-1"
+            required
+            disabled={!form.course_id}
+            value={form.lesson_id}
+            onChange={(event) => setForm({ ...form, lesson_id: event.target.value })}
+          >
+            <option value="">Select a lesson</option>
+            {lessons
+              .filter((lesson) => {
+                const week = weeks.find((item) => item.id === lesson.week_id);
+                return week?.course_id === form.course_id;
+              })
+              .map((lesson) => {
+                const week = weeks.find((item) => item.id === lesson.week_id);
+                return (
+                  <option key={lesson.id} value={lesson.id}>
+                    Week {week?.week_number ?? "—"} · {lesson.title}
+                  </option>
+                );
+              })}
           </select>
         </label>
         <label className="text-sm font-semibold">
@@ -200,6 +232,7 @@ export default function AcademyTeacherAssignments() {
               <h2 className="font-bold">{assignment.title}</h2>
               <p className="text-sm text-slate-500">
                 {assignment.academy_courses?.title || "Course"} ·{" "}
+                {assignment.academy_lessons?.title ? `${assignment.academy_lessons.title} · ` : ""}
                 {assignment.points} points · {assignment.retry_limit} retries
               </p>
             </div>
