@@ -187,12 +187,16 @@ describe("honest failures", () => {
     ).toBe("9\n");
   });
 
-  it("says so when the program reads more input than it was given", () => {
-    // A real cin would block or hit EOF. Failing loudly beats silently reading
-    // nothing, which would look like a passing run with a wrong answer.
+  it("explains how to supply missing input", () => {
     expect(() => run(main("  int n;\n  cin >> n;\n  cout << n;"), "")).toThrow(
-      /more input than was supplied/,
+      /needs more input.*Program input/i,
     );
+  });
+
+  it("explains when cin is used as an expression instead of a statement", () => {
+    expect(() =>
+      run(main('  int n;\n  cout << (cin >> n) << endl;'), "12"),
+    ).toThrow(/Read input on its own line.*Program input/);
   });
 
   it("still refuses getline, which it does not model", () => {

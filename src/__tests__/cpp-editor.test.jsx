@@ -3,14 +3,17 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import CppEditor from "../components/academy/CppEditor";
 
 class MockWorker {
+  static lastMessage;
+
   constructor() {
     this.onmessage = null;
     this.onerror = null;
   }
 
-  postMessage({ id }) {
+  postMessage(message) {
+    MockWorker.lastMessage = message;
     this.onmessage?.({
-      data: { type: "result", id, output: "LED state: ON" },
+      data: { type: "result", id: message.id, output: "LED state: ON" },
     });
   }
 
@@ -36,6 +39,24 @@ describe("C++ practice terminal", () => {
 
     await waitFor(() => {
       expect(screen.getByRole("status")).toHaveTextContent("LED state: ON");
+    });
+  });
+
+  it("passes the supplied standard input to the C++ program", async () => {
+    vi.stubGlobal("Worker", MockWorker);
+    render(
+      <CppEditor
+        starterCode={"int distance;\ncin >> distance;\ncout << distance;"}
+      />,
+    );
+
+    fireEvent.change(screen.getByRole("textbox", { name: "Program input" }), {
+      target: { value: "42" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Run program" }));
+
+    await waitFor(() => {
+      expect(MockWorker.lastMessage.stdin).toBe("42");
     });
   });
 });

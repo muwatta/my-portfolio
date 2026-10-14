@@ -155,7 +155,9 @@ class BeginnerCpp {
 
   nextStdinToken() {
     if (this.stdinIndex >= this.stdinTokens.length) {
-      throw new Error("This program read more input than was supplied.");
+      throw new Error(
+        "This program needs more input. Enter the values it reads in Program input, separated by spaces or new lines.",
+      );
     }
     const token = this.stdinTokens[this.stdinIndex];
     this.stdinIndex += 1;
@@ -213,6 +215,11 @@ class BeginnerCpp {
 
   evaluate(rawExpression) {
     let expression = String(rawExpression ?? "").trim();
+    if (/^(?:std::)?cin\b/.test(expression)) {
+      throw new Error(
+        "Read input on its own line with `cin >> variable;`, then enter its value in Program input.",
+      );
+    }
     while (expression.startsWith("(") && expression.endsWith(")")) {
       const parts = splitTopLevel(expression.slice(1, -1), "");
       if (parts.length === 1) expression = parts[0].trim();
