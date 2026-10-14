@@ -54,7 +54,7 @@ describe("the review gate", () => {
 
   it("keeps the mark inside the points the assignment is worth", () => {
     expect(review).toMatch(/between 0 and %/);
-    expect(review).toMatch(/coalesce\(points, 100\) into assignment_points/);
+    expect(review).toMatch(/coalesce\\(a\\.points, 100\\) into assignment_points/);
     expect(review).not.toMatch(/max_score, 100\)/);
   });
 });
@@ -116,7 +116,7 @@ describe("the grading queue", () => {
   });
 
   it("is staff only and revoked from anon", () => {
-    expect(queue).toMatch(/academy_is_teacher\(\)/);
+    expect(queue).toMatch(/academy_can_grade\\(\\)/);
     expect(allSql).toMatch(
       /revoke execute on function public\.academy_grading_queue\(uuid, uuid, uuid, text\) from public, anon/,
     );
