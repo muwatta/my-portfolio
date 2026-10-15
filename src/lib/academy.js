@@ -1897,7 +1897,7 @@ export async function getAcademyAssignments(studentId) {
       supabase
         .from("academy_assignments")
         .select(
-          "id, course_id, week_id, lesson_id, title, due_at, points, retry_limit, published, created_at, academy_weeks(week_number, title)",
+          "id, course_id, week_id, lesson_id, title, instructions, starter_code, due_at, points, retry_limit, published, created_at, academy_weeks(week_number, title)",
         )
         .eq("is_draft", false)
         .eq("published", true)
@@ -1920,12 +1920,36 @@ export async function getAcademyAssignments(studentId) {
       rows.push(submission);
       submissionsByAssignment.set(submission.assignment_id, rows);
     });
-    const visibleAssignments =
+    let visibleAssignments =
       activeCourse.language === "cpp"
         ? assignments ?? []
         : (assignments ?? []).filter(
             (assignment) => !submissionsByAssignment.has(assignment.id),
           );
+    if (activeCourse.language === "cpp") {
+      const uniqueWeeklyAssignments = new Map();
+      for (const assignment of visibleAssignments) {
+        const week = assignment.academy_weeks?.week_number ?? "unassigned";
+        const instructions =
+          assignment.instructions?.trim().replace(/\s+/g, " ") ?? "";
+        const starterCode =
+          assignment.starter_code?.trim().replace(/\s+/g, " ") ?? "";
+        const contentKey =
+          instructions || starterCode
+            ? [week, instructions, starterCode].join("\u0000")
+            : `${week}\u0000${assignment.id}`;
+        const existing = uniqueWeeklyAssignments.get(contentKey);
+        if (
+          !existing ||
+          (!existing.lesson_id && assignment.lesson_id) ||
+          (Boolean(existing.lesson_id) === Boolean(assignment.lesson_id) &&
+            assignment.created_at < existing.created_at)
+        ) {
+          uniqueWeeklyAssignments.set(contentKey, assignment);
+        }
+      }
+      visibleAssignments = [...uniqueWeeklyAssignments.values()];
+    }
     const orderedAssignments =
       activeCourse.language === "cpp"
         ? visibleAssignments.slice().sort(
@@ -1959,12 +1983,22 @@ export async function getAcademyAssignments(studentId) {
         ...assignment,
         week_number: assignment.academy_weeks?.week_number ?? null,
         week_title: assignment.academy_weeks?.title ?? null,
-        attempts_used: (submissionsByAssignment.get(assignment.id) ?? [])
-          .reduce(
+        attempts_used: (submissionsByAssignment.get(assignment.id) ?? []).reduce(
             (maximum, submission) =>
               Math.max(maximum, submission.attempt_number ?? 0),
             0,
           ),
+        latest_submission_status: (submissionsByAssignment
+          .get(assignment.id) ?? [])
+          .reduce(
+            (latest, submission) =>
+              !latest ||
+              (submission.attempt_number ?? 0) >
+                (latest.attempt_number ?? 0)
+                ? submission
+                : latest,
+            null,
+          )?.status ?? null,
         completed_mark: bestMarkedScore(
           submissionsByAssignment.get(assignment.id),
         ),

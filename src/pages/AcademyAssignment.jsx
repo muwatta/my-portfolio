@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import {
   getAcademyAssignment,
@@ -68,6 +68,7 @@ export default function AcademyAssignment() {
   const [state, setState] = useState("loading");
   const [notice, setNotice] = useState("");
   const [file, setFile] = useState(null);
+  const fileInput = useRef(null);
   const [sourceCode, setSourceCode] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [history, setHistory] = useState([]);
@@ -143,6 +144,34 @@ export default function AcademyAssignment() {
       mounted = false;
     };
   }, [id, user.id, reloadToken]);
+
+  useEffect(() => {
+    const awaitingMark = history.some((submission) =>
+      [
+        "submitted",
+        "grading",
+        "grading_unavailable",
+        "grading_failed",
+        "needs_review",
+      ].includes(submission.status),
+    );
+    if (!navigator.onLine || !awaitingMark) return undefined;
+    const timer = window.setTimeout(async () => {
+      const [historyResult, countResult] = await Promise.all([
+        getAcademySubmissionHistory(id, user.id),
+        getSubmissionCount(id, user.id),
+      ]);
+      if (historyResult.error || countResult.error) {
+        setNotice(
+          "Your submission is saved. We could not refresh its mark just now; it will be checked again shortly.",
+        );
+        return;
+      }
+      setHistory(historyResult.data ?? []);
+      setAttempts(countResult.count);
+    }, 15_000);
+    return () => window.clearTimeout(timer);
+  }, [history, id, user.id]);
 
   useEffect(() => {
     let mounted = true;
@@ -223,14 +252,23 @@ export default function AcademyAssignment() {
     }
   }
 
+  function clearSelectedFile() {
+    setFile(null);
+    if (fileInput.current) fileInput.current.value = "";
+  }
+
+  function cancelFileUpload() {
+    clearSelectedFile();
+    setNotice("Selected file removed. You can submit your code without it.");
+  }
+
   async function submit(source = sourceCode) {
     if (assignment?.locked) {
       return setNotice(
         "The previous week's assignment must be marked before starting this one.",
       );
     }
-    if (!assignment || attempts >= assignment.retry_limit)
-      return setNotice("No attempts remaining.");
+    if (!assignment) return setNotice("The assignment is not ready yet.");
     setSubmitting(true);
     setNotice("");
     try {
@@ -259,7 +297,7 @@ export default function AcademyAssignment() {
           `assignment:${assignment.id}:source`,
         );
         setAttempts((value) => value + 1);
-        setFile(null);
+        clearSelectedFile();
         setNotice(
           "Submission saved on this device. It will be submitted automatically when you reconnect.",
         );
@@ -291,7 +329,7 @@ export default function AcademyAssignment() {
       const submitted = await getAcademySubmissionHistory(id, user.id);
       const submission = submitted.data?.[0];
       setAttempts((value) => value + 1);
-      setFile(null);
+      clearSelectedFile();
       await deleteOfflineRecord(
         OFFLINE_STORES.drafts,
         user.id,
@@ -365,6 +403,8 @@ export default function AcademyAssignment() {
             clientOperationId: operationId,
           },
         });
+        setAttempts((value) => value + 1);
+        clearSelectedFile();
         setNotice(
           "Submission saved on this device. It will be submitted automatically when you reconnect.",
         );
@@ -437,8 +477,6 @@ export default function AcademyAssignment() {
         </div>
       </div>
     );
-  const attemptsRemaining = Math.max(0, assignment.retry_limit - attempts);
-
   const acceptAttribute = [
     ".py",
     ".ipynb",
@@ -523,7 +561,7 @@ export default function AcademyAssignment() {
       )}
       <div className="rounded-xl border border-slate-200 p-5 dark:border-slate-800">
         <p className="text-sm font-semibold">
-          Attempts remaining: {attemptsRemaining}
+          Attempts made: {attempts} · Unlimited submissions
         </p>
         <p className="mt-1 text-sm text-slate-500">
           Allowed:           {(assignment.allowed_submission_types || []).join(", ") || "Code or file"}
@@ -537,6 +575,7 @@ export default function AcademyAssignment() {
       <label className="label">
         Upload a file
         <input
+          ref={fileInput}
           className="field"
           type="file"
           accept={acceptAttribute}
@@ -547,7 +586,22 @@ export default function AcademyAssignment() {
         Python, C++ (for C++ courses), documents, and images are supported.
         Files must be 5 MB or smaller and are removed 14 days after submission.
       </p>
-      {file && <p className="text-sm text-slate-500">Selected: {file.name}</p>}
+      {file && (
+        <div className="flex flex-wrap items-center gap-3 text-sm">
+          <p className="text-slate-500">Selected: {file.name}</p>
+          <button
+            className="font-semibold text-red-700 underline hover:text-red-800 dark:text-red-300"
+            type="button"
+            onClick={cancelFileUpload}
+          >
+            Cancel upload
+          </button>
+        </div>
+      )}
+      <p className="text-xs text-slate-500 dark:text-slate-400">
+        You can submit code even if the terminal reports an error. Terminal
+        checks are only guidance and do not block submission.
+      </p>
       {notice && (
         <p
           role="status"
@@ -559,7 +613,7 @@ export default function AcademyAssignment() {
       <button
         className="button-primary"
         type="button"
-        disabled={submitting || attemptsRemaining === 0 || assignment.locked}
+        disabled={submitting || assignment.locked}
         onClick={() => submit()}
       >
         {submitting

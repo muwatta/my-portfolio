@@ -79,9 +79,10 @@ describe("the database validates the submission", () => {
 });
 
 describe("attempts and retries", () => {
-  it("counts attempts server side rather than trusting the client", () => {
-    expect(register).toMatch(/you have used all % attempts/i);
-    expect(register).toMatch(/assignment\.retry_limit is not null/);
+  it("allows unlimited attempts while assigning each submission the next attempt number", () => {
+    expect(register).not.toMatch(/assignment\.retry_limit/);
+    expect(register).not.toMatch(/you have used all % attempts/i);
+    expect(register).toMatch(/coalesce\(max\(attempt_number\), 0\) \+ 1/);
   });
 
   it("is idempotent so a queued retry cannot double count", () => {

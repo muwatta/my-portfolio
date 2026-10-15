@@ -111,5 +111,53 @@ describe("C++ assignment marks and progression", () => {
       locked: false,
     });
     expect(result.data[2].locked).toBe(true);
+    expect(result.data[0].latest_submission_status).toBe("graded");
+    expect(result.data[1].latest_submission_status).toBe("submitted");
+  });
+
+  it("deduplicates identical weekly tasks and prefers the lesson-linked copy", async () => {
+    const duplicate = {
+      id: "week-one-duplicate",
+      course_id: "cpp-course",
+      title: "Duplicate Week 1",
+      instructions: "Print the same output.",
+      starter_code: "int main() {}",
+      lesson_id: null,
+      created_at: "2026-10-10",
+      retry_limit: 3,
+      academy_weeks: { week_number: 1, title: "Week 1" },
+    };
+    const canonical = {
+      ...duplicate,
+      id: "week-one-canonical",
+      title: "Week 1 lesson task",
+      lesson_id: "lesson-1",
+      created_at: "2026-10-09",
+    };
+    supabase.from.mockImplementation((table) => {
+      if (table === "academy_enrollments") {
+        return queryFor({
+          data: {
+            academy_courses: {
+              id: "cpp-course",
+              language: "cpp",
+            },
+          },
+          error: null,
+        });
+      }
+      if (table === "academy_assignments") {
+        return queryFor({ data: [duplicate, canonical], error: null });
+      }
+      if (table === "academy_submissions") {
+        return queryFor({ data: [], error: null });
+      }
+      throw new Error(`Unexpected table: ${table}`);
+    });
+
+    const result = await getAcademyAssignments("duplicate-student");
+
+    expect(result.data).toHaveLength(1);
+    expect(result.data[0].id).toBe("week-one-canonical");
   });
 });

@@ -25,6 +25,10 @@ const assignmentRetakes = readFileSync(
   "supabase/migrations/20261423000000_cpp_assignment_retakes_and_marked_progression.sql",
   "utf8",
 );
+const unlimitedAssignments = readFileSync(
+  "supabase/migrations/20261424000000_academy_unlimited_assignment_submissions.sql",
+  "utf8",
+);
 const workflowMigration = readFileSync(
   "supabase/migrations/20261409000000_academy_signup_notifications_cpp_sequence_and_leaderboard.sql",
   "utf8",
@@ -182,11 +186,16 @@ describe("the learning assignment corrections", () => {
     expect(academy).toMatch(/activeCourse\.language === "cpp"[\s\S]*?assignments/);
     expect(academy).toMatch(/completed_mark:[\s\S]*?final_score/);
     expect(academy).toMatch(/submission\.status === "graded"/);
-    expect(assignmentList).toMatch(/Done · Best mark/);
-    expect(assignmentList).toMatch(/use another attempt/);
+    expect(assignmentList).toMatch(/Marked · Best mark/);
+    expect(assignmentList).toMatch(/submit again/);
+    expect(assignmentList).toMatch(/latest_submission_status/);
     expect(assignmentRetakes).toMatch(/result\.final_score is not null/);
     expect(assignmentRetakes).toMatch(/submission\.status = 'graded'/);
     expect(assignmentRetakes).toMatch(/must be marked before starting/);
+    expect(unlimitedAssignments).not.toMatch(/assignment\.retry_limit/);
+    expect(unlimitedAssignments).toMatch(/coalesce\(max\(attempt_number\), 0\) \+ 1/);
+    expect(unlimitedAssignments).toMatch(/where id = p_assignment_id\s+for update/);
+    expect(unlimitedAssignments).toMatch(/set published = false/);
   });
 
   it("gives administrators the full cohort while limiting other viewers to ten", () => {

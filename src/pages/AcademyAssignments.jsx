@@ -14,6 +14,9 @@ export default function AcademyAssignments() {
   const { user } = useAcademyAuth();
   const network = useNetworkStatus();
   const [reloadToken, setReloadToken] = useState(0);
+  const displayedAssignments = [
+    ...new Map(assignments.map((assignment) => [assignment.id, assignment])).values(),
+  ];
 
   useEffect(() => {
     if (!user?.id) return;
@@ -31,7 +34,8 @@ export default function AcademyAssignments() {
   useEffect(() => {
     const hasUnmarkedSubmission = assignments.some(
       (assignment) =>
-        assignment.attempts_used > 0 && assignment.completed_mark == null,
+        assignment.attempts_used > 0 &&
+        assignment.latest_submission_status !== "graded",
     );
     if (!network.online || !hasUnmarkedSubmission) return undefined;
     const timer = window.setTimeout(
@@ -110,7 +114,7 @@ export default function AcademyAssignments() {
         </AcademyConnectionState>
       )}
       <div className="grid gap-4 sm:grid-cols-2">
-        {assignments.map((assignment) => (
+        {displayedAssignments.map((assignment) => (
           <Link
             key={assignment.id}
             to={`/academy/assignments/${assignment.id}`}
@@ -134,21 +138,26 @@ export default function AcademyAssignments() {
               )}
               {assignment.completed_mark != null && (
                 <span className="text-emerald-700 dark:text-emerald-300">
-                  Done · Best mark {assignment.completed_mark}/100
+                  {assignment.latest_submission_status === "graded"
+                    ? `Marked · Best mark ${assignment.completed_mark}/100`
+                    : `Best mark ${assignment.completed_mark}/100`}
                 </span>
               )}
             </p>
             <h2 className="mt-2 text-lg font-bold">{assignment.title}</h2>
             {assignment.completed_mark != null && (
               <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
-                {assignment.attempts_used < assignment.retry_limit
-                  ? "Completed and marked. Reopen this assignment to review it or use another attempt."
-                  : "Completed and marked. Reopen this assignment to review your work and mark."}
+                {assignment.latest_submission_status === "graded"
+                  ? "Your latest submission is marked. Reopen this assignment to review it or submit again."
+                  : "Your best mark remains saved; your latest submission is awaiting a mark."}
               </p>
             )}
-            {assignment.completed_mark == null && assignment.attempts_used > 0 && (
+            {assignment.attempts_used > 0 &&
+              assignment.completed_mark == null && (
               <p className="mt-2 text-sm text-amber-700 dark:text-amber-300">
-                Submitted · waiting for your mark
+                {assignment.latest_submission_status === "grading"
+                  ? "Submitted · automatic grading in progress"
+                  : "Submitted · waiting for your mark"}
               </p>
             )}
             <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">

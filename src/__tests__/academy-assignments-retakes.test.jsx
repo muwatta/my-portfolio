@@ -47,6 +47,7 @@ describe("weekly assignment retakes", () => {
           week_number: 1,
           completed_mark: 80,
           attempts_used: 2,
+          latest_submission_status: "graded",
           retry_limit: 3,
         },
         {
@@ -70,9 +71,11 @@ describe("weekly assignment retakes", () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText("Done · Best mark 80/100")).toBeInTheDocument();
+      expect(screen.getByText("Marked · Best mark 80/100")).toBeInTheDocument();
     });
-    expect(screen.getByText(/use another attempt/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/submit again/i),
+    ).toBeInTheDocument();
     expect(
       screen.getByRole("link", { name: /C\+\+ Week 1/ }),
     ).toHaveAttribute("href", "/academy/assignments/week-one");
@@ -91,6 +94,7 @@ describe("weekly assignment retakes", () => {
           week_number: 1,
           completed_mark: null,
           attempts_used: 1,
+          latest_submission_status: "submitted",
           retry_limit: 3,
         },
       ],
@@ -107,5 +111,101 @@ describe("weekly assignment retakes", () => {
       expect(screen.getByText("Submitted · waiting for your mark")).toBeInTheDocument();
     });
     expect(screen.queryByText(/Done · Best mark/)).not.toBeInTheDocument();
+  });
+
+  it("shows a pending retake alongside an earlier best mark", async () => {
+    getAcademyAssignments.mockResolvedValue({
+      data: [
+        {
+          id: "week-one",
+          title: "C++ Week 1",
+          points: 25,
+          week_number: 1,
+          completed_mark: 80,
+          attempts_used: 4,
+          latest_submission_status: "submitted",
+        },
+      ],
+      error: null,
+    });
+
+    render(
+      <MemoryRouter>
+        <AcademyAssignments />
+      </MemoryRouter>,
+    );
+
+    expect(
+      await screen.findByText("Best mark 80/100"),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/best mark remains saved; your latest submission is awaiting a mark/i),
+    ).toBeInTheDocument();
+  });
+
+  it("renders only one card when an assignment is duplicated in the returned list", async () => {
+    getAcademyAssignments.mockResolvedValue({
+      data: [
+        {
+          id: "week-one",
+          title: "C++ Week 1",
+          points: 25,
+          week_number: 1,
+          completed_mark: null,
+          attempts_used: 0,
+        },
+        {
+          id: "week-one",
+          title: "C++ Week 1",
+          points: 25,
+          week_number: 1,
+          completed_mark: null,
+          attempts_used: 0,
+        },
+      ],
+      error: null,
+    });
+
+    render(
+      <MemoryRouter>
+        <AcademyAssignments />
+      </MemoryRouter>,
+    );
+
+    await waitFor(() =>
+      expect(screen.getAllByRole("link", { name: /C\+\+ Week 1/ })).toHaveLength(
+        1,
+      ),
+    );
+  });
+
+  it("shows a new attempt as awaiting a mark while retaining the best prior mark", async () => {
+    getAcademyAssignments.mockResolvedValue({
+      data: [
+        {
+          id: "week-one",
+          title: "C++ Week 1",
+          points: 25,
+          week_number: 1,
+          completed_mark: 80,
+          attempts_used: 4,
+          latest_submission_status: "submitted",
+        },
+      ],
+      error: null,
+    });
+
+    render(
+      <MemoryRouter>
+        <AcademyAssignments />
+      </MemoryRouter>,
+    );
+
+    expect(await screen.findByText("Best mark 80/100")).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        /best mark remains saved; your latest submission is awaiting a mark/i,
+      ),
+    ).toBeInTheDocument();
   });
 });

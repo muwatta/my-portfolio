@@ -127,6 +127,7 @@ describe("which editor an assignment offers", () => {
 
   it("submits the latest edited code and explains when automatic grading is unavailable", async () => {
     getAcademyAssignment.mockResolvedValue(assignmentFor("cpp"));
+    getSubmissionCount.mockResolvedValue({ count: 3, error: null });
     getAcademySubmissionHistory
       .mockResolvedValueOnce({ data: [], error: null })
       .mockResolvedValueOnce({
@@ -144,6 +145,12 @@ describe("which editor an assignment offers", () => {
     });
 
     renderPage();
+    expect(
+      await screen.findByText("Attempts made: 3 · Unlimited submissions"),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Submit assignment" }),
+    ).toBeEnabled();
     fireEvent.change(await screen.findByLabelText("Mock C++ source"), {
       target: { value: "int main() { return 0; }" },
     });
@@ -200,6 +207,26 @@ describe("which editor an assignment offers", () => {
     await waitFor(() => expect(screen.getByTestId("cpp-editor")).toBeInTheDocument());
     const input = screen.getByLabelText(/upload a file/i);
     expect(input.getAttribute("accept")).toContain(".cpp");
+  });
+
+  it("lets students cancel a selected file upload", async () => {
+    getAcademyAssignment.mockResolvedValue(assignmentFor("cpp"));
+    renderPage();
+    const input = await screen.findByLabelText(/upload a file/i);
+    const upload = new File(["int main() {}"], "answer.cpp", {
+      type: "text/plain",
+    });
+
+    fireEvent.change(input, { target: { files: [upload] } });
+
+    expect(await screen.findByText("Selected: answer.cpp")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Cancel upload" }));
+
+    expect(screen.queryByText("Selected: answer.cpp")).not.toBeInTheDocument();
+    expect(
+      screen.getByText(/selected file removed/i),
+    ).toBeInTheDocument();
+    expect(input.value).toBe("");
   });
 
   it("does not offer C++ uploads for a Python assignment", async () => {
