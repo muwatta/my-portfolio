@@ -33,21 +33,27 @@ function getCppExampleInput(instructions = "") {
   );
 }
 
-function CodeEditorForAssignment({ assignment, onCaptureSource }) {
+function CodeEditorForAssignment({
+  assignment,
+  sourceCode,
+  onSourceCodeChange,
+}) {
   const isCpp = assignment?.academy_courses?.language === "cpp";
   if (isCpp) {
     return (
       <CppEditor
         starterCode={assignment.starter_code || ""}
         stdin={getCppExampleInput(assignment.instructions)}
-        onSubmit={onCaptureSource}
+        code={sourceCode}
+        onCodeChange={onSourceCodeChange}
       />
     );
   }
   return (
     <PythonEditor
       starterCode={assignment.starter_code}
-      onSubmit={onCaptureSource}
+      code={sourceCode}
+      onCodeChange={onSourceCodeChange}
     />
   );
 }
@@ -284,17 +290,54 @@ export default function AcademyAssignment() {
       if (error) throw error;
       const submitted = await getAcademySubmissionHistory(id, user.id);
       const submission = submitted.data?.[0];
-      if (submission?.id) await requestAcademyDeterministicGrading(submission.id);
       setAttempts((value) => value + 1);
-      const refreshed = await getAcademySubmissionHistory(id, user.id);
-      setHistory(refreshed.data ?? []);
       setFile(null);
       await deleteOfflineRecord(
         OFFLINE_STORES.drafts,
         user.id,
         `assignment:${assignment.id}:source`,
       );
-      setNotice("Submitted. Deterministic grading has started.");
+      let feedback =
+        "Your submission was received and is waiting for an instructor to review it.";
+      if (submitted.error) {
+        feedback =
+          "Your submission was received, but its status could not be refreshed. Check your submission history shortly.";
+      } else if (submission?.id) {
+        try {
+          const grading = await requestAcademyDeterministicGrading(
+            submission.id,
+          );
+          if (
+            grading.error ||
+            grading.data?.status === "grading_unavailable"
+          ) {
+            feedback =
+              "Your submission was received, but automatic grading is unavailable right now. It remains saved for instructor review.";
+          } else if (grading.data?.status === "grading_failed") {
+            feedback =
+              "Your submission was received, but automatic checks could not grade it. It remains saved for instructor review.";
+          } else if (grading.data?.status === "graded") {
+            feedback =
+              "Your submission was received and graded. See your result below.";
+          } else {
+            feedback =
+              "Your submission was received. Its grading result will appear below when ready.";
+          }
+        } catch {
+          feedback =
+            "Your submission was received, but automatic grading could not be reached. It remains saved for instructor review.";
+        }
+      } else {
+        feedback =
+          "Your submission was received, but its grading record could not be found. Check your submission history shortly.";
+      }
+      const refreshed = await getAcademySubmissionHistory(id, user.id);
+      if (refreshed.error) {
+        feedback += " The latest results could not be refreshed.";
+      } else {
+        setHistory(refreshed.data ?? []);
+      }
+      setNotice(feedback);
       const returnTo = searchParams.get("returnTo");
       if (
         returnTo?.startsWith("/academy/lessons/") &&
@@ -458,8 +501,9 @@ export default function AcademyAssignment() {
           role="status"
           className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-950 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-100"
         >
-          Wait until the previous week's assignment has been marked before
-          starting this one.
+          You can review this assignment, but submissions and retakes are
+          locked until all earlier C++ weekly assignments have been marked.
+          Your earlier submission is still awaiting a mark.
         </p>
       )}
       {materialState === "missing" && (
@@ -485,17 +529,10 @@ export default function AcademyAssignment() {
           Allowed:           {(assignment.allowed_submission_types || []).join(", ") || "Code or file"}
         </p>
       </div>
-      {notice && (
-        <p
-          role="status"
-          className="rounded-lg bg-amber-50 p-3 text-sm text-amber-900"
-        >
-          {notice}
-        </p>
-      )}
       <CodeEditorForAssignment
         assignment={assignment}
-        onCaptureSource={setSourceCode}
+        sourceCode={sourceCode}
+        onSourceCodeChange={setSourceCode}
       />
       <label className="label">
         Upload a file
@@ -514,7 +551,7 @@ export default function AcademyAssignment() {
       {notice && (
         <p
           role="status"
-          className="rounded-lg bg-blue-50 p-3 text-sm text-blue-800"
+          className="rounded-lg bg-blue-50 p-3 text-sm text-blue-800 dark:bg-blue-950/40 dark:text-blue-200"
         >
           {notice}
         </p>
@@ -525,8 +562,18 @@ export default function AcademyAssignment() {
         disabled={submitting || attemptsRemaining === 0 || assignment.locked}
         onClick={() => submit()}
       >
-        {submitting ? "Submitting..." : "Submit assignment"}
+        {submitting
+          ? "Submitting..."
+          : assignment.locked
+            ? "Waiting for previous mark"
+            : "Submit assignment"}
       </button>
+      {assignment.locked && (
+        <p className="text-sm text-amber-800 dark:text-amber-200">
+          An instructor must mark every earlier C++ weekly assignment before
+          this assignment can be submitted.
+        </p>
+      )}
       <section className="space-y-3">
         <h2 className="text-xl font-bold">Submission results</h2>
         {history.length === 0 && (
@@ -543,13 +590,25 @@ export default function AcademyAssignment() {
             >
               <div className="flex flex-wrap justify-between gap-2 text-sm">
                 <span>
-                  Attempt {submission.attempt_number} · {submission.status}
+                  Attempt {submission.attempt_number} ·{" "}
+                  {submission.status === "submitted"
+                    ? "submitted · awaiting instructor review"
+                    : submission.status === "grading"
+                      ? "automatic grading in progress"
+                      : submission.status === "grading_unavailable"
+                        ? "automatic grading unavailable · awaiting instructor review"
+                        : submission.status === "grading_failed"
+                          ? "automatic checks could not grade this · awaiting instructor review"
+                          : submission.status}
                   {submission.grading_error
                     ? ` · ${submission.grading_error}`
                     : ""}
                 </span>
                 <span>
-                  {result?.final_score ?? "Awaiting grade"}
+                  {result?.final_score ??
+                    (submission.status === "grading"
+                      ? "Grading"
+                      : "Awaiting mark")}
                   {result?.final_score != null ? "/100" : ""}
                 </span>
               </div>

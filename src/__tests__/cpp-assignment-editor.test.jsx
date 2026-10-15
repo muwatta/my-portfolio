@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 
 vi.mock("../hooks/useAcademyAuth", () => ({
@@ -31,7 +31,15 @@ vi.mock("../components/academy/PythonEditor", () => ({
   default: () => <div data-testid="python-editor" />,
 }));
 vi.mock("../components/academy/CppEditor", () => ({
-  default: ({ stdin }) => <div data-testid="cpp-editor" data-stdin={stdin} />,
+  default: ({ stdin, code, onCodeChange }) => (
+    <div data-testid="cpp-editor" data-stdin={stdin}>
+      <textarea
+        aria-label="Mock C++ source"
+        value={code}
+        onChange={(event) => onCodeChange(event.target.value)}
+      />
+    </div>
+  ),
 }));
 
 const {
@@ -40,6 +48,8 @@ const {
   getAcademyMaterialUrl,
   getSubmissionCount,
   getAcademySubmissionHistory,
+  requestAcademyDeterministicGrading,
+  submitAssignment,
 } = await import("../lib/academy");
 const { fetchWithOfflineFallback } = await import("../lib/academyOffline");
 const { getOfflineRecord } = await import("../lib/offlineStore");
@@ -113,6 +123,65 @@ describe("which editor an assignment offers", () => {
     renderPage();
     await waitFor(() => expect(screen.getByTestId("python-editor")).toBeInTheDocument());
     expect(screen.queryByTestId("cpp-editor")).not.toBeInTheDocument();
+  });
+
+  it("submits the latest edited code and explains when automatic grading is unavailable", async () => {
+    getAcademyAssignment.mockResolvedValue(assignmentFor("cpp"));
+    getAcademySubmissionHistory
+      .mockResolvedValueOnce({ data: [], error: null })
+      .mockResolvedValueOnce({
+        data: [{ id: "submission-1", attempt_number: 1, status: "submitted" }],
+        error: null,
+      })
+      .mockResolvedValueOnce({
+        data: [{ id: "submission-1", attempt_number: 1, status: "submitted" }],
+        error: null,
+      });
+    submitAssignment.mockResolvedValue({ data: null, error: null });
+    requestAcademyDeterministicGrading.mockResolvedValue({
+      data: null,
+      error: new Error("Grader unavailable"),
+    });
+
+    renderPage();
+    fireEvent.change(await screen.findByLabelText("Mock C++ source"), {
+      target: { value: "int main() { return 0; }" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Submit assignment" }));
+
+    await waitFor(() =>
+      expect(submitAssignment).toHaveBeenCalledWith(
+        expect.objectContaining({
+          assignmentId: "a1",
+          sourceCode: "int main() { return 0; }",
+        }),
+      ),
+    );
+    expect(requestAcademyDeterministicGrading).toHaveBeenCalledWith(
+      "submission-1",
+    );
+    expect(
+      await screen.findByText(
+        /submission was received, but automatic grading is unavailable/i,
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it("explains why a locked weekly assignment cannot be submitted", async () => {
+    const result = assignmentFor("cpp");
+    getAcademyAssignment.mockResolvedValue({
+      ...result,
+      data: { ...result.data, locked: true },
+    });
+
+    renderPage();
+
+    expect(
+      await screen.findByRole("button", { name: "Waiting for previous mark" }),
+    ).toBeDisabled();
+    expect(
+      screen.getByText(/instructor must mark every earlier c\+\+ weekly assignment/i),
+    ).toBeInTheDocument();
   });
 
   it("falls back to Python when the course relation is missing", async () => {
