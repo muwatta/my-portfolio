@@ -136,28 +136,25 @@ export default function AcademyAssignments() {
                   Waiting for the previous week to be marked
                 </span>
               )}
-              {assignment.completed_mark != null && (
+              {assignment.latest_submission_mark != null && (
                 <span className="text-emerald-700 dark:text-emerald-300">
-                  {assignment.latest_submission_status === "graded"
-                    ? `Marked · Best mark ${assignment.completed_mark}/100`
-                    : `Best mark ${assignment.completed_mark}/100`}
+                  Marked · Latest mark {assignment.latest_submission_mark}/100
                 </span>
               )}
             </p>
             <h2 className="mt-2 text-lg font-bold">{assignment.title}</h2>
-            {assignment.completed_mark != null && (
+            {assignment.latest_submission_mark != null && (
               <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
-                {assignment.latest_submission_status === "graded"
-                  ? "Your latest submission is marked. Reopen this assignment to review it or submit again."
-                  : "Your best mark remains saved; your latest submission is awaiting a mark."}
+                Your latest submission is marked. Reopen this assignment to
+                review it or submit again.
               </p>
             )}
             {assignment.attempts_used > 0 &&
-              assignment.completed_mark == null && (
+              assignment.latest_submission_mark == null && (
               <p className="mt-2 text-sm text-amber-700 dark:text-amber-300">
                 {assignment.latest_submission_status === "grading"
-                  ? "Submitted · automatic grading in progress"
-                  : "Submitted · waiting for your mark"}
+                  ? `Latest submission · attempt ${assignment.attempts_used} · automatic grading in progress`
+                  : `Latest submission · attempt ${assignment.attempts_used} · waiting for your mark`}
               </p>
             )}
             <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">

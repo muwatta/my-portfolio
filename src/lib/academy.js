@@ -27,6 +27,17 @@ const bestMarkedScore = (submissions) =>
       (best, score) => (best == null || score > best ? score : best),
       null,
     );
+const latestSubmission = (submissions) =>
+  (submissions ?? []).reduce(
+    (latest, submission) =>
+      !latest ||
+      (submission.attempt_number ?? 0) > (latest.attempt_number ?? 0) ||
+      ((submission.attempt_number ?? 0) === (latest.attempt_number ?? 0) &&
+        submission.submitted_at > latest.submitted_at)
+        ? submission
+        : latest,
+    null,
+  );
 const createClientOperationId = () =>
   globalThis.crypto?.randomUUID?.() ||
   `academy-${Date.now()}-${Math.random().toString(36).slice(2)}`;
@@ -1979,34 +1990,32 @@ export async function getAcademyAssignments(studentId) {
           )
         : null;
     return {
-      data: orderedAssignments.map((assignment) => ({
-        ...assignment,
-        week_number: assignment.academy_weeks?.week_number ?? null,
-        week_title: assignment.academy_weeks?.title ?? null,
-        attempts_used: (submissionsByAssignment.get(assignment.id) ?? []).reduce(
+      data: orderedAssignments.map((assignment) => {
+        const assignmentSubmissions =
+          submissionsByAssignment.get(assignment.id) ?? [];
+        const currentSubmission = latestSubmission(assignmentSubmissions);
+        const currentResult = submissionResultsFor(currentSubmission)[0];
+        return {
+          ...assignment,
+          week_number: assignment.academy_weeks?.week_number ?? null,
+          week_title: assignment.academy_weeks?.title ?? null,
+          attempts_used: assignmentSubmissions.reduce(
             (maximum, submission) =>
               Math.max(maximum, submission.attempt_number ?? 0),
             0,
           ),
-        latest_submission_status: (submissionsByAssignment
-          .get(assignment.id) ?? [])
-          .reduce(
-            (latest, submission) =>
-              !latest ||
-              (submission.attempt_number ?? 0) >
-                (latest.attempt_number ?? 0)
-                ? submission
-                : latest,
-            null,
-          )?.status ?? null,
-        completed_mark: bestMarkedScore(
-          submissionsByAssignment.get(assignment.id),
-        ),
-        locked:
-          activeCourse.language === "cpp" &&
-          assignment.academy_weeks?.week_number != null &&
-          assignment.academy_weeks.week_number > nextCppWeek,
-      })),
+          latest_submission_status: currentSubmission?.status ?? null,
+          latest_submission_mark:
+            currentSubmission?.status === "graded"
+              ? currentResult?.final_score ?? null
+              : null,
+          completed_mark: bestMarkedScore(assignmentSubmissions),
+          locked:
+            activeCourse.language === "cpp" &&
+            assignment.academy_weeks?.week_number != null &&
+            assignment.academy_weeks.week_number > nextCppWeek,
+        };
+      }),
       error: null,
       configured: true,
     };
@@ -2147,7 +2156,15 @@ export async function getAcademySubmissionHistory(assignmentId, studentId) {
     .eq("assignment_id", assignmentId)
     .eq("student_id", studentId)
     .order("attempt_number", { ascending: false });
-  return { data: data  ??  [], error, configured: true };
+  const submissions = data ?? [];
+  return {
+    data: submissions.slice(0, 1).map((submission) => ({
+      ...submission,
+      attempts_count: submissions.length,
+    })),
+    error,
+    configured: true,
+  };
 }
 
 export async function getAcademyTeacherSubmissions() {
@@ -2158,7 +2175,27 @@ export async function getAcademyTeacherSubmissions() {
       "id, assignment_id, student_id, attempt_number, status, grading_error, original_filename, submitted_at, source_code, academy_assignments(title, points), academy_submission_results(objective_score, objective_status, final_score, passed_tests, failed_tests, tests_total, ai_feedback_status, ai_feedback, rubric_feedback, teacher_feedback)",
     )
     .order("submitted_at", { ascending: false });
-  const rows = data ?? [];
+  const latestByStudentAndAssignment = new Map();
+  for (const row of data ?? []) {
+    const key = `${row.assignment_id}:${row.student_id}`;
+    const previous = latestByStudentAndAssignment.get(key);
+    if (!previous) {
+      latestByStudentAndAssignment.set(key, { ...row, attempts_count: 1 });
+      continue;
+    }
+    previous.attempts_count += 1;
+    if (
+      (row.attempt_number ?? 0) > (previous.attempt_number ?? 0) ||
+      ((row.attempt_number ?? 0) === (previous.attempt_number ?? 0) &&
+        row.submitted_at > previous.submitted_at)
+    ) {
+      latestByStudentAndAssignment.set(key, {
+        ...row,
+        attempts_count: previous.attempts_count,
+      });
+    }
+  }
+  const rows = [...latestByStudentAndAssignment.values()];
   const names = await getAcademyProfileNames(
     rows.map((row) => row.student_id),
   );

@@ -644,7 +644,8 @@ export default function AcademyAssignment() {
             >
               <div className="flex flex-wrap justify-between gap-2 text-sm">
                 <span>
-                  Attempt {submission.attempt_number} ·{" "}
+                  Latest submission · attempt {submission.attempt_number} of{" "}
+                  {submission.attempts_count ?? attempts} ·{" "}
                   {submission.status === "submitted"
                     ? "submitted · awaiting instructor review"
                     : submission.status === "grading"

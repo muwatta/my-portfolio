@@ -345,7 +345,8 @@ export default function GradingInbox() {
                     {current.assignment_title}
                   </h2>
                   <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
-                    {current.student_name} · attempt {current.attempt_number}
+                    {current.student_name} · latest attempt{" "}
+                    {current.attempt_number} of {current.attempts_count}
                   </p>
                   <p className="text-xs text-slate-500 dark:text-slate-400">
                     {current.submitted_at

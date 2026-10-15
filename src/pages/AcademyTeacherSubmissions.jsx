@@ -98,10 +98,11 @@ export default function AcademyTeacherSubmissions() {
 
       <details className="rounded-xl border border-slate-200 p-5 dark:border-slate-800">
         <summary className="min-h-11 cursor-pointer text-sm font-semibold">
-          Older submission table
+          Latest submissions by learner
         </summary>
         <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
-          The original per assignment listing, kept for reference.
+          Only each learner’s most recent submission is shown. Earlier attempts
+          remain counted but are not available here.
         </p>
       {state === "loading" && <p>Loading submissions...</p>}
       {state === "unconfigured" && (
@@ -148,7 +149,9 @@ export default function AcademyTeacherSubmissions() {
                   </h2>
                   <p className="mt-1 text-sm text-slate-500">
                     {submission.academy_profiles?.display_name || "Learner"} ·
-                    attempt {submission.attempt_number} · {submission.status}
+                    latest attempt {submission.attempt_number} of{" "}
+                    {submission.attempts_count ?? submission.attempt_number} ·{" "}
+                    {submission.status}
                   </p>
                 </div>
                 <span className="text-sm font-semibold">

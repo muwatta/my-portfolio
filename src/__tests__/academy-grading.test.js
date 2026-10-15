@@ -104,6 +104,13 @@ describe("the grading queue", () => {
     expect(queue).toMatch(/p_review_state is null/);
   });
 
+  it("returns only the latest attempt per student and assignment with a count", () => {
+    expect(queue).toMatch(/partition by s\.assignment_id, s\.student_id/);
+    expect(queue).toMatch(/order by s\.attempt_number desc, s\.submitted_at desc/);
+    expect(queue).toMatch(/'attempts_count', s\.attempts_count/);
+    expect(queue).toMatch(/where s\.latest_attempt = 1/);
+  });
+
   it("joins the student, topic and course in one call", () => {
     expect(queue).toMatch(/join public\.academy_profiles p on p\.id = s\.student_id/);
     expect(queue).toMatch(/join auth\.users u on u\.id = s\.student_id/);

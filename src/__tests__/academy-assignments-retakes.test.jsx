@@ -37,7 +37,7 @@ describe("weekly assignment retakes", () => {
     }));
   });
 
-  it("keeps marked previous weeks visible with their best mark and retake link", async () => {
+  it("keeps marked previous weeks visible with the latest mark and retake link", async () => {
     getAcademyAssignments.mockResolvedValue({
       data: [
         {
@@ -46,6 +46,7 @@ describe("weekly assignment retakes", () => {
           points: 25,
           week_number: 1,
           completed_mark: 80,
+          latest_submission_mark: 80,
           attempts_used: 2,
           latest_submission_status: "graded",
           retry_limit: 3,
@@ -71,7 +72,7 @@ describe("weekly assignment retakes", () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText("Marked · Best mark 80/100")).toBeInTheDocument();
+      expect(screen.getByText("Marked · Latest mark 80/100")).toBeInTheDocument();
     });
     expect(
       screen.getByText(/submit again/i),
@@ -108,12 +109,14 @@ describe("weekly assignment retakes", () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText("Submitted · waiting for your mark")).toBeInTheDocument();
+      expect(
+        screen.getByText("Latest submission · attempt 1 · waiting for your mark"),
+      ).toBeInTheDocument();
     });
     expect(screen.queryByText(/Done · Best mark/)).not.toBeInTheDocument();
   });
 
-  it("shows a pending retake alongside an earlier best mark", async () => {
+  it("hides an earlier mark while the latest retake is waiting to be marked", async () => {
     getAcademyAssignments.mockResolvedValue({
       data: [
         {
@@ -122,6 +125,7 @@ describe("weekly assignment retakes", () => {
           points: 25,
           week_number: 1,
           completed_mark: 80,
+          latest_submission_mark: null,
           attempts_used: 4,
           latest_submission_status: "submitted",
         },
@@ -136,11 +140,9 @@ describe("weekly assignment retakes", () => {
     );
 
     expect(
-      await screen.findByText("Best mark 80/100"),
+      await screen.findByText("Latest submission · attempt 4 · waiting for your mark"),
     ).toBeInTheDocument();
-    expect(
-      screen.getByText(/best mark remains saved; your latest submission is awaiting a mark/i),
-    ).toBeInTheDocument();
+    expect(screen.queryByText(/mark 80\/100/)).not.toBeInTheDocument();
   });
 
   it("renders only one card when an assignment is duplicated in the returned list", async () => {
@@ -179,7 +181,7 @@ describe("weekly assignment retakes", () => {
     );
   });
 
-  it("shows a new attempt as awaiting a mark while retaining the best prior mark", async () => {
+  it("shows only the new attempt while retaining old records for progression", async () => {
     getAcademyAssignments.mockResolvedValue({
       data: [
         {
@@ -188,6 +190,7 @@ describe("weekly assignment retakes", () => {
           points: 25,
           week_number: 1,
           completed_mark: 80,
+          latest_submission_mark: null,
           attempts_used: 4,
           latest_submission_status: "submitted",
         },
@@ -201,11 +204,9 @@ describe("weekly assignment retakes", () => {
       </MemoryRouter>,
     );
 
-    expect(await screen.findByText("Best mark 80/100")).toBeInTheDocument();
     expect(
-      screen.getByText(
-        /best mark remains saved; your latest submission is awaiting a mark/i,
-      ),
+      await screen.findByText("Latest submission · attempt 4 · waiting for your mark"),
     ).toBeInTheDocument();
+    expect(screen.queryByText(/mark 80\/100/)).not.toBeInTheDocument();
   });
 });
