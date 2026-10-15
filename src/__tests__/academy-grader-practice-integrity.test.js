@@ -17,6 +17,10 @@ const graderWriteAccess = readFileSync(
   "supabase/migrations/20261415000000_academy_grader_write_and_file_access.sql",
   "utf8",
 );
+const graderReadAccess = readFileSync(
+  "supabase/migrations/20261428000000_academy_grader_read_policies.sql",
+  "utf8",
+);
 const assignmentActivitySync = readFileSync(
   "supabase/migrations/20261416000000_academy_assignment_activity_sync.sql",
   "utf8",
@@ -46,6 +50,25 @@ describe("manual grading authorization", () => {
     expect(graderWriteAccess).toMatch(/bucket_id = 'assignment-submissions'/);
     expect(graderWriteAccess).toMatch(/or public\.academy_can_grade\(\)/);
     expect(graderWriteAccess).toMatch(/\(storage\.foldername\(name\)\)\[1\] = auth\.uid\(\)::text/);
+  });
+
+  it("restricts direct submission, result, and event reads to the student or an appointed grader", () => {
+    expect(graderReadAccess).toMatch(
+      /drop policy if exists academy_submissions_teacher\s+on public\.academy_submissions/,
+    );
+    expect(graderReadAccess).toMatch(
+      /create policy academy_submissions_student_self_read[\s\S]*?student_id = auth\.uid\(\)\s+or public\.academy_can_grade\(\)/,
+    );
+    expect(graderReadAccess).toMatch(
+      /drop policy if exists academy_submission_results_teacher\s+on public\.academy_submission_results/,
+    );
+    expect(graderReadAccess).toMatch(
+      /create policy academy_submission_results_student_read[\s\S]*?student_id = auth\.uid\(\)\s+or public\.academy_can_grade\(\)/,
+    );
+    expect(graderReadAccess).toMatch(
+      /create policy academy_submission_events_student_read[\s\S]*?public\.academy_can_grade\(\)\s+or exists/,
+    );
+    expect(graderReadAccess).not.toMatch(/or public\.academy_is_teacher\(\)/);
   });
 });
 
