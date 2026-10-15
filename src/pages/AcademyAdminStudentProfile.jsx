@@ -63,7 +63,7 @@ export default function AcademyAdminStudentProfile() {
               {error}
             </p>
           )}
-          <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+          <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-6">
             <h2 className="text-xl font-bold">Account</h2>
             <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
               Correct a name or change the email a student signs in with. Changing
@@ -120,7 +120,7 @@ export default function AcademyAdminStudentProfile() {
                     Leave empty to keep the current address.
                   </span>
                 </label>
-                <div className="flex flex-wrap gap-3">
+                <div className="flex flex-col gap-3 sm:flex-row">
                   <button className="button-primary" type="submit" disabled={busy}>
                     {busy ? "Saving..." : "Save account"}
                   </button>
@@ -134,7 +134,7 @@ export default function AcademyAdminStudentProfile() {
                 </div>
               </form>
             ) : (
-              <div className="mt-4 flex flex-wrap gap-3">
+              <div className="mt-4 flex flex-col gap-3 sm:flex-row">
                 <button
                   className="button-secondary"
                   type="button"
@@ -164,7 +164,7 @@ export default function AcademyAdminStudentProfile() {
           </section>
 
           {deleteOpen && (
-            <section className="rounded-2xl border-2 border-rose-300 bg-rose-50 p-6 dark:border-rose-800 dark:bg-rose-950/30">
+            <section className="rounded-2xl border-2 border-rose-300 bg-rose-50 p-4 dark:border-rose-800 dark:bg-rose-950/30 sm:p-6">
               <h2 className="text-lg font-bold text-rose-900 dark:text-rose-200">
                 Delete this account?
               </h2>
@@ -187,7 +187,7 @@ export default function AcademyAdminStudentProfile() {
                   Recorded against the deletion.
                 </span>
               </label>
-              <div className="mt-4 flex flex-wrap gap-3">
+              <div className="mt-4 flex flex-col gap-3 sm:flex-row">
                 <button
                   className="button-primary"
                   type="button"

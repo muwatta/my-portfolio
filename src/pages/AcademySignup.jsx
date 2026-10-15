@@ -197,7 +197,7 @@ export default function AcademySignup() {
   }
 
   return (
-    <div className="relative grid min-h-screen place-items-center bg-[#F2F4F8] px-4 py-10 dark:bg-[#0B0F1A]">
+    <div className="relative grid min-h-screen place-items-start bg-[#F2F4F8] px-3 pb-8 pt-16 dark:bg-[#0B0F1A] sm:place-items-center sm:px-4 sm:py-10">
       <button
         type="button"
         className="button-secondary absolute right-4 top-4 px-3 py-1.5"
@@ -231,7 +231,7 @@ export default function AcademySignup() {
         </div>
 
         {/* Form panel */}
-        <div className="p-6 sm:p-8">
+        <div className="p-4 sm:p-8">
           <Link
             to="/academy/login"
             className="text-sm font-semibold text-amber-600 hover:text-amber-700 dark:text-amber-400 dark:hover:text-amber-300"
@@ -239,8 +239,8 @@ export default function AcademySignup() {
             ← Back to sign in
           </Link>
 
-          <div className="mt-6">
-            <h2 className="text-3xl font-bold tracking-tight">
+          <div className="mt-5 sm:mt-6">
+            <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">
               Create your account
             </h2>
             <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">

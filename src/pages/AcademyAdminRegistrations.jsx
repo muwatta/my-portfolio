@@ -258,8 +258,100 @@ export default function AcademyAdminRegistrations() {
             : "No registration numbers to show."}
         </p>
         {loading ? <p className="mt-5 text-sm text-slate-500">Loading registration numbers...</p> : (
-          <div className="mt-5 overflow-x-auto">
-            <table className="min-w-full text-left text-sm">
+          <div className="mt-5">
+            <div className="space-y-3 md:hidden">
+              {pageRows.map((row) => (
+                <article
+                  key={row.registration_number}
+                  className="rounded-xl border border-slate-200 p-4 dark:border-slate-700"
+                >
+                  <div className="flex flex-wrap items-start justify-between gap-2">
+                    <p className="font-semibold tracking-[0.1em]">
+                      {row.registration_number}
+                    </p>
+                    <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold capitalize text-slate-700 dark:bg-slate-800 dark:text-slate-200">
+                      {row.status === "provisional"
+                        ? "awaiting acceptance"
+                        : row.status}
+                    </span>
+                  </div>
+                  <dl className="mt-3 grid gap-2 text-sm">
+                    <div>
+                      <dt className="text-xs text-slate-500">Student</dt>
+                      <dd className="break-words">
+                        {row.student_name || "Student record unavailable"}
+                      </dd>
+                    </div>
+                    <div>
+                      <dt className="text-xs text-slate-500">Email</dt>
+                      <dd className="break-all">
+                        {row.student_email || "Not available"}
+                      </dd>
+                    </div>
+                    <div>
+                      <dt className="text-xs text-slate-500">Course</dt>
+                      <dd>{row.course_title || "Not assigned"}</dd>
+                    </div>
+                    <div>
+                      <dt className="text-xs text-slate-500">Created</dt>
+                      <dd>{new Date(row.created_at).toLocaleDateString()}</dd>
+                    </div>
+                  </dl>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {row.status === "provisional" && row.student_id && (
+                      <>
+                        <button
+                          className="button-secondary min-h-11 text-emerald-700"
+                          type="button"
+                          disabled={saving}
+                          onClick={() => handleAccept(row)}
+                        >
+                          Accept
+                        </button>
+                        <button
+                          className="button-secondary min-h-11 text-red-600"
+                          type="button"
+                          disabled={saving}
+                          onClick={() => handleWithdraw(row)}
+                        >
+                          Withdraw
+                        </button>
+                      </>
+                    )}
+                    {row.status === "claimed" && row.student_id && (
+                      <button
+                        className="button-secondary min-h-11 text-red-600"
+                        type="button"
+                        disabled={saving}
+                        onClick={() => handleWithdraw(row)}
+                      >
+                        Withdraw
+                      </button>
+                    )}
+                    {["provisional", "claimed"].includes(row.status) && (
+                      <button
+                        className="button-secondary min-h-11"
+                        type="button"
+                        disabled={saving}
+                        onClick={() => {
+                          setForm((current) => ({ ...current, reason: "" }));
+                          setSuspendTarget(row);
+                        }}
+                      >
+                        Suspend
+                      </button>
+                    )}
+                  </div>
+                </article>
+              ))}
+              {!directoryRows.length && (
+                <p className="text-sm text-slate-500">
+                  No registration numbers match these filters.
+                </p>
+              )}
+            </div>
+            <div className="hidden overflow-x-auto md:block">
+              <table className="min-w-full text-left text-sm">
               <thead className="border-b border-slate-200 text-xs uppercase text-slate-500 dark:border-slate-800">
                 <tr>
                   <th className="px-4 py-3">Registration No.</th>
@@ -312,6 +404,19 @@ export default function AcademyAdminRegistrations() {
                             Withdraw
                           </button>
                         )}
+                        {["provisional", "claimed"].includes(row.status) && (
+                          <button
+                            className="min-h-11 font-semibold text-amber-700"
+                            type="button"
+                            disabled={saving}
+                            onClick={() => {
+                              setForm((current) => ({ ...current, reason: "" }));
+                              setSuspendTarget(row);
+                            }}
+                          >
+                            Suspend
+                          </button>
+                        )}
                         {row.status === "suspended" && "Suspended"}
                         {row.status === "voided" && "Withdrawn"}
                       </div>
@@ -321,6 +426,7 @@ export default function AcademyAdminRegistrations() {
               </tbody>
             </table>
             {!directoryRows.length && <p className="mt-5 text-sm text-slate-500">No registration numbers match these filters.</p>}
+            </div>
             {directoryPageCount > 1 && (
               <nav
                 className="mt-4 flex items-center justify-between gap-3"
@@ -354,6 +460,42 @@ export default function AcademyAdminRegistrations() {
           </div>
         )}
       </section>
+
+      {suspendTarget && (
+        <form
+          onSubmit={handleSuspend}
+          className="rounded-2xl border border-red-200 bg-red-50 p-4 dark:border-red-900 dark:bg-red-950/30 sm:p-6"
+        >
+          <h2 className="text-xl font-bold text-red-900 dark:text-red-100">
+            Suspend {suspendTarget.registration_number}
+          </h2>
+          <label className="label mt-4 text-red-900 dark:text-red-100">
+            Reason
+            <input
+              className="field"
+              value={form.reason}
+              onChange={(event) => updateForm("reason", event.target.value)}
+              required
+            />
+          </label>
+          <div className="mt-4 flex flex-col gap-3 sm:flex-row">
+            <button
+              className="button-secondary"
+              type="submit"
+              disabled={saving}
+            >
+              Confirm suspension
+            </button>
+            <button
+              className="button-secondary"
+              type="button"
+              onClick={() => setSuspendTarget(null)}
+            >
+              Cancel
+            </button>
+          </div>
+        </form>
+      )}
 
       <section className="rounded-2xl border border-amber-200 bg-amber-50 p-6 dark:border-amber-900 dark:bg-amber-950/30">
         <h2 className="text-xl font-bold">Controlled changes</h2>
@@ -415,16 +557,6 @@ export default function AcademyAdminRegistrations() {
         </form>
       </section>
 
-      {suspendTarget && (
-        <form onSubmit={handleSuspend} className="rounded-2xl border border-red-200 bg-red-50 p-6 dark:border-red-900 dark:bg-red-950/30">
-          <h2 className="text-xl font-bold text-red-900 dark:text-red-100">Suspend {suspendTarget.registration_number}</h2>
-          <label className="label mt-4 text-red-900 dark:text-red-100">Reason<input className="field" value={form.reason} onChange={(event) => updateForm("reason", event.target.value)} required /></label>
-          <div className="mt-4 flex gap-3">
-            <button className="button-secondary" type="submit" disabled={saving}>Confirm suspension</button>
-            <button className="button-secondary" type="button" onClick={() => setSuspendTarget(null)}>Cancel</button>
-          </div>
-        </form>
-      )}
     </div>
   );
 }

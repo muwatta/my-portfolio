@@ -11,7 +11,7 @@ import { useAcademyAuth } from "../hooks/useAcademyAuth";
 import { useAutoRefresh } from "../hooks/useAutoRefresh";
 import { Skeleton } from "../components/ui/Skeleton";
 
-export default function AcademyAdminAccess() {
+export default function AcademyAdminAccess({ settingsPage = false }) {
   const { user, isAdmin } = useAcademyAuth();
   const [data, setData] = useState({
     profiles: [],
@@ -68,14 +68,16 @@ export default function AcademyAdminAccess() {
     <div className="space-y-8">
       <header>
         <p className="text-sm font-semibold uppercase tracking-[0.18em] text-cyan-600 dark:text-cyan-300">
-          Administrator controls
+          {settingsPage ? "Superadmin settings" : "Administrator controls"}
         </p>
-        <h1 className="mt-2 text-3xl font-bold">Access and roles</h1>
+        <h1 className="mt-2 text-3xl font-bold">
+          {settingsPage ? "Academy settings" : "Access and roles"}
+        </h1>
         <p className="mt-2 max-w-2xl text-slate-600 dark:text-slate-300">
-          School viewers can see and support students at one assigned school
-          without grading access. Grading editors can review and publish
-          submissions across all schools. Only you can appoint either role or
-          access the all-school dashboard.
+          Manage Academy roles, grading privileges, and school-scoped access.
+          School viewers see and support students at one assigned school;
+          grading editors can review and publish submissions across schools.
+          Only you can change these permissions or access the all-school dashboard.
         </p>
       </header>
       {message && (
@@ -117,7 +119,97 @@ export default function AcademyAdminAccess() {
         </p>
       )}
       {state === "ready" && (
-        <div className="overflow-x-auto border border-slate-200 dark:border-slate-800">
+        <>
+        <div className="space-y-3 md:hidden">
+          {data.profiles.map((profile) => {
+            const isPrimaryAdmin = isAdmin && profile.id === user?.id;
+            const name =
+              profile.display_name ||
+              (isPrimaryAdmin ? "Abdullahi Musliudeen" : "Unnamed user");
+            return (
+              <article
+                key={profile.id}
+                className="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900"
+              >
+                <div className="flex flex-wrap items-start justify-between gap-2">
+                  <h2 className="break-words font-semibold">{name}</h2>
+                  {isPrimaryAdmin && (
+                    <span className="rounded-full bg-cyan-100 px-2.5 py-1 text-xs font-semibold text-cyan-900 dark:bg-cyan-900/60 dark:text-cyan-100">
+                      Superadmin
+                    </span>
+                  )}
+                </div>
+                <label className="label mt-4 block">
+                  Academy role
+                  <select
+                    className="field mt-1"
+                    value={profile.role}
+                    disabled={isPrimaryAdmin}
+                    onChange={(event) =>
+                      changeRole(profile.id, event.target.value)
+                    }
+                  >
+                    <option value="student">Student</option>
+                    <option value="teacher">Teacher</option>
+                  </select>
+                </label>
+                <label className="mt-4 flex min-h-11 items-center gap-3 text-sm">
+                  <input
+                    className="h-5 w-5 shrink-0"
+                    type="checkbox"
+                    checked={isPrimaryAdmin || graderIds.has(profile.id)}
+                    disabled={isPrimaryAdmin}
+                    aria-label={`Appoint ${name} as a grading editor`}
+                    onChange={(event) =>
+                      changeGrader(profile.id, event.target.checked)
+                    }
+                  />
+                  <span>
+                    {isPrimaryAdmin
+                      ? "Superadmin can grade"
+                      : graderIds.has(profile.id)
+                        ? "Appointed grading editor"
+                        : "Appoint as grading editor"}
+                  </span>
+                </label>
+                <label className="label mt-4 block">
+                  School viewer access
+                  <select
+                    className="field mt-1"
+                    value={schoolByAdmin.get(profile.id) || ""}
+                    aria-label={`School viewer access for ${name}`}
+                    disabled={isPrimaryAdmin}
+                    onChange={(event) =>
+                      changeSchoolAdmin(profile.id, event.target.value)
+                    }
+                  >
+                    <option value="">
+                      {isPrimaryAdmin
+                        ? "Primary superadmin"
+                        : "No school viewer access"}
+                    </option>
+                    {data.schools.map((school) => (
+                      <option
+                        key={school.id}
+                        value={school.id}
+                        disabled={!school.is_active}
+                      >
+                        {school.name} · {school.city}, {school.state}
+                        {!school.is_active ? " (inactive)" : ""}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </article>
+            );
+          })}
+          {!data.profiles.length && (
+            <p className="rounded-xl border border-dashed border-slate-300 p-6 text-center text-sm text-slate-600 dark:border-slate-700 dark:text-slate-300">
+              No Academy accounts to manage.
+            </p>
+          )}
+        </div>
+        <div className="hidden overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800 md:block">
           <table className="min-w-full text-left text-sm">
             <thead className="border-b border-slate-200 text-xs uppercase text-slate-500 dark:border-slate-800">
               <tr>
@@ -205,6 +297,7 @@ export default function AcademyAdminAccess() {
             </tbody>
           </table>
         </div>
+        </>
       )}
     </div>
   );

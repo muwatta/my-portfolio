@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -61,5 +61,42 @@ describe("AcademyAdminRegistrations", () => {
       "Only Academy administrators can view registration numbers.",
     );
     expect(alert.textContent).not.toContain("[object Object]");
+  });
+
+  it("opens the suspension form from the registration directory", async () => {
+    getAcademyRegistrationCodes.mockResolvedValue({
+      data: [
+        {
+          registration_number: "ATE-2026-001",
+          status: "claimed",
+          student_id: "student-1",
+          student_name: "A Student",
+          student_email: "student@example.com",
+          course_title: "C++",
+          created_at: "2026-01-01T00:00:00.000Z",
+        },
+      ],
+      error: null,
+    });
+    getAcademyTeacherStudents.mockResolvedValue({
+      data: { students: [], levels: [] },
+      error: null,
+    });
+
+    render(
+      <MemoryRouter>
+        <AcademyAdminRegistrations />
+      </MemoryRouter>,
+    );
+
+    const suspendButtons = await screen.findAllByRole("button", {
+      name: "Suspend",
+    });
+    fireEvent.click(suspendButtons[0]);
+
+    expect(
+      screen.getByRole("heading", { name: "Suspend ATE-2026-001" }),
+    ).toBeTruthy();
+    expect(screen.getByRole("textbox", { name: "Reason" })).toBeTruthy();
   });
 });

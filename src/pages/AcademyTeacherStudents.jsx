@@ -77,7 +77,53 @@ export default function AcademyTeacherStudents() {
         </div>
       )}
       {state === "ready" && data.students.length > 0 && (
-        <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
+        <div className="space-y-3 md:hidden">
+          {data.students.map((student) => (
+            <article
+              key={student.id}
+              className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900"
+            >
+              <h2 className="font-semibold">
+                {student.display_name || "Unnamed student"}
+              </h2>
+              <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
+                Current course: {student.academy_courses?.title || "Unassigned"}
+              </p>
+              <p className="mt-1 text-xs text-slate-500">
+                Profile updated{" "}
+                {student.updated_at
+                  ? new Date(student.updated_at).toLocaleDateString()
+                  : "Not available"}
+              </p>
+              <label className="label mt-4 block">
+                Assign course
+                <select
+                  className="field mt-1"
+                  value={student.current_course_id || ""}
+                  disabled={savingId === student.id}
+                  onChange={(event) =>
+                    handleLevelChange(student.id, event.target.value)
+                  }
+                >
+                  <option value="">Unassigned</option>
+                  {data.levels.map((course) => (
+                    <option key={course.id} value={course.id}>
+                      {course.title}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              {savingId === student.id && (
+                <p className="mt-2 text-sm text-slate-500" role="status">
+                  Updating course...
+                </p>
+              )}
+            </article>
+          ))}
+        </div>
+      )}
+      {state === "ready" && data.students.length > 0 && (
+        <div className="hidden overflow-x-auto rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 md:block">
           <table className="min-w-full text-left text-sm">
             <thead className="border-b border-slate-200 text-xs uppercase tracking-wide text-slate-500 dark:border-slate-800 dark:text-slate-400">
               <tr>

@@ -156,7 +156,7 @@ export default function AcademyAdminStudents() {
             {students.map((student) => (
               <article
                 key={student.id}
-                className="border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900"
+                className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900"
               >
                 <div className="flex items-start justify-between gap-3">
                   <div>
@@ -175,10 +175,16 @@ export default function AcademyAdminStudents() {
                     </p>
                   </div>
                   <Link
-                    className="shrink-0 text-sm font-semibold text-blue-600"
+                    className="inline-flex min-h-11 shrink-0 items-center rounded-lg px-2 text-sm font-semibold text-blue-600"
                     to={`/academy/admin/students/${student.id}`}
                   >
                     Profile
+                  </Link>
+                  <Link
+                    className="inline-flex min-h-11 items-center rounded-lg px-2 text-sm font-semibold text-cyan-700 dark:text-cyan-300"
+                    to={`/academy/admin/registrations?student=${student.id}`}
+                  >
+                    Assign registration
                   </Link>
                 </div>
                 <div className="mt-4 grid gap-3 sm:grid-cols-2">

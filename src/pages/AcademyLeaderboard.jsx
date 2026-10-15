@@ -107,54 +107,96 @@ export default function AcademyLeaderboard() {
   return (
     <div className="space-y-6 sm:space-y-8">
       <motion.header
-        initial={reduceMotion ? false : { opacity: 0, y: 14 }}
+        initial={reduceMotion ? false : { opacity: 0 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: reduceMotion ? 0 : 0.35, ease: "easeOut" }}
-        className="relative isolate overflow-hidden rounded-3xl bg-gradient-to-br from-slate-950 via-indigo-950 to-cyan-950 p-5 text-white shadow-xl sm:p-8"
+        transition={{ duration: reduceMotion ? 0 : 0.2, ease: "easeOut" }}
+        className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-6"
       >
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute -right-12 -top-20 -z-10 h-64 w-64 rounded-full border-[28px] border-cyan-200/10"
-        />
-        <div className="relative flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <p className="inline-flex items-center gap-2 rounded-full border border-cyan-100/15 bg-white/10 px-3 py-1 text-xs font-bold uppercase tracking-[0.16em] text-cyan-100">
+            <p className="inline-flex items-center gap-2 rounded-full bg-cyan-50 px-3 py-1 text-xs font-bold uppercase tracking-[0.12em] text-cyan-900 dark:bg-cyan-950/50 dark:text-cyan-200">
               <FiActivity aria-hidden="true" />
-              Verified activity · this week
+              Weekly standings · verified activity
             </p>
-            <h1 className="mt-4 text-3xl font-extrabold tracking-tight sm:text-4xl">
+            <h1 className="mt-3 text-2xl font-bold tracking-tight sm:text-3xl">
               Leaderboard
             </h1>
-            <p className="mt-2 max-w-xl text-sm leading-6 text-slate-300 sm:text-base">
+            <p className="mt-2 max-w-xl text-sm leading-6 text-slate-600 dark:text-slate-300">
               {isStaff
-                ? "See how students are progressing through verified learning activity."
-                : "Every lesson and practice win moves you up. Keep learning, keep earning, and celebrate your progress."}
+                ? "Review student points earned from completed lessons, first successful practice attempts, and released exam results."
+                : "Earn points for completed lessons, first successful practice attempts, and released exam results."}
             </p>
           </div>
           {currentUserRow ? (
-            <div className="rounded-2xl border border-cyan-100/15 bg-white/10 px-4 py-3 backdrop-blur-sm">
-              <p className="text-xs font-bold uppercase tracking-wide text-cyan-100">
+            <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 dark:border-slate-700 dark:bg-slate-800">
+              <p className="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-300">
                 Your rank
               </p>
-              <p className="mt-1 text-2xl font-extrabold">
+              <p className="mt-1 text-2xl font-bold">
                 {currentUserRow.rank}
-                <span className="ml-2 text-sm font-semibold text-cyan-100">
+                <span className="ml-2 text-sm font-semibold text-slate-600 dark:text-slate-300">
                   · {currentUserRow.points} pts
                 </span>
               </p>
             </div>
           ) : isStaff && rows.length > 0 ? (
-            <div className="rounded-2xl border border-cyan-100/15 bg-white/10 px-4 py-3 backdrop-blur-sm">
-              <p className="text-xs font-bold uppercase tracking-wide text-cyan-100">
+            <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 dark:border-slate-700 dark:bg-slate-800">
+              <p className="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-300">
                 This week
               </p>
-              <p className="mt-1 text-2xl font-extrabold">
+              <p className="mt-1 text-2xl font-bold">
                 {rows.length} student{rows.length === 1 ? "" : "s"} ranked
               </p>
             </div>
           ) : null}
         </div>
       </motion.header>
+
+      <section
+        aria-labelledby="points-guide-heading"
+        className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900 sm:p-5"
+      >
+        <h2 id="points-guide-heading" className="text-base font-bold">
+          How points are counted
+        </h2>
+        <dl className="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+          <div className="rounded-xl bg-slate-50 p-3 dark:bg-slate-800">
+            <dt className="text-sm text-slate-600 dark:text-slate-300">
+              Completed lesson
+            </dt>
+            <dd className="mt-1 font-bold">5 points</dd>
+          </div>
+          <div className="rounded-xl bg-slate-50 p-3 dark:bg-slate-800">
+            <dt className="text-sm text-slate-600 dark:text-slate-300">
+              First pass on a practice exercise
+            </dt>
+            <dd className="mt-1 font-bold">2 points</dd>
+          </div>
+          <div className="rounded-xl bg-slate-50 p-3 dark:bg-slate-800">
+            <dt className="text-sm text-slate-600 dark:text-slate-300">
+              Published exam
+            </dt>
+            <dd className="mt-1 font-bold">Score ÷ 10, rounded</dd>
+          </div>
+          <div className="rounded-xl bg-slate-50 p-3 dark:bg-slate-800">
+            <dt className="text-sm text-slate-600 dark:text-slate-300">
+              Published assignment
+            </dt>
+            <dd className="mt-1 font-bold">Configured points and mark</dd>
+          </div>
+          <div className="rounded-xl bg-slate-50 p-3 dark:bg-slate-800">
+            <dt className="text-sm text-slate-600 dark:text-slate-300">
+              Project milestone
+            </dt>
+            <dd className="mt-1 font-bold">10 points</dd>
+          </div>
+        </dl>
+        <p className="mt-3 text-xs leading-5 text-slate-500">
+          Lesson and practice points are awarded once for each activity.
+          Published exams award at least 1 point. Assignments use the configured
+          point value and marked score.
+        </p>
+      </section>
 
       {offline && (
         <p className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">

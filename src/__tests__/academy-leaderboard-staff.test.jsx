@@ -53,6 +53,9 @@ describe("an administrator reading the leaderboard", () => {
     await waitFor(() => expect(screen.getByText("Ada")).toBeInTheDocument());
     expect(screen.getByText("Ben")).toBeInTheDocument();
     expect(screen.getByText("900")).toBeInTheDocument();
+    expect(screen.getByText("5 points")).toBeInTheDocument();
+    expect(screen.getByText("2 points")).toBeInTheDocument();
+    expect(screen.getByText("Score ÷ 10, rounded")).toBeInTheDocument();
     // The personal summary must not appear for someone who is not ranked.
     expect(screen.queryByText(/your rank/i)).not.toBeInTheDocument();
     // Instead they get the size of the list they are looking at.

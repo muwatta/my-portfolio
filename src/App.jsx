@@ -522,7 +522,7 @@ function AppShell() {
                             />
                             <Route
                               path="/academy/admin/settings"
-                              element={<AcademyAdminAccess />}
+                              element={<AcademyAdminAccess settingsPage />}
                             />
                           </Route>
                         </Route>

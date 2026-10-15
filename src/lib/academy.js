@@ -506,7 +506,7 @@ export async function getAcademyTeacherAnalytics() {
     supabase
       .from("academy_profiles")
       .select(
-        "id, display_name, current_course_id, academy_courses!academy_profiles_current_course_id_fkey(title, slug)",
+        "id, display_name, current_course_id, school_id, academy_courses!academy_profiles_current_course_id_fkey(title, slug), academy_schools(name)",
       )
       .eq("role", "student"),
     supabase
@@ -2240,18 +2240,20 @@ export async function getAcademyTeacherClasses() {
   const { data, error } = await supabase
     .from("academy_classes")
     .select(
-      "id, name, description, course_id, academy_courses(title), academy_class_members(student_id, status)",
+      "id, name, description, course_id, created_by, created_at, academy_courses(title), academy_class_members(student_id, status, joined_at)",
     )
     .order("name");
   const rows = data ?? [];
   const names = await getAcademyProfileNames(
-    rows.flatMap((row) =>
-      (row.academy_class_members ?? []).map((member) => member.student_id),
-    ),
+    rows.flatMap((row) => [
+      row.created_by,
+      ...(row.academy_class_members ?? []).map((member) => member.student_id),
+    ]),
   );
   return {
     data: rows.map((row) => ({
       ...row,
+      creator_name: names.get(row.created_by) ?? null,
       academy_class_members: (row.academy_class_members ?? []).map((member) => ({
         ...member,
         academy_profiles: names.has(member.student_id)
