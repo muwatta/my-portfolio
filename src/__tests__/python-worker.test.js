@@ -70,6 +70,29 @@ describe("python practice worker", () => {
     expect(runPython).toHaveBeenCalledWith("__academy_result__");
   });
 
+  it("passes input lines into Python's input() shim", async () => {
+    const runPythonAsync = vi.fn().mockResolvedValue(undefined);
+    const runPython = vi.fn().mockResolvedValue("36");
+    const { worker, loadPyodide } = await loadWorker();
+    loadPyodide.mockResolvedValue({ runPythonAsync, runPython });
+
+    await worker.onmessage({
+      data: {
+        type: "run",
+        id: "job-input",
+        code: "first = int(input())\nsecond = int(input())\nprint(first + second)",
+        stdin: "12\n24",
+      },
+    });
+
+    expect(runPythonAsync.mock.calls[0][0]).toContain(
+      '_academy_input_values = "12\\n24".splitlines()',
+    );
+    expect(runPythonAsync.mock.calls[0][0]).toContain(
+      "builtins.input = _academy_input",
+    );
+  });
+
   it("returns a readable message and allows a retry when the runtime fails", async () => {
     const runPythonAsync = vi.fn().mockResolvedValue(undefined);
     const runPython = vi.fn().mockResolvedValue("recovered");

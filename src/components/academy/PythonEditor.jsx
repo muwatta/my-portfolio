@@ -55,19 +55,19 @@ function getWorker() {
       job.onLoading?.(false);
     }
     if (event.data.type === "loading-packages") {
-        // The data and machine-learning weeks fetch pandas and friends on first
-        // use. That is a download, not execution, so the run timeout must not be
-        // counting it or a slow connection would look like an infinite loop.
-        job.loadingPackages = true;
-        window.clearTimeout(job.timeout);
-        job.timeout = window.setTimeout(() => {
-          rejectJobs(
-            "Downloading the Python packages took too long. Check your connection and try again.",
-          );
-        }, PACKAGE_DOWNLOAD_TIMEOUT);
-        job.onLoadingPackages?.(event.data.packages);
-      }
-      if (event.data.type === "result") {
+      // The data and machine-learning weeks fetch pandas and friends on first
+      // use. That is a download, not execution, so the run timeout must not be
+      // counting it or a slow connection would look like an infinite loop.
+      job.loadingPackages = true;
+      window.clearTimeout(job.timeout);
+      job.timeout = window.setTimeout(() => {
+        rejectJobs(
+          "Downloading the Python packages took too long. Check your connection and try again.",
+        );
+      }, PACKAGE_DOWNLOAD_TIMEOUT);
+      job.onLoadingPackages?.(event.data.packages);
+    }
+    if (event.data.type === "result") {
       window.clearTimeout(job.timeout);
       activeJob = null;
       job.resolve(event.data.output);
@@ -101,10 +101,11 @@ function dispatchJob() {
     type: "run",
     id: activeJob.id,
     code: activeJob.code,
+    stdin: activeJob.stdin,
   });
 }
 
-function runPython(code, onLoading) {
+function runPython(code, stdin, onLoading, onLoadingPackages) {
   if (code.length > MAX_SOURCE_LENGTH) {
     return Promise.reject(
       new Error("Program is too large to run in the browser practice terminal."),
@@ -114,7 +115,9 @@ function runPython(code, onLoading) {
     jobQueue.push({
       id: `${Date.now()}-${Math.random()}`,
       code,
+      stdin,
       onLoading,
+      onLoadingPackages,
       resolve,
       reject,
     });
@@ -129,6 +132,7 @@ function runPython(code, onLoading) {
 
 export default function PythonEditor({
   starterCode = "",
+  stdin: starterInput = "",
   onSubmit,
   code: controlledCode,
   onCodeChange,
@@ -137,6 +141,8 @@ export default function PythonEditor({
     () => separateTerminalInstructions(starterCode).code,
   );
   const code = controlledCode ?? localCode;
+  const [programInput, setProgramInput] = useState(starterInput);
+  const readsStandardInput = /\binput\s*\(/.test(code);
   const [output, setOutput] = useState("");
   const [error, setError] = useState("");
   const [running, setRunning] = useState(false);
@@ -152,6 +158,10 @@ export default function PythonEditor({
     setOutput("");
     setError("");
   }, [editableStarterCode]);
+
+  useEffect(() => {
+    setProgramInput(starterInput);
+  }, [starterInput]);
 
   useEffect(
     () => () => {
@@ -169,6 +179,7 @@ export default function PythonEditor({
     try {
       const result = await runPython(
         code,
+        programInput,
         (loading) => {
           if (currentRun === runId.current) setLoadingRuntime(loading);
         },
@@ -213,6 +224,30 @@ export default function PythonEditor({
         spellCheck="false"
         className="min-h-64 w-full resize-y bg-slate-950 p-4 font-mono text-sm leading-6 text-slate-100 outline-none"
       />
+      {readsStandardInput && (
+        <label className="block space-y-2 border-t border-slate-800 px-4 py-3 text-sm text-slate-300">
+          <span className="font-semibold">Program input</span>
+          <textarea
+            aria-label="Program input"
+            value={programInput}
+            onChange={(event) => setProgramInput(event.target.value)}
+            placeholder="Enter one value for each input() call, on a new line"
+            rows={3}
+            spellCheck="false"
+            className="w-full resize-y rounded-lg border border-slate-700 bg-slate-900 p-3 font-mono text-sm text-slate-100 outline-none focus:border-violet-500"
+          />
+          {starterInput.trim() && (
+            <span className="block text-xs text-violet-200">
+              Example input is already filled in. Change it to try another
+              value.
+            </span>
+          )}
+          <span className="block text-xs text-slate-400">
+            Each <code>input()</code> reads one whole line. If your program
+            needs several values, put each on a separate line.
+          </span>
+        </label>
+      )}
       <div className="flex flex-wrap items-center gap-2 border-t border-slate-800 p-3">
         <button
           type="button"
@@ -235,6 +270,7 @@ export default function PythonEditor({
             runId.current += 1;
             if (controlledCode === undefined) setLocalCode(editableStarterCode);
             onCodeChange?.(editableStarterCode);
+            setProgramInput(starterInput);
             setOutput("");
             setError("");
           }}

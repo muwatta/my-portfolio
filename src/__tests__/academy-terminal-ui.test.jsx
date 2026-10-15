@@ -36,6 +36,27 @@ describe("terminal lesson instructions", () => {
     expect(fireEvent.copy(prompt)).toBe(false);
   });
 
+  it("offers one-line-per-call input for Python programs that call input()", () => {
+    render(
+      <PythonEditor
+        starterCode={"temperature = int(input())\nprint(temperature)"}
+      />,
+    );
+
+    expect(
+      screen.getByRole("textbox", { name: "Program input" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/reads one whole line/),
+    ).toBeInTheDocument();
+    fireEvent.change(screen.getByRole("textbox", { name: "Program input" }), {
+      target: { value: "12" },
+    });
+    expect(screen.getByRole("textbox", { name: "Program input" })).toHaveValue(
+      "12",
+    );
+  });
+
   it("uses a distinct C++ terminal frame and keeps TODO prompts out of source", () => {
     render(
       <CppEditor

@@ -28,7 +28,9 @@ vi.mock("../lib/academySync", () => ({ enqueueAcademyOperation: vi.fn() }));
 // Both editors are reduced to a marker so the assertion is about which one the
 // page chose, not about how each editor renders or whether its worker runs.
 vi.mock("../components/academy/PythonEditor", () => ({
-  default: () => <div data-testid="python-editor" />,
+  default: ({ stdin }) => (
+    <div data-testid="python-editor" data-stdin={stdin} />
+  ),
 }));
 vi.mock("../components/academy/CppEditor", () => ({
   default: ({ stdin, code, onCodeChange }) => (
@@ -123,6 +125,10 @@ describe("which editor an assignment offers", () => {
     renderPage();
     await waitFor(() => expect(screen.getByTestId("python-editor")).toBeInTheDocument());
     expect(screen.queryByTestId("cpp-editor")).not.toBeInTheDocument();
+    expect(screen.getByTestId("python-editor")).toHaveAttribute(
+      "data-stdin",
+      "3000",
+    );
   });
 
   it("submits the latest edited code and explains when automatic grading is unavailable", async () => {

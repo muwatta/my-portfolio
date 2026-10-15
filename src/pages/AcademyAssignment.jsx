@@ -25,7 +25,7 @@ import PythonEditor from "../components/academy/PythonEditor";
 import CppEditor from "../components/academy/CppEditor";
 import ProtectedContent from "../components/academy/ProtectedContent";
 
-function getCppExampleInput(instructions = "") {
+function getProgramExampleInput(instructions = "") {
   return (
     instructions.match(
       /^Program input example(?: \([^)]*\))?:\s*(.+)$/im,
@@ -43,7 +43,7 @@ function CodeEditorForAssignment({
     return (
       <CppEditor
         starterCode={assignment.starter_code || ""}
-        stdin={getCppExampleInput(assignment.instructions)}
+        stdin={getProgramExampleInput(assignment.instructions)}
         code={sourceCode}
         onCodeChange={onSourceCodeChange}
       />
@@ -52,6 +52,7 @@ function CodeEditorForAssignment({
   return (
     <PythonEditor
       starterCode={assignment.starter_code}
+      stdin={getProgramExampleInput(assignment.instructions)}
       code={sourceCode}
       onCodeChange={onSourceCodeChange}
     />

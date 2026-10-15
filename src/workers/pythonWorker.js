@@ -82,6 +82,7 @@ async function ensurePackages(runtime, code) {
 
 const runner = `
 import ast
+import builtins
 import contextlib
 import io
 import traceback
@@ -115,9 +116,24 @@ _namespace = {"__name__": "__main__"}
 _output = _LimitedWriter(100000)
 _error = _LimitedWriter(20000)
 _status = "ok"
+_input_error = None
 _result = None
+_academy_input_values = __ACADEMY_STDIN__.splitlines()
+_academy_input_index = 0
+_academy_original_input = builtins.input
+
+def _academy_input(prompt=""):
+    global _academy_input_index
+    if prompt:
+        print(prompt, end="")
+    if _academy_input_index >= len(_academy_input_values):
+        raise EOFError("This program needs more input. Enter one value per line in Program input.")
+    value = _academy_input_values[_academy_input_index]
+    _academy_input_index += 1
+    return value
 
 try:
+    builtins.input = _academy_input
     with contextlib.redirect_stdout(_output), contextlib.redirect_stderr(_error):
         _tree = ast.parse(_source, mode="exec")
         _tail = None
@@ -126,23 +142,32 @@ try:
         exec(compile(_tree, "<academy>", "exec"), _namespace)
         if _tail is not None:
             _result = eval(compile(ast.Expression(_tail.value), "<academy>", "eval"), _namespace)
-except BaseException:
-    _status = traceback.format_exc()
+except BaseException as _exception:
+    if isinstance(_exception, EOFError):
+        _input_error = str(_exception)
+    else:
+        _status = traceback.format_exc()
+finally:
+    builtins.input = _academy_original_input
 
 _printed = _output.getvalue()
-if _printed:
+if _input_error:
+    __academy_result__ = _printed + ("\\n" if _printed and not _printed.endswith("\\n") else "") + _input_error
+elif _printed:
     __academy_result__ = _printed
 elif _status != "ok":
     __academy_result__ = _status
 elif _result is not None:
     __academy_result__ = repr(_result)
+elif _academy_input_index:
+    __academy_result__ = "Your program read the input but did not print anything. Add a print() statement to display a result."
 else:
     __academy_result__ = "Program finished with no output."
 `;
 
 self.onmessage = async (event) => {
   if (event.data?.type !== "run") return;
-  const { id, code } = event.data;
+  const { id, code, stdin = "" } = event.data;
   try {
     self.postMessage({ type: "loading", id });
     const runtime = await getRuntime();
@@ -159,7 +184,9 @@ self.onmessage = async (event) => {
       });
     }
 
-    const wrapped = runner.replace("__ACADEMY_SOURCE__", () => JSON.stringify(code));
+    const wrapped = runner
+      .replace("__ACADEMY_SOURCE__", () => JSON.stringify(code))
+      .replace("__ACADEMY_STDIN__", () => JSON.stringify(String(stdin ?? "")));
     await runtime.runPythonAsync(wrapped);
     const result = await runtime.runPython("__academy_result__");
     const output = String(result ?? "");
